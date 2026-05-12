@@ -71,14 +71,12 @@ async function bootstrap() {
 
   const port = configService.get<number>('PORT') || 3000;
   
-  logger.log('--- RAILWAY STARTUP SEQUENCE ---');
-  logger.log('1. Server boot start');
-  logger.log(`2. Environment loaded. PORT: ${port}`);
-  logger.log('3. Security headers (Helmet) & CORS configured');
-  logger.log('4. Prisma & Database modules initialized via NestJS DI');
+  logger.log('SERVER_LISTEN_START: Binding NestJS to 0.0.0.0');
   
   await app.listen(port, '0.0.0.0');
 
+  logger.log('SERVER_LISTEN_OK: Application bound successfully');
+  logger.log('HEALTH_ROUTE_READY: /api/health accessible');
   logger.log(`🚀 Application is running on: http://localhost:${port}/api`);
 }
 
