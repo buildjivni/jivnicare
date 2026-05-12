@@ -70,6 +70,13 @@ async function bootstrap() {
   app.enableShutdownHooks();
 
   const port = configService.get<number>('PORT') || 3000;
+  
+  logger.log('--- RAILWAY STARTUP SEQUENCE ---');
+  logger.log('1. Server boot start');
+  logger.log(`2. Environment loaded. PORT: ${port}`);
+  logger.log('3. Security headers (Helmet) & CORS configured');
+  logger.log('4. Prisma & Database modules initialized via NestJS DI');
+  
   await app.listen(port, '0.0.0.0');
 
   logger.log(`🚀 Application is running on: http://localhost:${port}/api`);
