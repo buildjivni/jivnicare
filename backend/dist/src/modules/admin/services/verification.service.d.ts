@@ -1,0 +1,66 @@
+import { PrismaService } from '../../../database/prisma.service';
+import { AdminAuditService } from './admin-audit.service';
+export declare class VerificationService {
+    private readonly prisma;
+    private readonly auditService;
+    constructor(prisma: PrismaService, auditService: AdminAuditService);
+    getPendingDoctors(): Promise<({
+        user: {
+            phone: string;
+            name: string | null;
+        };
+    } & {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        name: string;
+        userId: string;
+        bio: string | null;
+        experience: number;
+        fee: number;
+        district: string;
+        hospitalName: string;
+        emergencyAvailable: boolean;
+        gender: string | null;
+        languages: string[];
+        verificationStatus: import("@prisma/client").$Enums.VerificationStatus;
+        slug: string;
+        profileImage: string | null;
+        rating: number;
+        availableDays: string[];
+        availableTimeSlots: import("@prisma/client/runtime/client").JsonValue | null;
+        maxAppointmentsPerDay: number;
+        isAcceptingAppointments: boolean;
+        profileCompletionPercentage: number;
+        medicalRegistrationNumber: string | null;
+        consultationFee: number;
+        followUpFee: number;
+        averageConsultationTime: number;
+        treatmentFocus: string[];
+        commonSymptomsTreated: string[];
+        certifications: string[];
+        education: string | null;
+        onlineConsultationAvailable: boolean;
+        emergencyConsultationAvailable: boolean;
+    })[]>;
+    getPendingHospitals(): Promise<{
+        phone: string;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        name: string;
+        district: string;
+        emergencyAvailable: boolean;
+        verificationStatus: import("@prisma/client").$Enums.VerificationStatus;
+        slug: string;
+        rating: number;
+        description: string | null;
+        address: string;
+        hospitalType: string;
+        ambulanceAvailable: boolean;
+        website: string | null;
+        images: string[];
+    }[]>;
+    moderateDoctor(adminId: string, doctorId: string, action: 'APPROVE' | 'REJECT', reason?: string): Promise<any>;
+    moderateHospital(adminId: string, hospitalId: string, action: 'APPROVE' | 'REJECT', reason?: string): Promise<any>;
+}

@@ -1,0 +1,192 @@
+import { PrismaService } from '../../database/prisma.service';
+import { CreateDoctorDto, UpdateDoctorDto, FilterDoctorDto } from './dto/doctors.dto';
+import { Prisma } from '@prisma/client';
+export declare class DoctorsService {
+    private prisma;
+    constructor(prisma: PrismaService);
+    private generateSlug;
+    private calculateProfileCompleteness;
+    create(createDoctorDto: CreateDoctorDto): Promise<{
+        specialties: {
+            id: string;
+            name: string;
+            slug: string;
+        }[];
+        keywords: {
+            id: string;
+            term: string;
+        }[];
+    } & {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        name: string;
+        userId: string;
+        bio: string | null;
+        experience: number;
+        fee: number;
+        district: string;
+        hospitalName: string;
+        emergencyAvailable: boolean;
+        gender: string | null;
+        languages: string[];
+        verificationStatus: import("@prisma/client").$Enums.VerificationStatus;
+        slug: string;
+        profileImage: string | null;
+        rating: number;
+        availableDays: string[];
+        availableTimeSlots: Prisma.JsonValue | null;
+        maxAppointmentsPerDay: number;
+        isAcceptingAppointments: boolean;
+        profileCompletionPercentage: number;
+        medicalRegistrationNumber: string | null;
+        consultationFee: number;
+        followUpFee: number;
+        averageConsultationTime: number;
+        treatmentFocus: string[];
+        commonSymptomsTreated: string[];
+        certifications: string[];
+        education: string | null;
+        onlineConsultationAvailable: boolean;
+        emergencyConsultationAvailable: boolean;
+    }>;
+    findAll(filterDto: FilterDoctorDto): Promise<{
+        doctors: ({
+            specialties: {
+                id: string;
+                name: string;
+                slug: string;
+            }[];
+        } & {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            name: string;
+            userId: string;
+            bio: string | null;
+            experience: number;
+            fee: number;
+            district: string;
+            hospitalName: string;
+            emergencyAvailable: boolean;
+            gender: string | null;
+            languages: string[];
+            verificationStatus: import("@prisma/client").$Enums.VerificationStatus;
+            slug: string;
+            profileImage: string | null;
+            rating: number;
+            availableDays: string[];
+            availableTimeSlots: Prisma.JsonValue | null;
+            maxAppointmentsPerDay: number;
+            isAcceptingAppointments: boolean;
+            profileCompletionPercentage: number;
+            medicalRegistrationNumber: string | null;
+            consultationFee: number;
+            followUpFee: number;
+            averageConsultationTime: number;
+            treatmentFocus: string[];
+            commonSymptomsTreated: string[];
+            certifications: string[];
+            education: string | null;
+            onlineConsultationAvailable: boolean;
+            emergencyConsultationAvailable: boolean;
+        })[];
+        meta: {
+            total: number;
+            page: number;
+            limit: number;
+            totalPages: number;
+        };
+    }>;
+    findOne(slug: string): Promise<{
+        specialties: {
+            id: string;
+            name: string;
+            slug: string;
+        }[];
+        keywords: {
+            id: string;
+            term: string;
+        }[];
+    } & {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        name: string;
+        userId: string;
+        bio: string | null;
+        experience: number;
+        fee: number;
+        district: string;
+        hospitalName: string;
+        emergencyAvailable: boolean;
+        gender: string | null;
+        languages: string[];
+        verificationStatus: import("@prisma/client").$Enums.VerificationStatus;
+        slug: string;
+        profileImage: string | null;
+        rating: number;
+        availableDays: string[];
+        availableTimeSlots: Prisma.JsonValue | null;
+        maxAppointmentsPerDay: number;
+        isAcceptingAppointments: boolean;
+        profileCompletionPercentage: number;
+        medicalRegistrationNumber: string | null;
+        consultationFee: number;
+        followUpFee: number;
+        averageConsultationTime: number;
+        treatmentFocus: string[];
+        commonSymptomsTreated: string[];
+        certifications: string[];
+        education: string | null;
+        onlineConsultationAvailable: boolean;
+        emergencyConsultationAvailable: boolean;
+    }>;
+    update(id: string, updateDoctorDto: UpdateDoctorDto): Promise<{
+        specialties: {
+            id: string;
+            name: string;
+            slug: string;
+        }[];
+        keywords: {
+            id: string;
+            term: string;
+        }[];
+    } & {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        name: string;
+        userId: string;
+        bio: string | null;
+        experience: number;
+        fee: number;
+        district: string;
+        hospitalName: string;
+        emergencyAvailable: boolean;
+        gender: string | null;
+        languages: string[];
+        verificationStatus: import("@prisma/client").$Enums.VerificationStatus;
+        slug: string;
+        profileImage: string | null;
+        rating: number;
+        availableDays: string[];
+        availableTimeSlots: Prisma.JsonValue | null;
+        maxAppointmentsPerDay: number;
+        isAcceptingAppointments: boolean;
+        profileCompletionPercentage: number;
+        medicalRegistrationNumber: string | null;
+        consultationFee: number;
+        followUpFee: number;
+        averageConsultationTime: number;
+        treatmentFocus: string[];
+        commonSymptomsTreated: string[];
+        certifications: string[];
+        education: string | null;
+        onlineConsultationAvailable: boolean;
+        emergencyConsultationAvailable: boolean;
+    }>;
+    remove(id: string): Promise<{
+        message: string;
+    }>;
+}

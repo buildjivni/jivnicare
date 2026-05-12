@@ -1,0 +1,390 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  USER
+  DOCTOR
+  ADMIN
+}
+
+enum MediaType {
+  DOCTOR_PROFILE
+  HOSPITAL_GALLERY
+  LICENSE_DOCUMENT
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+  SUSPENDED
+}
+
+enum TargetType {
+  DOCTOR
+  HOSPITAL
+  USER
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWING
+  RESOLVED
+  DISMISSED
+}
+
+model ModerationLog {
+  id         String     @id @default(uuid())
+  adminId    String
+  admin      User       @relation(fields: [adminId], references: [id])
+  action     String     
+  targetType TargetType
+  targetId   String
+  reason     String?
+  createdAt  DateTime   @default(now())
+}
+
+model Media {
+  id         String    @id @default(uuid())
+  url        String
+  publicId   String    @unique
+  type       MediaType
+  userId     String
+  user       User      @relation(fields: [userId], references: [id])
+  createdAt  DateTime  @default(now())
+}
+
+model User {
+  id         String   @id @default(uuid())
+  phone      String   @unique
+  name       String?
+  role       Role     @default(USER)
+  isVerified Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  
+  doctor         Doctor?
+  media          Media[]
+  moderationLogs ModerationLog[]
+  notifications  Notification[]
+  savedDoctors   SavedDoctor[]
+  notificationPreference NotificationPreference?
+  queueTokens    QueueToken[]
+  reportsSubmitted Report[]
+}
+
+model Doctor {
+  id                 String      @id @default(uuid())
+  userId             String      @unique
+  user               User        @relation(fields: [userId], references: [id])
+  name               String
+  slug               String      @unique
+  bio                String?
+  experience         Int         @default(0)
+  fee                Int         @default(0)
+  district           String
+  hospitalName       String
+  verificationStatus VerificationStatus @default(PENDING)
+  emergencyAvailable Boolean     @default(false)
+  profileImage       String?
+  gender             String?
+  languages          String[]    @default([])
+  rating             Float       @default(0)
+  
+  specialties        Specialty[]
+  keywords           Keyword[]
+  savedBy            SavedDoctor[]
+  dailyQueues        DailyQueue[]
+  
+  // ── Phase 16: Doctor Control System ────────────────────────
+  availableDays               String[] @default([]) // e.g., ["MONDAY", "TUESDAY"]
+  availableTimeSlots          Json?    // e.g., [{start: "10:00", end: "13:00"}]
+  maxAppointmentsPerDay       Int      @default(0) // 0 means no limit
+  isAcceptingAppointments     Boolean  @default(true)
+  profileCompletionPercentage Int      @default(0)
+
+  // ── Real-World Clinic Operations Extension ─────────────────
+  medicalRegistrationNumber   String?
+  consultationFee             Int      @default(0)
+  followUpFee                 Int      @default(0)
+  averageConsultationTime     Int      @default(15) // minutes
+  treatmentFocus              String[] @default([])
+  commonSymptomsTreated       String[] @default([])
+  certifications              String[] @default([])
+  education                   String?
+  onlineConsultationAvailable Boolean  @default(false)
+  emergencyConsultationAvailable Boolean @default(false)
+
+  weeklySchedule              WeeklySchedule?
+  clinicOperations            ClinicOperations?
+
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+  
+  @@index([district])
+  @@index([verificationStatus])
+}
+
+model Specialty {
+  id        String     @id @default(uuid())
+  name      String     @unique
+  slug      String     @unique
+  doctors   Doctor[]
+  hospitals Hospital[]
+}
+
+model Keyword {
+  id        String     @id @default(uuid())
+  term      String     @unique
+  doctors   Doctor[]
+  hospitals Hospital[]
+}
+
+model Hospital {
+  id                 String      @id @default(uuid())
+  name               String
+  slug               String      @unique
+  description        String?
+  district           String
+  address            String
+  phone              String
+  hospitalType       String      @default("General")
+  verificationStatus VerificationStatus @default(PENDING)
+  emergencyAvailable Boolean     @default(false)
+  ambulanceAvailable Boolean     @default(false)
+  website            String?
+  rating             Float       @default(0)
+  images             String[]    @default([])
+  
+  specialties        Specialty[]
+  keywords           Keyword[]
+  
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+  
+  @@index([district])
+  @@index([verificationStatus])
+  @@index([emergencyAvailable])
+}
+
+model SearchAnalytics {
+  id              String   @id @default(uuid())
+  query           String
+  normalizedQuery String
+  district        String?
+  resultsCount    Int      @default(0)
+  createdAt       DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([district])
+  @@index([normalizedQuery])
+}
+
+model ProfileAnalytics {
+  id         String     @id @default(uuid())
+  targetType TargetType 
+  targetId   String
+  action     String     
+  createdAt  DateTime   @default(now())
+
+  @@index([targetType, targetId])
+  @@index([createdAt])
+}
+
+// ── Phase 23: Trust & Safety (Reports) ────────────────────────
+model Report {
+  id          String       @id @default(uuid())
+  reporterId  String
+  reporter    User         @relation(fields: [reporterId], references: [id])
+  targetType  TargetType
+  targetId    String       // ID of Doctor, Hospital, or User
+  reason      String
+  description String?
+  status      ReportStatus @default(PENDING)
+  adminNotes  String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([status])
+  @@index([targetType, targetId])
+}
+
+// ── Phase 13: Notifications ───────────────────────────────────
+
+enum NotificationType {
+  VERIFICATION_APPROVED
+  VERIFICATION_REJECTED
+  VERIFICATION_SUSPENDED
+  PROFILE_UPDATED
+  ADMIN_ALERT
+  MODERATION_PENDING
+  PLATFORM_ALERT
+  ENGAGEMENT_ALERT
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  message   String
+  isRead    Boolean          @default(false)
+  metadata  Json?            // Extra context (doctorId, action, etc.)
+  createdAt DateTime         @default(now())
+  readAt    DateTime?
+
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
+  @@index([createdAt])
+}
+
+// ── Phase 13: Saved Doctors (Engagement) ─────────────────────
+
+model SavedDoctor {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  doctorId  String
+  doctor    Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, doctorId])
+  @@index([userId])
+}
+
+// ── Phase 13: Notification Preferences ───────────────────────
+
+model NotificationPreference {
+  id          String  @id @default(uuid())
+  userId      String  @unique
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  smsEnabled  Boolean @default(false)
+  emailEnabled Boolean @default(true)
+  pushEnabled Boolean @default(false)
+  whatsappEnabled Boolean @default(false)
+  updatedAt   DateTime @updatedAt
+}
+
+// ── Phase 27: Unified Patient Queue System ───────────────────
+
+enum QueueStatus {
+  NOT_STARTED
+  ACTIVE
+  PAUSED
+  FULL
+  COMPLETED
+}
+
+enum TokenSource {
+  ONLINE
+  WALK_IN
+}
+
+enum TokenStatus {
+  WAITING
+  IN_CONSULTATION
+  COMPLETED
+  SKIPPED
+  CANCELLED
+}
+
+model DailyQueue {
+  id              String      @id @default(uuid())
+  doctorId        String
+  doctor          Doctor      @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  date            DateTime    @db.Date // The specific operating day
+  status          QueueStatus @default(NOT_STARTED)
+  maxCapacity     Int         // Maximum patients for today
+  currentActiveToken Int      @default(0) // The token number currently inside the cabin
+  
+  tokens          QueueToken[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@unique([doctorId, date])
+}
+
+model QueueToken {
+  id              String      @id @default(uuid())
+  queueId         String
+  queue           DailyQueue  @relation(fields: [queueId], references: [id], onDelete: Cascade)
+  
+  tokenNumber     Int         // Strict Sequence: 1, 2, 3...
+  source          TokenSource // ONLINE or WALK_IN
+  status          TokenStatus @default(WAITING)
+  
+  // Patient Reference
+  userId          String?     
+  user            User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  walkInEntryId   String?     
+  walkInEntry     WalkInEntry? @relation(fields: [walkInEntryId], references: [id], onDelete: SetNull)
+  
+  estimatedTime   DateTime?   // Dynamic estimate
+  tokenIssuedAt   DateTime    @default(now()) // Determines strict FCFS priority
+  
+  @@unique([queueId, tokenNumber])
+  @@index([queueId, status])
+  @@index([tokenIssuedAt])
+}
+
+model WalkInEntry {
+  id              String      @id @default(uuid())
+  patientName     String
+  phoneNumber     String?
+  symptoms        String?
+  createdAt       DateTime    @default(now())
+  
+  token           QueueToken[]
+}
+
+// ── Phase 26: Security & OTP Persistence ─────────────────────
+
+model OtpToken {
+  id        String   @id @default(uuid())
+  phone     String   @unique
+  hashedOtp String
+  expiresAt DateTime
+  attempts  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([phone])
+}
+
+// ── Clinic Schedule & Operations Engine ──────────────────────
+
+model WeeklySchedule {
+  id         String   @id @default(uuid())
+  doctorId   String   @unique
+  doctor     Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  monday     Json     // { isOpen: true, start: "09:00", end: "14:00", maxPatients: 30 }
+  tuesday    Json
+  wednesday  Json
+  thursday   Json
+  friday     Json
+  saturday   Json
+  sunday     Json
+  updatedAt  DateTime @updatedAt
+}
+
+model ClinicOperations {
+  id               String   @id @default(uuid())
+  doctorId         String   @unique
+  doctor           Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  isClosedToday    Boolean  @default(false)
+  pauseOnlineBooking Boolean @default(false)
+  walkInLimit      Int      @default(10)
+  onlineLimit      Int      @default(20)
+  emergencySlots   Int      @default(2)
+}
