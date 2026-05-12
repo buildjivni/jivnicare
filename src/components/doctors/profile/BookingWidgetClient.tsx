@@ -42,14 +42,12 @@ export function BookingWidgetClient({ doctor, isMobileCTA = false }: BookingWidg
   const [selectedService, setSelectedService] = useState<"clinic" | "video">("clinic");
   const [selectedDate, setSelectedDate] = useState<DateItem>(availableDates[0]);
 
-  const { setDoctor, setTime, setService, setDate } = useBookingStore();
+  const { setDoctor, setService } = useBookingStore();
 
   const handleBook = () => {
     if (!selectedSlot) return;
     setDoctor(doctor);
-    setTime(selectedSlot);
     setService(selectedService);
-    setDate(selectedDate.fullDate);
     router.push("/checkout");
   };
 
