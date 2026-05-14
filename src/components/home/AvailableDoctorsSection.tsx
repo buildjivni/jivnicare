@@ -5,11 +5,14 @@ import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DoctorCard } from "@/components/shared/DoctorCard";
-import { DOCTORS as PATNA_DOCTORS } from "@/data/mock-data";
 import { staggerContainer, itemVariants } from "@/animations/variants";
+import type { Doctor } from "@/types";
 
+interface AvailableDoctorsSectionProps {
+  doctors: Doctor[];
+}
 
-export function AvailableDoctorsSection() {
+export function AvailableDoctorsSection({ doctors }: AvailableDoctorsSectionProps) {
   return (
     <section className="py-10 md:py-16 bg-slate-50 border-b border-slate-100">
       <div className="container mx-auto px-4 max-w-6xl">
@@ -28,7 +31,7 @@ export function AvailableDoctorsSection() {
         whileInView="show" viewport={{ once: true, margin: "-100px" }}
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
       >
-        {PATNA_DOCTORS.slice(0, 3).map((doctor) => (
+        {doctors.map((doctor) => (
           <motion.div key={doctor.id} variants={itemVariants}>
             <DoctorCard doctor={doctor} />
           </motion.div>
@@ -38,7 +41,7 @@ export function AvailableDoctorsSection() {
       <div className="mt-8 md:hidden">
         <Link href="/doctors">
           <Button variant="outline" className="w-full h-14 rounded-2xl border-slate-200 text-slate-700 font-bold text-base shadow-sm">
-            View All Doctors in Patna
+            View All Doctors
           </Button>
         </Link>
       </div>

@@ -16,8 +16,11 @@ export class QueueService {
       });
 
       if (!dailyQueue) {
+        const clinicOps = await tx.clinicOperations.findUnique({ where: { doctorId } });
+        const maxCapacity = clinicOps ? (clinicOps.walkInLimit + clinicOps.onlineLimit) : 40;
+
         dailyQueue = await tx.dailyQueue.create({
-          data: { doctorId, date: queueDate, maxCapacity: 50 },
+          data: { doctorId, date: queueDate, maxCapacity },
         });
       }
 

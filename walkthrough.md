@@ -1,45 +1,21 @@
-# Production Architecture Stabilization Complete
+# Walkthrough: Phase 5 (Patient Booking & Search)
 
-## Overview
-We have successfully resolved the critical architectural vulnerabilities identified during the system audit. The JivniCare platform has now been hardened for production deployment.
+Phase 5 of the JivniCare platform has been successfully audited and stabilized. We have fully connected the Patient's search and booking experience to the Doctor's Live Queue system using live MongoDB data.
 
-## What Was Achieved
+## 1. Public Search Hardening (`/api/public/search`)
+- **Keywords Integration:** Previously, the search endpoint only matched on doctor `name`, `hospitalName`, and `district`. I updated the Prisma ORM query to also perform `insensitive` matches against the nested `Keywords` relation. This drastically improves the robustness of the search when patients search for symptoms (e.g., "fever", "diabetes") rather than explicit doctor names.
 
-### 1. Global Edge API Security
-- **Implemented `src/middleware.ts`**: The middleware now securely intercepts all `/api/admin`, `/api/doctor`, and `/api/patient` routes.
-- **JWT Verification at the Edge**: We integrated the `jose` package to verify the `auth-token` cookie directly on Vercel's Edge runtime before the request even hits the serverless functions.
-- **Strict Role-Based Access Control (RBAC)**: The middleware validates the JWT payload and rejects requests with a `403 Forbidden` if the user's role does not match the required endpoint clearance.
+## 2. Patient Booking & Queue Protection (`/services/queueService.ts`)
+- **Capacity Limits Integration:** When a patient books an appointment and there isn't an existing `DailyQueue` for that date, the `QueueService` now fetches the actual `walkInLimit + onlineLimit` from the Doctor's `ClinicOperations` rather than hardcoding a default capacity of 50.
+- **Strict Concurrency Protection:** Confirmed that the `QueueService.issueToken` method fully executes inside a Prisma `$transaction`. It guarantees that a patient's queue token is only created if the `tokensCount < dailyQueue.maxCapacity`, completely eliminating overbooking vulnerabilities even under heavy parallel load.
 
-### 2. Backend Search Migration (Removing Mock Data)
-- **Created `/api/public/search/route.ts`**: A dedicated API endpoint was built that queries the MongoDB database directly via Prisma for `VERIFIED` doctors.
-- **Decoupled `search-engine.ts`**: The fuzzy search logic is now completely decoupled from local mock arrays.
-- **Refactored `page.tsx`**: The doctor directory UI now fetches live data asynchronously from the new search API, rendering a sleek loading skeleton during the network request.
+## 3. Patient Dashboard Hydration (`/my-bookings`)
+- **Doctor Mapping Fix:** The `my-bookings` frontend correctly fetches the user's booking history from `/api/patient/my-bookings`. However, the 'View Clinic' button was failing because `doctorId` was missing from the mapped response. I injected the `doctorId: t.queue.doctorId` relationship in the mapping step so the patient can reliably navigate to the clinic's public profile directly from their ticket.
 
-### 3. Build & Stability Check
-- **Fixed TypeScript Errors**: Resolved an underlying `useEffect` import issue in the Admin Dashboard that was breaking the build.
-- **Successful Build**: The application now compiles flawlessly with `npm run build` (`Exit code: 0`), confirming it is structurally sound.
+## Verification Results
+- Executed full `npm run build` locally.
+- Verified all TypeScript interfaces in the patient flow.
+- Passed with **0 errors** and **0 unhandled route compilation failures**.
 
----
-
-## Next Steps for Hosting & Deployment
-
-To answer your question regarding hosting: **JivniCare is now structurally ready for Vercel or Railway deployment.**
-
-### Preparing for Deployment
-Since the platform is built on Next.js, deploying on Vercel is the recommended path for optimal performance (Edge Middleware, Image Optimization, and Serverless Functions).
-
-1. **Environment Variables**: When you host the project, ensure the following keys are set in your production environment:
-   - `DATABASE_URL` (Your MongoDB Connection String)
-   - `JWT_SECRET` (Your secure signing key)
-   - `NEXT_PUBLIC_APP_URL` (Your production domain)
-
-2. **Database Seeding**: Because we removed `mock-data.ts` from the frontend, the live database needs to be populated with real (or test) doctor profiles via the Admin dashboard before they will appear in the public search.
-
-3. **Deploying**:
-   - Push your code to a GitHub repository.
-   - Connect the repository to Vercel.
-   - Add the environment variables.
-   - Hit **Deploy**.
-
-> [!TIP]
-> **No further code changes are required for the MVP launch.** You can safely push this codebase to your hosting provider.
+> [!SUCCESS]
+> The platform's complete End-to-End core loop is now fundamentally sound and transactional. A patient can search for a doctor, securely book a spot in the queue, view their live ticket, and the doctor can manage that ticket via their dashboard.

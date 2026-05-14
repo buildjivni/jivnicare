@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import {
   Stethoscope, HeartPulse, Sparkles, Baby, Bone, Brain, ArrowRight
 } from "lucide-react";
-import { SPECIALTIES } from "@/data/mock-data";
+import { SPECIALTIES } from "@/lib/constants";
 import { staggerContainer, itemVariants } from "@/animations/variants";
 
 

@@ -1,9 +1,12 @@
-# Execution Tasks
+# Phase 5 Implementation Tasks
 
-- [x] Install `jose` package for Edge runtime JWT verification
-- [x] Implement global Edge API security in `src/middleware.ts`
-- [x] Create search API at `src/app/api/public/search/route.ts`
-- [x] Refactor `src/lib/search-engine.ts` to decouple from `mock-data.ts`
-- [x] Refactor `src/app/(public)/doctors/page.tsx` to fetch from search API
-- [x] Optimize `src/components/shared/RoleGuard.tsx` to minimize hydration flicker
-- [x] Verify functionality (API protection and Search behavior)
+## 1. Search & Discovery Hardening
+- [x] Audit and modify `src/app/api/public/search/route.ts` for robust MongoDB search filtering `VERIFIED` doctors.
+
+## 2. Patient Booking & Queue Integration
+- [x] Implement `src/app/api/patient/book-appointment/route.ts` using Prisma `$transaction`.
+- [x] Ensure overbooking protection and lazy initialization of the queue if needed.
+
+## 3. Patient Dashboard Hydration
+- [x] Create/Update `src/app/api/patient/my-bookings/route.ts` to fetch patient's queue tokens.
+- [x] Update frontend to consume the live booking data.
