@@ -11,8 +11,7 @@ import { BrandName } from "@/components/brand/BrandName";
 export default function ConfirmationPage() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
-  const [servingTokenOffset, setServingTokenOffset] = useState(4);
-  const [waitMinutesElapsed, setWaitMinutesElapsed] = useState(0);
+  const [queueStats, setQueueStats] = useState<{ currentToken: number; totalInQueue: number; estimatedWait: number } | null>(null);
   
   const token = useBookingStore(state => state.generatedToken);
   const doctor = useBookingStore(state => state.selectedDoctor);
@@ -29,24 +28,27 @@ export default function ConfirmationPage() {
     }
   }, [mounted, router, token, doctor]);
 
-  // Simulated queue progression
+  // Poll real queue stats every 30 seconds
   useEffect(() => {
-    if (!mounted || !token) return;
-    
-    // Simulate token moving every 15 seconds
-    const interval = setInterval(() => {
-      setServingTokenOffset(prev => Math.max(0, prev - 1));
-      setWaitMinutesElapsed(prev => prev + 5);
-    }, 15000);
+    if (!mounted || !token?.doctorId) return;
 
+    const fetchStats = async () => {
+      try {
+        const res = await fetch(`/api/public/doctor/${token.doctorId}/queue-stats`);
+        const data = await res.json();
+        if (data.success) setQueueStats(data.queue);
+      } catch { /* ignore polling errors */ }
+    };
+
+    fetchStats();
+    const interval = setInterval(fetchStats, 30000);
     return () => clearInterval(interval);
   }, [mounted, token]);
 
   if (!mounted || !token || !doctor) return <div className="min-h-screen bg-[#f7f9fc]" />;
 
-  const currentServing = Math.max(1, (token.tokenNumber || token) - servingTokenOffset);
-  const initialWait = token.estimatedWaitMinutes || 45;
-  const currentWait = Math.max(0, initialWait - waitMinutesElapsed);
+  const currentServing = queueStats?.currentToken ?? Math.max(1, (token.tokenNumber || 1) - 1);
+  const currentWait = queueStats?.estimatedWait ?? token.estimatedWaitMinutes ?? 45;
 
   return (
     <div className="bg-[#f7f9fc] min-h-screen pt-12 pb-20 relative">

@@ -69,7 +69,7 @@ function PatientLoginContent() {
       const res = await fetch("/api/auth/verify-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone, otp }),
+        body: JSON.stringify({ phone, otp, name: name.trim() }),
       });
       
       const data = await res.json();
@@ -81,9 +81,9 @@ function PatientLoginContent() {
       login({
         id: data.user.id,
         name: data.user.name || name.trim() || "Patient User",
-        email: "patient@example.com", // Assuming no email for now
         role: "PATIENT",
-      }, data.token);
+      });
+      // Token is already set as httpOnly cookie by backend — no need to store in Zustand
       
       router.push(redirectUrl);
     } catch (error: any) {

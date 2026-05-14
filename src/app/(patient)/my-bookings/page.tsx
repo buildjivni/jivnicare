@@ -30,7 +30,7 @@ export default function MyBookingsPage() {
             doctorName: t.queue.doctor.user.name,
             clinic: t.queue.doctor.clinic || "JivniCare Clinic",
             location: t.queue.doctor.district || "Local",
-            estimatedWaitMinutes: 15, // dynamic estimate logic can go here
+            estimatedWaitMinutes: t.tokenNumber * 10, // 10 min avg per patient
             createdAt: t.tokenIssuedAt,
           }));
           setBookings(formattedBookings);

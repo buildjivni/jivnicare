@@ -2,38 +2,87 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { DOCTORS } from "@/data/mock-data";
+import prisma from "@/lib/prisma";
 import { DoctorProfileView } from "@/components/doctors/profile/DoctorProfileView";
 import { BookingWidgetClient } from "@/components/doctors/profile/BookingWidgetClient";
 import { generateDoctorMetadata } from "@/lib/seo/metadata";
 import { physicianSchema, breadcrumbSchema } from "@/lib/seo/jsonld";
 import { JsonLd } from "@/components/seo/JsonLd";
+import type { Doctor } from "@/types";
 
 interface PageProps {
   params: Promise<{ id: string }>;
 }
 
+// Fetch all verified doctor IDs from DB for static generation
 export async function generateStaticParams() {
-  return DOCTORS.map((d) => ({ id: d.id }));
+  try {
+    const doctors = await prisma.doctor.findMany({
+      where: { verificationStatus: "VERIFIED" },
+      select: { id: true },
+    });
+    return doctors.map((d) => ({ id: d.id }));
+  } catch {
+    // Fallback to empty if DB not available at build time
+    return [];
+  }
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
-  const doctor = DOCTORS.find((d) => d.id === id);
-  if (!doctor) return { title: "Doctor Not Found | JivniCare" };
+  try {
+    const doc = await prisma.doctor.findUnique({
+      where: { id },
+      include: { specialties: true },
+    });
+    if (!doc) return { title: "Doctor Not Found | JivniCare" };
+    const mappedDoctor = mapDoctorToUI(doc);
+    return generateDoctorMetadata({ ...mappedDoctor, image: mappedDoctor.image });
+  } catch {
+    return { title: "Doctor | JivniCare" };
+  }
+}
 
-  return generateDoctorMetadata({
-    ...doctor,
-    image: doctor.image,
-  });
+// Map Prisma Doctor record to the frontend Doctor type
+function mapDoctorToUI(doc: any): Doctor {
+  return {
+    id: doc.id,
+    name: doc.name,
+    specialty: doc.specialties?.[0]?.name || "General Physician",
+    clinic: doc.hospitalName || "JivniCare Clinic",
+    location: doc.district || "Bihar",
+    rating: doc.rating || 4.5,
+    reviews: 120, // No review model yet
+    experience: `${doc.experience || 0} Years`,
+    fee: `₹${doc.fee || 0}`,
+    videoFee: `₹${doc.consultationFee || 300}`,
+    image:
+      doc.profileImage ||
+      `https://ui-avatars.com/api/?name=${encodeURIComponent(doc.name)}&background=5298D2&color=fff`,
+    bgImage:
+      "https://images.unsplash.com/photo-1551076805-e18690c5e53b?q=80&w=1200",
+    available: "Today",
+    tags: [
+      ...(doc.specialties?.map((s: any) => s.name) || []),
+      ...(doc.keywords?.map((k: any) => k.term) || []),
+    ],
+    about: doc.bio || "Experienced and dedicated doctor.",
+    education: doc.education || "MBBS, MD",
+    nextAvailable: "10:00 AM",
+  };
 }
 
 export default async function DoctorProfilePage({ params }: PageProps) {
   const { id } = await params;
-  const doctor = DOCTORS.find((d) => d.id === id);
 
-  if (!doctor) notFound();
+  const doc = await prisma.doctor.findUnique({
+    where: { id },
+    include: { specialties: true, keywords: true },
+  });
 
+  if (!doc) notFound();
+
+  const doctor = mapDoctorToUI(doc);
   const district = doctor.location.split(",").pop()?.trim() ?? "Bihar";
 
   return (
@@ -44,7 +93,10 @@ export default async function DoctorProfilePage({ params }: PageProps) {
         schema={breadcrumbSchema([
           { name: "Home", url: "https://jivnicare.in" },
           { name: "Doctors", url: "https://jivnicare.in/doctors" },
-          { name: `${doctor.specialty} in ${district}`, url: `https://jivnicare.in/doctors?specialty=${doctor.specialty}` },
+          {
+            name: `${doctor.specialty} in ${district}`,
+            url: `https://jivnicare.in/doctors?specialty=${doctor.specialty}`,
+          },
           { name: doctor.name, url: `https://jivnicare.in/doctors/${doctor.id}` },
         ])}
       />
@@ -69,7 +121,7 @@ export default async function DoctorProfilePage({ params }: PageProps) {
           {/* Main Content Area */}
           <div className="flex-1">
             <DoctorProfileView doctor={doctor} />
-            
+
             {/* Mobile Inline Booking Widget */}
             <div className="block lg:hidden mt-8" id="mobile-booking-widget">
               <BookingWidgetClient doctor={doctor} />
