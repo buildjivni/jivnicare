@@ -55,12 +55,31 @@ export async function GET(request: Request) {
       }
     });
 
-    // If it doesn't exist, they haven't had any bookings yet today. We can return empty.
+    // If it doesn't exist, they haven't had any bookings yet today. We can lazy-initialize it.
     if (!dailyQueue) {
-      return NextResponse.json({ success: true, queue: null, tokens: [] });
+      // Find operations to get max capacity
+      const clinicOps = await prisma.clinicOperations.findUnique({ where: { doctorId: doctor.id } });
+      const maxCapacity = clinicOps ? (clinicOps.walkInLimit + clinicOps.onlineLimit) : 40;
+
+      dailyQueue = await prisma.dailyQueue.create({
+        data: {
+          doctorId: doctor.id,
+          date: queueDate,
+          status: "ACTIVE",
+          maxCapacity
+        },
+        include: {
+          tokens: {
+            include: {
+              user: { select: { name: true, phone: true } },
+              walkInEntry: true
+            }
+          }
+        }
+      });
     }
 
-    return NextResponse.json({ success: true, queue: dailyQueue, tokens: dailyQueue.tokens });
+    return NextResponse.json({ success: true, queue: dailyQueue, tokens: dailyQueue.tokens || [] });
   } catch (error: any) {
     console.error("Fetch doctor queue error:", error);
     return NextResponse.json({ error: "Failed to fetch queue" }, { status: 500 });

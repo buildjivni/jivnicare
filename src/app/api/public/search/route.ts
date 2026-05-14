@@ -15,11 +15,36 @@ export async function GET(request: Request) {
       if (specParam) specialties = specParam.split(',');
     }
 
-    // Fetch verified doctors from DB
+    // Build Prisma Where Clause
+    const whereClause: any = {
+      verificationStatus: 'VERIFIED'
+    };
+
+    if (specialties.length > 0) {
+      whereClause.specialties = {
+        some: {
+          OR: specialties.map(s => ({
+            name: { contains: s, mode: 'insensitive' }
+          }))
+        }
+      };
+    }
+
+    if (query) {
+      whereClause.OR = [
+        { name: { contains: query, mode: 'insensitive' } },
+        { hospitalName: { contains: query, mode: 'insensitive' } },
+        { district: { contains: query, mode: 'insensitive' } },
+        { keywords: { some: { term: { contains: query, mode: 'insensitive' } } } }
+      ];
+    }
+
+    // Fetch verified doctors from DB with pagination/limit
+    const limit = parseInt(searchParams.get('limit') || '30', 10);
+    
     const dbDoctors = await prisma.doctor.findMany({
-      where: {
-        verificationStatus: 'VERIFIED'
-      },
+      where: whereClause,
+      take: limit,
       include: {
         specialties: true,
         keywords: true,
@@ -47,18 +72,8 @@ export async function GET(request: Request) {
       nextAvailable: "10:00 AM"
     }));
 
-    // Filter by specialty if provided
-    let specialtyFiltered = mappedDoctors;
-    if (specialties.length > 0) {
-      specialtyFiltered = mappedDoctors.filter(doctor => 
-        specialties.some(specId => 
-          doctor.specialty.toLowerCase() === specId.toLowerCase()
-        )
-      );
-    }
-
-    // Run the fuzzy search algorithm
-    const searchResult = searchDoctors(query, specialtyFiltered);
+    // Run the fuzzy search algorithm for final scoring (typo tolerance)
+    const searchResult = searchDoctors(query, mappedDoctors);
 
     return NextResponse.json(searchResult);
 

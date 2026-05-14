@@ -96,7 +96,7 @@ export function SmartSearchBar({
 
   // Load trending + recents on mount
   useEffect(() => {
-    const backendUrl = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api"}/intelligence/trending${district ? `?district=${district}` : ""}`;
+    const backendUrl = `/api/intelligence/trending${district ? `?district=${district}` : ""}`;
     fetch(backendUrl)
       .then(r => r.json())
       .then(d => setTrending(d.searches?.slice(0, 6) ?? []))
@@ -120,7 +120,7 @@ export function SmartSearchBar({
     setIsLoading(true);
     const ctrl = new AbortController();
     const timeout = setTimeout(() => ctrl.abort(), 700);
-    const backendUrl = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api"}/intelligence/suggestions?q=${encodeURIComponent(debouncedQuery)}${district ? `&district=${district}` : ""}`;
+    const backendUrl = `/api/intelligence/suggestions?q=${encodeURIComponent(debouncedQuery)}${district ? `&district=${district}` : ""}`;
     fetch(backendUrl, { signal: ctrl.signal })
       .then(r => r.json())
       .then(d => {

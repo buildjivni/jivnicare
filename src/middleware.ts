@@ -7,20 +7,36 @@ const JWT_SECRET = process.env.JWT_SECRET;
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  const isAdminRoute = pathname.startsWith('/api/admin');
-  const isDoctorRoute = pathname.startsWith('/api/doctor');
-  const isPatientRoute = pathname.startsWith('/api/patient');
+  const isAdminApi = pathname.startsWith('/api/admin');
+  const isDoctorApi = pathname.startsWith('/api/doctor');
+  const isPatientApi = pathname.startsWith('/api/patient');
   
-  if (isAdminRoute || isDoctorRoute || isPatientRoute) {
+  const isAdminFrontend = pathname.startsWith('/admin');
+  const isDoctorFrontend = pathname.startsWith('/doctor');
+  const isPatientFrontend = pathname.startsWith('/patient');
+
+  const isProtectedApi = isAdminApi || isDoctorApi || isPatientApi;
+  const isProtectedFrontend = isAdminFrontend || isDoctorFrontend || isPatientFrontend;
+  
+  if (isProtectedApi || isProtectedFrontend) {
     const token = request.cookies.get('auth-token')?.value;
 
+    const unauthorizedResponse = () => {
+      if (isProtectedApi) {
+        return NextResponse.json({ error: 'Unauthorized: Missing token' }, { status: 401 });
+      }
+      return NextResponse.redirect(new URL('/login', request.url));
+    };
+
     if (!token) {
-      return NextResponse.json({ error: 'Unauthorized: Missing token' }, { status: 401 });
+      return unauthorizedResponse();
     }
 
     if (!JWT_SECRET) {
       console.error("JWT_SECRET is not set in environment variables");
-      return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+      return isProtectedApi 
+        ? NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
+        : NextResponse.redirect(new URL('/login', request.url));
     }
 
     try {
@@ -29,16 +45,23 @@ export async function middleware(request: NextRequest) {
       
       const role = payload.role as string;
 
-      if (isAdminRoute && role !== 'ADMIN') {
-        return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+      const forbiddenResponse = (message: string) => {
+        if (isProtectedApi) {
+          return NextResponse.json({ error: `Forbidden: ${message}` }, { status: 403 });
+        }
+        return NextResponse.redirect(new URL('/login', request.url));
+      };
+
+      if ((isAdminApi || isAdminFrontend) && role !== 'ADMIN') {
+        return forbiddenResponse('Admin access required');
       }
 
-      if (isDoctorRoute && role !== 'DOCTOR') {
-        return NextResponse.json({ error: 'Forbidden: Doctor access required' }, { status: 403 });
+      if ((isDoctorApi || isDoctorFrontend) && role !== 'DOCTOR') {
+        return forbiddenResponse('Doctor access required');
       }
 
-      if (isPatientRoute && role !== 'PATIENT') {
-        return NextResponse.json({ error: 'Forbidden: Patient access required' }, { status: 403 });
+      if ((isPatientApi || isPatientFrontend) && role !== 'PATIENT') {
+        return forbiddenResponse('Patient access required');
       }
 
       const requestHeaders = new Headers(request.headers);
@@ -52,7 +75,7 @@ export async function middleware(request: NextRequest) {
       });
 
     } catch (error) {
-      return NextResponse.json({ error: 'Unauthorized: Invalid token' }, { status: 401 });
+      return unauthorizedResponse();
     }
   }
 
@@ -63,6 +86,9 @@ export const config = {
   matcher: [
     '/api/admin/:path*',
     '/api/doctor/:path*',
-    '/api/patient/:path*'
+    '/api/patient/:path*',
+    '/admin/:path*',
+    '/doctor/:path*',
+    '/patient/:path*'
   ],
 };

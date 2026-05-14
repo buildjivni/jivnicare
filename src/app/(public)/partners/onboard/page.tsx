@@ -6,6 +6,8 @@ import { ArrowLeft, ArrowRight, CheckCircle2, Building2, Hospital, ShieldCheck, 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/store/useAuthStore";
 
 // Brand Colors
 const BrandColors = { blue: "#5298D2", green: "#489C66" };
@@ -60,8 +62,39 @@ export default function DoctorOnboardingFlow() {
     return isValid;
   };
 
-  const handleNext = () => {
-    if (validateStep(step)) setStep(prev => prev + 1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter();
+  const setAuth = useAuthStore(state => state.setUser);
+
+  const handleNext = async () => {
+    if (!validateStep(step)) return;
+    
+    if (step === 4) {
+      setIsSubmitting(true);
+      try {
+        const res = await fetch("/api/doctor/onboard", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData)
+        });
+        const data = await res.json();
+        
+        if (res.ok && data.success) {
+          // Set user in AuthStore (token is handled via httpOnly cookie now)
+          setAuth(data.user);
+          // Go to success step briefly, or directly push
+          setStep(5);
+        } else {
+          setErrors({ submit: data.error || "Failed to create profile. Please try again." });
+        }
+      } catch (err) {
+        setErrors({ submit: "Network error occurred." });
+      } finally {
+        setIsSubmitting(false);
+      }
+    } else {
+      setStep(prev => prev + 1);
+    }
   };
   
   const handleBack = () => setStep(prev => prev - 1);
@@ -293,9 +326,9 @@ export default function DoctorOnboardingFlow() {
         <p className="text-sm font-bold text-slate-700 mb-1">Status: <span className="text-amber-600">Pending Verification</span></p>
         <p className="text-xs text-slate-500">Usually takes 24-48 hours.</p>
       </div>
-      <Link href="/">
-        <Button className="h-12 px-8 rounded-xl font-bold shadow-md" style={{ backgroundColor: BrandColors.blue }}>Return to Homepage</Button>
-      </Link>
+      <Button onClick={() => router.push('/doctor/dashboard')} className="h-12 px-8 rounded-xl font-bold shadow-md" style={{ backgroundColor: BrandColors.blue }}>
+        Go to Doctor Dashboard
+      </Button>
     </div>
   );
 

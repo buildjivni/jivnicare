@@ -74,13 +74,60 @@ function DoctorDashboardContent() {
 
   // Profile Form State
   const [profileData, setProfileData] = useState({
-    name: "Dr. Sanctuary", bio: "Senior Clinical Specialist", regNumber: "", specialty: "General Medicine"
+    name: "Dr. Doctor", bio: "", regNumber: "", specialty: "General"
   });
 
   // Settings State
-  const [settingsData, setSettingsData] = useState({ fee: "500", timings: "10:00 AM - 05:00 PM" });
+  const [settingsData, setSettingsData] = useState({ fee: "0", timings: "09:00 - 17:00" });
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Hydrate Profile Data
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await fetch("/api/doctor/profile");
+        const data = await res.json();
+        if (data.success && data.doctor) {
+          setProfileData({
+            name: data.doctor.name || "Dr. Doctor",
+            bio: data.doctor.bio || "",
+            regNumber: data.doctor.medicalRegistrationNumber || "",
+            specialty: data.doctor.specialties?.[0]?.name || "General"
+          });
+          setSettingsData({
+            fee: data.doctor.fee?.toString() || "0",
+            timings: "09:00 - 17:00" // Simplify for now
+          });
+          if (data.doctor.clinicOperations) {
+            setLeaveMode(data.doctor.clinicOperations.isClosedToday);
+            setIsOnline(!data.doctor.clinicOperations.pauseOnlineBooking);
+          }
+        }
+      } catch (err) {}
+    };
+    fetchProfile();
+  }, []);
+
+  const handleUpdateSettings = async (updates: any) => {
+    setIsSaving(true);
+    try {
+      await fetch("/api/doctor/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updates)
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const toggleLeaveMode = async () => {
+    const newMode = !leaveMode;
+    setLeaveMode(newMode);
+    await handleUpdateSettings({ isClosedToday: newMode });
+  };
 
   // ── RENDER TABS ──────────────────────────────────────────────────
 
@@ -214,7 +261,7 @@ function DoctorDashboardContent() {
           <Users className="w-6 h-6 mb-3 group-hover:scale-110 transition-transform" style={{ color: BrandColors.blue }} />
           <p className="font-bold text-slate-900">Manage Queue</p>
         </button>
-        <button onClick={() => setLeaveMode(!leaveMode)} className={`p-4 rounded-2xl text-left border transition-all ${leaveMode ? 'bg-red-50 border-red-200' : 'bg-white border-slate-200 hover:border-red-500 hover:shadow-md'}`}>
+        <button onClick={toggleLeaveMode} className={`p-4 rounded-2xl text-left border transition-all ${leaveMode ? 'bg-red-50 border-red-200' : 'bg-white border-slate-200 hover:border-red-500 hover:shadow-md'}`}>
           <CalendarX className={`w-6 h-6 mb-3 ${leaveMode ? 'text-red-600' : 'text-slate-600'}`} />
           <p className={`font-bold ${leaveMode ? 'text-red-700' : 'text-slate-900'}`}>{leaveMode ? 'Resume Bookings' : 'Mark Holiday Today'}</p>
         </button>
@@ -330,8 +377,8 @@ function DoctorDashboardContent() {
             <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Short Biography</label>
             <textarea value={profileData.bio} onChange={e => setProfileData({...profileData, bio: e.target.value})} className="w-full h-24 px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none transition-colors" style={{ outlineColor: BrandColors.blue }} />
           </div>
-          <Button className="h-14 px-8 rounded-xl text-white font-bold w-full md:w-auto mt-4 shadow-lg hover:brightness-110 transition-all" style={{ backgroundColor: BrandColors.blue }}>
-            Save Changes
+          <Button onClick={() => handleUpdateSettings({ name: profileData.name, bio: profileData.bio, regNumber: profileData.regNumber })} disabled={isSaving} className="h-14 px-8 rounded-xl text-white font-bold w-full md:w-auto mt-4 shadow-lg hover:brightness-110 transition-all" style={{ backgroundColor: BrandColors.blue }}>
+            {isSaving ? "Saving..." : "Save Changes"}
           </Button>
         </div>
       </div>
@@ -356,8 +403,8 @@ function DoctorDashboardContent() {
             <Input value={settingsData.timings} onChange={e => setSettingsData({...settingsData, timings: e.target.value})} className="h-12 rounded-xl bg-slate-50 font-bold text-slate-700" />
           </div>
         </div>
-        <Button className="h-12 px-8 rounded-xl bg-slate-900 text-white font-bold mt-6 shadow-md hover:bg-slate-800">
-          Update Settings
+        <Button onClick={() => handleUpdateSettings({ fee: settingsData.fee })} disabled={isSaving} className="h-12 px-8 rounded-xl bg-slate-900 text-white font-bold mt-6 shadow-md hover:bg-slate-800">
+          {isSaving ? "Updating..." : "Update Settings"}
         </Button>
       </div>
 
@@ -366,7 +413,7 @@ function DoctorDashboardContent() {
           <CalendarX className="w-5 h-5" /> Leave & Holiday Manager
         </h2>
         <p className="text-red-600/80 text-sm mb-6 max-w-lg">Mark your clinic as closed for the day to prevent new online bookings. Existing patients will be notified.</p>
-        <button onClick={() => setLeaveMode(!leaveMode)} className={`h-14 px-8 rounded-xl font-black transition-all ${leaveMode ? 'bg-red-600 text-white shadow-lg shadow-red-500/30' : 'bg-white border-2 border-red-200 text-red-600 hover:bg-red-100'}`}>
+        <button onClick={toggleLeaveMode} className={`h-14 px-8 rounded-xl font-black transition-all ${leaveMode ? 'bg-red-600 text-white shadow-lg shadow-red-500/30' : 'bg-white border-2 border-red-200 text-red-600 hover:bg-red-100'}`}>
           {leaveMode ? 'CLINIC IS CLOSED TODAY' : 'MARK CLINIC CLOSED'}
         </button>
       </div>

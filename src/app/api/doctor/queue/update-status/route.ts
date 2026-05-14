@@ -46,21 +46,26 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "Unauthorized access to this token" }, { status: 403 });
     }
 
-    // Update status
-    const updatedToken = await prisma.queueToken.update({
-      where: { id: tokenId },
-      data: { status }
+    // Use Prisma transaction to atomically update both the token status and the daily queue's active token
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Update the token status
+      const updatedToken = await tx.queueToken.update({
+        where: { id: tokenId },
+        data: { status }
+      });
+
+      // 2. If marked as IN_CONSULTATION, atomically update the currentActiveToken in DailyQueue
+      if (status === "IN_CONSULTATION") {
+        await tx.dailyQueue.update({
+          where: { id: queueToken.queueId },
+          data: { currentActiveToken: updatedToken.tokenNumber }
+        });
+      }
+      
+      return updatedToken;
     });
 
-    // If marked as IN_CONSULTATION, update the currentActiveToken in DailyQueue
-    if (status === "IN_CONSULTATION") {
-      await prisma.dailyQueue.update({
-        where: { id: queueToken.queueId },
-        data: { currentActiveToken: updatedToken.tokenNumber }
-      });
-    }
-
-    return NextResponse.json({ success: true, token: updatedToken });
+    return NextResponse.json({ success: true, token: result });
   } catch (error: any) {
     console.error("Update token status error:", error);
     return NextResponse.json({ error: "Failed to update token status" }, { status: 500 });

@@ -26,6 +26,7 @@ export default function MyBookingsPage() {
             id: t.id,
             tokenNumber: t.tokenNumber,
             status: t.status,
+            doctorId: t.queue.doctorId,
             doctorName: t.queue.doctor.user.name,
             clinic: t.queue.doctor.clinic || "JivniCare Clinic",
             location: t.queue.doctor.district || "Local",
