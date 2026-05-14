@@ -1,71 +1,59 @@
-# JivniCare Booking & Queue Flow - Implementation Plan
+# System Remediation Plan
 
-This document outlines the complete architectural plan and implementation sequence for the JivniCare V1 production-grade Booking & Queue Management system using MongoDB.
+This plan addresses the **top critical problems** identified in the JivniCare system audit to prepare the platform for production launch.
 
-## 1. Booking Lifecycle Architecture
+## Proposed Changes
 
-**Patient Journey:**
-1. **Discovery:** Patient opens a Doctor's public profile (`/doctors/[id]`). The `BookingWidget` fetches real-time queue data (current active token, waiting count, est. wait time).
-2. **Authentication:** Patient clicks "Join Queue". 
-   - If not logged in, they are redirected to `/login?callbackUrl=/doctors/[id]`. 
-   - Post-login, they return to the doctor's profile safely.
-3. **Checkout/Confirmation:** Patient reviews the consultation fee and queue status. A checkout/payment modal or page confirms intent.
-4. **Booking API:** Frontend calls `POST /api/patient/book-appointment`. 
-5. **Confirmation:** On success, patient sees the "Booking Confirmed" screen with their exact Token Number and estimated wait time, which also appears in `/my-bookings`.
+We will tackle the fixes in three main phases:
 
-## 2. Queue/Token Flow
+### Phase 1: Edge Security & Middleware
 
-- **Single Source of Truth:** Both Online patients and Walk-in patients share the **exact same queue sequence** to prevent clinic chaos.
-- **Sequential Generation:** Token numbers are generated strictly sequentially (1, 2, 3...) per doctor, per day.
-- **Active Management:** 
-  - The Doctor's `DailyQueue` tracks the `currentActiveToken`.
-  - When the Doctor clicks "Next", the current token status becomes `COMPLETED`, and the next waiting token becomes `IN_CONSULTATION`.
-  - "Skip" changes status to `SKIPPED` (patient can be called back later if needed).
-  - "Emergency Insert" will add a patient with a special emergency flag to immediately bypass the standard waiting list.
+Currently, `src/middleware.ts` is empty. We will secure all API routes.
 
-## 3. Schema Structure (Prisma + MongoDB)
+#### [NEW] `npm install jose`
+- Since `jsonwebtoken` does not work in Next.js Edge Runtime (used by Middleware), we need the standard `jose` package.
 
-The system relies on three core models already present in our schema, with one minor proposed addition:
-*   **`DailyQueue`**: Created automatically for a doctor on a specific day. Tracks `maxCapacity` and `currentActiveToken`.
-*   **`QueueToken`**: The individual ticket. Tracks `tokenNumber`, `source` (ONLINE/WALK_IN), `status` (WAITING, IN_CONSULTATION, COMPLETED, SKIPPED, CANCELLED), and links to the Patient.
-*   **`WalkInEntry`**: Stores name/phone for offline patients added by the receptionist/doctor.
+#### [MODIFY] `src/middleware.ts`
+- Implement Edge middleware to intercept requests to `/api/admin/*`, `/api/doctor/*`, and `/api/patient/*`.
+- Verify the `auth-token` cookie using `jose`.
+- Enforce Role-Based Access Control (RBAC):
+  - Block patients from `/api/admin` and `/api/doctor`
+  - Return `401 Unauthorized` or `403 Forbidden` standard JSON responses instead of crashing or relying on the client UI.
 
-## 4. Booking Validation Logic (Backend)
+### Phase 2: Migrate Search Engine to Backend (Scalability Fix)
 
-The `/api/patient/book-appointment` route runs a strictly isolated Prisma Transaction:
-1.  **Auth Check:** Validates JWT for Patient role.
-2.  **Date Parsing:** Locks the booking to the UTC Start-Of-Day.
-3.  **Queue Limits Check:** Validates that `DailyQueue.tokens.count < DailyQueue.maxCapacity`.
-4.  **Duplicate Check:** Verifies the `userId` does not already hold a `WAITING` or `IN_CONSULTATION` token for this specific `DailyQueue`.
-5.  **Sequential Assignment:** Issues `nextTokenNumber = tokensCount + 1`.
+Currently, the client browser downloads `mock-data.ts` and runs fuzzy matching locally. We will move this to the server to prevent browser crashes and bundle bloat.
 
-## 5. Frontend & Backend Connection Plan
+#### [NEW] `src/app/api/public/search/route.ts`
+- Create an API endpoint that accepts `?q=query` and `?specialty=specialty`.
+- Fetch active, verified doctors from MongoDB via Prisma.
+- Pass the DB data through our robust `searchDoctors` algorithm from `search-engine.ts`.
+- Return the `SearchResult` JSON.
 
-*   **Public API:** Create a new GET route `/api/public/doctor/[id]/queue-stats` so the `BookingWidget` can show live stats without needing authentication.
-*   **Patient Dashboard:** The `/my-bookings` page will ping a user-specific API to get real-time updates on their waiting status (e.g., "5 patients ahead of you").
-*   **Doctor Dashboard:** 
-    *   The `/doctor/dashboard` UI will use `SWR` or `React Query` to poll `/api/doctor/queue` every 15 seconds.
-    *   `NowCallingController` action buttons will trigger `PUT /api/doctor/queue/update-status`.
-    *   `QueueOperationsMenu` will trigger `POST /api/doctor/queue/walk-in` (to create walk-ins) and `POST /api/doctor/queue/emergency`.
+#### [MODIFY] `src/lib/search-engine.ts`
+- Disconnect `mock-data.ts` from the search engine.
+- Update types to strictly map with `Prisma.DoctorGetPayload`.
 
-## 6. Safest Implementation Sequence
+#### [MODIFY] `src/app/(public)/doctors/page.tsx`
+- Replace client-side local arrays with a `useEffect` / `fetch` call to `/api/public/search`.
+- Implement a loading skeleton while the server fetches and computes the search results.
 
-1.  **Phase 1: Backend Infrastructure (APIs & Schema)**
-    *   Update `QueueToken` schema to add `isEmergency Boolean @default(false)` to handle emergency insertions cleanly.
-    *   Create `/api/public/doctor/[id]/queue-stats` for the public booking widget.
-    *   Create `/api/doctor/queue/walk-in` and `/api/doctor/queue/emergency` routes.
-2.  **Phase 2: Patient Booking Experience (Frontend)**
-    *   Connect `BookingWidget.tsx` to live stats.
-    *   Implement the Join Queue / Checkout button to hit the real booking API.
-    *   Build the Booking Confirmation UI.
-3.  **Phase 3: Doctor Queue Control (Frontend)**
-    *   Connect `NowCallingController` and `QueueOperationsMenu` in `doctor/dashboard` to the real APIs so the doctor can actually move the queue forward.
-4.  **Phase 4: Real-time Feedback**
-    *   Ensure the patient's `my-bookings` dashboard reflects the changes made by the doctor in real-time.
+### Phase 3: Technical Debt & Stability
+
+#### [MODIFY] `src/data/mock-data.ts`
+- Safely deprecate/isolate mock data so it doesn't accidentally end up in the client production bundle.
+
+#### [MODIFY] `src/components/shared/RoleGuard.tsx`
+- Optimize hydration checks to minimize the "flash of loading spinner" for authenticated users.
 
 ---
 
-> [!IMPORTANT]
-> **User Review Required:**
-> 1. To support "Emergency Insert" cleanly without breaking the strict `tokenNumber` integer sequence, I propose adding `isEmergency Boolean @default(false)` to the `QueueToken` model. Emergency patients will automatically be sorted to the top of the "WAITING" list. Do you approve this minor schema update?
-> 2. Currently, the `BookingWidget` has an "In-Clinic" vs "Video Call" selector. Should the queue system handle BOTH together, or should this V1 focus purely on physical/In-Clinic queue management?
+> [!WARNING]
+> **User Review Required**
+> Do you approve installing the `jose` package to handle JWT verification in the Edge Middleware? 
+> `jsonwebtoken` is inherently incompatible with Vercel's Edge architecture.
+
+## Verification Plan
+1. **Security:** Attempt to curl `/api/admin/doctors` without a token and verify a `401` response.
+2. **Search Performance:** Inspect the network tab on `/doctors` to confirm `mock-data.js` is no longer bundled, and an API call is made to `/api/public/search`.
+3. **End-to-End:** Search for "bukhar", ensure the backend returns the correct Doctor results.
