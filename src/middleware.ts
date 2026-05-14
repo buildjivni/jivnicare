@@ -7,6 +7,17 @@ const JWT_SECRET = process.env.JWT_SECRET;
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // ── Public routes that should NEVER be auth-guarded ─────────────
+  const publicPaths = [
+    '/admin/login',
+    '/partners/login',
+    '/partners/onboard',
+    '/login',
+  ];
+  if (publicPaths.some(p => pathname === p || pathname.startsWith(p))) {
+    return NextResponse.next();
+  }
+
   const isAdminApi = pathname.startsWith('/api/admin');
   const isDoctorApi = pathname.startsWith('/api/doctor');
   const isPatientApi = pathname.startsWith('/api/patient');
@@ -25,6 +36,9 @@ export async function middleware(request: NextRequest) {
       if (isProtectedApi) {
         return NextResponse.json({ error: 'Unauthorized: Missing token' }, { status: 401 });
       }
+      // Redirect to appropriate login page
+      if (isAdminFrontend) return NextResponse.redirect(new URL('/admin/login', request.url));
+      if (isDoctorFrontend) return NextResponse.redirect(new URL('/partners/login', request.url));
       return NextResponse.redirect(new URL('/login', request.url));
     };
 
@@ -45,23 +59,23 @@ export async function middleware(request: NextRequest) {
       
       const role = payload.role as string;
 
-      const forbiddenResponse = (message: string) => {
+      const forbiddenResponse = (redirectTo: string) => {
         if (isProtectedApi) {
-          return NextResponse.json({ error: `Forbidden: ${message}` }, { status: 403 });
+          return NextResponse.json({ error: 'Forbidden: Insufficient role' }, { status: 403 });
         }
-        return NextResponse.redirect(new URL('/login', request.url));
+        return NextResponse.redirect(new URL(redirectTo, request.url));
       };
 
       if ((isAdminApi || isAdminFrontend) && role !== 'ADMIN') {
-        return forbiddenResponse('Admin access required');
+        return forbiddenResponse('/admin/login');
       }
 
       if ((isDoctorApi || isDoctorFrontend) && role !== 'DOCTOR') {
-        return forbiddenResponse('Doctor access required');
+        return forbiddenResponse('/partners/login');
       }
 
       if ((isPatientApi || isPatientFrontend) && role !== 'PATIENT') {
-        return forbiddenResponse('Patient access required');
+        return forbiddenResponse('/login');
       }
 
       const requestHeaders = new Headers(request.headers);

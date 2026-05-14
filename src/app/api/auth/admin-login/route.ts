@@ -12,6 +12,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
     }
 
+    // Admin user is identified by ADMIN role (not by email since schema has no email field)
+    // We use password hash comparison for security
     try {
       const { user, token } = await AuthService.login(email, password, "ADMIN");
 
