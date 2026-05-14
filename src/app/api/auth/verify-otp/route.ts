@@ -8,7 +8,7 @@ const MAX_ATTEMPTS = 3;
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { phone, otp } = body;
+    const { phone, otp, name } = body;
 
     if (!phone || !otp) {
       return NextResponse.json(
@@ -69,15 +69,20 @@ export async function POST(request: Request) {
       user = await prisma.user.create({
         data: {
           phone,
+          name: name?.trim() || null,
           isVerified: true,
-          role: 'PATIENT', // 'PATIENT' string maps to Role enum
+          role: 'PATIENT',
         },
       });
       console.log(`Created new user with phone ${phone}`);
-    } else if (!user.isVerified) {
+    } else if (!user.isVerified || (name?.trim() && !user.name)) {
       user = await prisma.user.update({
         where: { id: user.id },
-        data: { isVerified: true },
+        data: {
+          isVerified: true,
+          // Only update name if user doesn't have one yet
+          ...(name?.trim() && !user.name ? { name: name.trim() } : {}),
+        },
       });
     }
 

@@ -25,7 +25,7 @@ export function PaymentForm() {
       return;
     }
     
-    const phone = patientDetails.phone.replace(/\\D/g, "");
+    const phone = patientDetails.phone.replace(/\D/g, "");
     if (phone.length < 10) {
       document.querySelector('[placeholder="+91 98765 43210"]')?.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
@@ -52,12 +52,13 @@ export function PaymentForm() {
       }
 
       // Map backend token format to the frontend store format
+      const avgConsultMinutes = 10; // default avg per patient
       const token = {
         id: data.token.id,
         tokenNumber: data.token.tokenNumber,
         status: data.token.status,
         source: data.token.source,
-        estimatedWaitMinutes: 15, // Currently static, can be dynamic later
+        estimatedWaitMinutes: data.token.tokenNumber * avgConsultMinutes,
         createdAt: new Date().toISOString(),
         doctorId: selectedDoctor?.id,
         doctorName: selectedDoctor?.name,
