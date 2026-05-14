@@ -19,7 +19,7 @@ export function OrderSummary({ doctor, type }: OrderSummaryProps) {
   return (
     <div className="lg:w-[400px] shrink-0 space-y-6">
       <Card className="border-slate-200/60 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden bg-white/60 backdrop-blur-xl">
-        <div className="bg-[#205E98] p-6 text-white">
+        <div className="bg-primary p-6 text-white">
           <h3 className="font-bold text-lg">Order Summary</h3>
           <p className="text-blue-100 text-sm mt-1">Review your consultation details</p>
         </div>
@@ -76,15 +76,14 @@ export function OrderSummary({ doctor, type }: OrderSummaryProps) {
             <Separator className="bg-slate-100 my-3" />
             <div className="flex justify-between items-center">
               <span className="font-bold text-slate-900">Total Amount</span>
-              <span className="font-black text-2xl text-[#205E98]">{consultationFee}</span>
+              <span className="font-black text-2xl text-primary">{consultationFee}</span>
             </div>
           </div>
         </CardContent>
       </Card>
-      
       <div className="flex items-center gap-3 p-4 rounded-2xl bg-emerald-50 border border-emerald-100 text-emerald-700 text-sm">
         <Lock className="w-5 h-5 shrink-0" />
-        <p>Payments are 100% secure and encrypted. <BrandName /> never stores your full card details.</p>
+        <p>Your booking is secure. <BrandName /> will instantly reserve your place in the clinic's live queue.</p>
       </div>
     </div>
   );

@@ -38,9 +38,13 @@ export declare class DashboardController {
                 id: string;
                 name: string;
                 slug: string;
+                doctorIds: string[];
+                hospitalIds: string[];
             }[];
             keywords: {
                 id: string;
+                doctorIds: string[];
+                hospitalIds: string[];
                 term: string;
             }[];
         } & {
@@ -61,8 +65,10 @@ export declare class DashboardController {
             slug: string;
             profileImage: string | null;
             rating: number;
+            specialtyIds: string[];
+            keywordIds: string[];
             availableDays: string[];
-            availableTimeSlots: import("@prisma/client/runtime/client").JsonValue | null;
+            availableTimeSlots: import("@prisma/client/runtime/library").JsonValue | null;
             maxAppointmentsPerDay: number;
             isAcceptingAppointments: boolean;
             profileCompletionPercentage: number;
@@ -86,9 +92,13 @@ export declare class DashboardController {
                 id: string;
                 name: string;
                 slug: string;
+                doctorIds: string[];
+                hospitalIds: string[];
             }[];
             keywords: {
                 id: string;
+                doctorIds: string[];
+                hospitalIds: string[];
                 term: string;
             }[];
         } & {
@@ -109,8 +119,10 @@ export declare class DashboardController {
             slug: string;
             profileImage: string | null;
             rating: number;
+            specialtyIds: string[];
+            keywordIds: string[];
             availableDays: string[];
-            availableTimeSlots: import("@prisma/client/runtime/client").JsonValue | null;
+            availableTimeSlots: import("@prisma/client/runtime/library").JsonValue | null;
             maxAppointmentsPerDay: number;
             isAcceptingAppointments: boolean;
             profileCompletionPercentage: number;

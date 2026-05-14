@@ -29,12 +29,24 @@ export function UserProfileDropdown({ isOpen, onLogout }: UserProfileDropdownPro
             <p className="text-xs text-slate-500">{user?.phone ?? "No phone"}</p>
           </div>
           <div className="p-2 space-y-1">
-            <Link href="/bookings" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-lg transition-colors">
-              <CalendarDays className="w-4 h-4 text-slate-400" /> My Bookings
-            </Link>
-            <Link href="/records" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-lg transition-colors">
-              <HeartPulse className="w-4 h-4 text-slate-400" /> Medical Records
-            </Link>
+            {user?.role === "DOCTOR" ? (
+              <Link href="/doctor/dashboard" className="flex items-center gap-3 px-3 py-2 text-sm font-black text-primary hover:bg-slate-100 rounded-lg transition-colors">
+                <CalendarDays className="w-4 h-4" /> Doctor Dashboard
+              </Link>
+            ) : user?.role === "ADMIN" ? (
+              <Link href="/admin/dashboard" className="flex items-center gap-3 px-3 py-2 text-sm font-black text-primary hover:bg-slate-100 rounded-lg transition-colors">
+                <Settings className="w-4 h-4" /> Admin Panel
+              </Link>
+            ) : (
+              <>
+                <Link href="/my-bookings" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-lg transition-colors">
+                  <CalendarDays className="w-4 h-4 text-slate-400" /> My Bookings
+                </Link>
+                <Link href="/my-bookings" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-lg transition-colors">
+                  <HeartPulse className="w-4 h-4 text-slate-400" /> Live Queue
+                </Link>
+              </>
+            )}
             <Link href="/settings" className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-lg transition-colors">
               <Settings className="w-4 h-4 text-slate-400" /> Settings
             </Link>

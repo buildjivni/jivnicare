@@ -81,7 +81,10 @@ async function bootstrap() {
     app.useGlobalInterceptors(new response_interceptor_1.ResponseInterceptor());
     app.enableShutdownHooks();
     const port = configService.get('PORT') || 3000;
-    await app.listen(port);
+    logger.log('SERVER_LISTEN_START: Binding NestJS to 0.0.0.0');
+    await app.listen(port, '0.0.0.0');
+    logger.log('SERVER_LISTEN_OK: Application bound successfully');
+    logger.log('HEALTH_ROUTE_READY: /api/health accessible');
     logger.log(`🚀 Application is running on: http://localhost:${port}/api`);
 }
 bootstrap().catch(err => {

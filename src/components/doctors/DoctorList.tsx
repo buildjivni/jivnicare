@@ -72,7 +72,7 @@ export function DoctorList({ doctors, onClearFilters }: DoctorListProps) {
         <div>
           <h1 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900">
             {doctors.length > 0
-              ? <><span className="text-[#205E98]">{doctors.length}</span> Doctors Found</>
+              ? <><span className="text-primary">{doctors.length}</span> Doctors Found</>
               : "No Doctors Found"
             }
           </h1>
@@ -85,7 +85,7 @@ export function DoctorList({ doctors, onClearFilters }: DoctorListProps) {
         <div className="relative">
           <button
             onClick={() => setSortOpen(!sortOpen)}
-            className="flex items-center gap-2 text-sm font-semibold text-slate-600 bg-white border border-slate-200 px-3.5 py-2 rounded-2xl hover:border-[#205E98]/30 hover:text-[#205E98] transition-all shadow-sm"
+            className="flex items-center gap-2 text-sm font-semibold text-slate-600 bg-white border border-slate-200 px-3.5 py-2 rounded-2xl hover:border-primary/30 hover:text-primary transition-all shadow-sm"
             aria-label="Sort results"
           >
             <SortAsc className="w-4 h-4" />
@@ -97,7 +97,7 @@ export function DoctorList({ doctors, onClearFilters }: DoctorListProps) {
                 <button
                   key={opt.value}
                   onClick={() => { setSort(opt.value); setSortOpen(false); }}
-                  className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors ${sort === opt.value ? "text-[#205E98] bg-[#205E98]/6" : "text-slate-600 hover:bg-slate-50"}`}
+                  className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors ${sort === opt.value ? "text-primary bg-primary/6" : "text-slate-600 hover:bg-slate-50"}`}
                 >
                   {opt.label}
                 </button>
@@ -128,7 +128,7 @@ export function DoctorList({ doctors, onClearFilters }: DoctorListProps) {
             {EMPTY_SUGGESTIONS.map((s) => (
               <button
                 key={s}
-                className="px-3 py-1.5 text-xs font-semibold text-[#205E98] bg-[#205E98]/6 border border-[#205E98]/10 rounded-full hover:bg-[#205E98]/10 transition-colors"
+                className="px-3 py-1.5 text-xs font-semibold text-primary bg-primary/6 border border-primary/10 rounded-full hover:bg-primary/10 transition-colors"
                 onClick={() => {
                   const params = new URLSearchParams({ query: s });
                   router.push(`/doctors?${params}`);

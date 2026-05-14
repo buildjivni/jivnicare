@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
 import { Header, Footer } from "@/components/shared";
+import { GoogleAnalytics } from "@/components/shared/GoogleAnalytics";
 import { SITE_CONFIG } from "@/lib/seo/metadata";
 import { websiteSchema, organizationSchema } from "@/lib/seo/jsonld";
 
@@ -105,9 +106,10 @@ export default function RootLayout({
         suppressHydrationWarning
         className="min-h-full flex flex-col bg-background text-foreground"
       >
-        <Header />
-        <main className="flex-1">{children}</main>
-        <Footer />
+        <GoogleAnalytics ga_id={process.env.NEXT_PUBLIC_GA_ID || ""} />
+        <div className="flex-1 flex flex-col">
+          {children}
+        </div>
       </body>
     </html>
   );

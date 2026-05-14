@@ -36,7 +36,7 @@ export function HospitalCard({ hospital }: HospitalCardProps) {
           <div className="flex items-start gap-4">
             {/* Hospital Icon */}
             <div className="w-14 h-14 rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center justify-center shrink-0">
-              <Building2 className="w-7 h-7 text-[#205E98]" />
+              <Building2 className="w-7 h-7 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5 mb-1 flex-wrap">
@@ -51,7 +51,7 @@ export function HospitalCard({ hospital }: HospitalCardProps) {
                   </div>
                 )}
               </div>
-              <h3 className="font-bold text-slate-900 text-base leading-tight group-hover:text-[#205E98] transition-colors line-clamp-2">
+              <h3 className="font-bold text-slate-900 text-base leading-tight group-hover:text-primary transition-colors line-clamp-2">
                 {hospital.name}
               </h3>
               <p className="text-xs text-slate-500 mt-0.5 font-medium">{hospital.type}</p>
@@ -81,7 +81,7 @@ export function HospitalCard({ hospital }: HospitalCardProps) {
                 <Stethoscope className="w-3 h-3" />
               </div>
               {hospital.departments.slice(0, 3).map((dept) => (
-                <span key={dept} className="text-[10px] font-medium text-[#205E98] bg-[#205E98]/6 px-2 py-0.5 rounded-full border border-[#205E98]/10">
+                <span key={dept} className="text-[10px] font-medium text-primary bg-primary/6 px-2 py-0.5 rounded-full border border-primary/10">
                   {dept}
                 </span>
               ))}
@@ -112,7 +112,7 @@ export function HospitalCard({ hospital }: HospitalCardProps) {
         {/* Footer CTA */}
         <div className="px-4 pb-4">
           <Button
-            className="w-full h-10 rounded-2xl bg-slate-50 text-slate-700 hover:bg-[#205E98] hover:text-white border border-slate-200/60 hover:border-transparent font-bold text-sm transition-all duration-300"
+            className="w-full h-10 rounded-2xl bg-slate-50 text-slate-700 hover:bg-primary hover:text-white border border-slate-200/60 hover:border-transparent font-bold text-sm transition-all duration-300"
             aria-label={`View details for ${hospital.name}`}
           >
             View Hospital

@@ -11,9 +11,13 @@ export declare class DoctorsService {
             id: string;
             name: string;
             slug: string;
+            doctorIds: string[];
+            hospitalIds: string[];
         }[];
         keywords: {
             id: string;
+            doctorIds: string[];
+            hospitalIds: string[];
             term: string;
         }[];
     } & {
@@ -34,6 +38,8 @@ export declare class DoctorsService {
         slug: string;
         profileImage: string | null;
         rating: number;
+        specialtyIds: string[];
+        keywordIds: string[];
         availableDays: string[];
         availableTimeSlots: Prisma.JsonValue | null;
         maxAppointmentsPerDay: number;
@@ -56,6 +62,8 @@ export declare class DoctorsService {
                 id: string;
                 name: string;
                 slug: string;
+                doctorIds: string[];
+                hospitalIds: string[];
             }[];
         } & {
             id: string;
@@ -75,6 +83,8 @@ export declare class DoctorsService {
             slug: string;
             profileImage: string | null;
             rating: number;
+            specialtyIds: string[];
+            keywordIds: string[];
             availableDays: string[];
             availableTimeSlots: Prisma.JsonValue | null;
             maxAppointmentsPerDay: number;
@@ -103,9 +113,13 @@ export declare class DoctorsService {
             id: string;
             name: string;
             slug: string;
+            doctorIds: string[];
+            hospitalIds: string[];
         }[];
         keywords: {
             id: string;
+            doctorIds: string[];
+            hospitalIds: string[];
             term: string;
         }[];
     } & {
@@ -126,6 +140,8 @@ export declare class DoctorsService {
         slug: string;
         profileImage: string | null;
         rating: number;
+        specialtyIds: string[];
+        keywordIds: string[];
         availableDays: string[];
         availableTimeSlots: Prisma.JsonValue | null;
         maxAppointmentsPerDay: number;
@@ -147,9 +163,13 @@ export declare class DoctorsService {
             id: string;
             name: string;
             slug: string;
+            doctorIds: string[];
+            hospitalIds: string[];
         }[];
         keywords: {
             id: string;
+            doctorIds: string[];
+            hospitalIds: string[];
             term: string;
         }[];
     } & {
@@ -170,6 +190,8 @@ export declare class DoctorsService {
         slug: string;
         profileImage: string | null;
         rating: number;
+        specialtyIds: string[];
+        keywordIds: string[];
         availableDays: string[];
         availableTimeSlots: Prisma.JsonValue | null;
         maxAppointmentsPerDay: number;

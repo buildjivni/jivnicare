@@ -1,3 +1,3 @@
-export * from './ProfileHeader';
-export * from './ClinicDetails';
+export * from './DoctorProfileView';
 export * from './BookingWidget';
+export * from './BookingWidgetClient';

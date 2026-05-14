@@ -8,7 +8,7 @@ export function Footer() {
   return (
     <footer className="bg-slate-950 text-slate-300 pt-16 md:pt-24 pb-12 border-t border-slate-900 relative overflow-hidden">
       {/* Background ambient glow */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-32 bg-[#205E98]/10 blur-[120px] pointer-events-none rounded-full" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-32 bg-primary/10 blur-[120px] pointer-events-none rounded-full" />
       
       <div className="container mx-auto px-4 md:px-6 max-w-7xl relative z-10">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-10 md:gap-12 lg:gap-8 mb-12 md:mb-16">
@@ -78,15 +78,15 @@ export function Footer() {
             <h4 className="text-white font-bold mb-6 text-sm uppercase tracking-wider">Contact Us</h4>
             <ul className="space-y-4">
               <li className="flex items-start gap-3">
-                <MapPin className="w-5 h-5 text-[#205E98] shrink-0 mt-0.5" />
+                <MapPin className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                 <span className="text-sm leading-relaxed">4th Floor, <BrandName /> Tech Hub<br/>Boring Road, Patna, Bihar 800001</span>
               </li>
               <li className="flex items-center gap-3">
-                <Phone className="w-5 h-5 text-[#205E98] shrink-0" />
+                <Phone className="w-5 h-5 text-primary shrink-0" />
                 <span className="text-sm font-medium">+91 98765 43210</span>
               </li>
               <li className="flex items-center gap-3">
-                <Mail className="w-5 h-5 text-[#205E98] shrink-0" />
+                <Mail className="w-5 h-5 text-primary shrink-0" />
                 <span className="text-sm font-medium">support@jivnicare.com</span>
               </li>
               <li className="flex items-center gap-3 pt-2">

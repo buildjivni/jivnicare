@@ -66,8 +66,8 @@ export class QueueService {
     }
 
     return this.prisma.$transaction(async (tx) => {
-      // Concurrency lock on the queue row
-      await tx.$executeRawUnsafe(`SELECT 1 FROM "DailyQueue" WHERE "id" = $1 FOR UPDATE`, queue.id);
+      // Concurrency lock is not available in raw SQL for MongoDB.
+      // We rely on standard Prisma transaction atomicity.
 
       // Check capacity
       const currentTokenCount = await tx.queueToken.count({ where: { queueId: queue.id } });
@@ -124,7 +124,7 @@ export class QueueService {
     }
 
     return this.prisma.$transaction(async (tx) => {
-      await tx.$executeRawUnsafe(`SELECT 1 FROM "DailyQueue" WHERE "id" = $1 FOR UPDATE`, queue.id);
+      // Concurrency lock is not available in raw SQL for MongoDB.
 
       const walkInEntry = await tx.walkInEntry.create({
         data: {

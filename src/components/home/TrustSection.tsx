@@ -9,7 +9,7 @@ export function TrustSection() {
     <section className="py-10 md:py-16 relative bg-[#0B2136] overflow-hidden">
       {/* Abstract Background */}
       <div className="absolute inset-0 z-0">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#205E98] rounded-full blur-[120px] opacity-20 translate-x-1/3 -translate-y-1/3" />
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary rounded-full blur-[120px] opacity-20 translate-x-1/3 -translate-y-1/3" />
         <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-[#258C54] rounded-full blur-[120px] opacity-20 -translate-x-1/3 translate-y-1/3" />
       </div>
 
@@ -71,7 +71,7 @@ export function TrustSection() {
                 <hr className="border-white/10" />
                 
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-full bg-[#205E98] flex items-center justify-center shrink-0">
+                  <div className="w-14 h-14 rounded-full bg-primary flex items-center justify-center shrink-0">
                     <PhoneCall className="w-6 h-6 text-white" />
                   </div>
                   <div>

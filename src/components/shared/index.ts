@@ -4,3 +4,6 @@ export * from './Header';
 export * from './Footer';
 export * from './DoctorCard';
 export * from './HospitalCard';
+export * from './PatientHeader';
+export * from './PublicGuard';
+export * from './RoleGuard';

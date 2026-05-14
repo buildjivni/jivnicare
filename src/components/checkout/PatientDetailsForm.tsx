@@ -1,75 +1,147 @@
 "use client";
 
-import { useState } from "react";
-import { User, Mail, Phone } from "lucide-react";
+import { useState, useEffect } from "react";
+import { User, Mail, Phone, ShieldCheck } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { useBookingStore } from "@/store/useBookingStore";
+import { useAuthStore } from "@/store/useAuthStore";
 
-const FIELD_CLASS = "pl-12 h-14 rounded-2xl bg-slate-50 border-slate-200 focus-visible:ring-[#205E98] focus-visible:bg-white text-base shadow-sm";
+const FIELD_CLASS = "pl-12 h-14 rounded-2xl bg-slate-50 border-slate-200 focus-visible:ring-primary focus-visible:bg-white text-base shadow-sm";
 
 export function PatientDetailsForm() {
   const [focused, setFocused] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   
   const patientDetails = useBookingStore(state => state.patientDetails);
   const setPatientDetails = useBookingStore(state => state.setPatientDetails);
+  const authUser = useAuthStore(state => state.user);
+
+  // Pre-fill from auth store on mount
+  useEffect(() => {
+    if (authUser) {
+      const prefill: Partial<{ name: string; phone: string; email: string }> = {};
+      if (!patientDetails.phone && authUser.phone) {
+        prefill.phone = authUser.phone;
+      }
+      if (!patientDetails.name && authUser.name && authUser.name !== "Patient User") {
+        prefill.name = authUser.name;
+      }
+      if (Object.keys(prefill).length > 0) {
+        setPatientDetails(prefill);
+      }
+    }
+  }, [authUser]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const focusProps = (name: string) => ({
     onFocus: () => setFocused(name),
-    onBlur: () => setFocused(null),
+    onBlur: () => {
+      setFocused(null);
+      validateField(name);
+    },
   });
+
+  const validateField = (field: string) => {
+    const newErrors = { ...errors };
+    switch (field) {
+      case "name":
+        if (!patientDetails.name.trim()) {
+          newErrors.name = "Patient name is required";
+        } else if (patientDetails.name.trim().length < 2) {
+          newErrors.name = "Name must be at least 2 characters";
+        } else {
+          delete newErrors.name;
+        }
+        break;
+      case "phone":
+        const phone = patientDetails.phone.replace(/\D/g, "");
+        if (!phone) {
+          newErrors.phone = "Phone number is required";
+        } else if (phone.length < 10) {
+          newErrors.phone = "Enter a valid 10-digit phone number";
+        } else {
+          delete newErrors.phone;
+        }
+        break;
+      case "email":
+        // Email is optional
+        if (patientDetails.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(patientDetails.email)) {
+          newErrors.email = "Enter a valid email address";
+        } else {
+          delete newErrors.email;
+        }
+        break;
+    }
+    setErrors(newErrors);
+  };
 
   return (
     <section>
       <div className="mb-6 flex items-center justify-between">
         <h2 className="text-2xl font-bold tracking-tight text-slate-900">Patient Details</h2>
-        <span className="text-sm font-medium text-slate-500 bg-slate-100 px-3 py-1 rounded-full">Step 1 of 2</span>
       </div>
+
+      {/* Pre-filled indicator */}
+      {authUser?.phone && (
+        <div className="mb-4 flex items-center gap-2 text-xs text-emerald-700 bg-emerald-50 border border-emerald-100 px-3 py-2 rounded-xl">
+          <ShieldCheck className="w-3.5 h-3.5" />
+          <span className="font-medium">Auto-filled from your verified account</span>
+        </div>
+      )}
 
       <Card className="border-slate-200/60 shadow-sm rounded-3xl overflow-hidden bg-white/60 backdrop-blur-xl">
         <CardContent className="p-6 md:p-8 space-y-5">
           <div className={`transition-transform duration-300 ${focused === "name" ? "scale-[1.01]" : ""}`}>
-            <label className="text-sm font-semibold text-slate-700 mb-2 block">Full Name</label>
+            <label className="text-sm font-semibold text-slate-700 mb-2 block">
+              Full Name <span className="text-red-400">*</span>
+            </label>
             <div className="relative">
               <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
               <Input 
-                placeholder="Rahul Sharma" 
-                className={FIELD_CLASS} 
+                placeholder="Patient's full name" 
+                className={`${FIELD_CLASS} ${errors.name ? "border-red-300 bg-red-50/30" : ""}`}
                 value={patientDetails.name}
                 onChange={(e) => setPatientDetails({ name: e.target.value })}
                 {...focusProps("name")} 
               />
             </div>
+            {errors.name && <p className="text-xs text-red-500 mt-1.5 font-medium">{errors.name}</p>}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div className={`transition-transform duration-300 ${focused === "email" ? "scale-[1.01]" : ""}`}>
-              <label className="text-sm font-semibold text-slate-700 mb-2 block">Email Address</label>
-              <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                <Input 
-                  type="email" 
-                  placeholder="rahul@example.com" 
-                  className={FIELD_CLASS} 
-                  value={patientDetails.email}
-                  onChange={(e) => setPatientDetails({ email: e.target.value })}
-                  {...focusProps("email")} 
-                />
-              </div>
-            </div>
             <div className={`transition-transform duration-300 ${focused === "phone" ? "scale-[1.01]" : ""}`}>
-              <label className="text-sm font-semibold text-slate-700 mb-2 block">Phone Number</label>
+              <label className="text-sm font-semibold text-slate-700 mb-2 block">
+                Phone Number <span className="text-red-400">*</span>
+              </label>
               <div className="relative">
                 <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                 <Input 
                   type="tel" 
                   placeholder="+91 98765 43210" 
-                  className={FIELD_CLASS} 
+                  className={`${FIELD_CLASS} ${errors.phone ? "border-red-300 bg-red-50/30" : ""}`}
                   value={patientDetails.phone}
                   onChange={(e) => setPatientDetails({ phone: e.target.value })}
                   {...focusProps("phone")} 
                 />
               </div>
+              {errors.phone && <p className="text-xs text-red-500 mt-1.5 font-medium">{errors.phone}</p>}
+            </div>
+            <div className={`transition-transform duration-300 ${focused === "email" ? "scale-[1.01]" : ""}`}>
+              <label className="text-sm font-semibold text-slate-700 mb-2 block">
+                Email <span className="text-slate-400 text-xs font-normal">(optional)</span>
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <Input 
+                  type="email" 
+                  placeholder="for booking receipt" 
+                  className={`${FIELD_CLASS} ${errors.email ? "border-red-300 bg-red-50/30" : ""}`}
+                  value={patientDetails.email}
+                  onChange={(e) => setPatientDetails({ email: e.target.value })}
+                  {...focusProps("email")} 
+                />
+              </div>
+              {errors.email && <p className="text-xs text-red-500 mt-1.5 font-medium">{errors.email}</p>}
             </div>
           </div>
         </CardContent>

@@ -68,7 +68,6 @@ let QueueService = class QueueService {
             throw new common_1.BadRequestException(`Queue is currently ${queue.status}`);
         }
         return this.prisma.$transaction(async (tx) => {
-            await tx.$executeRawUnsafe(`SELECT 1 FROM "DailyQueue" WHERE "id" = $1 FOR UPDATE`, queue.id);
             const currentTokenCount = await tx.queueToken.count({ where: { queueId: queue.id } });
             if (currentTokenCount >= queue.maxCapacity) {
                 await tx.dailyQueue.update({
@@ -112,7 +111,6 @@ let QueueService = class QueueService {
             throw new common_1.BadRequestException('Queue is completed for today.');
         }
         return this.prisma.$transaction(async (tx) => {
-            await tx.$executeRawUnsafe(`SELECT 1 FROM "DailyQueue" WHERE "id" = $1 FOR UPDATE`, queue.id);
             const walkInEntry = await tx.walkInEntry.create({
                 data: {
                     patientName: dto.patientName,

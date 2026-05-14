@@ -7,14 +7,15 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-export type UserRole = "user" | "doctor" | "admin" | null;
+export type UserRole = "PATIENT" | "DOCTOR" | "ADMIN" | null;
 
 export interface AuthUser {
   id: string;
-  phone: string;
+  phone?: string;
+  email?: string;
   name: string;
   role: UserRole;
-  verified: boolean;
+  verified?: boolean;
   avatar?: string;
 }
 
@@ -23,11 +24,14 @@ interface AuthState {
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  _hasHydrated: boolean;
 
   // Actions
+  login: (user: AuthUser, token?: string) => void;
   setUser: (user: AuthUser, token?: string) => void;
   logout: () => void;
   setLoading: (loading: boolean) => void;
+  setHasHydrated: (state: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -37,14 +41,25 @@ export const useAuthStore = create<AuthState>()(
       token: null,
       isAuthenticated: false,
       isLoading: false,
+      _hasHydrated: false,
+
+      login: (user, token) =>
+        set({ user, token: token ?? null, isAuthenticated: true, isLoading: false }),
 
       setUser: (user, token) =>
         set({ user, token: token ?? null, isAuthenticated: true, isLoading: false }),
 
-      logout: () =>
-        set({ user: null, token: null, isAuthenticated: false }),
+      logout: async () => {
+        try {
+          await fetch('/api/auth/logout', { method: 'POST' });
+        } catch (error) {
+          console.error("Logout error", error);
+        }
+        set({ user: null, token: null, isAuthenticated: false });
+      },
 
       setLoading: (isLoading) => set({ isLoading }),
+      setHasHydrated: (state) => set({ _hasHydrated: state }),
     }),
     {
       name: "jivnicare-auth",
@@ -53,6 +68,9 @@ export const useAuthStore = create<AuthState>()(
         token: state.token,
         isAuthenticated: state.isAuthenticated,
       }),
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
     }
   )
 );
@@ -60,9 +78,13 @@ export const useAuthStore = create<AuthState>()(
 // Role-based redirect helper
 export function getRoleRedirect(role: UserRole): string {
   switch (role) {
-    case "doctor": return "/doctor/dashboard";
-    case "admin": return "/internal-admin";
-    case "user": return "/";
+    case "DOCTOR": return "/doctor/dashboard";
+    case "ADMIN": return "/admin/dashboard";
+    case "PATIENT": return "/";
     default: return "/";
   }
 }
+
+export const isDoctor = (role: UserRole) => role === "DOCTOR";
+export const isAdmin = (role: UserRole) => role === "ADMIN";
+export const isPatient = (role: UserRole) => role === "PATIENT";

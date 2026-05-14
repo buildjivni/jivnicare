@@ -45,9 +45,9 @@ export declare const NullTypes: {
     JsonNull: (new (secret: never) => typeof runtime.JsonNull);
     AnyNull: (new (secret: never) => typeof runtime.AnyNull);
 };
-export declare const DbNull: runtime.DbNullClass;
-export declare const JsonNull: runtime.JsonNullClass;
-export declare const AnyNull: runtime.AnyNullClass;
+export declare const DbNull: any;
+export declare const JsonNull: any;
+export declare const AnyNull: any;
 type SelectAndInclude = {
     select: any;
     include: any;

@@ -12,11 +12,12 @@ import { MobileNav } from "./MobileNav";
 import { UserProfileDropdown } from "./UserProfileDropdown";
 import { useAuthStore } from "@/store/useAuthStore";
 import { NotificationBell } from "./NotificationBell";
+import { SmartSearchBar } from "./SmartSearchBar";
 
 const NAV_LINKS = [
   { label: "Find Doctors", href: "/doctors", icon: <Stethoscope className="w-4 h-4" /> },
   { label: "Specialties", href: "/#specialties", icon: <BookOpen className="w-4 h-4" /> },
-  { label: "My Bookings", href: "/bookings", icon: <CalendarDays className="w-4 h-4" /> },
+  { label: "My Bookings", href: "/my-bookings", icon: <CalendarDays className="w-4 h-4" /> },
   { label: "For Partners", href: "/partners", icon: <Building2 className="w-4 h-4" /> },
 ];
 
@@ -33,6 +34,7 @@ export function Header() {
   useEffect(() => setMounted(true), []);
   
   const isLoggedIn = mounted ? isAuthenticated : false;
+  const isDoctorsPage = pathname.startsWith("/doctors");
 
   const mobileProfileRef = useRef<HTMLDivElement>(null);
 
@@ -82,7 +84,7 @@ export function Header() {
 
           {/* ── DESKTOP NAV ───────────────────── */}
           <nav className="hidden md:flex items-center gap-1">
-            {NAV_LINKS.map((link) => {
+            {NAV_LINKS.filter(link => link.label !== "My Bookings" || isLoggedIn).map((link) => {
               const isActive = pathname === link.href || (pathname.startsWith('/doctors') && link.href === '/doctors');
               return (
                 <Link
@@ -90,8 +92,8 @@ export function Header() {
                   href={link.href}
                   className={`px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200 ${
                     isActive 
-                      ? "text-[#205E98] bg-[#205E98]/10 shadow-sm" 
-                      : "text-slate-600 hover:text-[#205E98] hover:bg-slate-50 hover:shadow-sm"
+                      ? "text-primary bg-primary/10 shadow-sm" 
+                      : "text-slate-600 hover:text-primary hover:bg-slate-50 hover:shadow-sm"
                   }`}
                 >
                   {link.label}
@@ -99,6 +101,17 @@ export function Header() {
               );
             })}
           </nav>
+
+          {/* ── DESKTOP SEARCH ── */}
+          {(isDoctorsPage && pathname !== "/") && (
+            <div className="hidden md:flex flex-1 max-w-xl mx-6">
+              <SmartSearchBar
+                compact
+                district="Patna"
+                className="w-full"
+              />
+            </div>
+          )}
 
           {/* ── DESKTOP CTA ───────────────────── */}
           <div className="hidden md:flex items-center gap-2.5">
@@ -108,7 +121,7 @@ export function Header() {
                 <div className="relative" ref={profileRef}>
                   <button 
                     onClick={() => setProfileOpen(!profileOpen)}
-                    className="flex items-center justify-center w-10 h-10 rounded-full bg-[#205E98]/10 border border-[#205E98]/20 text-[#205E98] hover:bg-[#205E98]/20 transition-colors"
+                    className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 transition-colors"
                     aria-label="Profile Menu"
                   >
                     <User className="w-5 h-5" />
@@ -122,7 +135,7 @@ export function Header() {
               <Link href="/login">
                 <Button
                   variant="ghost"
-                  className="h-9 px-5 rounded-xl text-sm font-semibold text-slate-600 hover:text-[#205E98] hover:bg-[#205E98]/8"
+                  className="h-9 px-5 rounded-xl text-sm font-semibold text-slate-600 hover:text-primary hover:bg-primary/8"
                 >
                   Log In
                 </Button>
@@ -131,7 +144,7 @@ export function Header() {
 
             <Link href="/doctors">
               <Button
-                className="h-9 px-5 rounded-xl text-sm font-semibold bg-[#205E98] hover:bg-[#184a7a] shadow-md shadow-[#205E98]/25 transition-all hover:shadow-lg hover:shadow-[#205E98]/30 hover:-translate-y-px"
+                className="h-9 px-5 rounded-xl text-sm font-semibold bg-primary hover:bg-primary/90 shadow-md shadow-primary/25 transition-all hover:shadow-lg hover:shadow-primary/30 hover:-translate-y-px"
               >
                 Book Appointment
               </Button>
@@ -144,7 +157,7 @@ export function Header() {
               <div className="relative" ref={mobileProfileRef}>
                 <button
                   onClick={() => setProfileOpen(!profileOpen)}
-                  className="flex items-center justify-center w-11 h-11 rounded-full bg-[#205E98]/10 text-[#205E98] border border-[#205E98]/15"
+                  className="flex items-center justify-center w-11 h-11 rounded-full bg-primary/10 text-primary border border-primary/15"
                   aria-label="Toggle profile menu"
                 >
                   <User className="w-5 h-5" />
@@ -163,6 +176,13 @@ export function Header() {
             </Button>
           </div>
         </div>
+
+        {/* ── MOBILE SEARCH BAR (doctors page only) ── */}
+        {isDoctorsPage && (
+          <div className="md:hidden px-4 pb-3">
+            <SmartSearchBar compact district="Patna" className="w-full" />
+          </div>
+        )}
       </header>
 
       {/* ── MOBILE DRAWER ─────────────────────── */}

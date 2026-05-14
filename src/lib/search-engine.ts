@@ -105,15 +105,15 @@ const SYNONYM_MAP: Record<string, SynonymEntry> = {
   "bukhar":           { specialties: ["General Physician"], keywords: ["fever", "viral", "infection"] },
   "bukar":            { specialties: ["General Physician"], keywords: ["fever"] },
   "taapmaan":         { specialties: ["General Physician"], keywords: ["fever"] },
-  "pet dard":         { specialties: ["General Physician"], keywords: ["stomach", "gastro", "abdomen"] },
+  "pet dard":         { specialties: ["General Physician", "Gastroenterologist"], keywords: ["stomach", "gastro", "abdomen"] },
   "pet":              { specialties: ["General Physician"], keywords: ["stomach", "abdomen"] },
   "dard":             { specialties: ["General Physician", "Orthopedist"], keywords: ["pain"] },
-  "sir dard":         { specialties: ["Neurologist"], keywords: ["headache", "migraine"] },
+  "sir dard":         { specialties: ["Neurologist", "General Physician"], keywords: ["headache", "migraine"] },
   "sirdard":          { specialties: ["Neurologist"], keywords: ["headache"] },
   "sir":              { specialties: ["Neurologist"], keywords: ["head", "migraine"] },
   "khansi":           { specialties: ["General Physician"], keywords: ["cough", "infection"] },
   "khanshi":          { specialties: ["General Physician"], keywords: ["cough"] },
-  "saans":            { specialties: ["General Physician"], keywords: ["breathing"] },
+  "saans":            { specialties: ["General Physician", "Pulmonologist"], keywords: ["breathing", "asthma"] },
   "sans":             { specialties: ["General Physician"], keywords: ["breathing"] },
   "aankh":            { specialties: ["Ophthalmologist"], keywords: ["eye"] },
   "ankh":             { specialties: ["Ophthalmologist"], keywords: ["eye"] },
@@ -144,7 +144,7 @@ const SYNONYM_MAP: Record<string, SynonymEntry> = {
   "baal":             { specialties: ["Dermatologist"], keywords: ["hair"] },
   "nazar":            { specialties: ["Ophthalmologist"], keywords: ["vision", "eye", "spectacle"] },
   "chashma":          { specialties: ["Ophthalmologist"], keywords: ["spectacle", "eye", "vision"] },
-  "sugar":            { specialties: ["General Physician"], keywords: ["diabetes", "blood sugar"] },
+  "sugar":            { specialties: ["General Physician", "Endocrinologist"], keywords: ["diabetes", "blood sugar"] },
   "madhumeh":         { specialties: ["General Physician"], keywords: ["diabetes"] },
   "bp":               { specialties: ["General Physician", "Cardiologist"], keywords: ["blood pressure", "hypertension"] },
   "blood pressure":   { specialties: ["General Physician", "Cardiologist"], keywords: ["hypertension", "bp"] },
@@ -153,24 +153,28 @@ const SYNONYM_MAP: Record<string, SynonymEntry> = {
   "jukam":            { specialties: ["General Physician"], keywords: ["cold", "cough"] },
   "ulti":             { specialties: ["General Physician"], keywords: ["vomiting", "nausea"] },
   "dast":             { specialties: ["General Physician"], keywords: ["diarrhea"] },
-  "pagal":            { specialties: ["Neurologist"], keywords: ["mental", "neuro"] },
+  "pagal":            { specialties: ["Neurologist", "Psychiatrist"], keywords: ["mental", "neuro"] },
   "dimag":            { specialties: ["Neurologist"], keywords: ["brain", "neuro"] },
   "aankhon":          { specialties: ["Ophthalmologist"], keywords: ["eye"] },
-  "sunte nahi":       { specialties: ["General Physician"], keywords: ["ear", "hearing"] },
-  "kaan":             { specialties: ["General Physician"], keywords: ["ear", "ENT"] },
+  "sunte nahi":       { specialties: ["ENT Specialist"], keywords: ["ear", "hearing"] },
+  "kaan":             { specialties: ["ENT Specialist"], keywords: ["ear", "ENT"] },
+  "gala":             { specialties: ["ENT Specialist"], keywords: ["throat", "ENT"] },
+  "naak":             { specialties: ["ENT Specialist"], keywords: ["nose", "ENT"] },
 
   // ── Hindi mixed ───────────────────────────────────
   "baccha doctor":    { specialties: ["Pediatrician"], keywords: ["child doctor"] },
   "bachche ka doctor":{ specialties: ["Pediatrician"], keywords: ["child doctor"] },
-  "pet doctor":       { specialties: ["General Physician"], keywords: ["stomach doctor"] },
+  "pet doctor":       { specialties: ["General Physician", "Gastroenterologist"], keywords: ["stomach doctor"] },
   "heart ka doctor":  { specialties: ["Cardiologist"], keywords: ["heart"] },
   "mahila doctor":    { specialties: ["Gynecologist"], keywords: ["women doctor"] },
   "aankhon ka doctor":{ specialties: ["Ophthalmologist"], keywords: ["eye doctor"] },
   "daanth ka doctor": { specialties: ["Dentist"], keywords: ["dental"] },
   "skin doctor":      { specialties: ["Dermatologist"], keywords: ["derma"] },
   "hadi doctor":      { specialties: ["Orthopedist"], keywords: ["bone doctor"] },
+  "haddi specialist": { specialties: ["Orthopedist"], keywords: ["bone specialist"] },
   "dil ka doctor":    { specialties: ["Cardiologist"], keywords: ["heart doctor"] },
-  "naak kaan gala":   { specialties: ["General Physician"], keywords: ["ENT", "ear nose throat"] },
+  "dil specialist":   { specialties: ["Cardiologist"], keywords: ["heart specialist"] },
+  "naak kaan gala":   { specialties: ["ENT Specialist"], keywords: ["ENT", "ear nose throat"] },
 
   // ── English symptoms ──────────────────────────────
   "fever":            { specialties: ["General Physician"], keywords: ["viral", "infection", "temperature"] },
@@ -217,6 +221,8 @@ const SYNONYM_MAP: Record<string, SynonymEntry> = {
   "diarrhea":         { specialties: ["General Physician"], keywords: ["loose motion", "dast"] },
   "emergency":        { specialties: [], keywords: ["urgent", "24x7", "emergency"] },
   "urgent":           { specialties: [], keywords: ["emergency", "immediate"] },
+  "accident":         { specialties: ["Orthopedist", "Surgeon"], keywords: ["emergency", "trauma"] },
+  "trauma":           { specialties: ["Orthopedist", "Surgeon"], keywords: ["emergency", "accident"] },
 };
 
 // ── 5. QUERY EXPANSION ENGINE ────────────────────────────────────────────────
@@ -400,7 +406,7 @@ export interface SearchResult {
   didYouMean?: string;
 }
 
-const SCORE_THRESHOLD = 10; // minimum score to appear in results
+const SCORE_THRESHOLD = 25; // minimum score to appear in results
 
 export function searchDoctors(rawQuery: string, doctors: Doctor[]): SearchResult {
   if (!rawQuery.trim()) {
@@ -424,7 +430,7 @@ export function searchDoctors(rawQuery: string, doctors: Doctor[]): SearchResult
   if (scored.length === 0) {
     const fuzzyFallback: ScoredDoctor[] = doctors
       .map(doctor => ({ doctor, score: scoreDoctor(doctor, eq) }))
-      .filter(({ score }) => score >= 3)
+      .filter(({ score }) => score >= 15)
       .sort((a, b) => b.score - a.score);
 
     return {
