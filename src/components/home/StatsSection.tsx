@@ -13,7 +13,7 @@ const STATS = [
 
 export function StatsSection() {
   return (
-    <section className="py-12 md:py-16 bg-[#205E98] relative overflow-hidden">
+    <section className="py-12 md:py-16 bg-primary relative overflow-hidden">
       {/* Decorative Wave */}
       <div className="absolute inset-0 opacity-10 pointer-events-none">
         <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute w-full h-full">

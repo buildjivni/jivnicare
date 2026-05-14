@@ -22,7 +22,7 @@ export function HowItWorksSection() {
           >
             <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-slate-900 leading-tight">
               Booking an Appointment <br className="hidden lg:block" />
-              is Now <span className="text-[#205E98]">Effortless</span>.
+              is Now <span className="text-primary">Effortless</span>.
             </h2>
             <p className="text-lg text-slate-600 leading-relaxed">
               Book an appointment with the best doctors from your phone in just 2 minutes. No tension, no confusion.
@@ -38,7 +38,7 @@ export function HowItWorksSection() {
               <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent" />
               <div className="absolute bottom-6 left-6 right-6">
                 <div className="bg-white/95 backdrop-blur-md p-4 rounded-2xl shadow-lg flex items-center gap-4">
-                  <div className="bg-[#205E98]/10 p-2.5 rounded-xl shrink-0">
+                  <div className="bg-primary/10 p-2.5 rounded-xl shrink-0">
                     <Logo className="w-6 h-6" />
                   </div>
                   <div>
@@ -52,7 +52,7 @@ export function HowItWorksSection() {
               </div>
             </div>
             
-            <Button className="mt-8 h-12 px-8 rounded-full bg-[#205E98] hover:bg-[#184a7a] shadow-lg shadow-[#205E98]/20 transition-all font-semibold hidden lg:inline-flex text-white">
+            <Button className="mt-8 h-12 px-8 rounded-full bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all font-semibold hidden lg:inline-flex text-white">
               Book Now
             </Button>
           </motion.div>
@@ -65,17 +65,17 @@ export function HowItWorksSection() {
             className="lg:w-7/12 grid grid-cols-1 sm:grid-cols-2 gap-6 w-full"
           >
             {[
-              { step: "01", icon: <Search className="w-6 h-6 text-[#205E98]" />, title: "Search by Health Concern", desc: "Select a doctor or department based on the health issue you need treated." },
-              { step: "02", icon: <UserCheck className="w-6 h-6 text-[#205E98]" />, title: "Choose the Right Doctor", desc: "Choose the best doctor for you by reviewing their qualifications, experience, and patient feedback." },
-              { step: "03", icon: <Calendar className="w-6 h-6 text-[#205E98]" />, title: "Pick a Convenient Time", desc: "Book a slot for when you are free. Morning, afternoon, or evening." },
-              { step: "04", icon: <ShieldCheck className="w-6 h-6 text-[#205E98]" />, title: "Appointment Confirmed!", desc: "Confirm your booking with one click. You will receive the appointment details via SMS instantly." },
+              { step: "01", icon: <Search className="w-6 h-6 text-primary" />, title: "Search by Health Concern", desc: "Select a doctor or department based on the health issue you need treated." },
+              { step: "02", icon: <UserCheck className="w-6 h-6 text-primary" />, title: "Choose the Right Doctor", desc: "Choose the best doctor for you by reviewing their qualifications, experience, and patient feedback." },
+              { step: "03", icon: <Calendar className="w-6 h-6 text-primary" />, title: "Pick a Convenient Time", desc: "Book a slot for when you are free. Morning, afternoon, or evening." },
+              { step: "04", icon: <ShieldCheck className="w-6 h-6 text-primary" />, title: "Appointment Confirmed!", desc: "Confirm your booking with one click. You will receive the appointment details via SMS instantly." },
             ].map((step, i) => (
-              <motion.div key={i} variants={fadeUp} className="relative p-6 md:p-8 rounded-3xl bg-white border border-slate-200/60 shadow-sm hover:border-[#205E98]/30 transition-all hover:shadow-lg group">
+              <motion.div key={i} variants={fadeUp} className="relative p-6 md:p-8 rounded-3xl bg-white border border-slate-200/60 shadow-sm hover:border-primary/30 transition-all hover:shadow-lg group">
                 <div className="flex items-center justify-between mb-4">
                   <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center group-hover:scale-110 transition-transform">
                     {step.icon}
                   </div>
-                  <div className="text-4xl font-black text-slate-100 tracking-tighter group-hover:text-[#205E98]/10 transition-colors">{step.step}</div>
+                  <div className="text-4xl font-black text-slate-100 tracking-tighter group-hover:text-primary/10 transition-colors">{step.step}</div>
                 </div>
                 <h3 className="text-xl font-bold text-slate-900 mb-2">{step.title}</h3>
                 <p className="text-slate-600 leading-relaxed text-sm md:text-base">{step.desc}</p>
@@ -83,7 +83,7 @@ export function HowItWorksSection() {
             ))}
           </motion.div>
           
-          <Button className="w-full h-14 rounded-full bg-[#205E98] hover:bg-[#184a7a] shadow-lg shadow-[#205E98]/20 transition-all font-semibold lg:hidden text-white">
+          <Button className="w-full h-14 rounded-full bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all font-semibold lg:hidden text-white">
             Book Now
           </Button>
         </div>

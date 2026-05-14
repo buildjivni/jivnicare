@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Search, X, TrendingUp, Zap, ChevronRight, MapPin, Clock,
   Stethoscope, User, Sparkles, Mic,
@@ -15,7 +15,7 @@ import type { LocalSuggestion } from "@/lib/search-engine";
 interface TrendingItem { query: string; count: number }
 
 const TYPE_META = {
-  specialty: { icon: <Stethoscope className="w-4 h-4" />, color: "text-[#205E98] bg-[#205E98]/8", label: "Specialty" },
+  specialty: { icon: <Stethoscope className="w-4 h-4" />, color: "text-primary bg-primary/8", label: "Specialty" },
   symptom:   { icon: <span>🩺</span>,                     color: "text-amber-600 bg-amber-50",    label: "Symptom"  },
   doctor:    { icon: <User className="w-4 h-4" />,        color: "text-emerald-600 bg-emerald-50",label: "Doctor"   },
   location:  { icon: <MapPin className="w-4 h-4" />,      color: "text-slate-500 bg-slate-100",   label: "Location" },
@@ -35,10 +35,10 @@ const QUICK_HINTS = [
   { label: "Bukhar / Fever",    q: "bukhar",    emoji: "🌡️" },
   { label: "Heart Doctor",      q: "heart",     emoji: "❤️" },
   { label: "Bachcha Doctor",    q: "bachcha",   emoji: "👶" },
-  { label: "Skin Specialist",   q: "skin",      emoji: "🩺" },
+  { label: "Pet Dard / Stomach", q: "pet dard", emoji: "🫃" },
+  { label: "Sir Dard / Neuro",  q: "sir dard",  emoji: "🧠" },
+  { label: "Saans / Chest",     q: "saans",     emoji: "🫁" },
   { label: "Daant / Dental",    q: "daant",     emoji: "🦷" },
-  { label: "Aankhon ka Doctor", q: "aankh",     emoji: "👁️" },
-  { label: "Pet Dard",          q: "pet dard",  emoji: "🫃" },
   { label: "Emergency",         q: "emergency", emoji: "🚨" },
 ];
 
@@ -60,10 +60,12 @@ export function SmartSearchBar({
   onSearch,
 }: SmartSearchBarProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const inputRef = useRef<HTMLInputElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  const [query, setQuery] = useState("");
+  const initialQuery = searchParams?.get("q") || searchParams?.get("query") || "";
+  const [query, setQuery] = useState(initialQuery);
   const [focused, setFocused] = useState(false);
   const [suggestions, setSuggestions] = useState<LocalSuggestion[]>([]);
   const [trending, setTrending] = useState<TrendingItem[]>([]);
@@ -104,6 +106,12 @@ export function SmartSearchBar({
       if (stored) setRecentSearches(JSON.parse(stored).slice(0, 5));
     } catch { /* ignore */ }
   }, [district]);
+
+  // Sync with URL
+  useEffect(() => {
+    const q = searchParams?.get("q") || searchParams?.get("query") || "";
+    if (q) setQuery(q);
+  }, [searchParams]);
 
   // Generate suggestions
   useEffect(() => {
@@ -188,7 +196,7 @@ export function SmartSearchBar({
           focused
             ? isEmergency
               ? "border-red-400 shadow-[0_0_0_4px_rgba(239,68,68,0.12)] bg-white"
-              : "border-[#205E98] shadow-[0_0_0_4px_rgba(32,94,152,0.10)] bg-white"
+              : "border-primary shadow-[0_0_0_4px_rgba(32,94,152,0.10)] bg-white"
             : "border-slate-200 bg-white shadow-md hover:border-slate-300 hover:shadow-lg",
         )}
       >
@@ -197,8 +205,8 @@ export function SmartSearchBar({
           {isEmergency
             ? <Zap className={cn("text-red-500 animate-pulse", compact ? "w-4 h-4" : "w-5 h-5")} />
             : focused && !query
-            ? <Sparkles className={cn("text-[#205E98]", compact ? "w-4 h-4" : "w-5 h-5")} />
-            : <Search className={cn(focused ? "text-[#205E98]" : "text-slate-400", compact ? "w-4 h-4" : "w-5 h-5")} />
+            ? <Sparkles className={cn("text-primary", compact ? "w-4 h-4" : "w-5 h-5")} />
+            : <Search className={cn(focused ? "text-primary" : "text-slate-400", compact ? "w-4 h-4" : "w-5 h-5")} />
           }
         </div>
 
@@ -247,7 +255,7 @@ export function SmartSearchBar({
               : "px-5 md:px-7 py-2.5 text-sm flex items-center gap-2",
             isEmergency
               ? "bg-red-500 hover:bg-red-600 shadow-md shadow-red-200"
-              : "bg-[#205E98] hover:bg-[#184a7a] shadow-md shadow-[#205E98]/25"
+              : "bg-primary hover:bg-primary/90 shadow-md shadow-primary/25"
           )}
           aria-label="Search"
         >
@@ -261,7 +269,7 @@ export function SmartSearchBar({
       {/* ── DROPDOWN PANEL ───────────────────────────────────────────────── */}
       {showPanel && (
         <div
-          className="absolute top-full left-0 right-0 mt-2.5 bg-white rounded-2xl shadow-[0_20px_60px_-10px_rgba(0,0,0,0.15)] border border-slate-100/80 z-[60] overflow-hidden"
+          className="absolute top-full left-0 right-0 mt-2.5 bg-white rounded-2xl shadow-[0_20px_60px_-10px_rgba(0,0,0,0.15)] border border-slate-100/80 z-[60] max-h-[60vh] overflow-y-auto overscroll-contain"
           role="listbox"
           aria-label="Search suggestions"
           style={{ animation: "ssDropdown 150ms cubic-bezier(0.16,1,0.3,1)" }}
@@ -290,7 +298,7 @@ export function SmartSearchBar({
             <div className="flex items-center gap-3 px-5 py-4">
               <div className="flex gap-1">
                 {[0, 1, 2].map(i => (
-                  <div key={i} className="w-1.5 h-1.5 bg-[#205E98] rounded-full animate-bounce" style={{ animationDelay: `${i * 100}ms` }} />
+                  <div key={i} className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: `${i * 100}ms` }} />
                 ))}
               </div>
               <p className="text-xs text-slate-400 font-medium">Searching doctors…</p>
@@ -301,7 +309,7 @@ export function SmartSearchBar({
           {!isLoading && query.length > 0 && suggestions.length > 0 && (
             <div>
               <div className="flex items-center gap-2 px-5 pt-3 pb-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-[#205E98]" />
+                <Sparkles className="w-3.5 h-3.5 text-primary" />
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Suggestions</p>
               </div>
               {suggestions.map((s, i) => {
@@ -314,7 +322,7 @@ export function SmartSearchBar({
                     onMouseEnter={() => setHighlightIdx(i)}
                     className={cn(
                       "w-full flex items-center gap-3.5 px-5 py-3 transition-colors text-left",
-                      isHighlighted ? "bg-[#205E98]/5" : "hover:bg-slate-50"
+                      isHighlighted ? "bg-primary/5" : "hover:bg-slate-50"
                     )}
                     role="option"
                     aria-selected={isHighlighted}
@@ -344,7 +352,7 @@ export function SmartSearchBar({
                   <button
                     key={h.q}
                     onClick={() => doSearch(h.q)}
-                    className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-50 hover:bg-[#205E98]/8 border border-slate-200 hover:border-[#205E98]/30 rounded-2xl text-xs font-semibold text-slate-600 hover:text-[#205E98] transition-all"
+                    className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-50 hover:bg-primary/8 border border-slate-200 hover:border-primary/30 rounded-2xl text-xs font-semibold text-slate-600 hover:text-primary transition-all"
                   >
                     <span>{h.emoji}</span>
                     {h.label}
@@ -415,7 +423,7 @@ export function SmartSearchBar({
                   <button
                     key={h.q}
                     onClick={() => doSearch(h.q)}
-                    className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-50 hover:bg-[#205E98]/8 border border-slate-100 hover:border-[#205E98]/20 rounded-2xl text-xs font-semibold text-slate-600 hover:text-[#205E98] transition-all"
+                    className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-50 hover:bg-primary/8 border border-slate-100 hover:border-primary/20 rounded-2xl text-xs font-semibold text-slate-600 hover:text-primary transition-all"
                   >
                     <span>{h.emoji}</span>
                     {h.label}
@@ -427,10 +435,10 @@ export function SmartSearchBar({
 
           {/* Location footer */}
           {district && (
-            <div className="px-5 py-2.5 bg-[#205E98]/4 border-t border-slate-100/80 flex items-center justify-between">
+            <div className="px-5 py-2.5 bg-primary/4 border-t border-slate-100/80 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <MapPin className="w-3.5 h-3.5 text-[#205E98]" />
-                <p className="text-xs text-[#205E98] font-semibold">Searching in {district}</p>
+                <MapPin className="w-3.5 h-3.5 text-primary" />
+                <p className="text-xs text-primary font-semibold">Searching in {district}</p>
               </div>
               <p className="text-[10px] text-slate-400">Bihar, India</p>
             </div>

@@ -8,9 +8,13 @@ export declare class HospitalsController {
             id: string;
             name: string;
             slug: string;
+            doctorIds: string[];
+            hospitalIds: string[];
         }[];
         keywords: {
             id: string;
+            doctorIds: string[];
+            hospitalIds: string[];
             term: string;
         }[];
     } & {
@@ -24,6 +28,8 @@ export declare class HospitalsController {
         verificationStatus: import("@prisma/client").$Enums.VerificationStatus;
         slug: string;
         rating: number;
+        specialtyIds: string[];
+        keywordIds: string[];
         description: string | null;
         address: string;
         hospitalType: string;
@@ -37,6 +43,8 @@ export declare class HospitalsController {
                 id: string;
                 name: string;
                 slug: string;
+                doctorIds: string[];
+                hospitalIds: string[];
             }[];
         } & {
             phone: string;
@@ -49,6 +57,8 @@ export declare class HospitalsController {
             verificationStatus: import("@prisma/client").$Enums.VerificationStatus;
             slug: string;
             rating: number;
+            specialtyIds: string[];
+            keywordIds: string[];
             description: string | null;
             address: string;
             hospitalType: string;
@@ -68,9 +78,13 @@ export declare class HospitalsController {
             id: string;
             name: string;
             slug: string;
+            doctorIds: string[];
+            hospitalIds: string[];
         }[];
         keywords: {
             id: string;
+            doctorIds: string[];
+            hospitalIds: string[];
             term: string;
         }[];
     } & {
@@ -84,6 +98,8 @@ export declare class HospitalsController {
         verificationStatus: import("@prisma/client").$Enums.VerificationStatus;
         slug: string;
         rating: number;
+        specialtyIds: string[];
+        keywordIds: string[];
         description: string | null;
         address: string;
         hospitalType: string;
@@ -96,9 +112,13 @@ export declare class HospitalsController {
             id: string;
             name: string;
             slug: string;
+            doctorIds: string[];
+            hospitalIds: string[];
         }[];
         keywords: {
             id: string;
+            doctorIds: string[];
+            hospitalIds: string[];
             term: string;
         }[];
     } & {
@@ -112,6 +132,8 @@ export declare class HospitalsController {
         verificationStatus: import("@prisma/client").$Enums.VerificationStatus;
         slug: string;
         rating: number;
+        specialtyIds: string[];
+        keywordIds: string[];
         description: string | null;
         address: string;
         hospitalType: string;

@@ -4,11 +4,9 @@ import { useState } from "react";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { SPECIALTIES } from "@/data/mock-data";
-import { ChevronDown, X, SlidersHorizontal, Search } from "lucide-react";
+import { ChevronDown, X, SlidersHorizontal } from "lucide-react";
 
 interface DoctorFiltersProps {
-  search: string;
-  onSearchChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   selectedSpecialties: string[];
   onSpecialtyToggle: (specId: string) => void;
   onClearAll?: () => void;
@@ -22,8 +20,6 @@ const FEE_RANGES = [
 ];
 
 export function DoctorFilters({
-  search,
-  onSearchChange,
   selectedSpecialties,
   onSpecialtyToggle,
   onClearAll,
@@ -35,14 +31,14 @@ export function DoctorFilters({
   const visibleSpecialties = showAllSpecialties ? SPECIALTIES : SPECIALTIES.slice(0, 6);
 
   const FilterContent = () => (
-    <div className="space-y-5" role="search" aria-label="Filter doctors">
+    <div className="space-y-5" role="group" aria-label="Filter doctors">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
-          <SlidersHorizontal className="w-4 h-4 text-[#205E98]" />
+          <SlidersHorizontal className="w-4 h-4 text-primary" />
           Filters
           {activeFilterCount > 0 && (
-            <span className="bg-[#205E98] text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
+            <span className="bg-primary text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
               {activeFilterCount}
             </span>
           )}
@@ -50,31 +46,12 @@ export function DoctorFilters({
         {activeFilterCount > 0 && onClearAll && (
           <button
             onClick={onClearAll}
-            className="text-xs font-bold text-[#205E98] hover:text-[#184a7a] flex items-center gap-1 transition-colors"
+            className="text-xs font-bold text-primary hover:text-[#184a7a] flex items-center gap-1 transition-colors"
             aria-label="Clear all filters"
           >
             <X className="w-3 h-3" /> Clear all
           </button>
         )}
-      </div>
-
-      {/* Search */}
-      <div className="space-y-2">
-        <label htmlFor="filter-search" className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-          Search by Name
-        </label>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-          <input
-            id="filter-search"
-            type="text"
-            placeholder="Doctor, symptom, clinic…"
-            className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-[#205E98] focus:ring-2 focus:ring-[#205E98]/15 h-11 text-sm text-slate-800 placeholder:text-slate-400 transition-all"
-            value={search}
-            onChange={onSearchChange}
-            aria-label="Search doctor by name or condition"
-          />
-        </div>
       </div>
 
       <Separator className="bg-slate-100" />
@@ -88,16 +65,16 @@ export function DoctorFilters({
             return (
               <label
                 key={spec.id}
-                className={`flex items-center gap-3 cursor-pointer p-2 rounded-xl transition-all ${isChecked ? "bg-[#205E98]/6 border border-[#205E98]/15" : "hover:bg-slate-50 border border-transparent"}`}
+                className={`flex items-center gap-3 cursor-pointer p-3 min-h-[44px] rounded-xl transition-all ${isChecked ? "bg-primary/6 border border-primary/15" : "hover:bg-slate-50 border border-transparent"}`}
               >
                 <input
                   type="checkbox"
-                  className="rounded border-slate-300 text-[#205E98] focus:ring-[#205E98] w-4 h-4 cursor-pointer"
+                  className="rounded border-slate-300 text-primary focus:ring-primary w-4 h-4 cursor-pointer"
                   checked={isChecked}
                   onChange={() => onSpecialtyToggle(spec.id)}
                   aria-label={`Filter by ${spec.name}`}
                 />
-                <span className={`text-sm font-medium ${isChecked ? "text-[#205E98]" : "text-slate-600"}`}>{spec.name}</span>
+                <span className={`text-sm font-medium ${isChecked ? "text-primary" : "text-slate-600"}`}>{spec.name}</span>
               </label>
             );
           })}
@@ -105,7 +82,7 @@ export function DoctorFilters({
         {SPECIALTIES.length > 6 && (
           <button
             onClick={() => setShowAllSpecialties(!showAllSpecialties)}
-            className="flex items-center gap-1 text-xs font-bold text-[#205E98] hover:text-[#184a7a] mt-1 transition-colors"
+            className="flex items-center gap-1 text-xs font-bold text-primary hover:text-[#184a7a] mt-1 transition-colors"
           >
             <ChevronDown className={`w-3 h-3 transition-transform ${showAllSpecialties ? "rotate-180" : ""}`} />
             {showAllSpecialties ? "Show less" : `Show all ${SPECIALTIES.length}`}
@@ -124,11 +101,11 @@ export function DoctorFilters({
             { label: "Available Today", value: "today" },
             { label: "Tomorrow", value: "tomorrow" },
           ].map((opt) => (
-            <label key={opt.value} className="flex items-center gap-3 cursor-pointer p-2 rounded-xl hover:bg-slate-50 transition-all border border-transparent">
+            <label key={opt.value} className="flex items-center gap-3 cursor-pointer p-3 min-h-[44px] rounded-xl hover:bg-slate-50 transition-all border border-transparent">
               <input
                 type="radio"
                 name="avail"
-                className="text-[#205E98] focus:ring-[#205E98] w-4 h-4 cursor-pointer"
+                className="text-primary focus:ring-primary w-4 h-4 cursor-pointer"
                 defaultChecked={opt.value === "any"}
                 aria-label={`Show doctors available ${opt.label}`}
               />
@@ -145,11 +122,11 @@ export function DoctorFilters({
         <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Consultation Fee</label>
         <div className="space-y-1.5" role="group" aria-label="Filter by consultation fee">
           {FEE_RANGES.map((range) => (
-            <label key={range.id} className="flex items-center gap-3 cursor-pointer p-2 rounded-xl hover:bg-slate-50 transition-all border border-transparent">
+            <label key={range.id} className="flex items-center gap-3 cursor-pointer p-3 min-h-[44px] rounded-xl hover:bg-slate-50 transition-all border border-transparent">
               <input
                 type="radio"
                 name="fee"
-                className="text-[#205E98] focus:ring-[#205E98] w-4 h-4 cursor-pointer"
+                className="text-primary focus:ring-primary w-4 h-4 cursor-pointer"
                 aria-label={`Show doctors with fee ${range.label}`}
               />
               <span className="text-sm font-medium text-slate-600">{range.label}</span>
@@ -173,7 +150,7 @@ export function DoctorFilters({
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 px-4 pb-4 pt-2 bg-gradient-to-t from-[#f7f9fc] to-transparent pointer-events-none">
         <Button
           onClick={() => setShowMobileFilters(true)}
-          className="w-full h-12 rounded-2xl bg-[#205E98] text-white font-bold text-sm shadow-lg shadow-[#205E98]/30 pointer-events-auto flex items-center gap-2"
+          className="w-full h-12 rounded-2xl bg-primary text-white font-bold text-sm shadow-lg shadow-primary/30 pointer-events-auto flex items-center gap-2"
           aria-label="Open filters"
           aria-expanded={showMobileFilters}
         >
@@ -208,7 +185,7 @@ export function DoctorFilters({
             </div>
             <FilterContent />
             <Button
-              className="w-full h-12 rounded-2xl bg-[#205E98] text-white font-bold mt-5"
+              className="w-full h-12 rounded-2xl bg-primary text-white font-bold mt-5"
               onClick={() => setShowMobileFilters(false)}
             >
               Apply Filters

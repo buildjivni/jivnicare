@@ -29,7 +29,7 @@ export function CtaBannerSection() {
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link href="/doctors">
-            <Button className="h-14 px-8 rounded-full bg-[#205E98] hover:bg-[#184a7a] text-white font-bold text-lg shadow-xl shadow-[#205E98]/20 transition-all hover:scale-105 group w-full sm:w-auto">
+            <Button className="h-14 px-8 rounded-full bg-primary hover:bg-primary/90 text-white font-bold text-lg shadow-xl shadow-primary/20 transition-all hover:scale-105 group w-full sm:w-auto">
               Find a Doctor Now
               <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
             </Button>

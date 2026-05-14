@@ -18,7 +18,7 @@ export function AvailableDoctorsSection() {
             <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-slate-900 mb-4">Consult a Doctor Today</h2>
             <p className="text-lg text-slate-600">Don&apos;t wait. Book an available appointment for today and get on the path to recovery sooner.</p>
           </div>
-          <Link href="/doctors" className="hidden md:flex text-base font-bold text-[#205E98] hover:text-[#184a7a] items-center gap-2 bg-white px-6 py-3 rounded-full border border-slate-200 shadow-sm hover:shadow-md transition-all">
+          <Link href="/doctors" className="hidden md:flex text-base font-bold text-primary hover:text-[#184a7a] items-center gap-2 bg-white px-6 py-3 rounded-full border border-slate-200 shadow-sm hover:shadow-md transition-all">
           View All Doctors <ArrowRight className="w-4 h-4" />
         </Link>
       </div>

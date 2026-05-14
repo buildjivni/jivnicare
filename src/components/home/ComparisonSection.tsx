@@ -39,7 +39,7 @@ export function ComparisonSection() {
                 <span className="bg-slate-200/50 p-2 rounded-full hidden md:flex"><XCircle className="w-5 h-5" /></span>
                 The Old Way
               </div>
-              <div className="p-6 md:p-8 text-center font-black text-[#205E98] flex flex-col items-center gap-2 bg-[#205E98]/5 border-x border-[#205E98]/10 relative overflow-hidden">
+              <div className="p-6 md:p-8 text-center font-black text-primary flex flex-col items-center gap-2 bg-primary/5 border-x border-primary/10 relative overflow-hidden">
                 <div className="absolute top-0 inset-x-0 h-1 bg-[#258C54]" />
                 <span className="bg-white p-2 rounded-xl hidden md:flex shadow-sm"><Logo className="w-6 h-6" /></span>
                 <BrandName />
@@ -58,7 +58,7 @@ export function ComparisonSection() {
               <div key={i} className="grid grid-cols-3 items-stretch border-b border-slate-100 last:border-0 hover:bg-slate-50/50 transition-colors group">
                 <div className="p-6 md:p-8 font-semibold text-slate-800 text-sm md:text-base flex items-center">{row.label}</div>
                 <div className="p-6 md:p-8 text-center text-slate-500 text-sm md:text-base flex items-center justify-center">{row.old}</div>
-                <div className="p-6 md:p-8 text-center font-semibold text-[#258C54] text-sm md:text-base flex items-center justify-center gap-2 bg-[#205E98]/5 border-x border-[#205E98]/10 group-hover:bg-[#205E98]/10 transition-colors">
+                <div className="p-6 md:p-8 text-center font-semibold text-[#258C54] text-sm md:text-base flex items-center justify-center gap-2 bg-primary/5 border-x border-primary/10 group-hover:bg-primary/10 transition-colors">
                   <CheckCircle2 className="w-5 h-5 hidden sm:block text-[#258C54]" /> {row.new}
                 </div>
               </div>

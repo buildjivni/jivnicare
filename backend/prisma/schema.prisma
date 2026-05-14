@@ -8,7 +8,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
 }
 
 enum Role {
@@ -44,7 +45,7 @@ enum ReportStatus {
 }
 
 model ModerationLog {
-  id         String     @id @default(uuid())
+  id         String     @id @default(uuid()) @map("_id")
   adminId    String
   admin      User       @relation(fields: [adminId], references: [id])
   action     String     
@@ -55,7 +56,7 @@ model ModerationLog {
 }
 
 model Media {
-  id         String    @id @default(uuid())
+  id         String    @id @default(uuid()) @map("_id")
   url        String
   publicId   String    @unique
   type       MediaType
@@ -65,7 +66,7 @@ model Media {
 }
 
 model User {
-  id         String   @id @default(uuid())
+  id         String   @id @default(uuid()) @map("_id")
   phone      String   @unique
   name       String?
   role       Role     @default(USER)
@@ -84,7 +85,7 @@ model User {
 }
 
 model Doctor {
-  id                 String      @id @default(uuid())
+  id                 String      @id @default(uuid()) @map("_id")
   userId             String      @unique
   user               User        @relation(fields: [userId], references: [id])
   name               String
@@ -101,8 +102,10 @@ model Doctor {
   languages          String[]    @default([])
   rating             Float       @default(0)
   
-  specialties        Specialty[]
-  keywords           Keyword[]
+  specialtyIds String[]
+  specialties Specialty[] @relation(fields: [specialtyIds], references: [id])
+  keywordIds String[]
+  keywords Keyword[] @relation(fields: [keywordIds], references: [id])
   savedBy            SavedDoctor[]
   dailyQueues        DailyQueue[]
   
@@ -136,22 +139,26 @@ model Doctor {
 }
 
 model Specialty {
-  id        String     @id @default(uuid())
+  id        String     @id @default(uuid()) @map("_id")
   name      String     @unique
   slug      String     @unique
-  doctors   Doctor[]
-  hospitals Hospital[]
+  doctorIds String[]
+  doctors Doctor[] @relation(fields: [doctorIds], references: [id])
+  hospitalIds String[]
+  hospitals Hospital[] @relation(fields: [hospitalIds], references: [id])
 }
 
 model Keyword {
-  id        String     @id @default(uuid())
+  id        String     @id @default(uuid()) @map("_id")
   term      String     @unique
-  doctors   Doctor[]
-  hospitals Hospital[]
+  doctorIds String[]
+  doctors Doctor[] @relation(fields: [doctorIds], references: [id])
+  hospitalIds String[]
+  hospitals Hospital[] @relation(fields: [hospitalIds], references: [id])
 }
 
 model Hospital {
-  id                 String      @id @default(uuid())
+  id                 String      @id @default(uuid()) @map("_id")
   name               String
   slug               String      @unique
   description        String?
@@ -166,8 +173,10 @@ model Hospital {
   rating             Float       @default(0)
   images             String[]    @default([])
   
-  specialties        Specialty[]
-  keywords           Keyword[]
+  specialtyIds String[]
+  specialties Specialty[] @relation(fields: [specialtyIds], references: [id])
+  keywordIds String[]
+  keywords Keyword[] @relation(fields: [keywordIds], references: [id])
   
   createdAt          DateTime    @default(now())
   updatedAt          DateTime    @updatedAt
@@ -178,7 +187,7 @@ model Hospital {
 }
 
 model SearchAnalytics {
-  id              String   @id @default(uuid())
+  id              String   @id @default(uuid()) @map("_id")
   query           String
   normalizedQuery String
   district        String?
@@ -191,7 +200,7 @@ model SearchAnalytics {
 }
 
 model ProfileAnalytics {
-  id         String     @id @default(uuid())
+  id         String     @id @default(uuid()) @map("_id")
   targetType TargetType 
   targetId   String
   action     String     
@@ -203,7 +212,7 @@ model ProfileAnalytics {
 
 // ── Phase 23: Trust & Safety (Reports) ────────────────────────
 model Report {
-  id          String       @id @default(uuid())
+  id          String       @id @default(uuid()) @map("_id")
   reporterId  String
   reporter    User         @relation(fields: [reporterId], references: [id])
   targetType  TargetType
@@ -233,7 +242,7 @@ enum NotificationType {
 }
 
 model Notification {
-  id        String           @id @default(uuid())
+  id        String           @id @default(uuid()) @map("_id")
   userId    String
   user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   type      NotificationType
@@ -252,7 +261,7 @@ model Notification {
 // ── Phase 13: Saved Doctors (Engagement) ─────────────────────
 
 model SavedDoctor {
-  id        String   @id @default(uuid())
+  id        String   @id @default(uuid()) @map("_id")
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   doctorId  String
@@ -266,7 +275,7 @@ model SavedDoctor {
 // ── Phase 13: Notification Preferences ───────────────────────
 
 model NotificationPreference {
-  id          String  @id @default(uuid())
+  id          String  @id @default(uuid()) @map("_id")
   userId      String  @unique
   user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   smsEnabled  Boolean @default(false)
@@ -300,7 +309,7 @@ enum TokenStatus {
 }
 
 model DailyQueue {
-  id              String      @id @default(uuid())
+  id              String      @id @default(uuid()) @map("_id")
   doctorId        String
   doctor          Doctor      @relation(fields: [doctorId], references: [id], onDelete: Cascade)
   date            DateTime    @db.Date // The specific operating day
@@ -316,7 +325,7 @@ model DailyQueue {
 }
 
 model QueueToken {
-  id              String      @id @default(uuid())
+  id              String      @id @default(uuid()) @map("_id")
   queueId         String
   queue           DailyQueue  @relation(fields: [queueId], references: [id], onDelete: Cascade)
   
@@ -339,7 +348,7 @@ model QueueToken {
 }
 
 model WalkInEntry {
-  id              String      @id @default(uuid())
+  id              String      @id @default(uuid()) @map("_id")
   patientName     String
   phoneNumber     String?
   symptoms        String?
@@ -351,21 +360,19 @@ model WalkInEntry {
 // ── Phase 26: Security & OTP Persistence ─────────────────────
 
 model OtpToken {
-  id        String   @id @default(uuid())
+  id        String   @id @default(uuid()) @map("_id")
   phone     String   @unique
   hashedOtp String
   expiresAt DateTime
   attempts  Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
-  @@index([phone])
 }
 
 // ── Clinic Schedule & Operations Engine ──────────────────────
 
 model WeeklySchedule {
-  id         String   @id @default(uuid())
+  id         String   @id @default(uuid()) @map("_id")
   doctorId   String   @unique
   doctor     Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
   monday     Json     // { isOpen: true, start: "09:00", end: "14:00", maxPatients: 30 }
@@ -379,7 +386,7 @@ model WeeklySchedule {
 }
 
 model ClinicOperations {
-  id               String   @id @default(uuid())
+  id               String   @id @default(uuid()) @map("_id")
   doctorId         String   @unique
   doctor           Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
   isClosedToday    Boolean  @default(false)

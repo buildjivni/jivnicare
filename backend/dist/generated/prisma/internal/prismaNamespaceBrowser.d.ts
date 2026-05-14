@@ -7,9 +7,9 @@ export declare const NullTypes: {
     JsonNull: (new (secret: never) => typeof runtime.JsonNull);
     AnyNull: (new (secret: never) => typeof runtime.AnyNull);
 };
-export declare const DbNull: import("@prisma/client-runtime-utils").DbNullClass;
-export declare const JsonNull: import("@prisma/client-runtime-utils").JsonNullClass;
-export declare const AnyNull: import("@prisma/client-runtime-utils").AnyNullClass;
+export declare const DbNull: any;
+export declare const JsonNull: any;
+export declare const AnyNull: any;
 export declare const ModelName: {};
 export type ModelName = (typeof ModelName)[keyof typeof ModelName];
 export declare const TransactionIsolationLevel: {

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { User, Settings, HeartPulse } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAuthStore } from "@/store/useAuthStore";
+import { useAuthStore, getRoleRedirect } from "@/store/useAuthStore";
 
 interface MobileNavProps {
   isOpen: boolean;
@@ -31,11 +31,11 @@ export function MobileNav({ isOpen, setIsOpen, isLoggedIn, pathname, navLinks, o
             <nav className="container mx-auto px-4 py-6 flex flex-col gap-2 flex-1">
               {isLoggedIn && (
               <Link
-                href="/dashboard"
+                href={getRoleRedirect(user?.role ?? null)}
                 onClick={() => setIsOpen(false)}
                 className="flex items-center gap-4 p-4 mb-4 bg-slate-50 rounded-2xl border border-slate-100"
               >
-                <div className="w-12 h-12 rounded-full bg-[#205E98]/10 flex items-center justify-center text-[#205E98]">
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                   <User className="w-6 h-6" />
                 </div>
                 <div>
@@ -45,7 +45,7 @@ export function MobileNav({ isOpen, setIsOpen, isLoggedIn, pathname, navLinks, o
               </Link>
               )}
 
-              {navLinks.map((link) => {
+              {navLinks.filter(link => link.label !== "My Bookings" || isLoggedIn).map((link) => {
                 const isActive = pathname === link.href || (pathname.startsWith('/doctors') && link.href === '/doctors');
                 return (
                   <Link
@@ -53,10 +53,10 @@ export function MobileNav({ isOpen, setIsOpen, isLoggedIn, pathname, navLinks, o
                     href={link.href}
                     onClick={() => setIsOpen(false)}
                     className={`flex items-center gap-3 px-4 py-3.5 text-base font-medium rounded-2xl transition-all ${
-                      isActive ? "text-[#205E98] bg-[#205E98]/10" : "text-slate-700 hover:text-[#205E98] hover:bg-slate-50"
+                      isActive ? "text-primary bg-primary/10" : "text-slate-700 hover:text-primary hover:bg-slate-50"
                     }`}
                   >
-                    <span className={isActive ? "text-[#205E98]" : "text-slate-400"}>{link.icon}</span>
+                    <span className={isActive ? "text-primary" : "text-slate-400"}>{link.icon}</span>
                     {link.label}
                   </Link>
                 );
@@ -94,7 +94,7 @@ export function MobileNav({ isOpen, setIsOpen, isLoggedIn, pathname, navLinks, o
                   </Button>
                 </Link>
                 <Link href="/doctors" onClick={() => setIsOpen(false)}>
-                  <Button className="w-full rounded-xl h-12 font-bold bg-[#205E98] hover:bg-[#184a7a] shadow-md shadow-[#205E98]/20">
+                  <Button className="w-full rounded-xl h-12 font-bold bg-primary hover:bg-primary/90 shadow-md shadow-primary/20">
                     Book Appointment
                   </Button>
                 </Link>

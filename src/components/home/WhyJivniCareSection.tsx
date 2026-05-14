@@ -18,7 +18,7 @@ export function WhyJivniCareSection() {
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
-            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#205E98]/5 text-[#205E98] text-sm font-bold uppercase tracking-widest mb-6">
+            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/5 text-primary text-sm font-bold uppercase tracking-widest mb-6">
               <Shield className="w-4 h-4" /> Trusted Healthcare
             </span>
             <h2 className="text-[2rem] leading-[1.1] md:text-5xl font-black tracking-tight text-slate-900 mb-6">
@@ -70,7 +70,7 @@ export function WhyJivniCareSection() {
           >
             {[
               {
-                icon: <Zap className="w-6 h-6 text-[#205E98]" />,
+                icon: <Zap className="w-6 h-6 text-primary" />,
                 bg: "bg-blue-50/80",
                 title: "Confirmed Appointments",
                 desc: "Your slot is booked instantly without any confusion or waiting. 100% confirmed bookings.",
@@ -111,11 +111,11 @@ export function WhyJivniCareSection() {
                 variants={fadeUp}
                 className={`${idx % 2 !== 0 ? 'sm:mt-12' : ''}`}
               >
-                <div className="group bg-white p-6 md:p-8 rounded-3xl md:rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-200/60 hover:shadow-2xl hover:shadow-[#205E98]/10 hover:-translate-y-2 hover:border-[#205E98]/30 transition-all duration-300 h-full">
+                <div className="group bg-white p-6 md:p-8 rounded-3xl md:rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-200/60 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-2 hover:border-primary/30 transition-all duration-300 h-full">
                   <div className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl ${feature.bg} flex items-center justify-center mb-5 md:mb-6 group-hover:scale-110 transition-transform duration-300`}>
                     {feature.icon}
                   </div>
-                  <h3 className="text-lg md:text-xl font-bold text-slate-900 mb-2 md:mb-3 group-hover:text-[#205E98] transition-colors">{feature.title}</h3>
+                  <h3 className="text-lg md:text-xl font-bold text-slate-900 mb-2 md:mb-3 group-hover:text-primary transition-colors">{feature.title}</h3>
                   <p className="text-slate-500 leading-relaxed text-xs md:text-sm font-medium">{feature.desc}</p>
                 </div>
               </motion.div>

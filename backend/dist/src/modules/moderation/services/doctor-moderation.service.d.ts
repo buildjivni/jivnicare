@@ -20,6 +20,8 @@ export declare class DoctorModerationService {
                 id: string;
                 name: string;
                 slug: string;
+                doctorIds: string[];
+                hospitalIds: string[];
             }[];
         } & {
             id: string;
@@ -39,8 +41,10 @@ export declare class DoctorModerationService {
             slug: string;
             profileImage: string | null;
             rating: number;
+            specialtyIds: string[];
+            keywordIds: string[];
             availableDays: string[];
-            availableTimeSlots: import("@prisma/client/runtime/client").JsonValue | null;
+            availableTimeSlots: import("@prisma/client/runtime/library").JsonValue | null;
             maxAppointmentsPerDay: number;
             isAcceptingAppointments: boolean;
             profileCompletionPercentage: number;
@@ -83,8 +87,10 @@ export declare class DoctorModerationService {
             slug: string;
             profileImage: string | null;
             rating: number;
+            specialtyIds: string[];
+            keywordIds: string[];
             availableDays: string[];
-            availableTimeSlots: import("@prisma/client/runtime/client").JsonValue | null;
+            availableTimeSlots: import("@prisma/client/runtime/library").JsonValue | null;
             maxAppointmentsPerDay: number;
             isAcceptingAppointments: boolean;
             profileCompletionPercentage: number;

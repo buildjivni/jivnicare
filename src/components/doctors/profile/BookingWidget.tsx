@@ -1,43 +1,66 @@
 "use client";
 
-import { Stethoscope, Video } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Stethoscope, Video, Users, Clock, Activity, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import type { Doctor } from "@/types";
-
-import type { DateItem } from "./BookingWidgetClient";
-
-const TIME_SLOTS = ["09:00 AM", "10:30 AM", "01:15 PM", "02:45 PM", "04:00 PM"];
 
 interface BookingWidgetProps {
   doctor: Doctor;
   selectedService: "clinic" | "video";
   onServiceChange: (service: "clinic" | "video") => void;
-  selectedSlot: string | null;
-  onSlotChange: (slot: string) => void;
-  availableDates: DateItem[];
-  selectedDate: DateItem;
-  onDateChange: (date: DateItem) => void;
   onBook: () => void;
 }
 
 const SERVICE_BTN = "flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all";
-const ACTIVE_SERVICE = "border-[#205E98] bg-[#205E98]/5 text-[#205E98]";
-const INACTIVE_SERVICE = "border-border bg-background text-muted-foreground hover:border-[#205E98]/30 hover:bg-muted";
+const ACTIVE_SERVICE = "border-primary bg-primary/5 text-primary";
+const INACTIVE_SERVICE = "border-border bg-background text-muted-foreground hover:border-primary/30 hover:bg-muted";
 
 export function BookingWidget({
   doctor,
   selectedService,
   onServiceChange,
-  selectedSlot,
-  onSlotChange,
-  availableDates,
-  selectedDate,
-  onDateChange,
   onBook,
 }: BookingWidgetProps) {
+  const [queue, setQueue] = useState({
+    currentToken: 0,
+    totalInQueue: 0,
+    estimatedWait: 0,
+    avgTime: 15,
+    status: "NOT_STARTED",
+    isClosedToday: false,
+  });
+
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchQueueStats = async () => {
+      try {
+        const res = await fetch(`/api/public/doctor/${doctor.id}/queue-stats`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success) {
+            setQueue(data.queue);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch queue stats", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchQueueStats();
+    // Poll every 30 seconds
+    const interval = setInterval(fetchQueueStats, 30000);
+    return () => clearInterval(interval);
+  }, [doctor.id]);
+
+  const isAvailableToday = doctor.available?.toLowerCase().includes("today") && !queue.isClosedToday;
+
   return (
-    <Card className="border-border/50 shadow-lg rounded-2xl bg-background overflow-hidden">
+    <Card className="border-border/50 shadow-lg rounded-2xl bg-background overflow-hidden" id="mobile-booking-widget">
       <CardContent className="p-0">
         {/* Service Selection */}
         <div className="p-5 bg-muted/30 border-b border-border/50">
@@ -56,51 +79,64 @@ export function BookingWidget({
           </div>
         </div>
 
-        {/* Date & Slot Selection */}
+        {/* Live Queue Status */}
         <div className="p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold text-base">Select Date</h3>
-            <span className="text-xs font-medium text-[#205E98]">{selectedDate.monthYear}</span>
+          <div className="flex items-center gap-2 mb-4">
+            <Activity className="w-4 h-4 text-emerald-500" />
+            <h3 className="font-bold text-base">Live Queue Status</h3>
+            {isAvailableToday && (
+              <span className="ml-auto text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                Open Now
+              </span>
+            )}
           </div>
 
-          <div className="flex justify-between gap-2 mb-6">
-            {availableDates.map((d) => {
-              const isActive = selectedDate.fullDate === d.fullDate;
-              return (
-                <button
-                  key={d.fullDate}
-                  onClick={() => onDateChange(d)}
-                  className={`flex flex-col items-center p-2 rounded-xl border min-w-[3.5rem] transition-all ${isActive ? "bg-[#205E98] text-white border-[#205E98] shadow-md" : "border-border hover:border-[#205E98]/50 text-foreground"}`}
-                >
-                  <span className={`text-xs ${isActive ? "text-blue-100" : "text-muted-foreground"}`}>{d.day}</span>
-                  <span className="font-bold text-lg mt-0.5">{d.date}</span>
-                </button>
-              );
-            })}
+          <div className="grid grid-cols-3 gap-3 mb-5">
+            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-center">
+              <p className="text-[10px] text-slate-500 font-bold uppercase mb-1">Current</p>
+              <p className="text-xl font-black text-primary">#{queue.currentToken}</p>
+            </div>
+            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-center">
+              <p className="text-[10px] text-slate-500 font-bold uppercase mb-1">In Queue</p>
+              <div className="flex items-center justify-center gap-1">
+                <Users className="w-3.5 h-3.5 text-amber-500" />
+                <p className="text-xl font-black text-slate-800">{queue.totalInQueue}</p>
+              </div>
+            </div>
+            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-center">
+              <p className="text-[10px] text-slate-500 font-bold uppercase mb-1">Est. Wait</p>
+              <div className="flex items-center justify-center gap-1">
+                <Clock className="w-3.5 h-3.5 text-emerald-500" />
+                <p className="text-xl font-black text-slate-800">{queue.estimatedWait}m</p>
+              </div>
+            </div>
           </div>
 
-          <h3 className="font-bold text-base mb-4">Available Slots</h3>
-          <div className="grid grid-cols-3 gap-2">
-            {TIME_SLOTS.map((time) => (
-              <button
-                key={time}
-                onClick={() => onSlotChange(time)}
-                className={`py-2 px-1 text-xs font-medium rounded-lg border transition-all ${selectedSlot === time ? "bg-[#258C54] text-white border-[#258C54]" : "border-border text-foreground hover:border-[#258C54]/50"}`}
-              >
-                {time}
-              </button>
-            ))}
+          {/* Consultation Fee Highlight */}
+          <div className="bg-primary/5 border border-primary/10 rounded-xl p-4 mb-5 flex items-center justify-between">
+            <div>
+              <p className="text-xs text-slate-500 font-semibold">Consultation Fee</p>
+              <p className="text-2xl font-black text-primary">
+                {selectedService === "video" ? doctor.videoFee : doctor.fee}
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-xs text-slate-500 font-semibold">~{queue.avgTime} min</p>
+              <p className="text-xs text-slate-400">per patient</p>
+            </div>
           </div>
 
-          <div className="hidden md:block mt-8">
+          {/* Join Queue CTA — Desktop */}
+          <div className="hidden md:block">
             <Button
               onClick={onBook}
-              disabled={!selectedSlot}
-              className="w-full h-14 rounded-xl bg-[#205E98] hover:bg-[#1a4b7a] shadow-md text-base font-semibold transition-all hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              className="w-full h-14 rounded-xl bg-primary hover:bg-[#1a4b7a] shadow-md text-base font-bold transition-all hover:scale-[1.02]"
             >
-              Continue to Book
+              Join Queue — Book Now
             </Button>
-            <p className="text-xs text-center text-muted-foreground mt-3">You won&apos;t be charged yet</p>
+            <p className="text-xs text-center text-muted-foreground mt-3 flex items-center justify-center gap-1.5">
+              <Shield className="w-3 h-3" /> Pay online or at the clinic
+            </p>
           </div>
         </div>
       </CardContent>

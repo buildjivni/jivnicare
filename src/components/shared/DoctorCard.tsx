@@ -24,7 +24,7 @@ export function DoctorCard({ doctor }: DoctorCardProps) {
 
   return (
     <Link href={`/doctors/${doctor.id}`} className="block h-full group outline-none" aria-label={`View profile of ${doctor.name}, ${doctor.specialty}`}>
-      <Card className="relative overflow-hidden border border-slate-200/60 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_20px_40px_rgba(32,94,152,0.1)] hover:border-[#205E98]/30 hover:-translate-y-1 transition-all duration-300 bg-white rounded-[24px] h-full flex flex-col group-focus-visible:ring-2 group-focus-visible:ring-[#205E98] group-focus-visible:ring-offset-2">
+      <Card className="relative overflow-hidden border border-slate-200/60 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_20px_40px_rgba(32,94,152,0.1)] hover:border-primary/30 hover:-translate-y-1 transition-all duration-300 bg-white rounded-[24px] h-full flex flex-col group-focus-visible:ring-2 group-focus-visible:ring-primary group-focus-visible:ring-offset-2">
 
         {/* 1. Clinic Banner Image */}
         <div className="relative h-28 md:h-32 w-full overflow-hidden shrink-0 bg-slate-100">
@@ -57,7 +57,7 @@ export function DoctorCard({ doctor }: DoctorCardProps) {
             <div className="relative group-hover:-translate-y-1 transition-transform duration-300">
               <Avatar className="h-24 w-24 border-[4px] border-white shadow-sm bg-white ring-1 ring-slate-100/50">
                 <AvatarImage src={doctor.image} alt={doctor.name} className="object-cover" />
-                <AvatarFallback className="bg-slate-50 text-[#205E98] font-bold text-2xl">
+                <AvatarFallback className="bg-slate-50 text-primary font-bold text-2xl">
                   {doctor.name.charAt(0)}
                 </AvatarFallback>
               </Avatar>
@@ -83,12 +83,12 @@ export function DoctorCard({ doctor }: DoctorCardProps) {
             {/* 3. Doctor Identity & Specialization */}
             <div className="mb-4">
               <div className="flex items-center gap-1.5 mb-1">
-                <h3 className="font-bold text-xl text-slate-900 group-hover:text-[#205E98] transition-colors leading-tight line-clamp-1">
+                <h3 className="font-bold text-xl text-slate-900 group-hover:text-primary transition-colors leading-tight line-clamp-1">
                   {doctor.name}
                 </h3>
-                <BadgeCheck className="w-5 h-5 text-[#205E98] shrink-0" aria-label="Verified Doctor" />
+                <BadgeCheck className="w-5 h-5 text-primary shrink-0" aria-label="Verified Doctor" />
               </div>
-              <p className="text-[#205E98] font-medium text-[14px]">{doctor.specialty}</p>
+              <p className="text-primary font-medium text-[14px]">{doctor.specialty}</p>
             </div>
 
             {/* 4. Experience & Education Row (Clean Pill format) */}
@@ -121,7 +121,7 @@ export function DoctorCard({ doctor }: DoctorCardProps) {
             <div className="bg-slate-50/60 rounded-xl p-3 md:p-4 border border-slate-100/60 mb-5 space-y-3">
               <div className="flex items-start gap-3">
                 <div className="mt-0.5 p-1.5 bg-white rounded-lg shadow-sm border border-slate-100 shrink-0">
-                  <MapPin className="w-4 h-4 text-[#205E98]" />
+                  <MapPin className="w-4 h-4 text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-[13px] text-slate-800 line-clamp-1">{doctor.clinic}</p>
@@ -146,7 +146,7 @@ export function DoctorCard({ doctor }: DoctorCardProps) {
 
             {/* 7. Booking CTA */}
             <Button
-              className="w-full h-12 rounded-xl bg-[#205E98] text-white hover:bg-[#184a7a] active:scale-[0.98] font-bold text-[15px] shadow-sm hover:shadow-[0_8px_20px_rgba(32,94,152,0.25)] transition-all duration-300 flex items-center justify-center gap-2 group/btn"
+              className="w-full h-12 rounded-xl bg-primary text-white hover:bg-primary/90 active:scale-[0.98] font-bold text-[15px] shadow-sm hover:shadow-[0_8px_20px_rgba(32,94,152,0.25)] transition-all duration-300 flex items-center justify-center gap-2 group/btn"
               aria-label={`Book appointment with ${doctor.name}`}
             >
               Book Appointment

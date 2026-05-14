@@ -5,8 +5,6 @@ import {
   Logger,
 } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
-import { PrismaPg } from '@prisma/adapter-pg';
-import { Pool } from 'pg';
 
 @Injectable()
 export class PrismaService
@@ -16,20 +14,9 @@ export class PrismaService
   private readonly logger = new Logger(PrismaService.name);
 
   constructor() {
-    const dbUrl = process.env.DATABASE_URL ?? '';
-
-    if (dbUrl.startsWith('prisma+postgres://')) {
-      // Prisma Postgres / Accelerate URL — uses Prisma's own protocol
-      super({
-        log: ['error', 'warn'],
-        accelerateUrl: dbUrl,
-      });
-    } else {
-      // Standard postgres:// (Railway, Supabase, local Postgres) — use pg adapter
-      const pool = new Pool({ connectionString: dbUrl });
-      const adapter = new PrismaPg(pool);
-      super({ adapter, log: ['error', 'warn'] });
-    }
+    super({
+      log: ['error', 'warn'],
+    });
   }
 
   async onModuleInit() {

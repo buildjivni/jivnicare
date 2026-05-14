@@ -18,10 +18,10 @@ const TYPE_ICONS: Record<string, React.ReactNode> = {
   VERIFICATION_REJECTED: <ShieldAlert className="w-4 h-4 text-red-500" />,
   VERIFICATION_SUSPENDED: <AlertTriangle className="w-4 h-4 text-amber-500" />,
   MODERATION_PENDING: <AlertTriangle className="w-4 h-4 text-amber-500" />,
-  PROFILE_UPDATED: <BadgeCheck className="w-4 h-4 text-[#205E98]" />,
+  PROFILE_UPDATED: <BadgeCheck className="w-4 h-4 text-primary" />,
   PLATFORM_ALERT: <Info className="w-4 h-4 text-slate-500" />,
   ADMIN_ALERT: <AlertTriangle className="w-4 h-4 text-red-500" />,
-  ENGAGEMENT_ALERT: <Info className="w-4 h-4 text-[#205E98]" />,
+  ENGAGEMENT_ALERT: <Info className="w-4 h-4 text-primary" />,
 };
 
 function timeAgo(dateStr: string): string {
@@ -123,7 +123,7 @@ export function NotificationBell({ token }: { token?: string | null }) {
         className="relative p-2 rounded-2xl hover:bg-slate-100 transition-colors"
       >
         {unread > 0 ? (
-          <BellDot className="w-5 h-5 text-[#205E98]" />
+          <BellDot className="w-5 h-5 text-primary" />
         ) : (
           <Bell className="w-5 h-5 text-slate-500" />
         )}
@@ -154,7 +154,7 @@ export function NotificationBell({ token }: { token?: string | null }) {
               {unread > 0 && (
                 <button
                   onClick={markAllRead}
-                  className="text-xs text-[#205E98] font-semibold hover:underline flex items-center gap-1"
+                  className="text-xs text-primary font-semibold hover:underline flex items-center gap-1"
                 >
                   <CheckCheck className="w-3.5 h-3.5" /> Mark all read
                 </button>
@@ -169,7 +169,7 @@ export function NotificationBell({ token }: { token?: string | null }) {
           <div className="max-h-80 overflow-y-auto">
             {loading ? (
               <div className="py-10 text-center">
-                <div className="w-6 h-6 border-2 border-[#205E98] border-t-transparent rounded-full animate-spin mx-auto" />
+                <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
                 <p className="text-xs text-slate-400 mt-2">Loading…</p>
               </div>
             ) : notifications.length === 0 ? (
@@ -191,7 +191,7 @@ export function NotificationBell({ token }: { token?: string | null }) {
                     {TYPE_ICONS[n.type] ?? <Info className="w-4 h-4 text-slate-400" />}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className={cn("text-xs font-bold text-slate-900 leading-tight", !n.isRead && "text-[#205E98]")}>
+                    <p className={cn("text-xs font-bold text-slate-900 leading-tight", !n.isRead && "text-primary")}>
                       {n.title}
                     </p>
                     <p className="text-xs text-slate-500 mt-0.5 leading-relaxed line-clamp-2">
@@ -200,7 +200,7 @@ export function NotificationBell({ token }: { token?: string | null }) {
                     <p className="text-[10px] text-slate-400 mt-1">{timeAgo(n.createdAt)}</p>
                   </div>
                   {!n.isRead && (
-                    <div className="w-2 h-2 bg-[#205E98] rounded-full mt-1.5 shrink-0" />
+                    <div className="w-2 h-2 bg-primary rounded-full mt-1.5 shrink-0" />
                   )}
                 </button>
               ))
@@ -210,7 +210,7 @@ export function NotificationBell({ token }: { token?: string | null }) {
           {/* Footer */}
           {notifications.length > 0 && (
             <div className="px-4 py-2.5 border-t border-slate-100 text-center">
-              <button className="text-xs text-[#205E98] font-semibold hover:underline">
+              <button className="text-xs text-primary font-semibold hover:underline">
                 View all notifications
               </button>
             </div>

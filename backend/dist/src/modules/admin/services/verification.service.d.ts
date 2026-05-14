@@ -27,8 +27,10 @@ export declare class VerificationService {
         slug: string;
         profileImage: string | null;
         rating: number;
+        specialtyIds: string[];
+        keywordIds: string[];
         availableDays: string[];
-        availableTimeSlots: import("@prisma/client/runtime/client").JsonValue | null;
+        availableTimeSlots: import("@prisma/client/runtime/library").JsonValue | null;
         maxAppointmentsPerDay: number;
         isAcceptingAppointments: boolean;
         profileCompletionPercentage: number;
@@ -54,6 +56,8 @@ export declare class VerificationService {
         verificationStatus: import("@prisma/client").$Enums.VerificationStatus;
         slug: string;
         rating: number;
+        specialtyIds: string[];
+        keywordIds: string[];
         description: string | null;
         address: string;
         hospitalType: string;
