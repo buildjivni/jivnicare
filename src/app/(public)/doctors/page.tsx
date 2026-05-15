@@ -203,11 +203,6 @@ function DoctorListingContent() {
           )}
         </AnimatePresence>
 
-        {/* ── Mobile Search Bar ──────────────────────────────── */}
-        <div className="block md:hidden mb-6">
-          <SmartSearchBar district="Patna" className="w-full shadow-sm" />
-        </div>
-
         <div className="flex flex-col md:flex-row gap-6">
           <DoctorFilters
             selectedSpecialties={selectedSpecialties}
