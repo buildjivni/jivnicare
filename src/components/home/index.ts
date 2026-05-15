@@ -7,3 +7,5 @@ export * from './CtaBannerSection';
 export * from './HeroSection';
 export * from './SpecialtiesSection';
 export * from './AvailableDoctorsSection';
+export * from './TrustedBySection';
+export * from './PartnerCtaSection';

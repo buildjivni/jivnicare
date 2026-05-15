@@ -1,28 +1,70 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { 
   Calendar, Clock, MapPin, ChevronRight, 
-  Search, ShieldCheck, MessageSquare, ExternalLink
+  Search, ShieldCheck, MessageSquare, ExternalLink,
+  Activity, Users
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 export default function MyBookingsPage() {
-  const [bookings, setBookings] = useState<any[]>([]);
+  const router = useRouter();
+  interface Booking {
+    id: string;
+    tokenNumber: number;
+    status: string;
+    doctorId: string;
+    doctorName: string;
+    clinic: string;
+    location: string;
+    estimatedWaitMinutes: number;
+    createdAt: string;
+  }
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchBookings = async () => {
-      try {
-        const res = await fetch("/api/patient/my-bookings");
-        const data = await res.json();
-        
-        if (res.ok && data.bookings) {
-          // Map backend tokens to UI format
-          const formattedBookings = data.bookings.map((t: any) => ({
+    fetchBookings();
+
+    // Live Tracking Polling (Every 60s)
+    const interval = setInterval(fetchBookings, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchBookings = async () => {
+    try {
+      const res = await fetch("/api/patient/my-bookings");
+      const data = await res.json();
+      
+      if (res.ok && data.bookings) {
+        // Map backend tokens to UI format
+        interface ApiToken {
+          id: string;
+          tokenNumber: number;
+          status: string;
+          tokenIssuedAt: string;
+          queue: {
+            doctorId: string;
+            currentActiveToken: number;
+            doctor: {
+              user: { name: string };
+              clinic?: string;
+              district?: string;
+            };
+          };
+        }
+        const formattedBookings = data.bookings.map((t: ApiToken) => {
+          const currentServing = t.queue.currentActiveToken || 0;
+          const pos = t.tokenNumber - currentServing;
+          const queuePosition = pos > 0 ? pos : 0;
+          const avgTime = (t.queue as any).doctor?.averageConsultationTime || 15;
+          
+          return {
             id: t.id,
             tokenNumber: t.tokenNumber,
             status: t.status,
@@ -30,24 +72,22 @@ export default function MyBookingsPage() {
             doctorName: t.queue.doctor.user.name,
             clinic: t.queue.doctor.clinic || "JivniCare Clinic",
             location: t.queue.doctor.district || "Local",
-            estimatedWaitMinutes: t.tokenNumber * 10, // 10 min avg per patient
+            estimatedWaitMinutes: queuePosition * avgTime, 
             createdAt: t.tokenIssuedAt,
-          }));
-          setBookings(formattedBookings);
-        } else {
-          console.error("Error fetching bookings:", data.error);
-        }
-      } catch (e) {
-        console.error("Failed to load bookings", e);
-      } finally {
-        setIsLoading(false);
+            currentServing,
+            queuePosition
+          };
+        });
+        setBookings(formattedBookings);
       }
-    };
-    
-    fetchBookings();
-  }, []);
+    } catch (e) {
+      console.error("Failed to load bookings", e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  const handleShareWhatsApp = (booking: any) => {
+  const handleShareWhatsApp = (booking: Booking) => {
     const text = `*JivniCare Token Detail*\n\n` +
       `🩺 *Doctor:* ${booking.doctorName}\n` +
       `🎫 *Token:* #${booking.tokenNumber}\n` +
@@ -70,7 +110,35 @@ export default function MyBookingsPage() {
         {isLoading ? (
           <div className="space-y-4">
             {[1, 2, 3].map(i => (
-              <div key={i} className="h-32 bg-white rounded-3xl animate-pulse border border-slate-100" />
+              <div key={i} className="bg-white rounded-3xl border border-slate-100 overflow-hidden animate-pulse">
+                <div className="flex flex-col md:flex-row">
+                  {/* Token column skeleton */}
+                  <div className="bg-primary/20 md:w-40 p-6 flex flex-col items-center justify-center gap-3">
+                    <div className="h-3 w-10 bg-white/30 rounded-full" />
+                    <div className="h-12 w-16 bg-white/40 rounded-xl" />
+                    <div className="h-5 w-20 bg-white/20 rounded-full" />
+                  </div>
+                  {/* Info section skeleton */}
+                  <div className="flex-1 p-6 space-y-4">
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-2">
+                        <div className="h-5 w-36 bg-slate-200 rounded-full" />
+                        <div className="h-4 w-28 bg-slate-100 rounded-full" />
+                      </div>
+                      <div className="h-4 w-20 bg-slate-100 rounded-full" />
+                    </div>
+                    <div className="flex gap-4">
+                      <div className="h-4 w-20 bg-slate-100 rounded-full" />
+                      <div className="h-4 w-20 bg-slate-100 rounded-full" />
+                      <div className="h-4 w-20 bg-slate-100 rounded-full" />
+                    </div>
+                    <div className="flex gap-3 pt-2">
+                      <div className="h-12 w-24 bg-slate-100 rounded-xl" />
+                      <div className="h-12 w-28 bg-slate-100 rounded-xl" />
+                    </div>
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
         ) : bookings.length > 0 ? (
@@ -86,10 +154,10 @@ export default function MyBookingsPage() {
                   <CardContent className="p-0">
                     <div className="flex flex-col md:flex-row">
                       {/* Token Section */}
-                      <div className="bg-primary md:w-40 p-6 flex flex-col items-center justify-center text-white text-center">
-                        <p className="text-[10px] font-bold uppercase tracking-widest opacity-70 mb-1">Token</p>
-                        <p className="text-4xl font-black">#{booking.tokenNumber}</p>
-                        <div className="mt-3 flex items-center gap-1.5 bg-white/10 px-2 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border border-white/10">
+                      <div className="bg-primary md:w-40 p-4 md:p-6 flex flex-col items-center justify-center text-white text-center">
+                        <p className="text-[10px] md:text-xs font-bold uppercase tracking-widest opacity-70 mb-1">Token</p>
+                        <p className="text-4xl md:text-5xl font-black">#{booking.tokenNumber}</p>
+                        <div className="mt-2 md:mt-3 flex items-center gap-1.5 bg-white/10 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border border-white/10">
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                           {booking.status}
                         </div>
@@ -110,31 +178,35 @@ export default function MyBookingsPage() {
 
                         <div className="mt-4 flex flex-wrap gap-4 text-sm text-slate-500">
                           <div className="flex items-center gap-2">
+                            <Activity className="w-4 h-4 text-primary" />
+                            <span>Serving: <b>#{ (booking as any).currentServing }</b></span>
+                          </div>
+                          <div className="flex items-center gap-2">
                             <Clock className="w-4 h-4 text-emerald-500" />
                             <span>Wait: <b>~{booking.estimatedWaitMinutes}m</b></span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <MapPin className="w-4 h-4 text-slate-400" />
-                            <span>{booking.location}</span>
+                            <Users className="w-4 h-4 text-amber-500" />
+                            <span>Pos: <b>{ (booking as any).queuePosition }</b></span>
                           </div>
                         </div>
 
-                        <div className="mt-6 flex items-center gap-2">
+                        <div className="mt-6 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                           <Button 
                             variant="outline" 
                             size="sm"
                             onClick={() => handleShareWhatsApp(booking)}
-                            className="rounded-xl border-emerald-100 text-emerald-700 hover:bg-emerald-50 font-bold gap-1.5 h-10"
+                            className="rounded-xl border-emerald-100 text-emerald-700 hover:bg-emerald-50 font-bold gap-1.5 h-12 md:h-10 w-full sm:w-auto"
                           >
-                            <MessageSquare className="w-3.5 h-3.5" /> Share
+                            <MessageSquare className="w-4 h-4 md:w-3.5 md:h-3.5" /> Share
                           </Button>
                           <Button 
                             variant="outline" 
                             size="sm"
-                            onClick={() => window.location.href = `/doctors/${booking.doctorId}`}
-                            className="rounded-xl border-slate-200 text-slate-600 hover:bg-slate-50 font-bold gap-1.5 h-10 ml-auto"
+                            onClick={() => router.push(`/doctors/${booking.doctorId}`)}
+                            className="rounded-xl border-slate-200 text-slate-600 hover:bg-slate-50 font-bold gap-1.5 h-12 md:h-10 sm:ml-auto w-full sm:w-auto"
                           >
-                              View Clinic <ExternalLink className="w-3.5 h-3.5" />
+                              View Clinic <ExternalLink className="w-4 h-4 md:w-3.5 md:h-3.5" />
                           </Button>
                         </div>
                       </div>

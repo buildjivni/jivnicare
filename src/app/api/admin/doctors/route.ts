@@ -18,14 +18,19 @@ export async function GET(req: Request) {
     }
 
     const url = new URL(req.url);
-    const status = url.searchParams.get("status") || "PENDING";
+    const status = url.searchParams.get("status") || "ALL";
+
+    const whereClause: any = {};
+    if (status !== "ALL") {
+      whereClause.verificationStatus = status;
+    }
 
     const doctors = await prisma.doctor.findMany({
-      where: {
-        verificationStatus: status as any,
-      },
+      where: whereClause,
       include: {
         user: true, // to get phone/email if needed
+        clinicOperations: true,
+        weeklySchedule: true,
       },
       orderBy: {
         createdAt: 'desc',

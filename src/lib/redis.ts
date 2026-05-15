@@ -1,0 +1,37 @@
+import { Redis } from '@upstash/redis';
+
+// Provide a fallback dummy client for local development if env vars are missing,
+// so the build doesn't crash completely, but warns.
+const createRedisClient = () => {
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+  if (!url || !token) {
+    console.warn("⚠️ UPSTASH_REDIS variables are missing. Using in-memory fallback for development only!");
+    // Basic mock for local dev
+    const store = new Map<string, any>();
+    return {
+      get: async (key: string) => store.get(key) || null,
+      set: async (key: string, value: any, options?: any) => { 
+        store.set(key, value); 
+        return 'OK'; 
+      },
+      setex: async (key: string, ttl: number, value: any) => {
+        store.set(key, value);
+        setTimeout(() => store.delete(key), ttl * 1000);
+        return 'OK';
+      },
+      del: async (key: string) => { 
+        store.delete(key); 
+        return 1; 
+      },
+    } as unknown as Redis;
+  }
+
+  return new Redis({
+    url,
+    token,
+  });
+};
+
+export const redis = createRedisClient();

@@ -25,12 +25,37 @@ function PatientLoginContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [resendTimer, setResendTimer] = useState(30);
   const [canResend, setCanResend] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [countdown, setCountdown] = useState<number>(0);
+
+  // Load from sessionStorage on mount
+  useEffect(() => {
+    const savedName = sessionStorage.getItem("jc_login_name");
+    const savedPhone = sessionStorage.getItem("jc_login_phone");
+    if (savedName) setName(savedName);
+    if (savedPhone) setPhone(savedPhone);
+  }, []);
+
+  // Save to sessionStorage on change
+  useEffect(() => {
+    if (name) sessionStorage.setItem("jc_login_name", name);
+    if (phone) sessionStorage.setItem("jc_login_phone", phone);
+  }, [name, phone]);
+
+  // Handle countdown for rate limits
+  useEffect(() => {
+    if (countdown > 0) {
+      const timer = setInterval(() => setCountdown(c => c - 1), 1000);
+      return () => clearInterval(timer);
+    }
+  }, [countdown]);
 
   useEffect(() => {
     if (step === "otp" && resendTimer > 0) {
       const timerId = setTimeout(() => setResendTimer((prev) => prev - 1), 1000);
       return () => clearTimeout(timerId);
     } else if (resendTimer === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCanResend(true);
     }
   }, [step, resendTimer]);
@@ -40,6 +65,7 @@ function PatientLoginContent() {
     if (phone.length < 10 || name.length < 2) return;
     setIsLoading(true);
     
+    setError(null);
     try {
       const res = await fetch("/api/auth/send-otp", {
         method: "POST",
@@ -47,14 +73,23 @@ function PatientLoginContent() {
         body: JSON.stringify({ phone }),
       });
       
-      if (!res.ok) throw new Error("Failed to send OTP");
+      const data = await res.json();
+
+      if (!res.ok) {
+        if (res.status === 429) {
+          setError(data.error || "Too many requests.");
+          if (data.retryAfter) setCountdown(data.retryAfter);
+          return;
+        }
+        throw new Error(data.error || "Failed to send OTP");
+      }
       
       setStep("otp");
       setResendTimer(30);
       setCanResend(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      alert("Error sending OTP. Please try again.");
+      setError(error.message || "Error sending OTP. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -65,6 +100,7 @@ function PatientLoginContent() {
     if (otp.length < 4) return;
     setIsLoading(true);
 
+    setError(null);
     try {
       const res = await fetch("/api/auth/verify-otp", {
         method: "POST",
@@ -78,17 +114,20 @@ function PatientLoginContent() {
         throw new Error(data.error || "Verification failed");
       }
       
+      // Clear persistence on success
+      sessionStorage.removeItem("jc_login_name");
+      sessionStorage.removeItem("jc_login_phone");
+
       login({
         id: data.user.id,
         name: data.user.name || name.trim() || "Patient User",
         role: "PATIENT",
       });
-      // Token is already set as httpOnly cookie by backend — no need to store in Zustand
       
       router.push(redirectUrl);
     } catch (error: any) {
       console.error(error);
-      alert(error.message);
+      setError(error.message || "Verification failed");
     } finally {
       setIsLoading(false);
     }
@@ -96,7 +135,7 @@ function PatientLoginContent() {
 
   return (
     <div className="min-h-screen bg-[#f7f9fc] flex items-center justify-center p-4">
-      <div className="w-full max-w-4xl bg-white rounded-[2.5rem] shadow-2xl flex overflow-hidden fade-in min-h-[550px]">
+      <div className="w-full max-w-4xl bg-white rounded-3xl md:rounded-[2.5rem] shadow-xl md:shadow-2xl flex overflow-hidden fade-in min-h-[500px] md:min-h-[550px]">
         {/* Left Side - Branding */}
         <div className="w-1/2 bg-gradient-to-br from-[#205E98] to-[#1E3A8A] p-12 flex flex-col justify-between relative overflow-hidden hidden md:flex">
           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
@@ -104,11 +143,7 @@ function PatientLoginContent() {
           <div className="relative z-10">
             <Link href="/" className="flex items-center gap-3 mb-8 cursor-pointer">
               <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-lg">
-                 <svg viewBox="0 0 100 100" className="w-8 h-8">
-                  <circle cx="50" cy="25" r="12" fill={BrandColors.blue} />
-                  <path d="M 45 40 Q 20 50 25 80 Q 40 85 48 75 Q 45 60 45 40 Z" fill={BrandColors.blue} />
-                  <path d="M 55 40 Q 80 50 75 80 Q 60 85 52 75 Q 55 60 55 40 Z" fill={BrandColors.green} />
-                </svg>
+                 <img src="/logo.png" alt="JivniCare Logo" className="w-8 h-8 object-contain" />
               </div>
               <h2 className="text-3xl font-black text-white tracking-tight">JivniCare</h2>
             </Link>
@@ -134,7 +169,7 @@ function PatientLoginContent() {
         </div>
 
         {/* Right Side - Login Form */}
-        <div className="w-full md:w-1/2 p-8 lg:p-16 flex flex-col justify-center bg-white relative">
+        <div className="w-full md:w-1/2 p-6 sm:p-8 lg:p-16 flex flex-col justify-center bg-white relative">
           <div className="max-w-sm w-full mx-auto">
             {step === "phone" ? (
               <div className="fade-in">
@@ -142,6 +177,22 @@ function PatientLoginContent() {
                   <h2 className="text-3xl font-black text-slate-900">Sign In / Sign Up</h2>
                   <p className="text-slate-500 font-medium mt-2">Enter your mobile number to continue.</p>
                 </div>
+
+                {error && (
+                  <div className="mb-6 p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
+                    <div className="w-5 h-5 bg-rose-500 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                      <span className="text-white text-xs font-bold">!</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-rose-900">{error}</p>
+                      {countdown > 0 && (
+                        <p className="text-xs text-rose-600 mt-1">
+                          You can try again in <span className="font-bold">{countdown} seconds</span>.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 <form onSubmit={handleSendOtp} className="space-y-5">
                   <div>
@@ -176,7 +227,7 @@ function PatientLoginContent() {
 
                   <Button 
                     type="submit" 
-                    disabled={isLoading || phone.length < 10 || name.length < 2}
+                    disabled={isLoading || phone.length < 10 || name.length < 2 || countdown > 0}
                     className="w-full h-14 rounded-xl bg-primary hover:bg-primary/90 text-white font-black text-lg shadow-xl shadow-blue-900/20 transition-all flex items-center justify-center group"
                   >
                     {isLoading ? (
@@ -204,6 +255,15 @@ function PatientLoginContent() {
                   <h2 className="text-3xl font-black text-slate-900">Verify OTP</h2>
                   <p className="text-slate-500 font-medium mt-2">Code sent to +91 {phone.slice(0,4)} {phone.slice(4,7)} {phone.slice(7)}</p>
                 </div>
+
+                {error && (
+                  <div className="mb-6 p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
+                    <div className="w-5 h-5 bg-rose-500 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                      <span className="text-white text-xs font-bold">!</span>
+                    </div>
+                    <p className="text-sm font-bold text-rose-900">{error}</p>
+                  </div>
+                )}
 
                 <form onSubmit={handleVerifyOtp} className="space-y-6">
                   <div>
@@ -238,17 +298,18 @@ function PatientLoginContent() {
                 </form>
                 
                 <div className="mt-6 text-center">
-                   {canResend ? (
-                     <button 
-                       onClick={handleSendOtp} 
-                       className="inline-flex items-center gap-1.5 text-sm font-bold text-primary hover:text-[#184a7a] transition-colors"
-                     >
-                       <RefreshCw className="w-3.5 h-3.5" />
-                       Resend OTP
-                     </button>
-                   ) : (
+                    {canResend ? (
+                      <button 
+                        onClick={handleSendOtp} 
+                        disabled={isLoading || countdown > 0}
+                        className="inline-flex items-center gap-1.5 text-sm font-bold text-primary hover:text-[#184a7a] transition-colors disabled:opacity-50"
+                      >
+                        <RefreshCw className="w-3.5 h-3.5" />
+                        Resend OTP
+                      </button>
+                    ) : (
                      <p className="text-sm font-medium text-slate-500">
-                       Didn't receive the code? Resend in <span className="font-bold text-slate-700">{resendTimer}s</span>
+                       Didn&apos;t receive the code? Resend in <span className="font-bold text-slate-700">{resendTimer}s</span>
                      </p>
                    )}
                 </div>
@@ -257,7 +318,7 @@ function PatientLoginContent() {
             
             <div className="mt-12 pt-8 border-t border-slate-100 text-center">
               <p className="text-xs font-medium text-slate-400">
-                By continuing, you agree to <BrandName />'s <br /> Terms of Service and Privacy Policy.
+                By continuing, you agree to <BrandName />&apos;s <br /> Terms of Service and Privacy Policy.
               </p>
             </div>
           </div>

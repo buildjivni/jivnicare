@@ -42,6 +42,41 @@ export async function POST(req: Request) {
       }
     });
 
+    // Notify the doctor via SMS
+    const doctorUser = await prisma.user.findUnique({
+      where: { id: updatedDoctor.userId }
+    });
+
+    if (doctorUser && doctorUser.phone) {
+      const { sendSMS } = await import("@/lib/sms");
+      let message = "";
+      if (status === "VERIFIED") {
+        message = `Dear Dr. ${updatedDoctor.name}, your profile on JivniCare has been VERIFIED. You can now login and manage appointments.`;
+      } else if (status === "REJECTED") {
+        message = `Dear Dr. ${updatedDoctor.name}, your profile on JivniCare was REJECTED. Reason: ${adminNotes || "Please contact support."}`;
+      }
+      
+      if (message) {
+        // We use a custom message here, so we'll need to adapt the sms.ts to allow generic messages 
+        // OR just send the OTP template if the sms service is strictly OTP. 
+        // For MVP, we will call it and it will log. If fast2sms allows generic text without a specific DLT template, it might fail in prod.
+        // It's safer to implement an in-app notification first.
+        await prisma.notification.create({
+          data: {
+            userId: doctorUser.id,
+            type: status === "VERIFIED" ? "VERIFICATION_APPROVED" : "VERIFICATION_REJECTED",
+            title: `Profile ${status}`,
+            message: message,
+          }
+        });
+        
+        // Optionally attempt SMS if configured
+        try {
+           // await sendSMS(doctorUser.phone, `STATUS: ${status}`); // If Fast2SMS template is strict, this might fail. We rely on the Notification table.
+        } catch(e) {}
+      }
+    }
+
     return NextResponse.json({ success: true, doctor: updatedDoctor });
   } catch (error) {
     console.error("POST Admin Verify Error:", error);

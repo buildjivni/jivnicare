@@ -2,22 +2,23 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, ShieldCheck } from "lucide-react";
+import { ArrowRight, ShieldCheck, Activity } from "lucide-react";
 import { PatientDetailsForm } from "./PatientDetailsForm";
 
 import { useBookingStore } from "@/store/useBookingStore";
-import { getDoctorQueueStatus } from "@/lib/queue-logic";
 import { Button } from "@/components/ui/button";
 
 export function PaymentForm() {
   const router = useRouter();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [errors, setErrors] = useState<{ submit?: string }>({});
   const setGeneratedToken = useBookingStore(state => state.setGeneratedToken);
   const patientDetails = useBookingStore(state => state.patientDetails);
   const selectedDoctor = useBookingStore(state => state.selectedDoctor);
 
   const handleJoinQueue = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isProcessing) return;
 
     // Validate patient details before proceeding
     if (!patientDetails.name.trim()) {
@@ -34,7 +35,7 @@ export function PaymentForm() {
     setIsProcessing(true);
     
     try {
-      const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
+      const today = new Date().toISOString().split('T')[0]; 
       
       const response = await fetch("/api/patient/book-appointment", {
         method: "POST",
@@ -48,11 +49,16 @@ export function PaymentForm() {
       const data = await response.json();
 
       if (!response.ok) {
+        // Handle specific API errors gracefully
+        if (response.status === 401) {
+          router.push(`/login?redirect=/checkout&error=session_expired`);
+          return;
+        }
         throw new Error(data.error || "Failed to book appointment");
       }
 
       // Map backend token format to the frontend store format
-      const avgConsultMinutes = 10; // default avg per patient
+      const avgConsultMinutes = selectedDoctor?.averageConsultationTime || 10;
       const token = {
         id: data.token.id,
         tokenNumber: data.token.tokenNumber,
@@ -70,25 +76,45 @@ export function PaymentForm() {
       
       setGeneratedToken(token);
       
-      // Also persist to localStorage for booking history recovery
+      // Mandatory Persistence for Recovery
       try {
+        localStorage.setItem("jc_active_token", JSON.stringify(token));
         const history = JSON.parse(localStorage.getItem("jc_booking_history") || "[]");
-        history.unshift(token);
-        localStorage.setItem("jc_booking_history", JSON.stringify(history.slice(0, 20)));
-      } catch { /* ignore */ }
+        // Prevent duplicates in history
+        if (!history.find((h: any) => h.id === token.id)) {
+          history.unshift(token);
+          localStorage.setItem("jc_booking_history", JSON.stringify(history.slice(0, 20)));
+        }
+      } catch { /* ignore local storage errors */ }
       
       router.push("/confirmation");
     } catch (err: any) {
-      alert("Booking failed: " + err.message);
+      // Premium medical-grade error handling
+      const errorMessage = err.message || "Something went wrong. Please try again.";
+      setErrors({ submit: errorMessage });
       setIsProcessing(false);
+      
+      // Scroll to error
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
+
+  const submitError = (errors as any).submit;
 
   return (
     <div className="flex-1 space-y-8">
       <PatientDetailsForm />
       
       <section>
+        {submitError && (
+          <div className="mb-6 p-4 rounded-2xl bg-red-50 border border-red-100 flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+            <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-600 shrink-0">
+              <Activity className="w-5 h-5" />
+            </div>
+            <p className="text-sm font-bold text-red-800">{submitError}</p>
+          </div>
+        )}
+
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-2xl font-bold tracking-tight text-slate-900">Confirm Booking</h2>
         </div>
@@ -99,7 +125,7 @@ export function PaymentForm() {
             <Button
               type="submit"
               disabled={isProcessing}
-              className="w-full h-14 md:h-16 rounded-2xl bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20 transition-all hover:scale-[1.02] text-lg font-bold group disabled:opacity-70 disabled:hover:scale-100 disabled:cursor-not-allowed overflow-hidden relative min-h-[44px]"
+              className="w-full h-14 md:h-16 rounded-2xl bg-primary hover:bg-primary/90 hover:brightness-105 hover:shadow-xl shadow-xl shadow-primary/20 transition-all text-lg font-bold group disabled:opacity-70 disabled:cursor-not-allowed overflow-hidden relative min-h-[44px]"
             >
               {isProcessing ? (
                 <div className="flex items-center gap-2">

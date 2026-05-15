@@ -34,7 +34,7 @@ function timeAgo(dateStr: string): string {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
+const API = process.env.NEXT_PUBLIC_API_URL || "/api";
 
 async function apiFetch(path: string, token: string, opts?: RequestInit) {
   const res = await fetch(`${API}${path}`, {
@@ -64,22 +64,30 @@ export function NotificationBell({ token }: { token?: string | null }) {
   // Poll unread count every 30 seconds if logged in
   useEffect(() => {
     if (!token) return;
+
+    let timeoutId: NodeJS.Timeout;
+
     const fetchCount = async () => {
       try {
-        const data = await apiFetch("/notifications/unread-count", token);
-        setUnread(data.unreadCount ?? 0);
+        if (document.visibilityState === "visible") {
+          const data = await apiFetch("/notifications/unread-count", token);
+          setUnread(data.unreadCount ?? 0);
+        }
       } catch {
         // silent
+      } finally {
+        timeoutId = setTimeout(fetchCount, 30000);
       }
     };
+
     fetchCount();
-    const interval = setInterval(fetchCount, 30_000);
-    return () => clearInterval(interval);
+    return () => clearTimeout(timeoutId);
   }, [token]);
 
   // Load notifications when panel opens
   useEffect(() => {
     if (!open || !token) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     apiFetch("/notifications?limit=15", token)
       .then((data) => setNotifications(data.notifications ?? []))
@@ -134,11 +142,9 @@ export function NotificationBell({ token }: { token?: string | null }) {
         )}
       </button>
 
-      {/* Dropdown Panel */}
       {open && (
         <div
-          className="absolute right-0 top-12 w-80 md:w-96 bg-white rounded-3xl shadow-2xl border border-slate-100 z-50 overflow-hidden"
-          style={{ animation: "fadeSlideDown 150ms ease" }}
+          className="absolute right-0 top-12 w-80 md:w-96 max-w-[calc(100%-32px)] sm:max-w-none bg-white rounded-3xl shadow-2xl border border-slate-100 z-[120] overflow-hidden animate-in fade-in slide-in-from-top-4 duration-150 origin-top-right"
         >
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
@@ -159,7 +165,7 @@ export function NotificationBell({ token }: { token?: string | null }) {
                   <CheckCheck className="w-3.5 h-3.5" /> Mark all read
                 </button>
               )}
-              <button onClick={() => setOpen(false)} className="p-1 hover:bg-slate-100 rounded-xl">
+              <button aria-label="Close notifications" onClick={() => setOpen(false)} className="p-1 hover:bg-slate-100 rounded-xl">
                 <X className="w-4 h-4 text-slate-400" />
               </button>
             </div>
@@ -218,12 +224,6 @@ export function NotificationBell({ token }: { token?: string | null }) {
         </div>
       )}
 
-      <style jsx>{`
-        @keyframes fadeSlideDown {
-          from { opacity: 0; transform: translateY(-8px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
     </div>
   );
 }

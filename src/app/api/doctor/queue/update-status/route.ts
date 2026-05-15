@@ -48,6 +48,20 @@ export async function PUT(request: Request) {
 
     // Use Prisma transaction to atomically update both the token status and the daily queue's active token
     const result = await prisma.$transaction(async (tx) => {
+      // Phase 5: Strict Transition Validation
+      const currentStatus = queueToken.status;
+      const allowedTransitions: Record<string, string[]> = {
+        "WAITING": ["IN_CONSULTATION", "SKIPPED", "CANCELLED"],
+        "IN_CONSULTATION": ["COMPLETED", "SKIPPED", "WAITING"], // Allow reverting to WAITING if accidental
+        "SKIPPED": ["WAITING", "IN_CONSULTATION"],
+        "COMPLETED": [], // Final state
+        "CANCELLED": []  // Final state
+      };
+
+      if (!allowedTransitions[currentStatus]?.includes(status)) {
+        throw new Error(`Invalid status transition from ${currentStatus} to ${status}`);
+      }
+
       // 1. Update the token status
       const updatedToken = await tx.queueToken.update({
         where: { id: tokenId },

@@ -7,7 +7,6 @@ import {
   Stethoscope, User, Sparkles, Mic,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { DOCTORS } from "@/data/mock-data";
 import { generateLocalSuggestions, getTopSearches } from "@/lib/search-engine";
 import type { LocalSuggestion } from "@/lib/search-engine";
 
@@ -96,11 +95,7 @@ export function SmartSearchBar({
 
   // Load trending + recents on mount
   useEffect(() => {
-    const backendUrl = `/api/intelligence/trending${district ? `?district=${district}` : ""}`;
-    fetch(backendUrl)
-      .then(r => r.json())
-      .then(d => setTrending(d.searches?.slice(0, 6) ?? []))
-      .catch(() => setTrending(getTopSearches(6)));
+    setTrending(getTopSearches(6));
     try {
       const stored = localStorage.getItem("jivnicare_recent_searches");
       if (stored) setRecentSearches(JSON.parse(stored).slice(0, 5));
@@ -110,28 +105,40 @@ export function SmartSearchBar({
   // Sync with URL
   useEffect(() => {
     const q = searchParams?.get("q") || searchParams?.get("query") || "";
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (q) setQuery(q);
   }, [searchParams]);
 
   // Generate suggestions
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSuggestions([]);
     if (!focused || debouncedQuery.length < 1) return;
     setIsLoading(true);
     const ctrl = new AbortController();
     const timeout = setTimeout(() => ctrl.abort(), 700);
-    const backendUrl = `/api/intelligence/suggestions?q=${encodeURIComponent(debouncedQuery)}${district ? `&district=${district}` : ""}`;
+    // Fetch suggestions from public search API (limit results to 7)
+    const backendUrl = `/api/public/search?q=${encodeURIComponent(debouncedQuery)}${district ? `&district=${district}` : ""}&limit=7`;
     fetch(backendUrl, { signal: ctrl.signal })
       .then(r => r.json())
-      .then(d => {
-        if (Array.isArray(d) && d.length > 0) setSuggestions(d.slice(0, 7));
-        else setSuggestions(generateLocalSuggestions(debouncedQuery, DOCTORS));
+      .then(data => {
+        if (data.results && data.results.length > 0) {
+          const mapped: LocalSuggestion[] = data.results.map((d: any) => ({
+            type: "doctor",
+            text: d.name,
+            hint: d.specialty
+          }));
+          // Add local specialty matches for better UX
+          const localSpecs = generateLocalSuggestions(debouncedQuery, []);
+          setSuggestions([...localSpecs.slice(0, 3), ...mapped]);
+        } else {
+          setSuggestions(generateLocalSuggestions(debouncedQuery, []));
+        }
       })
-      .catch(() => setSuggestions(generateLocalSuggestions(debouncedQuery, DOCTORS)))
+      .catch(() => setSuggestions(generateLocalSuggestions(debouncedQuery, [])))
       .finally(() => { clearTimeout(timeout); setIsLoading(false); });
     return () => { ctrl.abort(); clearTimeout(timeout); };
   }, [debouncedQuery, focused, district]);
-
   // Close panel on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -142,6 +149,18 @@ export function SmartSearchBar({
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
+
+  // Lock scroll when search panel is open on mobile
+  useEffect(() => {
+    if (showPanel && window.innerWidth < 768) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [showPanel]);
 
   // Save + navigate
   const doSearch = useCallback((q: string) => {
@@ -186,13 +205,30 @@ export function SmartSearchBar({
   const activePlaceholder = placeholder ?? PLACEHOLDERS[phIdx];
 
   return (
-    <div ref={panelRef} className={cn("relative w-full", className)}>
+    <div ref={panelRef} className={cn(
+      "relative w-full transition-all duration-200", 
+      focused && "max-md:fixed max-md:inset-0 max-md:z-[200] max-md:bg-slate-50 max-md:p-4 max-md:flex max-md:flex-col",
+      !focused && className
+    )}>
+
+      {/* ── MOBILE FULL SCREEN HEADER ───────────────────────────────────────── */}
+      {focused && (
+        <div className="md:hidden flex items-center mb-4 gap-3">
+          <button 
+            onClick={() => { setFocused(false); setHighlightIdx(-1); inputRef.current?.blur(); }}
+            className="p-2 -ml-2 rounded-full hover:bg-slate-200 text-slate-600 transition-colors"
+          >
+            <ChevronRight className="w-6 h-6 rotate-180" />
+          </button>
+          <span className="font-bold text-lg text-slate-900">Search</span>
+        </div>
+      )}
 
       {/* ── INPUT CONTAINER ──────────────────────────────────────────────── */}
       <div
         className={cn(
-          "relative flex items-center rounded-[20px] border-2 transition-all duration-200",
-          compact ? "h-12 rounded-2xl" : "h-[60px] md:h-[68px]",
+          "relative flex items-center border-2 transition-all duration-200 shrink-0",
+          compact && !focused ? "h-11 rounded-2xl" : "h-[54px] md:h-[68px] rounded-[20px]",
           focused
             ? isEmergency
               ? "border-red-400 shadow-[0_0_0_4px_rgba(239,68,68,0.12)] bg-white"
@@ -229,6 +265,7 @@ export function SmartSearchBar({
           aria-label="Search doctors, symptoms, or specialties"
           aria-expanded={showPanel}
           aria-haspopup="listbox"
+          aria-controls="search-suggestions-list"
           role="combobox"
           aria-autocomplete="list"
         />
@@ -269,10 +306,10 @@ export function SmartSearchBar({
       {/* ── DROPDOWN PANEL ───────────────────────────────────────────────── */}
       {showPanel && (
         <div
-          className="absolute top-full left-0 right-0 mt-2.5 bg-white rounded-2xl shadow-[0_20px_60px_-10px_rgba(0,0,0,0.15)] border border-slate-100/80 z-[60] max-h-[60vh] overflow-y-auto overscroll-contain"
+          id="search-suggestions-list"
+          className="absolute top-full left-0 right-0 mt-2.5 bg-white md:rounded-2xl shadow-[0_20px_60px_-10px_rgba(0,0,0,0.15)] md:border border-slate-100/80 z-[110] md:max-h-[60vh] overflow-y-auto overscroll-contain overflow-x-hidden animate-in fade-in slide-in-from-top-2 duration-150 max-md:static max-md:mt-4 max-md:max-h-none max-md:flex-1 max-md:rounded-2xl max-md:shadow-none max-md:border-none max-md:bg-transparent"
           role="listbox"
           aria-label="Search suggestions"
-          style={{ animation: "ssDropdown 150ms cubic-bezier(0.16,1,0.3,1)" }}
         >
 
           {/* Emergency Banner */}
@@ -352,7 +389,7 @@ export function SmartSearchBar({
                   <button
                     key={h.q}
                     onClick={() => doSearch(h.q)}
-                    className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-50 hover:bg-primary/8 border border-slate-200 hover:border-primary/30 rounded-2xl text-xs font-semibold text-slate-600 hover:text-primary transition-all"
+                    className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-50 hover:bg-primary/8 border border-slate-200 hover:border-primary/30 rounded-xl text-[10px] md:text-xs font-bold text-slate-600 hover:text-primary transition-all"
                   >
                     <span>{h.emoji}</span>
                     {h.label}
@@ -458,12 +495,6 @@ export function SmartSearchBar({
         </div>
       )}
 
-      <style jsx>{`
-        @keyframes ssDropdown {
-          from { opacity: 0; transform: translateY(-8px) scale(0.98); }
-          to   { opacity: 1; transform: translateY(0) scale(1); }
-        }
-      `}</style>
     </div>
   );
 }

@@ -5,7 +5,8 @@ import { MapPin, Stethoscope, Building2, Zap, ChevronRight, Star, ArrowRight, Ba
 import { BIHAR_DISTRICTS, generateDistrictMetadata, capitalizeDistrict, HEALTHCARE_SPECIALTIES } from "@/lib/seo/metadata";
 import { districtHealthcareSchema, breadcrumbSchema, faqSchema } from "@/lib/seo/jsonld";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { DOCTORS } from "@/data/mock-data";
+import prisma from "@/lib/prisma";
+import { mapPrismaDoctorToUI } from "@/lib/data-utils";
 import { Button } from "@/components/ui/button";
 
 interface PageProps {
@@ -18,7 +19,6 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { district } = await params;
-  const districtFormatted = capitalizeDistrict(district);
 
   if (!BIHAR_DISTRICTS.some((d) => d.toLowerCase().replace(/\s+/g, "-") === district)) {
     return { title: "District Not Found | JivniCare" };
@@ -38,10 +38,17 @@ export default async function DistrictPage({ params }: PageProps) {
 
   const districtFormatted = capitalizeDistrict(district);
 
-  // Filter doctors by district (mock: use Patna doctors for all districts in dev)
-  const districtDoctors = DOCTORS.filter((d) =>
-    d.location.toLowerCase().includes("patna")
-  ).slice(0, 6);
+  // Fetch Real Doctors for this District
+  const dbDoctors = await prisma.doctor.findMany({
+    where: { 
+      district: { contains: districtFormatted, mode: 'insensitive' },
+      verificationStatus: 'VERIFIED'
+    },
+    take: 6,
+    include: { specialties: true, keywords: true }
+  });
+
+  const districtDoctors = dbDoctors.map(mapPrismaDoctorToUI);
 
   const faqs = [
     {
@@ -127,7 +134,7 @@ export default async function DistrictPage({ params }: PageProps) {
       <section className="container mx-auto max-w-5xl px-4 py-8">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { icon: <Stethoscope className="w-5 h-5 text-primary" />, label: "Verified Doctors", value: "50+", bg: "bg-blue-50" },
+            { icon: <Stethoscope className="w-5 h-5 text-primary" />, label: "Verified Doctors", value: dbDoctors.length > 0 ? `${dbDoctors.length}+` : "10+", bg: "bg-blue-50" },
             { icon: <Building2 className="w-5 h-5 text-emerald-600" />, label: "Hospitals", value: "12+", bg: "bg-emerald-50" },
             { icon: <Zap className="w-5 h-5 text-red-500" />, label: "Emergency 24/7", value: "Available", bg: "bg-red-50" },
             { icon: <Star className="w-5 h-5 text-amber-500" />, label: "Avg Rating", value: "4.8 ⭐", bg: "bg-amber-50" },
@@ -178,42 +185,59 @@ export default async function DistrictPage({ params }: PageProps) {
           </Link>
         </div>
 
-        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
-          {districtDoctors.map((doctor) => (
-            <Link
-              key={doctor.id}
-              href={`/doctors/${doctor.id}`}
-              className="group bg-white rounded-3xl border border-slate-100 p-4 hover:shadow-md hover:border-primary/20 transition-all"
-            >
-              <div className="flex items-center gap-3 mb-3">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={doctor.image}
-                  alt={doctor.name}
-                  width={48}
-                  height={48}
-                  className="w-12 h-12 rounded-2xl object-cover"
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold text-slate-900 text-sm truncate group-hover:text-primary transition-colors">
-                    {doctor.name}
-                  </p>
-                  <p className="text-xs text-slate-500 truncate">{doctor.specialty}</p>
+        {districtDoctors.length > 0 ? (
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {districtDoctors.map((doctor) => (
+              <Link
+                key={doctor.id}
+                href={`/doctors/${doctor.id}`}
+                className="group bg-white rounded-3xl border border-slate-100 p-4 hover:shadow-md hover:border-primary/20 transition-all"
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={doctor.image}
+                    alt={doctor.name}
+                    width={48}
+                    height={48}
+                    className="w-12 h-12 rounded-2xl object-cover"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-slate-900 text-sm truncate group-hover:text-primary transition-colors">
+                      {doctor.name}
+                    </p>
+                    <p className="text-xs text-slate-500 truncate">{doctor.specialty}</p>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="flex items-center gap-1 text-xs font-semibold text-amber-600">
-                  <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                  {doctor.rating} ({doctor.reviews})
-                </span>
-                <span className="text-xs font-bold text-primary">{doctor.fee}</span>
-              </div>
-              <p className="text-xs text-slate-400 mt-1.5 flex items-center gap-1">
-                <MapPin className="w-3 h-3" /> {doctor.location}
-              </p>
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1 text-xs font-semibold text-amber-600">
+                    <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                    {doctor.rating} ({doctor.reviews})
+                  </span>
+                  <span className="text-xs font-bold text-primary">{doctor.fee}</span>
+                </div>
+                <p className="text-xs text-slate-400 mt-1.5 flex items-center gap-1">
+                  <MapPin className="w-3 h-3" /> {doctor.location}
+                </p>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="bg-white rounded-3xl border border-slate-100 p-12 text-center">
+            <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Stethoscope className="w-8 h-8 text-slate-300" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900">No doctors listed yet</h3>
+            <p className="text-slate-500 text-sm mt-1 max-w-xs mx-auto">
+              We are currently onboarding doctors in {districtFormatted}. Check back soon or find doctors in nearby districts.
+            </p>
+            <Link href="/doctors">
+              <Button variant="outline" className="mt-6 rounded-xl border-slate-200">
+                Browse All Doctors
+              </Button>
             </Link>
-          ))}
-        </div>
+          </div>
+        )}
       </section>
 
       {/* Emergency CTA */}

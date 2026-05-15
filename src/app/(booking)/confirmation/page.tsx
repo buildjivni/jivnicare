@@ -14,44 +14,86 @@ export default function ConfirmationPage() {
   const [queueStats, setQueueStats] = useState<{ currentToken: number; totalInQueue: number; estimatedWait: number } | null>(null);
   
   const token = useBookingStore(state => state.generatedToken);
+  const setGeneratedToken = useBookingStore(state => state.setGeneratedToken);
   const doctor = useBookingStore(state => state.selectedDoctor);
+  const setDoctor = useBookingStore(state => state.setDoctor);
   const resetBooking = useBookingStore(state => state.resetBooking);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
+    
+    // Hydrate from localStorage if store is empty (e.g. after hard refresh)
+    if (!token) {
+      try {
+        const savedToken = localStorage.getItem("jc_active_token");
+        if (savedToken) {
+          const parsed = JSON.parse(savedToken);
+          setGeneratedToken(parsed);
+          // If we have a token, we should have a doctor context too (usually in history or just from API later)
+        }
+      } catch (e) { console.error("Hydration failed", e); }
+    }
   }, []);
 
   useEffect(() => {
     if (!mounted) return;
-    if (!token || !doctor) {
+    // Only redirect if hydration also failed
+    if (!token && !localStorage.getItem("jc_active_token")) {
       router.replace("/");
     }
-  }, [mounted, router, token, doctor]);
+  }, [mounted, router, token]);
 
   // Poll real queue stats every 30 seconds
   useEffect(() => {
     if (!mounted || !token?.doctorId) return;
 
+    let timeoutId: NodeJS.Timeout;
+
     const fetchStats = async () => {
       try {
-        const res = await fetch(`/api/public/doctor/${token.doctorId}/queue-stats`);
-        const data = await res.json();
-        if (data.success) setQueueStats(data.queue);
+        if (document.visibilityState === "visible") {
+          const res = await fetch(`/api/public/doctor/${token.doctorId}/queue-stats`);
+          const data = await res.json();
+          if (data.success) setQueueStats(data.queue);
+        }
       } catch { /* ignore polling errors */ }
+      finally {
+        timeoutId = setTimeout(fetchStats, 30000);
+      }
     };
 
     fetchStats();
-    const interval = setInterval(fetchStats, 30000);
-    return () => clearInterval(interval);
+    return () => clearTimeout(timeoutId);
   }, [mounted, token]);
 
-  if (!mounted || !token || !doctor) return <div className="min-h-screen bg-[#f7f9fc]" />;
+  if (!mounted || !token || !doctor) return (
+    <div className="bg-[#f7f9fc] min-h-screen">
+      <div className="absolute top-0 left-0 w-full h-[400px] bg-gradient-to-b from-emerald-500 to-[#14532d]" />
+      <div className="container mx-auto px-4 max-w-2xl relative z-10 pt-12 animate-pulse">
+        <div className="text-center mb-8">
+          <div className="w-20 h-20 bg-white/20 rounded-full mx-auto mb-4" />
+          <div className="h-8 w-48 bg-white/20 rounded-full mx-auto" />
+          <div className="h-4 w-40 bg-white/10 rounded-full mx-auto mt-2" />
+        </div>
+        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
+          <div className="bg-primary/30 h-48" />
+          <div className="p-8 space-y-4">
+            <div className="h-6 w-48 bg-slate-200 rounded-full" />
+            <div className="h-4 w-full bg-slate-100 rounded-full" />
+            <div className="h-4 w-2/3 bg-slate-100 rounded-full" />
+            <div className="h-4 w-3/4 bg-slate-100 rounded-full" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 
   const currentServing = queueStats?.currentToken ?? Math.max(1, (token.tokenNumber || 1) - 1);
   const currentWait = queueStats?.estimatedWait ?? token.estimatedWaitMinutes ?? 45;
 
   return (
-    <div className="bg-[#f7f9fc] min-h-screen pt-12 pb-20 relative">
+    <div className="bg-[#f7f9fc] min-h-screen pt-6 md:pt-12 pb-20 relative">
 
       <div className="absolute top-0 left-0 w-full h-[400px] bg-gradient-to-b from-emerald-500 to-[#14532d] z-0" />
       <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/clean-gray-paper.png')] opacity-[0.03] pointer-events-none z-0" />
@@ -73,7 +115,7 @@ export default function ConfirmationPage() {
           <div className="bg-gradient-to-br from-primary to-primary/80 p-8 text-center text-white relative">
             <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10" />
             <p className="text-sm font-bold text-blue-200 uppercase tracking-widest mb-2 relative z-10">Your Live Token</p>
-            <h2 className="text-6xl font-black relative z-10">#{token.tokenNumber || token}</h2>
+            <h2 className="text-6xl font-black relative z-10">#{token.tokenNumber}</h2>
             
             <div className="mt-6 inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 px-4 py-2 rounded-full relative z-10">
               <Activity className="w-4 h-4 text-emerald-400" />

@@ -9,25 +9,25 @@ import { fadeUp, staggerContainer } from "@/animations/variants";
 
 export function WhyJivniCareSection() {
   return (
-    <section className="py-10 md:py-16 bg-slate-50/50">
+    <section className="py-10 md:py-20 bg-slate-50/50">
       <div className="container mx-auto px-4 max-w-6xl">
-        <div className="text-center max-w-3xl mx-auto mb-12">
+        <div className="text-center max-w-3xl mx-auto mb-16">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
-            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/5 text-primary text-sm font-bold uppercase tracking-widest mb-6">
+            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/5 text-primary text-xs font-bold uppercase tracking-widest mb-6">
               <Shield className="w-4 h-4" /> Trusted Healthcare
             </span>
-            <h2 className="text-[2rem] leading-[1.1] md:text-5xl font-black tracking-tight text-slate-900 mb-6">
+            <h2 className="text-3xl md:text-5xl font-black tracking-tight text-slate-900 mb-6 leading-tight">
               Why Choose <br className="hidden md:block" />
               <span className="inline-block relative">
-                <BrandName className="text-[2rem] md:text-5xl" />
+                <BrandName className="text-3xl md:text-5xl" />
               </span>
             </h2>
-            <p className="text-base md:text-lg text-slate-600 leading-relaxed">
+            <p className="text-base md:text-lg text-slate-600 leading-relaxed font-medium">
               Say goodbye to long clinic queues. <BrandName /> connects you with the best and most trusted doctors in your city, completely hassle-free.
             </p>
           </motion.div>
@@ -65,7 +65,7 @@ export function WhyJivniCareSection() {
             variants={staggerContainer}
             initial="hidden"
             whileInView="show"
-            viewport={{ once: true, margin: "-100px" }}
+            viewport={{ once: true, amount: 0.1 }}
             className="lg:w-[60%] grid grid-cols-1 sm:grid-cols-2 gap-6 items-start"
           >
             {[

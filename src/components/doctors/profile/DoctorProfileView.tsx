@@ -10,21 +10,23 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import type { Doctor } from "@/types";
-import { getDoctorQueueStatus } from "@/lib/queue-logic";
 import Image from "next/image";
 
 interface DoctorProfileViewProps {
   doctor: Doctor;
 }
 
-const TIMINGS = [
-  { day: "Mon – Fri", hours: "9:00 AM – 5:00 PM", open: true },
-  { day: "Saturday", hours: "9:00 AM – 2:00 PM", open: true },
-  { day: "Sunday", hours: "Closed", open: false },
-];
+// Helper to format 24h to 12h for UI
+const formatTime = (time: string) => {
+  if (!time) return "--:--";
+  const [h, m] = time.split(':');
+  const hh = parseInt(h);
+  const ampm = hh >= 12 ? 'PM' : 'AM';
+  const h12 = hh % 12 || 12;
+  return `${h12}:${m} ${ampm}`;
+};
 
 export function DoctorProfileView({ doctor }: DoctorProfileViewProps) {
-  const queueStatus = getDoctorQueueStatus(doctor.id);
   const availableToday = doctor.available?.toLowerCase().includes("today");
 
   return (
@@ -95,8 +97,8 @@ export function DoctorProfileView({ doctor }: DoctorProfileViewProps) {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-10">
             <div className="p-4 rounded-3xl bg-blue-50/50 border border-blue-100/50 flex flex-col items-center justify-center text-center">
               <Activity className="w-6 h-6 text-primary mb-2" />
-              <p className="font-black text-slate-900 text-lg leading-none">{queueStatus.totalInQueue - queueStatus.currentToken}</p>
-              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-2">Waiting Now</p>
+              <p className="font-black text-slate-900 text-lg leading-none">Live</p>
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-2">Queue Status</p>
             </div>
             <div className="p-4 rounded-3xl bg-emerald-50/50 border border-emerald-100/50 flex flex-col items-center justify-center text-center">
               <Clock className="w-6 h-6 text-emerald-600 mb-2" />
@@ -201,17 +203,28 @@ export function DoctorProfileView({ doctor }: DoctorProfileViewProps) {
                 <div className="flex-1">
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Operating Hours</p>
                   <div className="space-y-3">
-                    {TIMINGS.map((t) => (
-                      <div key={t.day} className="flex items-center justify-between group">
-                        <span className="text-sm font-bold text-slate-600 group-hover:text-slate-900 transition-colors">{t.day}</span>
-                        <div className="flex items-center gap-2">
-                           <span className={`h-1.5 w-1.5 rounded-full ${t.open ? 'bg-emerald-500' : 'bg-slate-300'}`} />
-                           <span className={`text-sm font-black ${t.open ? 'text-slate-900' : 'text-slate-400'}`}>
-                            {t.hours}
-                          </span>
+                    {[
+                      { id: 'monday', label: 'Monday' },
+                      { id: 'tuesday', label: 'Tuesday' },
+                      { id: 'wednesday', label: 'Wednesday' },
+                      { id: 'thursday', label: 'Thursday' },
+                      { id: 'friday', label: 'Friday' },
+                      { id: 'saturday', label: 'Saturday' },
+                      { id: 'sunday', label: 'Sunday' },
+                    ].map((d) => {
+                      const daySched = (doctor as any).weeklySchedule?.[d.id] || { isOpen: false };
+                      return (
+                        <div key={d.id} className="flex items-center justify-between group">
+                          <span className="text-sm font-bold text-slate-600 group-hover:text-slate-900 transition-colors">{d.label}</span>
+                          <div className="flex items-center gap-2">
+                             <span className={`h-1.5 w-1.5 rounded-full ${daySched.isOpen ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                             <span className={`text-sm font-black ${daySched.isOpen ? 'text-slate-900' : 'text-slate-400'}`}>
+                              {daySched.isOpen ? `${formatTime(daySched.start)} – ${formatTime(daySched.end)}` : 'Closed'}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               </div>

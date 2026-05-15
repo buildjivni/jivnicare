@@ -1,44 +1,30 @@
 import type { MetadataRoute } from "next";
 import { SITE_CONFIG, BIHAR_DISTRICTS, HEALTHCARE_SPECIALTIES } from "@/lib/seo/metadata";
-import { DOCTORS } from "@/data/mock-data";
+import prisma from "@/lib/prisma";
 
 const BASE = SITE_CONFIG.baseUrl;
-
-// Hospital slugs — in production, fetch from: GET /api/seo/sitemap-data
-const HOSPITAL_SLUGS = ["h1"];
-
-// Doctor slugs — from mock data; in production pull from backend
-const DOCTOR_IDS = DOCTORS.map((d) => d.id);
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
 
+  // 1. Fetch Dynamic Content from DB
+  const [dbDoctors, dbHospitals] = await Promise.all([
+    prisma.doctor.findMany({
+      where: { verificationStatus: "VERIFIED" },
+      select: { id: true, updatedAt: true }
+    }),
+    prisma.hospital.findMany({
+      where: { verificationStatus: "VERIFIED" },
+      select: { slug: true, updatedAt: true }
+    })
+  ]);
+
   // ── Static Pages ──────────────────────────────────────────
   const staticPages: MetadataRoute.Sitemap = [
-    {
-      url: BASE,
-      lastModified: now,
-      changeFrequency: "weekly",
-      priority: 1.0,
-    },
-    {
-      url: `${BASE}/doctors`,
-      lastModified: now,
-      changeFrequency: "daily",
-      priority: 0.95,
-    },
-    {
-      url: `${BASE}/hospitals`,
-      lastModified: now,
-      changeFrequency: "daily",
-      priority: 0.9,
-    },
-    {
-      url: `${BASE}/districts`,
-      lastModified: now,
-      changeFrequency: "weekly",
-      priority: 0.85,
-    },
+    { url: BASE, lastModified: now, changeFrequency: "weekly", priority: 1.0 },
+    { url: `${BASE}/doctors`, lastModified: now, changeFrequency: "daily", priority: 0.95 },
+    { url: `${BASE}/hospitals`, lastModified: now, changeFrequency: "daily", priority: 0.9 },
+    { url: `${BASE}/districts`, lastModified: now, changeFrequency: "weekly", priority: 0.85 },
   ];
 
   // ── District Pages (all 38 Bihar districts) ───────────────
@@ -49,18 +35,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.85,
   }));
 
-  // ── Doctor Pages ──────────────────────────────────────────
-  const doctorPages: MetadataRoute.Sitemap = DOCTOR_IDS.map((id) => ({
-    url: `${BASE}/doctors/${id}`,
-    lastModified: now,
+  // ── Doctor Pages (Dynamic) ────────────────────────────────
+  const doctorPages: MetadataRoute.Sitemap = dbDoctors.map((doc) => ({
+    url: `${BASE}/doctors/${doc.id}`,
+    lastModified: doc.updatedAt,
     changeFrequency: "monthly" as const,
     priority: 0.8,
   }));
 
-  // ── Hospital Pages ────────────────────────────────────────
-  const hospitalPages: MetadataRoute.Sitemap = HOSPITAL_SLUGS.map((id) => ({
-    url: `${BASE}/hospitals/${id}`,
-    lastModified: now,
+  // ── Hospital Pages (Dynamic) ──────────────────────────────
+  const hospitalPages: MetadataRoute.Sitemap = dbHospitals.map((hosp) => ({
+    url: `${BASE}/hospitals/${hosp.slug}`,
+    lastModified: hosp.updatedAt,
     changeFrequency: "monthly" as const,
     priority: 0.8,
   }));
@@ -73,24 +59,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  // ── Specialty × District Combinations (Top-value long-tail) ──
-  const PRIORITY_DISTRICTS = ["Patna", "Gaya", "Muzaffarpur", "Darbhanga", "Bhagalpur"];
-  const combinationPages: MetadataRoute.Sitemap = HEALTHCARE_SPECIALTIES.flatMap((s) =>
-    PRIORITY_DISTRICTS.map((d) => ({
-      // Use %26 to safely separate params in XML sitemap
-      url: `${BASE}/doctors?specialty=${encodeURIComponent(s)}%26district=${encodeURIComponent(d)}`,
-      lastModified: now,
-      changeFrequency: "monthly" as const,
-      priority: 0.65,
-    }))
-  );
-
   return [
     ...staticPages,
     ...districtPages,
     ...doctorPages,
     ...hospitalPages,
     ...specialtyPages,
-    ...combinationPages,
   ];
 }

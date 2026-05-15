@@ -8,9 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/useAuthStore";
+import { Logo } from "@/components/brand/Logo";
 
-// Brand Colors
-const BrandColors = { blue: "#5298D2", green: "#489C66" };
+// Brand Colors aligned with SaaS theme
+const BrandColors = { primary: "#10b981", dark: "#0f172a" };
 
 const TOTAL_STEPS = 5; // Step 5 is Success
 
@@ -24,9 +25,12 @@ export default function DoctorOnboardingFlow() {
     // Step 3: Practice Type
     practiceType: "", // "clinic" or "hospital"
     // Step 4: Practice Details
-    practiceName: "", practiceAddress: "", city: "", locality: "", landmark: "", contactNumber: "", workingDays: "", timings: "", department: ""
+    practiceName: "", practiceAddress: "", city: "", locality: "", landmark: "", contactNumber: "", workingDays: "", timings: "", department: "",
+    // Uploads
+    profilePhotoUrl: "", medicalRegistrationUrl: "", clinicPhotoUrl: ""
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isUploading, setIsUploading] = useState<Record<string, boolean>>({});
 
   // ── VALIDATION LOGIC ──────────────────────────────────────────────────
   const validateStep = (currentStep: number) => {
@@ -64,7 +68,7 @@ export default function DoctorOnboardingFlow() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
-  const setAuth = useAuthStore(state => state.setUser);
+  const setAuth = useAuthStore(state => state.login);
 
   const handleNext = async () => {
     if (!validateStep(step)) return;
@@ -105,6 +109,29 @@ export default function DoctorOnboardingFlow() {
     }
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) setErrors(prev => ({ ...prev, [field]: "" })); // Clear error
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: string) => {
+    if (!e.target.files?.[0]) return;
+    const file = e.target.files[0];
+    setIsUploading(prev => ({ ...prev, [field]: true }));
+    try {
+      const response = await fetch(`/api/upload?filename=${encodeURIComponent(file.name)}`, {
+        method: 'POST',
+        body: file,
+      });
+      const newBlob = await response.json();
+      if (newBlob.url) {
+        setFormData(prev => ({ ...prev, [field]: newBlob.url }));
+        setErrors(prev => ({ ...prev, [field]: "" }));
+      } else {
+        throw new Error("No URL returned");
+      }
+    } catch (error) {
+      setErrors(prev => ({ ...prev, [field]: "Upload failed. Try again." }));
+    } finally {
+      setIsUploading(prev => ({ ...prev, [field]: false }));
+    }
   };
 
   // ── RENDERERS ────────────────────────────────────────────────────────
@@ -149,15 +176,45 @@ export default function DoctorOnboardingFlow() {
     <div className="space-y-4">
       <h2 className="text-2xl font-black text-slate-900 mb-6">Professional Details</h2>
       
-      {/* Photo Upload Simulation */}
-      <div className="flex items-center gap-4 mb-6">
-        <div className="w-20 h-20 rounded-full bg-slate-100 border-2 border-dashed border-slate-300 flex items-center justify-center text-slate-400">
-          <Camera className="w-8 h-8" />
+      <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <div className="flex-1 bg-amber-50 border border-amber-100 p-4 rounded-2xl relative">
+          <label className="text-xs font-bold text-amber-900 uppercase mb-2 block">Profile Photo</label>
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-white border-2 border-amber-200 overflow-hidden shrink-0 flex items-center justify-center relative">
+              {formData.profilePhotoUrl ? (
+                <img src={formData.profilePhotoUrl} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <Camera className="w-5 h-5 text-amber-400" />
+              )}
+            </div>
+            <div className="flex-1 relative">
+              <Input type="file" accept="image/*" onChange={(e) => handleFileUpload(e, 'profilePhotoUrl')} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+              <Button type="button" variant="outline" className="w-full border-amber-200 text-amber-700 bg-white hover:bg-amber-100 h-10 pointer-events-none">
+                {isUploading['profilePhotoUrl'] ? "Uploading..." : formData.profilePhotoUrl ? "Change Photo" : "Upload Photo"}
+              </Button>
+            </div>
+          </div>
+          {errors.profilePhotoUrl && <p className="text-xs text-red-500 mt-2">{errors.profilePhotoUrl}</p>}
         </div>
-        <div>
-          <p className="font-bold text-slate-900">Profile Photo</p>
-          <p className="text-xs text-slate-500 mb-2">Patients trust profiles with real photos.</p>
-          <Button variant="outline" className="h-8 text-xs rounded-full"><Upload className="w-3 h-3 mr-2"/> Upload Image</Button>
+
+        <div className="flex-1 bg-emerald-50 border border-emerald-100 p-4 rounded-2xl relative">
+          <label className="text-xs font-bold text-emerald-900 uppercase mb-2 block">Medical Registration</label>
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-white border-2 border-emerald-200 overflow-hidden shrink-0 flex items-center justify-center relative">
+              {formData.medicalRegistrationUrl ? (
+                <CheckCircle2 className="w-6 h-6 text-emerald-500" />
+              ) : (
+                <Upload className="w-5 h-5 text-emerald-400" />
+              )}
+            </div>
+            <div className="flex-1 relative">
+              <Input type="file" accept="image/*,.pdf" onChange={(e) => handleFileUpload(e, 'medicalRegistrationUrl')} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+              <Button type="button" variant="outline" className="w-full border-emerald-200 text-emerald-700 bg-white hover:bg-emerald-100 h-10 pointer-events-none">
+                {isUploading['medicalRegistrationUrl'] ? "Uploading..." : formData.medicalRegistrationUrl ? "Change Document" : "Upload Registration"}
+              </Button>
+            </div>
+          </div>
+          {errors.medicalRegistrationUrl && <p className="text-xs text-red-500 mt-2">{errors.medicalRegistrationUrl}</p>}
         </div>
       </div>
 
@@ -199,7 +256,7 @@ export default function DoctorOnboardingFlow() {
 
       <div>
         <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">About / Biography</label>
-        <textarea placeholder="Briefly describe your experience and approach to patient care..." value={formData.bio} onChange={e => handleInputChange('bio', e.target.value)} className="w-full h-24 px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none" style={{ outlineColor: BrandColors.blue }} />
+        <textarea placeholder="Briefly describe your experience and approach to patient care..." value={formData.bio} onChange={e => handleInputChange('bio', e.target.value)} className="w-full h-24 px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all" />
       </div>
     </div>
   );
@@ -212,9 +269,9 @@ export default function DoctorOnboardingFlow() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div 
           onClick={() => handleInputChange('practiceType', 'clinic')}
-          className={`cursor-pointer rounded-3xl p-6 border-2 transition-all ${formData.practiceType === 'clinic' ? 'border-[#5298D2] bg-blue-50/50' : 'border-slate-200 hover:border-slate-300'}`}
+          className={`cursor-pointer rounded-3xl p-6 border-2 transition-all ${formData.practiceType === 'clinic' ? 'border-emerald-500 bg-emerald-50/50' : 'border-slate-200 hover:border-slate-300'}`}
         >
-          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-4 ${formData.practiceType === 'clinic' ? 'bg-[#5298D2] text-white' : 'bg-slate-100 text-slate-500'}`}>
+          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-4 ${formData.practiceType === 'clinic' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30' : 'bg-slate-100 text-slate-500'}`}>
             <Building2 className="w-7 h-7" />
           </div>
           <h3 className="text-xl font-bold text-slate-900">Own Clinic</h3>
@@ -223,9 +280,9 @@ export default function DoctorOnboardingFlow() {
 
         <div 
           onClick={() => handleInputChange('practiceType', 'hospital')}
-          className={`cursor-pointer rounded-3xl p-6 border-2 transition-all ${formData.practiceType === 'hospital' ? 'border-[#489C66] bg-green-50/50' : 'border-slate-200 hover:border-slate-300'}`}
+          className={`cursor-pointer rounded-3xl p-6 border-2 transition-all ${formData.practiceType === 'hospital' ? 'border-cyan-500 bg-cyan-50/50' : 'border-slate-200 hover:border-slate-300'}`}
         >
-          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-4 ${formData.practiceType === 'hospital' ? 'bg-[#489C66] text-white' : 'bg-slate-100 text-slate-500'}`}>
+          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-4 ${formData.practiceType === 'hospital' ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/30' : 'bg-slate-100 text-slate-500'}`}>
             <Hospital className="w-7 h-7" />
           </div>
           <h3 className="text-xl font-bold text-slate-900">Hospital Attachment</h3>
@@ -242,15 +299,22 @@ export default function DoctorOnboardingFlow() {
       <div className="space-y-4">
         <h2 className="text-2xl font-black text-slate-900 mb-6">{isClinic ? "Clinic Details" : "Hospital Attachment Details"}</h2>
         
-        {/* Practice Photo Upload Simulation */}
-        <div className="flex items-center gap-4 mb-6 p-4 rounded-2xl border border-slate-100 bg-slate-50/50">
-          <div className="w-16 h-16 rounded-xl bg-slate-100 border-2 border-dashed border-slate-300 flex items-center justify-center text-slate-400 shrink-0">
-            {isClinic ? <Building2 className="w-6 h-6" /> : <Hospital className="w-6 h-6" />}
+        {/* Practice Photo Upload */}
+        <div className="flex items-center gap-4 mb-6 p-4 rounded-2xl border border-sky-100 bg-sky-50 relative">
+          <div className="w-16 h-16 rounded-xl bg-white border-2 border-sky-200 flex items-center justify-center text-sky-600 shrink-0 overflow-hidden">
+            {formData.clinicPhotoUrl ? (
+              <img src={formData.clinicPhotoUrl} alt="Practice" className="w-full h-full object-cover" />
+            ) : isClinic ? <Building2 className="w-6 h-6 text-sky-400" /> : <Hospital className="w-6 h-6 text-sky-400" />}
           </div>
-          <div>
-            <p className="font-bold text-slate-900">{isClinic ? "Clinic Photo" : "Hospital Exterior Photo"}</p>
-            <p className="text-xs text-slate-500 mb-2">Helps patients identify the location easily.</p>
-            <Button variant="outline" className="h-8 text-xs rounded-full bg-white"><Upload className="w-3 h-3 mr-2"/> Upload Photo</Button>
+          <div className="flex-1">
+            <p className="font-bold text-sky-900">{isClinic ? "Clinic Photo" : "Hospital Photo"} (Optional)</p>
+            <div className="relative mt-2">
+              <Input type="file" accept="image/*" onChange={(e) => handleFileUpload(e, 'clinicPhotoUrl')} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+              <Button type="button" variant="outline" className="w-full border-sky-200 text-sky-700 bg-white hover:bg-sky-100 h-10 pointer-events-none">
+                {isUploading['clinicPhotoUrl'] ? "Uploading..." : formData.clinicPhotoUrl ? "Change Photo" : "Upload Exterior Photo"}
+              </Button>
+            </div>
+            {errors.clinicPhotoUrl && <p className="text-xs text-red-500 mt-2">{errors.clinicPhotoUrl}</p>}
           </div>
         </div>
 
@@ -315,7 +379,7 @@ export default function DoctorOnboardingFlow() {
 
   const renderStep5 = () => (
     <div className="flex flex-col items-center justify-center text-center py-10 fade-in">
-      <div className="w-24 h-24 bg-green-50 rounded-full flex items-center justify-center mb-6" style={{ color: BrandColors.green }}>
+      <div className="w-24 h-24 bg-emerald-50 rounded-full flex items-center justify-center mb-6 text-emerald-500">
         <ShieldCheck className="w-12 h-12" />
       </div>
       <h2 className="text-3xl font-black text-slate-900 mb-2">Application Submitted</h2>
@@ -326,7 +390,7 @@ export default function DoctorOnboardingFlow() {
         <p className="text-sm font-bold text-slate-700 mb-1">Status: <span className="text-amber-600">Pending Verification</span></p>
         <p className="text-xs text-slate-500">Usually takes 24-48 hours.</p>
       </div>
-      <Button onClick={() => router.push('/doctor/dashboard')} className="h-12 px-8 rounded-xl font-bold shadow-md" style={{ backgroundColor: BrandColors.blue }}>
+      <Button onClick={() => router.push('/doctor/dashboard')} className="h-12 px-8 rounded-xl font-bold shadow-xl bg-emerald-500 hover:bg-emerald-600 hover:brightness-105 hover:shadow-xl text-white transition-all">
         Go to Doctor Dashboard
       </Button>
     </div>
@@ -334,37 +398,39 @@ export default function DoctorOnboardingFlow() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans">
-      <style dangerouslySetInnerHTML={{__html: `
-        .fade-in { animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-      `}} />
       
-      <div className="bg-white w-full max-w-2xl rounded-[2rem] shadow-xl border border-slate-200 overflow-hidden relative">
+      <div className="bg-white w-full max-w-2xl rounded-3xl md:rounded-[2rem] shadow-xl border border-slate-200 overflow-hidden relative">
         {/* Top Header & Brand */}
-        <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-white/50 backdrop-blur-sm sticky top-0 z-10">
-          <div className="flex items-center gap-2">
-            <svg viewBox="0 0 100 100" className="w-8 h-8">
-              <circle cx="50" cy="25" r="12" fill={BrandColors.blue} />
-              <path d="M 45 40 Q 20 50 25 80 Q 40 85 48 75 Q 45 60 45 40 Z" fill={BrandColors.blue} />
-              <path d="M 55 40 Q 80 50 75 80 Q 60 85 52 75 Q 55 60 55 40 Z" fill={BrandColors.green} />
-            </svg>
-            <span className="font-black text-xl tracking-tight"><span style={{ color: BrandColors.blue }}>Jivni</span><span style={{ color: BrandColors.green }}>Care</span> Partner</span>
+        <div className="p-4 md:p-6 border-b border-slate-100 flex justify-between items-center bg-white/80 backdrop-blur-md sticky top-0 z-20 rounded-t-3xl md:rounded-t-[2rem]">
+          <div className="flex items-center gap-2 md:gap-3">
+            <Logo className="w-6 h-6 md:w-8 md:h-8" />
+            <span className="font-black text-lg md:text-xl tracking-tight text-slate-900">Partner Setup</span>
           </div>
-          {step < 5 && <span className="text-sm font-bold text-slate-400">Step {step} of 4</span>}
+          {step < 5 && <span className="text-xs md:text-sm font-bold text-slate-400">Step {step} of 4</span>}
         </div>
 
         {/* Progress Bar */}
         {step < 5 && (
-          <div className="w-full bg-slate-100 h-1">
+          <div className="w-full bg-slate-100 h-1.5">
             <div 
-              className="h-1 transition-all duration-500 ease-out" 
-              style={{ width: `${(step / 4) * 100}%`, backgroundColor: BrandColors.green }}
+              className="h-1.5 transition-all duration-500 ease-out bg-emerald-500" 
+              style={{ width: `${(step / 4) * 100}%` }}
             />
           </div>
         )}
 
         {/* Form Container */}
         <div className="p-6 md:p-10 min-h-[400px]">
+          {/* Submit error banner */}
+          {errors.submit && (
+            <div className="mb-6 p-4 rounded-2xl bg-red-50 border border-red-100 flex items-start gap-3">
+              <span className="text-red-500 shrink-0 text-lg">⚠</span>
+              <div>
+                <p className="text-sm font-bold text-red-800">Submission Failed</p>
+                <p className="text-xs text-red-600 mt-0.5">{errors.submit}</p>
+              </div>
+            </div>
+          )}
           <AnimatePresence mode="wait">
             <motion.div
               key={step}
@@ -384,22 +450,31 @@ export default function DoctorOnboardingFlow() {
 
         {/* Bottom Navigation */}
         {step < 5 && (
-          <div className="p-6 border-t border-slate-100 bg-slate-50 flex items-center justify-between sticky bottom-0 z-10">
+          <div className="p-4 md:p-6 border-t border-slate-100 bg-slate-50 flex items-center justify-between sticky bottom-0 z-10">
             <Button 
               variant="ghost" 
               onClick={handleBack} 
               disabled={step === 1}
-              className={`h-12 px-6 rounded-xl font-bold ${step === 1 ? 'opacity-0' : 'text-slate-600 hover:bg-slate-200'}`}
+              className={`h-10 md:h-12 px-3 md:px-6 rounded-xl font-bold ${step === 1 ? 'opacity-0' : 'text-slate-600 hover:bg-slate-200'}`}
             >
-              <ArrowLeft className="w-4 h-4 mr-2" /> Back
+              <ArrowLeft className="w-4 h-4 md:mr-2" /> <span className="hidden md:inline">Back</span>
             </Button>
             
             <Button 
               onClick={handleNext} 
-              className="h-12 px-8 rounded-xl text-white font-bold shadow-md hover:brightness-110 transition-all"
-              style={{ backgroundColor: BrandColors.blue }}
+              disabled={isSubmitting}
+              className="h-10 md:h-12 px-6 md:px-8 rounded-xl text-white font-bold shadow-xl bg-slate-900 hover:bg-slate-800 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              {step === 4 ? "Submit Profile" : "Continue"} <ArrowRight className="w-4 h-4 ml-2" />
+              {isSubmitting ? (
+                <span className="flex items-center gap-2">
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Submitting...
+                </span>
+              ) : (
+                <span className="flex items-center gap-2">
+                  {step === 4 ? "Submit Profile" : "Continue"} <ArrowRight className="w-4 h-4 ml-2" />
+                </span>
+              )}
             </Button>
           </div>
         )}

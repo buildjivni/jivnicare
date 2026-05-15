@@ -23,9 +23,10 @@ export function DoctorCard({ doctor }: DoctorCardProps) {
   const availColorClass = getAvailabilityColor(doctor.available || "");
 
   return (
-    <Link href={`/doctors/${doctor.id}`} className="block h-full group outline-none" aria-label={`View profile of ${doctor.name}, ${doctor.specialty}`}>
+    <div className="block h-full group outline-none">
       <Card className="relative overflow-hidden border border-slate-200/60 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_20px_40px_rgba(32,94,152,0.1)] hover:border-primary/30 hover:-translate-y-1 transition-all duration-300 bg-white rounded-[24px] h-full flex flex-col group-focus-visible:ring-2 group-focus-visible:ring-primary group-focus-visible:ring-offset-2">
-
+        <Link href={`/doctors/${doctor.id}`} className="absolute inset-0 z-10" aria-label={`View profile of ${doctor.name}`} />
+        
         {/* 1. Clinic Banner Image */}
         <div className="relative h-28 md:h-32 w-full overflow-hidden shrink-0 bg-slate-100">
           {/* Refined gradient overlay for text readability and premium fade */}
@@ -131,30 +132,33 @@ export function DoctorCard({ doctor }: DoctorCardProps) {
 
               <div className="flex items-center justify-between pt-2 border-t border-slate-200/60">
                 {/* Modern Availability Badge */}
-                <div className={`flex items-center gap-1.5 text-[11px] font-semibold px-2 py-1 rounded-md border ${availColorClass}`}>
+                <div className={`flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-lg border shadow-sm ${availColorClass}`}>
                   <CheckCircle2 className="w-3.5 h-3.5" />
                   {doctor.available}
                 </div>
 
                 {/* Consultation Fee */}
                 <div className="text-right flex flex-col items-end">
-                  <span className="font-black text-slate-900 text-[17px] leading-none">{doctor.fee}</span>
-                  <span className="text-[10px] text-slate-400 font-medium mt-0.5">Consultation Fee</span>
+                  <span className="font-black text-slate-900 text-[18px] leading-none">{doctor.fee}</span>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter mt-1">Fee</span>
                 </div>
               </div>
             </div>
 
             {/* 7. Booking CTA */}
-            <Button
-              className="w-full h-12 rounded-xl bg-primary text-white hover:bg-primary/90 active:scale-[0.98] font-bold text-[15px] shadow-sm hover:shadow-[0_8px_20px_rgba(32,94,152,0.25)] transition-all duration-300 flex items-center justify-center gap-2 group/btn"
-              aria-label={`Book appointment with ${doctor.name}`}
-            >
-              Book Appointment
-              <ChevronRight className="w-4 h-4 text-white/70 group-hover/btn:translate-x-1 transition-transform" />
-            </Button>
+            <div className="relative z-20">
+              <Link 
+                href={`/doctors/${doctor.id}`}
+                className="w-full h-12 rounded-xl bg-primary text-white hover:bg-primary/90 active:scale-[0.98] font-bold text-[15px] shadow-sm hover:shadow-[0_8px_20px_rgba(32,94,152,0.25)] transition-all duration-300 flex items-center justify-center gap-2 group/btn"
+                aria-label={`Book appointment with ${doctor.name}`}
+              >
+                Book Appointment
+                <ChevronRight className="w-4 h-4 text-white/70 group-hover/btn:translate-x-1 transition-transform" />
+              </Link>
+            </div>
           </div>
         </div>
       </Card>
-    </Link>
+    </div>
   );
 }

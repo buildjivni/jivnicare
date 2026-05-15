@@ -1,14 +1,20 @@
-# Patient Journey Bug Fix Tasks
-
-## P0 Critical
-- [x] BUG-1: Fix Doctor Profile page to fetch from MongoDB (not mock data)
-- [x] BUG-2: Fix name being saved to DB on patient login
-
-## P1 High
-- [x] BUG-4: Fix generateStaticParams to use real DB doctor IDs
-- [x] BUG-5: Fix Confirmation page to fetch real queue stats
-
-## P2 Medium
-- [x] BUG-6: Fix regex bug in PaymentForm phone validation
-- [x] ISSUE-7: Compute estimated wait from real token position
-- [x] BUG-3: Stop storing auth token in Zustand localStorage
+# Patient Journey Bug- [x] Phase 1: Queue & Capacity Consolidation
+    - [x] Unified maxCapacity logic
+    - [x] Refactored QueueService to use single pool
+- [x] Phase 2: Booking Time & Clinic Status Enforcement
+    - [x] Implemented WeeklySchedule check
+    - [x] Implemented ClinicOperations.isClosedToday check
+    - [x] Implemented hourly booking window enforcement
+- [x] Phase 3: Emergency System Deprecation
+    - [x] Removed emergency insert from UI
+    - [x] Deprecated emergency token logic
+- [x] Phase 4: Dashboard Real-time Analytics
+    - [x] Replaced mock stats with Prisma aggregates
+- [x] Phase 5: Atomic Next-Patient Operation
+    - [x] Created /api/doctor/queue/next-patient
+    - [x] Unified Complete -> Start Next flow
+- [x] Phase 6: Dynamic Profile Completeness
+    - [x] Calculated strength based on 8 key fields
+- [x] Phase 7: Stability & UX Hardening
+    - [x] Improved loading states and wait-time math
+    - [x] Fixed potential hydration/desync issues in Dashboard

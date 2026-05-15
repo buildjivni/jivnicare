@@ -31,7 +31,26 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Doctor profile not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, doctor });
+    // Phase 6: Dynamic Profile Completeness Calculation
+    const fields = [
+      { key: 'name', value: doctor.name },
+      { key: 'medicalRegistrationNumber', value: doctor.medicalRegistrationNumber },
+      { key: 'specialtyIds', value: doctor.specialtyIds?.length > 0 },
+      { key: 'hospitalName', value: doctor.hospitalName },
+      { key: 'bio', value: doctor.bio },
+      { key: 'consultationFee', value: doctor.consultationFee > 0 },
+      { key: 'weeklySchedule', value: !!doctor.weeklySchedule },
+      { key: 'profileImage', value: !!doctor.profileImage }
+    ];
+
+    const completedFields = fields.filter(f => !!f.value).length;
+    const completenessPercentage = Math.round((completedFields / fields.length) * 100);
+
+    return NextResponse.json({ 
+      success: true, 
+      doctor, 
+      completeness: completenessPercentage 
+    });
   } catch (error: any) {
     console.error("Fetch doctor profile error:", error);
     return NextResponse.json({ error: "Failed to fetch profile" }, { status: 500 });

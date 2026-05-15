@@ -31,12 +31,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, token: newQueueToken });
   } catch (error: any) {
     console.error("Booking error:", error);
-    if (error.message === "ALREADY_BOOKED") {
-      return NextResponse.json({ error: "You already have a token for this date." }, { status: 400 });
-    }
-    if (error.message === "QUEUE_FULL") {
-      return NextResponse.json({ error: "Queue is full for this date." }, { status: 400 });
-    }
-    return NextResponse.json({ error: "Failed to book appointment" }, { status: 500 });
+    
+    // Phase 2: Explicit Error Messages for Patients
+    const errorMessages: Record<string, string> = {
+      "ALREADY_BOOKED": "You already have a token for this date.",
+      "QUEUE_FULL": "Queue is full for this date.",
+      "CLINIC_CLOSED_TODAY": "Clinic is closed today. Please try another day.",
+      "CLINIC_CLOSED_ON_THIS_DAY": "Doctor does not consult on this day.",
+      "BOOKING_NOT_STARTED": "Bookings for today haven't started yet.",
+      "BOOKING_FINISHED": "Bookings for today are now closed."
+    };
+
+    const message = errorMessages[error.message] || "Failed to book appointment";
+    const status = errorMessages[error.message] ? 400 : 500;
+
+    return NextResponse.json({ error: message }, { status });
   }
 }

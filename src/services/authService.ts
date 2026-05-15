@@ -4,9 +4,17 @@ import prisma from "@/lib/prisma";
 import { UserRole } from "@/store/useAuthStore";
 
 export class AuthService {
-  static async login(email: string, password: string, role: "DOCTOR" | "ADMIN") {
+  static async login(identifier: string, password: string, role: "DOCTOR" | "ADMIN") {
+    // Find user by email or phone. Since current schema primarily uses phone,
+    // we search for both to be safe and future-proof.
     const user = await prisma.user.findFirst({
-      where: { role }
+      where: {
+        OR: [
+          { phone: identifier },
+          { email: identifier }
+        ],
+        role
+      }
     });
 
     if (!user || !user.password) {
@@ -26,7 +34,7 @@ export class AuthService {
     const expiresIn = role === "ADMIN" ? "1d" : "7d";
 
     const token = jwt.sign(
-      { id: user.id, role, email },
+      { id: user.id, role, email: user.email },
       JWT_SECRET,
       { expiresIn }
     );

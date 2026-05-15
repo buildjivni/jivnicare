@@ -18,7 +18,10 @@ export async function PUT(request: Request) {
     }
 
     const body = await request.json();
-    const { bio, fee, name, regNumber, isClosedToday, timings } = body;
+    const { 
+      bio, fee, name, regNumber, isClosedToday, timings,
+      weeklySchedule, averageConsultationTime, maxCapacity 
+    } = body;
 
     const doctor = await prisma.doctor.findUnique({
       where: { userId: payload.id }
@@ -33,8 +36,9 @@ export async function PUT(request: Request) {
     if (fee !== undefined) updatedData.fee = parseInt(fee) || 0;
     if (name !== undefined) updatedData.name = name;
     if (regNumber !== undefined) updatedData.medicalRegistrationNumber = regNumber;
+    if (averageConsultationTime !== undefined) updatedData.averageConsultationTime = parseInt(averageConsultationTime) || 15;
 
-    // Run transaction if updating clinic operations too
+    // Run transaction to ensure atomicity across models
     const result = await prisma.$transaction(async (tx) => {
       let updatedDoctor = doctor;
       
@@ -45,19 +49,50 @@ export async function PUT(request: Request) {
         });
       }
 
+      // 1. Update Clinic Operations
       let updatedClinicOps = null;
-      if (isClosedToday !== undefined) {
+      if (isClosedToday !== undefined || maxCapacity !== undefined) {
+        const opsUpdate: any = {};
+        if (isClosedToday !== undefined) opsUpdate.isClosedToday = isClosedToday;
+        if (maxCapacity !== undefined) {
+          opsUpdate.walkInLimit = parseInt(maxCapacity) || 40;
+          opsUpdate.onlineLimit = parseInt(maxCapacity) || 40; // Sync for safety
+        }
+
         updatedClinicOps = await tx.clinicOperations.upsert({
           where: { doctorId: doctor.id },
-          update: { isClosedToday },
-          create: { doctorId: doctor.id, isClosedToday }
+          update: opsUpdate,
+          create: { doctorId: doctor.id, ...opsUpdate }
         });
       }
 
-      // We'll ignore the complex `timings` string parser for now and keep it simple
-      // A full implementation would parse "10:00 AM - 05:00 PM" back into WeeklySchedule
-
-      return { doctor: updatedDoctor, clinicOps: updatedClinicOps };
+      // 2. Update Weekly Schedule (JSON blobs for each day)
+      let updatedSchedule = null;
+      if (weeklySchedule) {
+        updatedSchedule = await tx.weeklySchedule.upsert({
+          where: { doctorId: doctor.id },
+          update: {
+            monday: weeklySchedule.monday,
+            tuesday: weeklySchedule.tuesday,
+            wednesday: weeklySchedule.wednesday,
+            thursday: weeklySchedule.thursday,
+            friday: weeklySchedule.friday,
+            saturday: weeklySchedule.saturday,
+            sunday: weeklySchedule.sunday,
+          },
+          create: {
+            doctorId: doctor.id,
+            monday: weeklySchedule.monday || { isOpen: true, start: "09:00", end: "17:00" },
+            tuesday: weeklySchedule.tuesday || { isOpen: true, start: "09:00", end: "17:00" },
+            wednesday: weeklySchedule.wednesday || { isOpen: true, start: "09:00", end: "17:00" },
+            thursday: weeklySchedule.thursday || { isOpen: true, start: "09:00", end: "17:00" },
+            friday: weeklySchedule.friday || { isOpen: true, start: "09:00", end: "17:00" },
+            saturday: weeklySchedule.saturday || { isOpen: false, start: "09:00", end: "17:00" },
+            sunday: weeklySchedule.sunday || { isOpen: false, start: "09:00", end: "17:00" },
+          }
+        });
+      }
+      return { doctor: updatedDoctor, clinicOps: updatedClinicOps, schedule: updatedSchedule };
     });
 
     return NextResponse.json({ success: true, message: "Settings updated successfully", data: result });

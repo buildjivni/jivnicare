@@ -56,11 +56,7 @@ export default function AdminLogin() {
           <div className="relative z-10">
             <div className="flex items-center gap-3 mb-8">
               <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-lg">
-                 <svg viewBox="0 0 100 100" className="w-8 h-8">
-                  <circle cx="50" cy="25" r="12" fill={BrandColors.blue} />
-                  <path d="M 45 40 Q 20 50 25 80 Q 40 85 48 75 Q 45 60 45 40 Z" fill={BrandColors.blue} />
-                  <path d="M 55 40 Q 80 50 75 80 Q 60 85 52 75 Q 55 60 55 40 Z" fill={BrandColors.green} />
-                </svg>
+                 <img src="/logo.png" alt="JivniCare Logo" className="w-8 h-8 object-contain" />
               </div>
               <h2 className="text-3xl font-black text-white tracking-tight">JivniCare</h2>
             </div>
@@ -88,7 +84,8 @@ export default function AdminLogin() {
         {/* Right Side - Login Form */}
         <div className="w-full md:w-1/2 p-12 lg:p-20 flex flex-col justify-center bg-white relative">
           <div className="max-w-sm w-full mx-auto">
-            <div className="mb-10 text-center md:text-left">
+            <div className="mb-10 text-center md:text-left flex flex-col items-center md:items-start">
+              <img src="/logo.png" alt="JivniCare Logo" className="w-16 h-16 object-contain mb-4 md:hidden" />
               <h2 className="text-3xl font-black text-slate-900">Admin Login</h2>
               <p className="text-slate-500 font-medium mt-2">Enter your credentials to access the dashboard.</p>
             </div>

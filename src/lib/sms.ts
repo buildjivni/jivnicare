@@ -18,21 +18,32 @@ export const sendSMS = async (phone: string, otp: string) => {
   }
 
   try {
-    // Fast2SMS Route API (Transactional)
+    // Support DLT Template for Production or Fallback to Generic
+    const dltTemplateId = process.env.FAST2SMS_DLT_TEMPLATE_ID;
+    
+    const bodyPayload = dltTemplateId ? {
+      route: "dlt",
+      sender_id: process.env.FAST2SMS_SENDER_ID || "JIVNIC", // Your approved 6-letter sender ID
+      message: dltTemplateId,
+      variables_values: otp,
+      flash: 0,
+      numbers: phone,
+    } : {
+      route: "v3",
+      sender_id: "TXTIND", // Default generic sender ID
+      message: `Your JivniCare login OTP is ${otp}. Valid for 5 mins. Do not share this with anyone.`,
+      language: "english",
+      flash: 0,
+      numbers: phone,
+    };
+
     const response = await fetch("https://www.fast2sms.com/dev/bulkV2", {
       method: "POST",
       headers: {
         "authorization": apiKey,
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({
-        route: "v3",
-        sender_id: "TXTIND", // Default sender ID or use custom DLT approved
-        message: `Your JivniCare login OTP is ${otp}. Valid for 5 mins. Do not share this with anyone.`,
-        language: "english",
-        flash: 0,
-        numbers: phone,
-      })
+      body: JSON.stringify(bodyPayload)
     });
 
     const data = await response.json();
