@@ -4,7 +4,7 @@ import { jwtVerify } from 'jose';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // ── Public routes that should NEVER be auth-guarded ─────────────
@@ -47,9 +47,9 @@ export async function middleware(request: NextRequest) {
     }
 
     if (!JWT_SECRET) {
-      console.error("JWT_SECRET is not set in environment variables");
+      console.error("FATAL: JWT_SECRET is not set in environment variables");
       return isProtectedApi 
-        ? NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
+        ? NextResponse.json({ error: 'Internal Server Error: Auth misconfigured' }, { status: 500 })
         : NextResponse.redirect(new URL('/login', request.url));
     }
 
@@ -88,7 +88,7 @@ export async function middleware(request: NextRequest) {
         },
       });
 
-    } catch (error) {
+    } catch {
       return unauthorizedResponse();
     }
   }
