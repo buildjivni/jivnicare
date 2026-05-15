@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 
 export function PartnerCtaSection() {
   return (
-    <section className="py-16 md:py-24 relative overflow-hidden bg-slate-900 w-full max-w-full box-border">
+    <section className="py-20 md:py-32 relative overflow-hidden bg-slate-950 w-full max-w-full box-border">
       {/* Background Accents */}
       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 pointer-events-none" />
       <div className="absolute top-0 right-0 w-96 h-96 bg-primary/20 rounded-full blur-[120px] pointer-events-none -translate-y-1/2 translate-x-1/3" />
@@ -29,7 +29,7 @@ export function PartnerCtaSection() {
               For Doctors & Clinics
             </div>
             
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight mb-6 text-white leading-tight break-words">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-black tracking-tight mb-6 text-white leading-[1.1] break-words">
               Digitize Your Practice. <br className="hidden sm:block" />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">
                 Reach More Patients.
@@ -66,7 +66,7 @@ export function PartnerCtaSection() {
             <div className="relative w-full aspect-square sm:aspect-video lg:aspect-square flex items-center justify-center">
               
               {/* Card 1 */}
-              <div className="absolute top-10 right-0 sm:right-10 lg:right-0 w-64 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-2xl z-20 animate-float-slow">
+              <div className="absolute top-10 right-0 sm:right-10 lg:right-0 w-64 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-5 shadow-[0_8px_30px_rgba(0,0,0,0.12)] z-20 animate-float-slow">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center">
                     <ShieldCheck className="w-5 h-5 text-white" />
@@ -82,7 +82,7 @@ export function PartnerCtaSection() {
               </div>
 
               {/* Card 2 */}
-              <div className="absolute bottom-10 left-0 sm:left-10 lg:left-0 w-64 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-2xl z-10 animate-float-delayed">
+              <div className="absolute bottom-10 left-0 sm:left-10 lg:left-0 w-64 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-5 shadow-[0_8px_30px_rgba(0,0,0,0.12)] z-10 animate-float-delayed">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
                     <Stethoscope className="w-5 h-5 text-white" />

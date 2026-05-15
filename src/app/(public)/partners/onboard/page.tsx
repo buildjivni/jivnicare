@@ -228,7 +228,7 @@ export default function DoctorOnboardingFlow() {
           placeholder="e.g. Dr. Ramesh Kumar" 
           value={formData.fullName} 
           onChange={e => handleInputChange('fullName', e.target.value)} 
-          className="h-14 rounded-xl bg-slate-50 border-slate-200 text-lg font-bold focus-visible:ring-[#10b981]" 
+          className="h-14 rounded-xl bg-white border-slate-200 text-lg font-bold focus-visible:ring-4 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500 shadow-sm" 
         />
         {errors.fullName && <p className="text-xs font-bold text-red-500 mt-1">{errors.fullName}</p>}
       </div>
@@ -260,7 +260,7 @@ export default function DoctorOnboardingFlow() {
                   />
                 </div>
               </div>
-              <Button type="submit" disabled={isAuthLoading || authPhone.length < 10} className="w-full h-12 bg-[#10b981] hover:bg-[#059669] text-white font-bold rounded-xl shadow-lg">
+              <Button type="submit" disabled={isAuthLoading || authPhone.length < 10} className="w-full h-12 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white font-bold rounded-xl shadow-[0_8px_20px_rgba(5,150,105,0.2)] active:scale-[0.98]">
                 {isAuthLoading ? "Sending..." : "Verify Mobile Number"}
               </Button>
             </form>
@@ -277,7 +277,7 @@ export default function DoctorOnboardingFlow() {
                   placeholder="••••"
                 />
               </div>
-              <Button type="submit" disabled={isAuthLoading || authOtp.length < 4} className="w-full h-12 bg-[#10b981] hover:bg-[#059669] text-white font-bold rounded-xl shadow-lg">
+              <Button type="submit" disabled={isAuthLoading || authOtp.length < 4} className="w-full h-12 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white font-bold rounded-xl shadow-[0_8px_20px_rgba(5,150,105,0.2)] active:scale-[0.98]">
                 {isAuthLoading ? "Verifying..." : "Confirm Secure Login"}
               </Button>
               <div className="text-center mt-2">
@@ -355,12 +355,12 @@ export default function DoctorOnboardingFlow() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div>
           <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 block">Specialization *</label>
-          <Input placeholder="e.g. Cardiologist" value={formData.specialization} onChange={e => handleInputChange('specialization', e.target.value)} className="h-14 rounded-xl bg-slate-50 border-slate-200 font-bold focus-visible:ring-[#10b981]" />
+          <Input placeholder="e.g. Cardiologist" value={formData.specialization} onChange={e => handleInputChange('specialization', e.target.value)} className="h-14 rounded-xl bg-white border-slate-200 font-bold focus-visible:ring-4 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500 shadow-sm" />
           {errors.specialization && <p className="text-xs text-red-500 mt-1 font-bold">{errors.specialization}</p>}
         </div>
         <div>
           <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 block">Degrees / Qualifications *</label>
-          <Input placeholder="e.g. MBBS, MD" value={formData.qualifications} onChange={e => handleInputChange('qualifications', e.target.value)} className="h-14 rounded-xl bg-slate-50 border-slate-200 font-bold focus-visible:ring-[#10b981]" />
+          <Input placeholder="e.g. MBBS, MD" value={formData.qualifications} onChange={e => handleInputChange('qualifications', e.target.value)} className="h-14 rounded-xl bg-white border-slate-200 font-bold focus-visible:ring-4 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500 shadow-sm" />
           {errors.qualifications && <p className="text-xs text-red-500 mt-1 font-bold">{errors.qualifications}</p>}
         </div>
       </div>
@@ -374,11 +374,11 @@ export default function DoctorOnboardingFlow() {
         </div>
         <div>
           <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 block">Years Exp.</label>
-          <Input type="text" placeholder="e.g. 5" value={formData.experience} onChange={e => handleInputChange('experience', e.target.value)} className="h-14 rounded-xl bg-slate-50 border-slate-200 font-bold text-center focus-visible:ring-[#10b981]" />
+          <Input type="text" placeholder="e.g. 5" value={formData.experience} onChange={e => handleInputChange('experience', e.target.value)} className="h-14 rounded-xl bg-white border-slate-200 font-bold text-center focus-visible:ring-4 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500 shadow-sm" />
         </div>
         <div className="col-span-2 md:col-span-1">
           <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 block">Base Fee (₹) *</label>
-          <Input type="text" placeholder="500" value={formData.fee} onChange={e => handleInputChange('fee', e.target.value)} className="h-14 rounded-xl bg-slate-50 border-slate-200 font-black text-[#10b981] focus-visible:ring-[#10b981]" />
+          <Input type="text" placeholder="500" value={formData.fee} onChange={e => handleInputChange('fee', e.target.value)} className="h-14 rounded-xl bg-white border-slate-200 font-black text-emerald-600 focus-visible:ring-4 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500 shadow-sm" />
           {errors.fee && <p className="text-xs text-red-500 mt-1 font-bold">{errors.fee}</p>}
         </div>
       </div>
@@ -453,19 +453,19 @@ export default function DoctorOnboardingFlow() {
 
         <div>
           <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 block">{isClinic ? "Clinic Name *" : "Hospital Name *"}</label>
-          <Input placeholder={isClinic ? "e.g. Sanjeevani Clinic" : "e.g. Apollo Hospital"} value={formData.practiceName} onChange={e => handleInputChange('practiceName', e.target.value)} className="h-14 rounded-xl bg-slate-50 border-slate-200 font-bold focus-visible:ring-[#10b981]" />
+          <Input placeholder={isClinic ? "e.g. Sanjeevani Clinic" : "e.g. Apollo Hospital"} value={formData.practiceName} onChange={e => handleInputChange('practiceName', e.target.value)} className="h-14 rounded-xl bg-white border-slate-200 font-bold focus-visible:ring-4 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500 shadow-sm" />
           {errors.practiceName && <p className="text-xs text-red-500 mt-1 font-bold">{errors.practiceName}</p>}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div>
             <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 block">City *</label>
-            <Input placeholder="e.g. Patna" value={formData.city} onChange={e => handleInputChange('city', e.target.value)} className="h-14 rounded-xl bg-slate-50 border-slate-200 font-bold focus-visible:ring-[#10b981]" />
+            <Input placeholder="e.g. Patna" value={formData.city} onChange={e => handleInputChange('city', e.target.value)} className="h-14 rounded-xl bg-white border-slate-200 font-bold focus-visible:ring-4 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500 shadow-sm" />
             {errors.city && <p className="text-xs text-red-500 mt-1 font-bold">{errors.city}</p>}
           </div>
           <div>
             <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 block">Area / Locality *</label>
-            <Input placeholder="e.g. Kankarbagh" value={formData.locality} onChange={e => handleInputChange('locality', e.target.value)} className="h-14 rounded-xl bg-slate-50 border-slate-200 font-bold focus-visible:ring-[#10b981]" />
+            <Input placeholder="e.g. Kankarbagh" value={formData.locality} onChange={e => handleInputChange('locality', e.target.value)} className="h-14 rounded-xl bg-white border-slate-200 font-bold focus-visible:ring-4 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500 shadow-sm" />
             {errors.locality && <p className="text-xs text-red-500 mt-1 font-bold">{errors.locality}</p>}
           </div>
         </div>
@@ -474,11 +474,11 @@ export default function DoctorOnboardingFlow() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
               <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 block">Full Address</label>
-              <Input placeholder="Street, building..." value={formData.practiceAddress} onChange={e => handleInputChange('practiceAddress', e.target.value)} className="h-14 rounded-xl bg-slate-50 border-slate-200 font-bold focus-visible:ring-[#10b981]" />
+              <Input placeholder="Street, building..." value={formData.practiceAddress} onChange={e => handleInputChange('practiceAddress', e.target.value)} className="h-14 rounded-xl bg-white border-slate-200 font-bold focus-visible:ring-4 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500 shadow-sm" />
             </div>
             <div>
               <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 block">Clinic Contact Number *</label>
-              <Input type="tel" placeholder="Phone for reception" value={formData.contactNumber} onChange={e => handleInputChange('contactNumber', e.target.value)} className="h-14 rounded-xl bg-slate-50 border-slate-200 font-bold focus-visible:ring-[#10b981]" />
+              <Input type="tel" placeholder="Phone for reception" value={formData.contactNumber} onChange={e => handleInputChange('contactNumber', e.target.value)} className="h-14 rounded-xl bg-white border-slate-200 font-bold focus-visible:ring-4 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500 shadow-sm" />
               {errors.contactNumber && <p className="text-xs text-red-500 mt-1 font-bold">{errors.contactNumber}</p>}
             </div>
           </div>
@@ -504,7 +504,7 @@ export default function DoctorOnboardingFlow() {
   );
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] flex items-center justify-center p-4 font-sans py-12">
+    <div className="min-h-screen bg-slate-50/50 flex items-center justify-center p-4 font-sans py-12">
       
       <div className="bg-white w-full max-w-3xl rounded-[2.5rem] shadow-2xl shadow-slate-200/50 border border-slate-100 overflow-hidden relative">
         {/* Top Header & Brand */}
