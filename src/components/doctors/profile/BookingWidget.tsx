@@ -11,6 +11,7 @@ interface BookingWidgetProps {
   selectedService: "clinic" | "video";
   onServiceChange: (service: "clinic" | "video") => void;
   onBook: () => void;
+  isNavigating?: boolean;
 }
 
 const SERVICE_BTN = "flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all";
@@ -22,6 +23,7 @@ export function BookingWidget({
   selectedService,
   onServiceChange,
   onBook,
+  isNavigating = false,
 }: BookingWidgetProps) {
   const [queue, setQueue] = useState({
     currentToken: 0,
@@ -30,34 +32,38 @@ export function BookingWidget({
     avgTime: 15,
     status: "NOT_STARTED",
     isClosedToday: false,
+    timings: "",
   });
 
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+
     const fetchQueueStats = async () => {
       try {
-        const res = await fetch(`/api/public/doctor/${doctor.id}/queue-stats`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data.success) {
-            setQueue(data.queue);
+        if (document.visibilityState === "visible") {
+          const res = await fetch(`/api/public/doctor/${doctor.id}/queue-stats`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.success) {
+              setQueue(data.queue);
+            }
           }
         }
       } catch (err) {
         console.error("Failed to fetch queue stats", err);
       } finally {
         setIsLoading(false);
+        timeoutId = setTimeout(fetchQueueStats, 30000);
       }
     };
 
     fetchQueueStats();
-    // Poll every 30 seconds
-    const interval = setInterval(fetchQueueStats, 30000);
-    return () => clearInterval(interval);
+    return () => clearTimeout(timeoutId);
   }, [doctor.id]);
 
-  const isAvailableToday = doctor.available?.toLowerCase().includes("today") && !queue.isClosedToday;
+  const isAvailableToday = !queue.isClosedToday;
 
   return (
     <Card className="border-border/50 shadow-lg rounded-2xl bg-background overflow-hidden" id="mobile-booking-widget">
@@ -84,9 +90,13 @@ export function BookingWidget({
           <div className="flex items-center gap-2 mb-4">
             <Activity className="w-4 h-4 text-emerald-500" />
             <h3 className="font-bold text-base">Live Queue Status</h3>
-            {isAvailableToday && (
+            {isAvailableToday ? (
               <span className="ml-auto text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                Open Now
+                {queue.timings || "Open Now"}
+              </span>
+            ) : (
+              <span className="ml-auto text-[10px] font-bold text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                Closed
               </span>
             )}
           </div>
@@ -94,21 +104,39 @@ export function BookingWidget({
           <div className="grid grid-cols-3 gap-3 mb-5">
             <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-center">
               <p className="text-[10px] text-slate-500 font-bold uppercase mb-1">Current</p>
-              <p className="text-xl font-black text-primary">#{queue.currentToken}</p>
+              {isLoading ? (
+                <div className="h-7 w-12 bg-slate-200 rounded animate-pulse mx-auto" />
+              ) : (
+                <p className="text-xl font-black text-primary">#{queue.currentToken}</p>
+              )}
             </div>
             <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-center">
               <p className="text-[10px] text-slate-500 font-bold uppercase mb-1">In Queue</p>
-              <div className="flex items-center justify-center gap-1">
-                <Users className="w-3.5 h-3.5 text-amber-500" />
-                <p className="text-xl font-black text-slate-800">{queue.totalInQueue}</p>
-              </div>
+              {isLoading ? (
+                <div className="flex items-center justify-center gap-1">
+                  <Users className="w-3.5 h-3.5 text-amber-500 opacity-50" />
+                  <div className="h-7 w-8 bg-slate-200 rounded animate-pulse" />
+                </div>
+              ) : (
+                <div className="flex items-center justify-center gap-1">
+                  <Users className="w-3.5 h-3.5 text-amber-500" />
+                  <p className="text-xl font-black text-slate-800">{queue.totalInQueue}</p>
+                </div>
+              )}
             </div>
             <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-center">
               <p className="text-[10px] text-slate-500 font-bold uppercase mb-1">Est. Wait</p>
-              <div className="flex items-center justify-center gap-1">
-                <Clock className="w-3.5 h-3.5 text-emerald-500" />
-                <p className="text-xl font-black text-slate-800">{queue.estimatedWait}m</p>
-              </div>
+              {isLoading ? (
+                <div className="flex items-center justify-center gap-1">
+                  <Clock className="w-3.5 h-3.5 text-emerald-500 opacity-50" />
+                  <div className="h-7 w-10 bg-slate-200 rounded animate-pulse" />
+                </div>
+              ) : (
+                <div className="flex items-center justify-center gap-1">
+                  <Clock className="w-3.5 h-3.5 text-emerald-500" />
+                  <p className="text-xl font-black text-slate-800">{queue.estimatedWait}m</p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -130,9 +158,10 @@ export function BookingWidget({
           <div className="hidden md:block">
             <Button
               onClick={onBook}
-              className="w-full h-14 rounded-xl bg-primary hover:bg-[#1a4b7a] shadow-md text-base font-bold transition-all hover:scale-[1.02]"
+              disabled={!isAvailableToday || isNavigating}
+              className="w-full h-14 rounded-xl bg-primary hover:bg-primary/90 hover:brightness-105 hover:shadow-xl shadow-md text-base font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Join Queue — Book Now
+              {isNavigating ? "Redirecting..." : (!isAvailableToday ? "Closed Today" : "Join Queue — Book Now")}
             </Button>
             <p className="text-xs text-center text-muted-foreground mt-3 flex items-center justify-center gap-1.5">
               <Shield className="w-3 h-3" /> Pay online or at the clinic

@@ -17,7 +17,7 @@ export function OrderSummary({ doctor, type }: OrderSummaryProps) {
   const consultationFee = isVideo ? doctor.videoFee : doctor.fee;
 
   return (
-    <div className="lg:w-[400px] shrink-0 space-y-6">
+    <div className="w-full lg:w-[400px] shrink-0 space-y-6">
       <Card className="border-slate-200/60 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden bg-white/60 backdrop-blur-xl">
         <div className="bg-primary p-6 text-white">
           <h3 className="font-bold text-lg">Order Summary</h3>

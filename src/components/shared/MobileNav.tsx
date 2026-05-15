@@ -1,5 +1,5 @@
 "use client";
-
+import { useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { User, Settings, HeartPulse } from "lucide-react";
@@ -17,100 +17,166 @@ interface MobileNavProps {
 
 export function MobileNav({ isOpen, setIsOpen, isLoggedIn, pathname, navLinks, onLogout }: MobileNavProps) {
   const { user } = useAuthStore();
+
+  // Lock scroll when mobile menu is open
+  useEffect(() => {
+    document.body.style.overflow = isOpen ? "hidden" : "unset";
+    return () => { document.body.style.overflow = "unset"; };
+  }, [isOpen]);
+
   return (
     <AnimatePresence>
       {isOpen && (
-        <motion.div
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.2 }}
-          className="fixed top-16 inset-x-0 bottom-0 z-40 bg-white/95 backdrop-blur-xl md:hidden overflow-y-auto"
-        >
-          <div className="flex flex-col min-h-full">
-            <nav className="container mx-auto px-4 py-6 flex flex-col gap-2 flex-1">
-              {isLoggedIn && (
-              <Link
-                href={getRoleRedirect(user?.role ?? null)}
+        <>
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[89] bg-slate-900/25 backdrop-blur-sm md:hidden"
+            onClick={() => setIsOpen(false)}
+            aria-hidden="true"
+          />
+
+          {/* Slide-from-right Drawer */}
+          <motion.div
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "100%" }}
+            transition={{ type: "spring", stiffness: 380, damping: 38, mass: 1 }}
+            className="fixed top-0 right-0 bottom-0 z-[90] w-[85vw] max-w-sm bg-white shadow-2xl md:hidden flex flex-col"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Navigation menu"
+          >
+            {/* Drawer Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Menu</span>
+              <button
                 onClick={() => setIsOpen(false)}
-                className="flex items-center gap-4 p-4 mb-4 bg-slate-50 rounded-2xl border border-slate-100"
+                className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors active:scale-95"
+                aria-label="Close menu"
               >
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                  <User className="w-6 h-6" />
-                </div>
-                <div>
-                  <p className="font-bold text-slate-900">{user?.name ?? "Patient"}</p>
-                  <p className="text-xs text-slate-500">{user?.phone ?? ""}</p>
-                </div>
-              </Link>
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Scrollable Nav Body */}
+            <nav className="flex-1 overflow-y-auto px-4 py-5 space-y-1">
+
+              {/* Logged-in User Profile Card */}
+              {isLoggedIn && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.04, duration: 0.22 }}
+                >
+                  <Link
+                    href={getRoleRedirect(user?.role ?? null)}
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-4 p-4 mb-4 bg-gradient-to-br from-primary/5 via-transparent to-emerald-50/40 rounded-2xl border border-primary/10 hover:border-primary/20 hover:shadow-sm transition-all"
+                  >
+                    <div className="w-12 h-12 rounded-full bg-primary/10 ring-2 ring-primary/15 ring-offset-1 flex items-center justify-center text-primary shrink-0">
+                      <User className="w-6 h-6" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-bold text-slate-900 truncate">{user?.name ?? "Patient"}</p>
+                      <p className="text-xs text-primary font-medium mt-0.5">View Dashboard →</p>
+                    </div>
+                  </Link>
+                </motion.div>
               )}
 
-              {navLinks.filter(link => link.label !== "My Bookings" || isLoggedIn).map((link) => {
-                const isActive = pathname === link.href || (pathname.startsWith('/doctors') && link.href === '/doctors');
-                return (
-                  <Link
-                    key={link.label}
-                    href={link.href}
-                    onClick={() => setIsOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-3.5 text-base font-medium rounded-2xl transition-all ${
-                      isActive ? "text-primary bg-primary/10" : "text-slate-700 hover:text-primary hover:bg-slate-50"
-                    }`}
-                  >
-                    <span className={isActive ? "text-primary" : "text-slate-400"}>{link.icon}</span>
-                    {link.label}
-                  </Link>
-                );
-              })}
+              {/* Primary Nav Links */}
+              {navLinks
+                .filter(link => link.label === "My Bookings" ? isLoggedIn : true)
+                .map((link, i) => {
+                  const isActive = pathname === link.href || (pathname.startsWith("/doctors") && link.href === "/doctors");
+                  return (
+                    <motion.div
+                      key={link.label}
+                      initial={{ opacity: 0, x: 18 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.06 + i * 0.045, type: "spring", stiffness: 400, damping: 34 }}
+                    >
+                      <Link
+                        href={link.href}
+                        onClick={() => setIsOpen(false)}
+                        className={`flex items-center gap-3.5 px-4 py-3.5 text-[15px] font-semibold rounded-2xl transition-all duration-200 active:scale-[0.97] ${
+                          isActive
+                            ? "text-primary bg-primary/8 ring-1 ring-primary/12"
+                            : "text-slate-600 hover:text-primary hover:bg-slate-50"
+                        }`}
+                      >
+                        <span className={`shrink-0 ${isActive ? "text-primary" : "text-slate-400"}`}>{link.icon}</span>
+                        <span className="flex-1">{link.label}</span>
+                        {isActive && <span className="w-2 h-2 rounded-full bg-primary shrink-0" />}
+                      </Link>
+                    </motion.div>
+                  );
+                })}
 
+              {/* Extra Authenticated Links */}
               {isLoggedIn && (
                 <>
-                  <div className="h-px bg-slate-100 my-2" />
-                  <Link
-                    href="/records"
-                    onClick={() => setIsOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3.5 text-base font-medium text-slate-700 hover:bg-slate-50 rounded-2xl"
-                  >
-                    <span className="text-slate-400"><HeartPulse className="w-4 h-4" /></span>
-                    Medical Records
-                  </Link>
-                  <Link
-                    href="/settings"
-                    onClick={() => setIsOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3.5 text-base font-medium text-slate-700 hover:bg-slate-50 rounded-2xl"
-                  >
-                    <span className="text-slate-400"><Settings className="w-4 h-4" /></span>
-                    Settings
-                  </Link>
+                  <div className="h-px bg-slate-100 my-2 mx-2" />
+                  {[
+                    { href: "/records", icon: <HeartPulse className="w-5 h-5" />, label: "Medical Records" },
+                    { href: "/settings", icon: <Settings className="w-5 h-5" />, label: "Settings" },
+                  ].map((item, i) => (
+                    <motion.div
+                      key={item.href}
+                      initial={{ opacity: 0, x: 18 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.2 + i * 0.04, type: "spring", stiffness: 400, damping: 34 }}
+                    >
+                      <Link
+                        href={item.href}
+                        onClick={() => setIsOpen(false)}
+                        className="flex items-center gap-3.5 px-4 py-3.5 text-[15px] font-semibold text-slate-600 hover:text-primary hover:bg-slate-50 rounded-2xl transition-all duration-200 active:scale-[0.97]"
+                      >
+                        <span className="text-slate-400 shrink-0">{item.icon}</span>
+                        {item.label}
+                      </Link>
+                    </motion.div>
+                  ))}
                 </>
               )}
             </nav>
 
-            <div className="p-4 border-t border-slate-100 bg-white sticky bottom-0">
+            {/* Sticky Bottom CTA */}
+            <div
+              className="p-4 border-t border-slate-100 bg-white/95 backdrop-blur-sm"
+              style={{ paddingBottom: "max(16px, env(safe-area-inset-bottom))" }}
+            >
               {!isLoggedIn ? (
-                <div className="flex flex-col gap-3">
-                <Link href="/login" onClick={() => setIsOpen(false)}>
-                  <Button variant="outline" className="w-full rounded-xl h-12 font-semibold border-slate-200">
-                    Log In
-                  </Button>
-                </Link>
-                <Link href="/doctors" onClick={() => setIsOpen(false)}>
-                  <Button className="w-full rounded-xl h-12 font-bold bg-primary hover:bg-primary/90 shadow-md shadow-primary/20">
-                    Book Appointment
-                  </Button>
-                </Link>
+                <div className="flex flex-col gap-2.5">
+                  <Link href="/login" onClick={() => setIsOpen(false)} className="block w-full">
+                    <Button variant="outline" className="w-full h-12 font-semibold border-slate-200 text-slate-700 rounded-2xl">
+                      Log In
+                    </Button>
+                  </Link>
+                  <Link href="/doctors" onClick={() => setIsOpen(false)} className="block w-full">
+                    <Button className="w-full h-12 font-bold rounded-2xl shadow-lg shadow-primary/25">
+                      Book Appointment
+                    </Button>
+                  </Link>
                 </div>
               ) : (
-                <Button 
-                  variant="outline" 
-                  onClick={() => { onLogout(); setIsOpen(false); }} 
-                  className="w-full rounded-xl h-12 font-semibold text-rose-600 border-rose-200 bg-rose-50 hover:bg-rose-100"
+                <Button
+                  variant="outline"
+                  onClick={() => { onLogout(); setIsOpen(false); }}
+                  className="w-full h-12 font-semibold rounded-2xl text-rose-600 border-rose-200 bg-rose-50 hover:bg-rose-100 hover:border-rose-300 active:scale-[0.98]"
                 >
                   Log Out
                 </Button>
               )}
             </div>
-          </div>
-        </motion.div>
+          </motion.div>
+        </>
       )}
     </AnimatePresence>
   );

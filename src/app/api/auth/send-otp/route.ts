@@ -22,38 +22,54 @@ export async function POST(request: Request) {
       );
     }
 
-    // IP-based Rate Limiting (In-memory for MVP, replace with Redis for scale)
+    // IP-based Rate Limiting (Database-backed for scale/serverless)
     const ip = request.headers.get('x-forwarded-for') || 'unknown';
-    const now = Date.now();
+    const now = new Date();
     const windowMs = 5 * 60 * 1000; // 5 minutes
-    const maxRequests = 3;
+    const maxRequests = 5; // Allow 5 requests per 5 minutes
 
-    if (!global.otpRateLimitMap) {
-      global.otpRateLimitMap = new Map<string, { count: number; resetTime: number }>();
-    }
+    const rateLimit = await prisma.rateLimit.upsert({
+      where: { ip },
+      update: {},
+      create: {
+        ip,
+        count: 0,
+        resetTime: new Date(now.getTime() + windowMs),
+      },
+    });
 
-    const rateLimitInfo = global.otpRateLimitMap.get(ip);
-    if (rateLimitInfo) {
-      if (now < rateLimitInfo.resetTime) {
-        if (rateLimitInfo.count >= maxRequests) {
-          return NextResponse.json({ error: 'Too many requests from this IP. Please try again later.' }, { status: 429 });
-        }
-        rateLimitInfo.count++;
-      } else {
-        global.otpRateLimitMap.set(ip, { count: 1, resetTime: now + windowMs });
-      }
+    if (now > rateLimit.resetTime) {
+      // Reset window
+      await prisma.rateLimit.update({
+        where: { id: rateLimit.id },
+        data: { count: 1, resetTime: new Date(now.getTime() + windowMs) },
+      });
     } else {
-      global.otpRateLimitMap.set(ip, { count: 1, resetTime: now + windowMs });
+      if (rateLimit.count >= maxRequests) {
+        return NextResponse.json({ 
+          error: 'Too many requests from this IP. Please try again later.',
+          retryAfter: Math.ceil((rateLimit.resetTime.getTime() - now.getTime()) / 1000)
+        }, { status: 429 });
+      }
+      
+      // Increment count
+      await prisma.rateLimit.update({
+        where: { id: rateLimit.id },
+        data: { count: { increment: 1 } },
+      });
     }
 
-    // Check rate limits/cooldown: prevent spamming OTPs within 60 seconds
+    // Check rate limits/cooldown: prevent spamming OTPs within 60 seconds for the same phone
     const existingOtp = await prisma.otpToken.findUnique({
       where: { phone },
     });
 
     if (existingOtp && existingOtp.createdAt.getTime() > Date.now() - 60000) {
       return NextResponse.json(
-        { error: 'Please wait 60 seconds before requesting another OTP' },
+        { 
+          error: 'Please wait 60 seconds before requesting another OTP',
+          retryAfter: Math.ceil((existingOtp.createdAt.getTime() + 60000 - Date.now()) / 1000)
+        },
         { status: 429 } // Too Many Requests
       );
     }

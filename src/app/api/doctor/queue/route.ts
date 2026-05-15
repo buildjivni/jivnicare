@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { verifyToken } from "@/lib/jwt";
 import { cookies } from "next/headers";
+import { getCurrentLogicalDay, getStartOfDay } from "@/lib/clinic-utils";
 
 export async function GET(request: Request) {
   try {
@@ -26,12 +27,11 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Doctor profile not found" }, { status: 404 });
     }
 
-    // Parse date from query params or default to today
+    // Parse date from query params or default to logical today
     const url = new URL(request.url);
     const dateParam = url.searchParams.get("date");
     
-    const queueDate = dateParam ? new Date(dateParam) : new Date();
-    queueDate.setUTCHours(0, 0, 0, 0);
+    const queueDate = dateParam ? getStartOfDay(new Date(dateParam)) : getCurrentLogicalDay();
 
     // Fetch the daily queue for this doctor on this date
     let dailyQueue = await prisma.dailyQueue.findUnique({
@@ -48,7 +48,6 @@ export async function GET(request: Request) {
             walkInEntry: true
           },
           orderBy: [
-            { isEmergency: 'desc' },
             { tokenNumber: 'asc' }
           ]
         }
@@ -59,27 +58,47 @@ export async function GET(request: Request) {
     if (!dailyQueue) {
       // Find operations to get max capacity
       const clinicOps = await prisma.clinicOperations.findUnique({ where: { doctorId: doctor.id } });
-      const maxCapacity = clinicOps ? (clinicOps.walkInLimit + clinicOps.onlineLimit) : 40;
+      const maxCapacity = clinicOps ? clinicOps.walkInLimit : 40; // Unified Capacity
 
       dailyQueue = await prisma.dailyQueue.create({
         data: {
           doctorId: doctor.id,
           date: queueDate,
           status: "ACTIVE",
-          maxCapacity
+          maxCapacity,
+          issuedTokensCount: 0
         },
         include: {
           tokens: {
             include: {
               user: { select: { name: true, phone: true } },
               walkInEntry: true
-            }
+            },
+            orderBy: { tokenNumber: 'asc' }
           }
         }
       });
     }
 
-    return NextResponse.json({ success: true, queue: dailyQueue, tokens: dailyQueue.tokens || [] });
+    // Phase 4: Real-time Stats Aggregation
+    const tokens = dailyQueue.tokens || [];
+    const stats = {
+      total: tokens.length,
+      waiting: tokens.filter(t => t.status === "WAITING").length,
+      completed: tokens.filter(t => t.status === "COMPLETED").length,
+      currentActive: dailyQueue.currentActiveToken || 0,
+      avgWaitTime: (tokens.filter(t => t.status === "WAITING").length) * (doctor.averageConsultationTime || 15)
+    };
+
+    return NextResponse.json({ 
+      success: true, 
+      queue: dailyQueue, 
+      tokens,
+      stats,
+      doctor: {
+        averageConsultationTime: doctor.averageConsultationTime
+      }
+    });
   } catch (error: any) {
     console.error("Fetch doctor queue error:", error);
     return NextResponse.json({ error: "Failed to fetch queue" }, { status: 500 });

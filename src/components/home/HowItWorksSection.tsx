@@ -4,12 +4,13 @@ import { motion } from "framer-motion";
 import { CheckCircle2, Search, UserCheck, Calendar, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
+import Link from "next/link";
 import { Logo } from "@/components/brand/Logo";
 import { fadeUp, staggerContainer } from "@/animations/variants";
 
 export function HowItWorksSection() {
   return (
-    <section className="py-10 md:py-16 relative overflow-hidden border-t border-slate-100">
+    <section className="py-10 md:py-20 relative overflow-hidden border-t border-slate-100">
       <div className="absolute inset-0 bg-gradient-to-b from-white to-slate-50/50 pointer-events-none" />
       <div className="container mx-auto px-4 max-w-6xl relative z-10">
         <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
@@ -24,7 +25,7 @@ export function HowItWorksSection() {
               Booking an Appointment <br className="hidden lg:block" />
               is Now <span className="text-primary">Effortless</span>.
             </h2>
-            <p className="text-lg text-slate-600 leading-relaxed">
+            <p className="text-base md:text-lg text-slate-600 leading-relaxed font-medium">
               Book an appointment with the best doctors from your phone in just 2 minutes. No tension, no confusion.
             </p>
             
@@ -52,16 +53,18 @@ export function HowItWorksSection() {
               </div>
             </div>
             
-            <Button className="mt-8 h-12 px-8 rounded-full bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all font-semibold hidden lg:inline-flex text-white">
-              Book Now
-            </Button>
+            <Link href="/doctors">
+              <Button className="mt-8 h-12 px-8 rounded-full bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all font-semibold hidden lg:inline-flex text-white">
+                Book Now
+              </Button>
+            </Link>
           </motion.div>
 
           <motion.div 
             variants={staggerContainer}
             initial="hidden"
             whileInView="show"
-            viewport={{ once: true, margin: "-100px" }}
+            viewport={{ once: true, amount: 0.1 }}
             className="lg:w-7/12 grid grid-cols-1 sm:grid-cols-2 gap-6 w-full"
           >
             {[
@@ -83,9 +86,11 @@ export function HowItWorksSection() {
             ))}
           </motion.div>
           
-          <Button className="w-full h-14 rounded-full bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all font-semibold lg:hidden text-white">
-            Book Now
-          </Button>
+          <Link href="/doctors" className="w-full lg:hidden">
+            <Button className="w-full h-14 rounded-full bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all font-semibold text-white">
+              Book Now
+            </Button>
+          </Link>
         </div>
       </div>
     </section>

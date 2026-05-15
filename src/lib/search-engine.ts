@@ -234,13 +234,13 @@ export interface ExpandedQuery {
   specialties: string[];        // specialty targets
   keywords: string[];           // additional keyword hints
   didYouMean?: string;          // spelling suggestion
+  district?: string;            // location boost target
 }
 
+import { HEALTHCARE_SPECIALTIES } from "@/lib/seo/metadata";
+
 // Known specialty names for "did you mean" correction
-const KNOWN_SPECIALTIES = [
-  "General Physician", "Cardiologist", "Dermatologist", "Pediatrician",
-  "Orthopedist", "Neurologist", "Dentist", "Gynecologist", "Ophthalmologist",
-];
+const KNOWN_SPECIALTIES = HEALTHCARE_SPECIALTIES;
 const KNOWN_TERMS = [
   "fever", "headache", "heart", "bone", "child", "skin", "eye", "tooth",
   "pregnancy", "diabetes", "emergency", "hair", "allergy", "cough",
@@ -387,6 +387,14 @@ export function scoreDoctor(doctor: Doctor, eq: ExpandedQuery): number {
     }
   }
 
+  // ── Priority 9: District / Location Boosting (Resiliency) ──
+  if (eq.district) {
+    const targetDistrict = normalize(eq.district);
+    if (d.location.includes(targetDistrict)) {
+      score += 50; // Strong boost for local doctors
+    }
+  }
+
   // ── Availability boost ──
   if (d.available.includes("today")) score += 5;
 
@@ -408,7 +416,7 @@ export interface SearchResult {
 
 const SCORE_THRESHOLD = 25; // minimum score to appear in results
 
-export function searchDoctors(rawQuery: string, doctors: Doctor[]): SearchResult {
+export function searchDoctors(rawQuery: string, doctors: Doctor[], district: string = ""): SearchResult {
   if (!rawQuery.trim()) {
     return {
       results: doctors,
@@ -419,6 +427,7 @@ export function searchDoctors(rawQuery: string, doctors: Doctor[]): SearchResult
   }
 
   const eq = expandQuery(rawQuery);
+  if (district) eq.district = district;
 
   // Score every doctor
   const scored: ScoredDoctor[] = doctors

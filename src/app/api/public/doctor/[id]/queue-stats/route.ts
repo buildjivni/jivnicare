@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { getCurrentLogicalDay } from "@/lib/clinic-utils";
+import { redis } from "@/lib/redis";
 
 export async function GET(
   request: Request,
@@ -8,15 +10,25 @@ export async function GET(
   try {
     const { id: doctorId } = await params;
     
-    // Get today's start of day in UTC
-    const today = new Date();
-    today.setUTCHours(0, 0, 0, 0);
+    const cacheKey = `queue_stats:${doctorId}`;
+    const cachedStats = await redis.get(cacheKey);
+    
+    if (cachedStats) {
+      const stats = typeof cachedStats === 'string' ? JSON.parse(cachedStats) : cachedStats;
+      const response = NextResponse.json({ success: true, queue: stats });
+      response.headers.set('Cache-Control', 's-maxage=10, stale-while-revalidate');
+      return response;
+    }
+
+    // Use hardened logical day reset
+    const today = getCurrentLogicalDay();
 
     const doctor = await prisma.doctor.findUnique({
       where: { id: doctorId },
       select: {
         averageConsultationTime: true,
         clinicOperations: true,
+        weeklySchedule: true,
       }
     });
 
@@ -47,16 +59,25 @@ export async function GET(
     const avgTime = doctor.averageConsultationTime || 15;
     const estimatedWait = totalInQueue * avgTime;
 
+    const currentDayName = today.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+    const daySchedule: any = (doctor.weeklySchedule as any)?.[currentDayName] || { isOpen: true }; // Fallback to open if no schedule
+
+    const queueData = {
+      currentToken: currentActiveToken,
+      totalInQueue,
+      estimatedWait,
+      avgTime,
+      status: queue?.status || "NOT_STARTED",
+      isClosedToday: doctor.clinicOperations?.isClosedToday || !daySchedule.isOpen,
+      timings: daySchedule.isOpen ? `${daySchedule.start} - ${daySchedule.end}` : "Closed Today",
+    };
+
+    // Cache the result in Redis for 10 seconds to protect MongoDB
+    await redis.setex(cacheKey, 10, JSON.stringify(queueData));
+
     const response = NextResponse.json({
       success: true,
-      queue: {
-        currentToken: currentActiveToken,
-        totalInQueue,
-        estimatedWait,
-        avgTime,
-        status: queue?.status || "NOT_STARTED",
-        isClosedToday: doctor.clinicOperations?.isClosedToday || false,
-      }
+      queue: queueData
     });
 
     response.headers.set('Cache-Control', 's-maxage=10, stale-while-revalidate');

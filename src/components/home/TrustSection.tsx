@@ -6,11 +6,11 @@ import { BrandName } from "@/components/brand/BrandName";
 
 export function TrustSection() {
   return (
-    <section className="py-10 md:py-16 relative bg-[#0B2136] overflow-hidden">
+    <section className="py-14 md:py-24 relative bg-[#0B2136] overflow-hidden">
       {/* Abstract Background */}
       <div className="absolute inset-0 z-0">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary rounded-full blur-[120px] opacity-20 translate-x-1/3 -translate-y-1/3" />
-        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-[#258C54] rounded-full blur-[120px] opacity-20 -translate-x-1/3 translate-y-1/3" />
+        <div className="absolute top-0 right-0 w-72 md:w-[500px] h-72 md:h-[500px] bg-primary rounded-full blur-[80px] md:blur-[120px] opacity-20 translate-x-1/3 -translate-y-1/3" />
+        <div className="absolute bottom-0 left-0 w-72 md:w-[500px] h-72 md:h-[500px] bg-[#258C54] rounded-full blur-[80px] md:blur-[120px] opacity-20 -translate-x-1/3 translate-y-1/3" />
       </div>
 
       <div className="container mx-auto px-4 max-w-6xl relative z-10">
@@ -22,16 +22,16 @@ export function TrustSection() {
             transition={{ duration: 0.6 }}
             className="lg:w-1/2"
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-white/90 text-sm font-semibold mb-8 backdrop-blur-md">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-white/90 text-xs font-bold uppercase tracking-widest mb-8 backdrop-blur-md">
               <ShieldCheck className="w-4 h-4 text-emerald-400" /> Secure & Confidential
             </div>
-            <h2 className="text-3xl md:text-5xl font-black tracking-tight leading-[1.1] mb-6 text-white">
+            <h2 className="text-3xl md:text-5xl font-black tracking-tight mb-6 text-white leading-tight">
               Your Family&apos;s Health, <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-sky-400">
                 Our Responsibility.
               </span>
             </h2>
-            <p className="text-lg text-slate-300 leading-relaxed mb-8 max-w-lg">
+            <p className="text-base md:text-lg text-slate-300 leading-relaxed mb-8 max-w-lg font-medium">
               When it comes to your health, trust is everything. On <BrandName />, your data, appointments, and doctors are 100% safe, verified, and reliable.
             </p>
             

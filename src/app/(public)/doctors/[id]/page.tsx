@@ -44,7 +44,38 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 // Map Prisma Doctor record to the frontend Doctor type
-function mapDoctorToUI(doc: any): Doctor {
+interface PrismaDoctor {
+  id: string;
+  name: string;
+  specialties?: Array<{ name: string }>;
+  keywords?: Array<{ term: string }>;
+  weeklySchedule?: any;
+  hospitalName?: string | null;
+  district?: string | null;
+  rating?: number | null;
+  experience?: number | null;
+  fee?: number | null;
+  consultationFee?: number | null;
+  profileImage?: string | null;
+  bio?: string | null;
+  education?: string | null;
+}
+function mapDoctorToUI(doc: PrismaDoctor): Doctor {
+  let isAvailableToday = false;
+  let nextTime = "N/A";
+
+  if (doc.weeklySchedule) {
+    const daysOfWeek = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const todayIndex = new Date().getDay();
+    const todayString = daysOfWeek[todayIndex];
+    const todaySchedule: any = (doc.weeklySchedule as any)[todayString];
+    
+    if (todaySchedule && todaySchedule.isOpen) {
+      isAvailableToday = true;
+      nextTime = todaySchedule.start || "Available";
+    }
+  }
+
   return {
     id: doc.id,
     name: doc.name,
@@ -52,7 +83,7 @@ function mapDoctorToUI(doc: any): Doctor {
     clinic: doc.hospitalName || "JivniCare Clinic",
     location: doc.district || "Bihar",
     rating: doc.rating || 4.5,
-    reviews: 120, // No review model yet
+    reviews: 120, // Static baseline review count until review model is built
     experience: `${doc.experience || 0} Years`,
     fee: `₹${doc.fee || 0}`,
     videoFee: `₹${doc.consultationFee || 300}`,
@@ -61,14 +92,14 @@ function mapDoctorToUI(doc: any): Doctor {
       `https://ui-avatars.com/api/?name=${encodeURIComponent(doc.name)}&background=5298D2&color=fff`,
     bgImage:
       "https://images.unsplash.com/photo-1551076805-e18690c5e53b?q=80&w=1200",
-    available: "Today",
+    available: isAvailableToday ? "Today" : "Check Schedule",
     tags: [
-      ...(doc.specialties?.map((s: any) => s.name) || []),
-      ...(doc.keywords?.map((k: any) => k.term) || []),
+      ...(doc.specialties?.map((s: { name: string }) => s.name) || []),
+      ...(doc.keywords?.map((k: { term: string }) => k.term) || []),
     ],
     about: doc.bio || "Experienced and dedicated doctor.",
     education: doc.education || "MBBS, MD",
-    nextAvailable: "10:00 AM",
+    nextAvailable: isAvailableToday ? nextTime : "N/A",
   };
 }
 
@@ -77,7 +108,7 @@ export default async function DoctorProfilePage({ params }: PageProps) {
 
   const doc = await prisma.doctor.findUnique({
     where: { id },
-    include: { specialties: true, keywords: true },
+    include: { specialties: true, keywords: true, weeklySchedule: true },
   });
 
   if (!doc) notFound();

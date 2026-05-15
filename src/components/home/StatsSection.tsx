@@ -13,7 +13,7 @@ const STATS = [
 
 export function StatsSection() {
   return (
-    <section className="py-12 md:py-16 bg-primary relative overflow-hidden">
+    <section className="py-14 md:py-24 bg-primary relative overflow-hidden">
       {/* Decorative Wave */}
       <div className="absolute inset-0 opacity-10 pointer-events-none">
         <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute w-full h-full">
@@ -32,16 +32,16 @@ export function StatsSection() {
           variants={staggerContainer}
           initial="hidden"
           whileInView="show"
-          viewport={{ once: true, margin: "-100px" }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 lg:gap-12"
+          viewport={{ once: true, amount: 0.1 }}
+          className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12"
         >
           {STATS.map((s) => (
             <motion.div key={s.label} variants={fadeUp} className="flex flex-col items-center text-center text-white">
-              <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-sm mb-4 border border-white/10 shadow-inner">
+              <div className="flex items-center justify-center w-12 h-12 md:w-16 md:h-16 rounded-2xl md:rounded-3xl bg-white/10 backdrop-blur-sm mb-5 border border-white/10 shadow-inner">
                 {s.icon}
               </div>
-              <span className="text-3xl md:text-5xl font-black tracking-tight mb-1">{s.value}</span>
-              <span className="text-sm md:text-base text-blue-100/90 font-medium tracking-wide">{s.label}</span>
+              <span className="text-4xl md:text-5xl font-black tracking-tight mb-1">{s.value}</span>
+              <span className="text-xs md:text-sm text-blue-100 font-bold uppercase tracking-[0.1em]">{s.label}</span>
             </motion.div>
           ))}
         </motion.div>

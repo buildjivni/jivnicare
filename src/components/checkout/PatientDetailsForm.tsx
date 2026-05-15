@@ -91,7 +91,7 @@ export function PatientDetailsForm() {
 
       <Card className="border-slate-200/60 shadow-sm rounded-3xl overflow-hidden bg-white/60 backdrop-blur-xl">
         <CardContent className="p-6 md:p-8 space-y-5">
-          <div className={`transition-transform duration-300 ${focused === "name" ? "scale-[1.01]" : ""}`}>
+          <div className={`transition-all duration-300 ${focused === "name" ? "ring-2 ring-primary/10 rounded-2xl" : ""}`}>
             <label className="text-sm font-semibold text-slate-700 mb-2 block">
               Full Name <span className="text-red-400">*</span>
             </label>
@@ -102,14 +102,21 @@ export function PatientDetailsForm() {
                 className={`${FIELD_CLASS} ${errors.name ? "border-red-300 bg-red-50/30" : ""}`}
                 value={patientDetails.name}
                 onChange={(e) => setPatientDetails({ name: e.target.value })}
-                {...focusProps("name")} 
+                onFocus={(e) => {
+                  setFocused("name");
+                  setTimeout(() => e.target.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300);
+                }}
+                onBlur={() => {
+                  setFocused(null);
+                  validateField("name");
+                }}
               />
             </div>
             {errors.name && <p className="text-xs text-red-500 mt-1.5 font-medium">{errors.name}</p>}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div className={`transition-transform duration-300 ${focused === "phone" ? "scale-[1.01]" : ""}`}>
+            <div className={`transition-all duration-300 ${focused === "phone" ? "ring-2 ring-primary/10 rounded-2xl" : ""}`}>
               <label className="text-sm font-semibold text-slate-700 mb-2 block">
                 Phone Number <span className="text-red-400">*</span>
               </label>
@@ -121,12 +128,19 @@ export function PatientDetailsForm() {
                   className={`${FIELD_CLASS} ${errors.phone ? "border-red-300 bg-red-50/30" : ""}`}
                   value={patientDetails.phone}
                   onChange={(e) => setPatientDetails({ phone: e.target.value })}
-                  {...focusProps("phone")} 
+                  onFocus={(e) => {
+                  setFocused("phone");
+                  setTimeout(() => e.target.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300);
+                }}
+                onBlur={() => {
+                  setFocused(null);
+                  validateField("phone");
+                }}
                 />
               </div>
               {errors.phone && <p className="text-xs text-red-500 mt-1.5 font-medium">{errors.phone}</p>}
             </div>
-            <div className={`transition-transform duration-300 ${focused === "email" ? "scale-[1.01]" : ""}`}>
+            <div className={`transition-all duration-300 ${focused === "email" ? "ring-2 ring-primary/10 rounded-2xl" : ""}`}>
               <label className="text-sm font-semibold text-slate-700 mb-2 block">
                 Email <span className="text-slate-400 text-xs font-normal">(optional)</span>
               </label>
@@ -138,7 +152,15 @@ export function PatientDetailsForm() {
                   className={`${FIELD_CLASS} ${errors.email ? "border-red-300 bg-red-50/30" : ""}`}
                   value={patientDetails.email}
                   onChange={(e) => setPatientDetails({ email: e.target.value })}
-                  {...focusProps("email")} 
+                  onFocus={(e) => {
+                    setFocused("email");
+                    // Mobile keyboard adjustment
+                    setTimeout(() => e.target.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300);
+                  }}
+                  onBlur={() => {
+                    setFocused(null);
+                    validateField("email");
+                  }}
                 />
               </div>
               {errors.email && <p className="text-xs text-red-500 mt-1.5 font-medium">{errors.email}</p>}
@@ -146,6 +168,15 @@ export function PatientDetailsForm() {
           </div>
         </CardContent>
       </Card>
+      
+      {/* Trust Guarantee */}
+      <div className="mt-8 p-6 rounded-[2rem] bg-gradient-to-br from-[#205E98]/5 to-transparent border border-primary/10 flex items-start gap-4">
+        <ShieldCheck className="w-6 h-6 text-primary shrink-0 mt-0.5" />
+        <div>
+          <p className="font-bold text-slate-900">Verified Booking Guarantee</p>
+          <p className="text-sm text-slate-600 mt-1 leading-relaxed">JivniCare connects directly with the clinic's live management system. Your place in the queue is instantly reserved upon confirmation.</p>
+        </div>
+      </div>
     </section>
   );
 }

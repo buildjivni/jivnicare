@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { verifyToken } from "@/lib/jwt";
 import { cookies } from "next/headers";
+import { getCurrentLogicalDay } from "@/lib/clinic-utils";
+import { QueueService } from "@/services/queueService";
 
 export async function POST(request: Request) {
   try {
@@ -32,65 +34,43 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Doctor profile not found" }, { status: 404 });
     }
 
-    // Queue logic runs in a transaction
-    const today = new Date();
-    today.setUTCHours(0, 0, 0, 0);
+    // Phase 1 & 7: Use Unified Service Logic
+    const today = getCurrentLogicalDay();
 
-    const result = await prisma.$transaction(async (tx) => {
-      let dailyQueue = await tx.dailyQueue.findUnique({
-        where: {
-          doctorId_date: {
-            doctorId: doctor.id,
-            date: today,
-          },
-        },
-      });
-
-      if (!dailyQueue) {
-        dailyQueue = await tx.dailyQueue.create({
+    try {
+      const result = await prisma.$transaction(async (tx) => {
+        // Create WalkInEntry first
+        const walkInEntry = await tx.walkInEntry.create({
           data: {
-            doctorId: doctor.id,
-            date: today,
-            maxCapacity: 50,
-          },
+            patientName,
+            phoneNumber,
+            symptoms
+          }
         });
-      }
 
-      const tokensCount = await tx.queueToken.count({
-        where: { queueId: dailyQueue.id },
+        // Use Service for sequential token issuing and capacity checks
+        const newQueueToken = await QueueService.issueToken(doctor.id, today, null, "WALK_IN");
+        
+        // Link the walk-in entry to the token (Service issues generic WALK_IN tokens)
+        const updatedToken = await tx.queueToken.update({
+          where: { id: newQueueToken.id },
+          data: { walkInEntryId: walkInEntry.id },
+          include: { walkInEntry: true }
+        });
+
+        return updatedToken;
       });
 
-      const nextTokenNumber = tokensCount + 1;
-
-      // Create WalkInEntry
-      const walkInEntry = await tx.walkInEntry.create({
-        data: {
-          patientName,
-          phoneNumber,
-          symptoms
-        }
-      });
-
-      // Create QueueToken
-      const newQueueToken = await tx.queueToken.create({
-        data: {
-          queueId: dailyQueue.id,
-          tokenNumber: nextTokenNumber,
-          source: "WALK_IN",
-          status: "WAITING",
-          walkInEntryId: walkInEntry.id,
-        },
-        include: {
-          walkInEntry: true
-        }
-      });
-
-      return newQueueToken;
-    });
-
-    return NextResponse.json({ success: true, token: result });
+      return NextResponse.json({ success: true, token: result });
+    } catch (error: any) {
+      const errorMessages: Record<string, string> = {
+        "QUEUE_FULL": "Cannot add patient. Daily capacity reached.",
+        "CLINIC_CLOSED_TODAY": "Clinic is marked as closed today.",
+      };
+      return NextResponse.json({ error: errorMessages[error.message] || "Failed to add walk-in patient" }, { status: 400 });
+    }
   } catch (error: any) {
     console.error("Walk-in booking error:", error);
-    return NextResponse.json({ error: "Failed to add walk-in patient" }, { status: 500 });
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

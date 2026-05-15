@@ -69,6 +69,7 @@ model Media {
 model User {
   id         String   @id @default(uuid()) @map("_id")
   phone      String   @unique
+  email      String?
   name       String?
   password   String?
   role       Role     @default(PATIENT)
@@ -318,6 +319,7 @@ model DailyQueue {
   status          QueueStatus @default(NOT_STARTED)
   maxCapacity     Int         // Maximum patients for today
   currentActiveToken Int      @default(0) // The token number currently inside the cabin
+  issuedTokensCount Int       @default(0) // Atomic counter for sequential token issuance
   
   tokens          QueueToken[]
   createdAt       DateTime    @default(now())
@@ -368,6 +370,15 @@ model OtpToken {
   hashedOtp String
   expiresAt DateTime
   attempts  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model RateLimit {
+  id        String   @id @default(uuid()) @map("_id")
+  ip        String   @unique
+  count     Int      @default(1)
+  resetTime DateTime
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

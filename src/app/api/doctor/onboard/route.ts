@@ -7,7 +7,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { 
-      fullName, mobile, password, 
+      fullName, mobile, email, password, 
       gender, specialization, qualifications, experience, languages, fee, bio,
       practiceType, practiceName, practiceAddress, city, locality, contactNumber, workingDays, timings
     } = body;
@@ -44,6 +44,7 @@ export async function POST(request: Request) {
       const user = await tx.user.create({
         data: {
           phone: mobile,
+          email: email || null,
           name: fullName,
           password: hashedPassword,
           role: 'DOCTOR',

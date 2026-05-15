@@ -1,4 +1,4 @@
-import { ArrowRight, PauseCircle, SkipForward, User } from "lucide-react";
+import { ArrowRight, SkipForward, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface PatientQueueItem {
@@ -15,10 +15,10 @@ interface NowCallingControllerProps {
   currentPatient: PatientQueueItem | null;
   onNext: () => void;
   onSkip: () => void;
-  onPause: () => void;
+  isLoading?: boolean;
 }
 
-export function NowCallingController({ currentPatient, onNext, onSkip, onPause }: NowCallingControllerProps) {
+export function NowCallingController({ currentPatient, onNext, onSkip, isLoading = false }: NowCallingControllerProps) {
   if (!currentPatient) {
     return (
       <div className="bg-white rounded-3xl p-8 border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-center h-full min-h-[320px]">
@@ -49,7 +49,7 @@ export function NowCallingController({ currentPatient, onNext, onSkip, onPause }
 
         <div className="flex items-center gap-4 mb-8">
           <div className="w-14 h-14 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center font-bold text-xl border-2 border-white shadow-sm ring-2 ring-emerald-50">
-            {currentPatient.name.charAt(0)}
+            {currentPatient.name.charAt(0) || 'U'}
           </div>
           <div>
             <h3 className="text-xl font-bold text-slate-900">{currentPatient.name}</h3>
@@ -71,16 +71,17 @@ export function NowCallingController({ currentPatient, onNext, onSkip, onPause }
         </div>
       </div>
 
-      <div className="p-6 bg-slate-50 border-t border-slate-100 flex items-center gap-3">
-        <Button onClick={onNext} className="flex-1 h-12 rounded-xl bg-[#005da7] hover:bg-[#004883] text-white font-bold text-base shadow-lg shadow-blue-500/20">
-          <ArrowRight className="w-4 h-4 mr-2" /> Next
-        </Button>
-        <Button onClick={onSkip} variant="outline" className="flex-1 h-12 rounded-xl border-slate-200 text-slate-700 hover:bg-white font-bold">
-          <SkipForward className="w-4 h-4 mr-2 text-slate-400" /> Skip
-        </Button>
-        <Button onClick={onPause} variant="outline" className="flex-1 h-12 rounded-xl border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 font-bold">
-          <PauseCircle className="w-4 h-4 mr-2" /> Pause
-        </Button>
+      <div className="p-4 sm:p-6 bg-slate-50 border-t border-slate-100 flex flex-col sm:flex-row items-center gap-3">
+        <div className="flex w-full gap-3">
+          <Button onClick={onNext} disabled={isLoading} className="flex-1 h-14 rounded-2xl bg-[#5298D2] hover:bg-[#417fb1] text-white font-black text-lg shadow-xl shadow-blue-500/20 active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed">
+            {isLoading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" /> : <ArrowRight className="w-5 h-5 mr-2" />} 
+            Next
+          </Button>
+          <Button onClick={onSkip} disabled={isLoading} variant="outline" className="flex-1 h-14 rounded-2xl border-slate-300 text-slate-700 hover:bg-white font-bold active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed">
+            {isLoading ? <div className="w-5 h-5 border-2 border-slate-300 border-t-slate-700 rounded-full animate-spin mr-2" /> : <SkipForward className="w-5 h-5 mr-2 text-slate-400" />} 
+            Skip
+          </Button>
+        </div>
       </div>
     </div>
   );

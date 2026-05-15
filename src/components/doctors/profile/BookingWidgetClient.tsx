@@ -11,16 +11,20 @@ import type { Doctor } from "@/types";
 interface BookingWidgetClientProps {
   doctor: Doctor;
   isMobileCTA?: boolean;
+  isClosedToday?: boolean;
 }
 
-export function BookingWidgetClient({ doctor, isMobileCTA = false }: BookingWidgetClientProps) {
+export function BookingWidgetClient({ doctor, isMobileCTA = false, isClosedToday = false }: BookingWidgetClientProps) {
   const router = useRouter();
   const [selectedService, setSelectedService] = useState<"clinic" | "video">("clinic");
+  const [isNavigating, setIsNavigating] = useState(false);
 
   const { setDoctor, setService } = useBookingStore();
   const { isAuthenticated } = useAuthStore();
 
   const handleBook = () => {
+    if (isNavigating) return;
+    setIsNavigating(true);
     setDoctor(doctor);
     setService(selectedService);
     
@@ -35,9 +39,10 @@ export function BookingWidgetClient({ doctor, isMobileCTA = false }: BookingWidg
     return (
       <Button
         onClick={handleBook}
-        className="flex-1 h-12 rounded-xl text-base font-bold shadow-md transition-all bg-primary hover:bg-[#1a4b7a] text-white"
+        disabled={isNavigating || isClosedToday}
+        className="flex-1 h-12 rounded-xl text-base font-bold shadow-md transition-all bg-primary hover:bg-[#1a4b7a] text-white disabled:opacity-70 disabled:cursor-not-allowed"
       >
-        Join Queue — Book Now
+        {isNavigating ? "Redirecting..." : (isClosedToday ? "Closed Today" : "Join Queue — Book Now")}
       </Button>
     );
   }
@@ -48,6 +53,7 @@ export function BookingWidgetClient({ doctor, isMobileCTA = false }: BookingWidg
       selectedService={selectedService}
       onServiceChange={setSelectedService}
       onBook={handleBook}
+      isNavigating={isNavigating}
     />
   );
 }

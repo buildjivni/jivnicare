@@ -16,7 +16,7 @@ export function TrendingSearches() {
   useEffect(() => {
     async function fetchTrending() {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/search/trending`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || '/api'}/search/trending`);
         if (res.ok) {
           const data = await res.json();
           // Assume backend returns { searches: [], specialties: [] } or just an array

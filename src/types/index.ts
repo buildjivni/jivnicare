@@ -23,6 +23,7 @@ export interface Doctor {
   tags: string[];
   about: string;
   education: string;
+  averageConsultationTime?: number;
   nextAvailable?: string;
 }
 
@@ -46,6 +47,23 @@ export interface BookingDetails {
   patientPhone: string;
 }
 
+export interface QueueToken {
+  id: string;
+  tokenNumber: number;
+  status: string;
+  createdAt: string;
+  tokenIssuedAt?: string;
+  source?: string;
+  estimatedWaitMinutes?: number;
+  doctorId?: string;
+  doctorName?: string;
+  clinic?: string;
+  location?: string;
+  patientName?: string;
+  patientPhone?: string;
+  queuePosition?: number;
+}
+
 export interface BookingState {
   isBookingOpen: boolean;
   selectedDoctor: Doctor | null;
@@ -56,7 +74,7 @@ export interface BookingState {
     email: string;
     phone: string;
   };
-  generatedToken: any | null; // Will store the QueueToken from backend
+  generatedToken: QueueToken | null; // Will store the QueueToken from backend
 
   // Actions
   openBooking: (doctor: Doctor) => void;
@@ -65,7 +83,7 @@ export interface BookingState {
   setService: (service: string | null) => void;
   setDoctor: (doctor: Doctor) => void;
   setPatientDetails: (details: Partial<{ name: string; email: string; phone: string }>) => void;
-  setGeneratedToken: (token: any) => void;
+  setGeneratedToken: (token: QueueToken | null) => void;
   resetBooking: () => void;
 }
 

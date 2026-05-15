@@ -54,7 +54,7 @@ export const metadata: Metadata = {
     description: SITE_CONFIG.description,
     images: [
       {
-        url: "/og-default.jpg",
+        url: "/logo.png",
         width: 1200,
         height: 630,
         alt: "JivniCare — Healthcare Discovery for Bihar",
@@ -67,7 +67,7 @@ export const metadata: Metadata = {
     creator: SITE_CONFIG.twitterHandle,
     title: `${SITE_CONFIG.name} — Book Top Doctors in Bihar`,
     description: SITE_CONFIG.description,
-    images: ["/og-default.jpg"],
+    images: ["/logo.png"],
   },
   alternates: {
     canonical: SITE_CONFIG.baseUrl,
@@ -104,7 +104,7 @@ export default function RootLayout({
       </head>
       <body
         suppressHydrationWarning
-        className="min-h-full flex flex-col bg-background text-foreground"
+        className="min-h-full flex flex-col bg-background text-foreground overflow-x-hidden"
       >
         <GoogleAnalytics ga_id={process.env.NEXT_PUBLIC_GA_ID || ""} />
         <div className="flex-1 flex flex-col">
