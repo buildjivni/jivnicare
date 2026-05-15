@@ -75,7 +75,7 @@ export function Header() {
         <div className="container mx-auto px-4 md:px-6 h-full flex items-center justify-between max-w-7xl w-full box-border">
 
           <Link href="/" className="flex items-center gap-2 group shrink min-w-0">
-            <Logo className="w-8 h-8 md:w-11 md:h-11 transition-transform duration-500 group-hover:rotate-12 shrink-0" />
+            <Logo className="w-8 h-8 md:w-11 md:h-11 shrink-0 transition-transform duration-300 hover:scale-105" />
             <BrandName className={cn("text-lg md:text-2xl font-black tracking-tight truncate", isDoctorsPage && pathname !== "/" ? "hidden lg:block" : "block")} />
           </Link>
 
@@ -106,7 +106,7 @@ export function Header() {
 
           {/* ── SEARCH (Contextual) ── */}
           {isDoctorsPage && pathname !== "/" && (
-            <div className="flex flex-1 max-w-md mx-2 lg:mx-8">
+            <div className="hidden md:flex flex-1 max-w-md mx-4 lg:mx-8">
               <SmartSearchBar compact district="Patna" className="w-full shadow-sm" />
             </div>
           )}

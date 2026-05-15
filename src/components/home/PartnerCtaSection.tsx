@@ -48,7 +48,7 @@ export function PartnerCtaSection() {
                 </Button>
               </Link>
               <Link href="/partners/onboard" className="w-full sm:w-auto">
-                <Button variant="outline" className="h-14 px-8 rounded-xl border-slate-700 text-white font-bold text-base hover:bg-white/10 w-full transition-all">
+                <Button className="h-14 px-8 rounded-xl border-2 border-slate-700 bg-transparent text-white font-bold text-base hover:bg-slate-800 w-full transition-all shadow-none">
                   Start Your Practice Online
                 </Button>
               </Link>
