@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Lightbulb, AlertCircle, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { DoctorFilters, DoctorList } from "@/components/doctors";
+import { SmartSearchBar } from "@/components/shared/SmartSearchBar";
 import { trackSearch } from "@/lib/search-engine";
 import type { SearchResult } from "@/lib/search-engine";
 
@@ -201,6 +202,11 @@ function DoctorListingContent() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* ── Mobile Search Bar ──────────────────────────────── */}
+        <div className="block md:hidden mb-6">
+          <SmartSearchBar district="Patna" className="w-full shadow-sm" />
+        </div>
 
         <div className="flex flex-col md:flex-row gap-6">
           <DoctorFilters
