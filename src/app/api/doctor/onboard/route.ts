@@ -1,35 +1,53 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { cookies } from 'next/headers';
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { 
-      fullName, mobile, email, password, 
-      gender, specialization, qualifications, experience, languages, fee, bio,
-      practiceType, practiceName, practiceAddress, city, locality, contactNumber, workingDays, timings
-    } = body;
+    // 1. Authenticate user from JWT
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth-token')?.value;
 
-    if (!fullName || !mobile || !password || !specialization || !city || !practiceName) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized. Please verify your phone number first.' }, { status: 401 });
     }
 
-    // Check if user already exists
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) throw new Error("JWT_SECRET missing");
+
+    let decoded: any;
+    try {
+      decoded = jwt.verify(token, jwtSecret);
+    } catch (err) {
+      return NextResponse.json({ error: 'Invalid or expired session. Please log in again.' }, { status: 401 });
+    }
+
+    const userId = decoded.id;
+
     const existingUser = await prisma.user.findUnique({
-      where: { phone: mobile }
+      where: { id: userId }
     });
 
-    if (existingUser) {
-      if (existingUser.role === 'DOCTOR') {
-        return NextResponse.json({ error: 'Doctor account with this mobile number already exists.' }, { status: 409 });
-      }
-      return NextResponse.json({ error: 'Mobile number already registered as a Patient. Please use a different number.' }, { status: 409 });
+    if (!existingUser) {
+      return NextResponse.json({ error: 'User account not found.' }, { status: 404 });
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    if (existingUser.role === 'DOCTOR') {
+      return NextResponse.json({ error: 'You are already registered as a Doctor.' }, { status: 409 });
+    }
+
+    // 2. Parse Payload
+    const body = await request.json();
+    const { 
+      fullName, gender, specialization, qualifications, experience, languages, fee, bio,
+      practiceType, practiceName, practiceAddress, city, locality, contactNumber, workingDays, timings,
+      profilePhotoUrl, medicalRegistrationUrl, clinicPhotoUrl
+    } = body;
+
+    if (!specialization || !city || !practiceName) {
+      return NextResponse.json({ error: 'Missing required professional fields' }, { status: 400 });
+    }
 
     // Ensure Specialty exists
     const specialtySlug = specialization.toLowerCase().replace(/[^a-z0-9]+/g, '-');
@@ -39,25 +57,24 @@ export async function POST(request: Request) {
       create: { name: specialization, slug: specialtySlug }
     });
 
-    // Create the User & Doctor records in a Transaction
+    // 3. Create Doctor Record & Upgrade User in a Transaction
     const result = await prisma.$transaction(async (tx) => {
-      const user = await tx.user.create({
+      // Upgrade User Role and update Name if provided
+      const user = await tx.user.update({
+        where: { id: userId },
         data: {
-          phone: mobile,
-          email: email || null,
-          name: fullName,
-          password: hashedPassword,
           role: 'DOCTOR',
-          isVerified: true, // Auto-verify phone for now, but Doctor profile is PENDING
+          ...(fullName ? { name: fullName } : {})
         }
       });
 
-      const doctorSlug = `${fullName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${Math.floor(Math.random() * 10000)}`;
+      const safeName = fullName || existingUser.name || "doctor";
+      const doctorSlug = `${safeName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${Math.floor(Math.random() * 10000)}`;
 
       const doctor = await tx.doctor.create({
         data: {
           userId: user.id,
-          name: fullName,
+          name: safeName,
           slug: doctorSlug,
           bio: bio || null,
           experience: parseInt(experience) || 0,
@@ -69,6 +86,8 @@ export async function POST(request: Request) {
           education: qualifications,
           specialtyIds: [specialtyRecord.id],
           verificationStatus: 'PENDING',
+          profileImage: profilePhotoUrl || null,
+          medicalRegistrationNumber: medicalRegistrationUrl || null, // Storing URL here for simplicity
         }
       });
 
@@ -100,17 +119,14 @@ export async function POST(request: Request) {
       return { user, doctor };
     });
 
-    // Generate JWT Auth Token
-    const jwtSecret = process.env.JWT_SECRET;
-    if (!jwtSecret) throw new Error("JWT_SECRET missing");
-
+    // Generate NEW JWT Auth Token with DOCTOR role
     const payload = { id: result.user.id, role: result.user.role };
-    const token = jwt.sign(payload, jwtSecret, { expiresIn: '7d' });
+    const newToken = jwt.sign(payload, jwtSecret, { expiresIn: '7d' });
 
     const response = NextResponse.json({
       success: true,
       message: 'Doctor profile created successfully.',
-      token,
+      token: newToken,
       user: {
         id: result.user.id,
         phone: result.user.phone,
@@ -120,8 +136,8 @@ export async function POST(request: Request) {
       }
     });
 
-    // Set secure cookie
-    response.cookies.set('auth-token', token, {
+    // Set secure cookie with upgraded token
+    response.cookies.set('auth-token', newToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
