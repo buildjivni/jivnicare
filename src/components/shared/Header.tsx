@@ -106,7 +106,7 @@ export function Header() {
 
           {/* ── SEARCH (Contextual) ── */}
           {isDoctorsPage && pathname !== "/" && (
-            <div className="hidden md:flex flex-1 max-w-md mx-4 lg:mx-8">
+            <div className="flex flex-1 max-w-md mx-2 md:mx-4 lg:mx-8 min-w-0">
               <SmartSearchBar compact district="Patna" className="w-full shadow-sm" />
             </div>
           )}

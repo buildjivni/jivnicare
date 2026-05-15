@@ -257,7 +257,7 @@ export function SmartSearchBar({
           onKeyDown={handleKey}
           placeholder={activePlaceholder}
           className={cn(
-            "flex-1 bg-transparent outline-none text-slate-900 placeholder:text-slate-400 placeholder:transition-all",
+            "flex-1 w-full min-w-0 bg-transparent outline-none text-slate-900 placeholder:text-slate-400 placeholder:transition-all",
             compact ? "text-sm" : "text-base md:text-[15px] font-medium"
           )}
           autoComplete="off"
