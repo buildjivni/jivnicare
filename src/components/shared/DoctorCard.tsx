@@ -24,7 +24,7 @@ export function DoctorCard({ doctor }: DoctorCardProps) {
 
   return (
     <div className="block h-full group outline-none">
-      <Card className="relative overflow-hidden border border-slate-200/60 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_20px_40px_rgba(32,94,152,0.1)] hover:border-primary/30 hover:-translate-y-1 transition-all duration-300 bg-white rounded-[24px] h-full flex flex-col group-focus-visible:ring-2 group-focus-visible:ring-primary group-focus-visible:ring-offset-2">
+      <Card className="relative overflow-hidden border border-slate-100/60 shadow-[0_8px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgba(32,94,152,0.12)] hover:border-primary/40 hover:-translate-y-1.5 transition-all duration-400 bg-white rounded-[24px] h-full flex flex-col group-focus-visible:ring-2 group-focus-visible:ring-primary group-focus-visible:ring-offset-2">
         <Link href={`/doctors/${doctor.id}`} className="absolute inset-0 z-10" aria-label={`View profile of ${doctor.name}`} />
         
         {/* 1. Clinic Banner Image */}

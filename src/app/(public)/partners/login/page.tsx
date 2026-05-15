@@ -146,10 +146,10 @@ function DoctorLoginContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-slate-50/50 flex items-center justify-center p-4">
       <div className="w-full max-w-5xl bg-white rounded-3xl md:rounded-[2.5rem] shadow-xl md:shadow-2xl flex overflow-hidden fade-in min-h-[500px] md:min-h-[600px]">
         {/* Left Side - Branding */}
-        <div className="w-1/2 bg-gradient-to-br from-[#489C66] to-[#14532d] p-12 flex flex-col justify-between relative overflow-hidden hidden md:flex">
+        <div className="w-1/2 bg-gradient-to-br from-emerald-600 to-emerald-900 p-12 flex flex-col justify-between relative overflow-hidden hidden md:flex">
           {/* Subtle grid pattern */}
           <div className="absolute inset-0 opacity-[0.04]" style={{
             backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 24px, rgba(255,255,255,0.5) 24px, rgba(255,255,255,0.5) 25px), repeating-linear-gradient(90deg, transparent, transparent 24px, rgba(255,255,255,0.5) 24px, rgba(255,255,255,0.5) 25px)"
@@ -173,7 +173,7 @@ function DoctorLoginContent() {
           <div className="relative z-10 bg-white/10 backdrop-blur-md p-6 rounded-3xl border border-white/20">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shrink-0 shadow-lg">
-                <Stethoscope className="w-6 h-6 text-[#489C66]" />
+                <Stethoscope className="w-6 h-6 text-emerald-600" />
               </div>
               <div>
                 <p className="text-white font-bold">Secure Partner Portal</p>
@@ -224,7 +224,7 @@ function DoctorLoginContent() {
                         placeholder="98765 43210"
                         value={phone}
                         onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
-                        className="h-14 pl-16 rounded-xl bg-slate-50 border-slate-200 focus-visible:ring-[#489C66] font-black text-lg tracking-wide"
+                        className="h-14 pl-16 rounded-xl bg-white border-slate-200 focus-visible:ring-4 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500 font-black text-lg tracking-wide shadow-sm"
                       />
                     </div>
                   </div>
@@ -232,7 +232,7 @@ function DoctorLoginContent() {
                   <Button 
                     type="submit" 
                     disabled={isLoading || phone.length < 10 || countdown > 0}
-                    className="w-full h-14 rounded-xl bg-gradient-to-r from-[#489C66] to-[#15803d] hover:brightness-110 text-white font-black text-lg shadow-xl shadow-green-900/20 transition-all flex items-center justify-center group"
+                    className="w-full h-14 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white font-black text-lg shadow-[0_8px_20px_rgba(5,150,105,0.2)] hover:shadow-[0_12px_25px_rgba(5,150,105,0.3)] transition-all flex items-center justify-center group active:scale-[0.98]"
                   >
                     {isLoading ? (
                       <span className="flex items-center gap-2">
@@ -255,7 +255,7 @@ function DoctorLoginContent() {
                 <div className="mt-6 pt-6 border-t border-slate-100 text-center">
                   <p className="text-sm font-medium text-slate-500">
                     Not partnered with JivniCare yet? <br />
-                    <Link href="/partners/onboard" className="text-[#489C66] font-bold hover:underline mt-1 inline-block">
+                    <Link href="/partners/onboard" className="text-emerald-600 font-bold hover:underline mt-1 inline-block">
                       Join the Network
                     </Link>
                   </p>
@@ -265,7 +265,7 @@ function DoctorLoginContent() {
               <div className="fade-in">
                 <button 
                   onClick={() => setStep("phone")}
-                  className="mb-6 flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-[#489C66] transition-colors"
+                  className="mb-6 flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-emerald-600 transition-colors"
                 >
                   <ArrowLeft className="w-4 h-4" /> Back
                 </button>
@@ -291,14 +291,14 @@ function DoctorLoginContent() {
                       placeholder="• • • •"
                       value={otp}
                       onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                      className="h-14 text-center rounded-xl bg-slate-50 border-slate-200 focus-visible:ring-[#489C66] font-black text-2xl tracking-[1em]"
+                      className="h-14 text-center rounded-xl bg-white border-slate-200 focus-visible:ring-4 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500 font-black text-2xl tracking-[1em] shadow-sm"
                     />
                   </div>
 
                   <Button 
                     type="submit" 
                     disabled={isLoading || otp.length < 4}
-                    className="w-full h-14 rounded-xl bg-gradient-to-r from-[#489C66] to-[#15803d] hover:brightness-110 text-white font-black text-lg shadow-xl shadow-green-900/20 transition-all flex items-center justify-center group"
+                    className="w-full h-14 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white font-black text-lg shadow-[0_8px_20px_rgba(5,150,105,0.2)] hover:shadow-[0_12px_25px_rgba(5,150,105,0.3)] transition-all flex items-center justify-center group active:scale-[0.98]"
                   >
                     {isLoading ? (
                       <span className="flex items-center gap-2">
@@ -318,7 +318,7 @@ function DoctorLoginContent() {
                       <button 
                         onClick={handleSendOtp} 
                         disabled={isLoading || countdown > 0}
-                        className="inline-flex items-center gap-1.5 text-sm font-bold text-[#489C66] hover:text-[#15803d] transition-colors disabled:opacity-50"
+                        className="inline-flex items-center gap-1.5 text-sm font-bold text-emerald-600 hover:text-emerald-700 transition-colors disabled:opacity-50"
                       >
                         <RefreshCw className="w-3.5 h-3.5" />
                         Resend OTP

@@ -27,7 +27,7 @@ export function HeroSection() {
   if (isLoggedIn && (user?.role === "DOCTOR" || user?.role === "ADMIN")) return null;
 
   return (
-    <section className="relative w-full max-w-full pt-4 md:pt-12 pb-6 md:pb-16 overflow-hidden bg-white box-border" aria-label="Hero">
+    <section className="relative w-full max-w-full pt-10 md:pt-24 pb-12 md:pb-32 overflow-hidden bg-white box-border" aria-label="Hero">
       {/* Soft Background Accents */}
       <div className="absolute top-0 inset-x-0 h-96 bg-gradient-to-b from-blue-50/50 to-transparent -z-10" />
       <div className="absolute top-20 right-0 w-72 h-72 bg-blue-100/30 rounded-full blur-[100px] -z-10" />
@@ -39,7 +39,7 @@ export function HeroSection() {
           <motion.div 
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50/80 border border-emerald-100/50 text-emerald-700 text-[10px] md:text-xs font-bold uppercase tracking-widest mb-4 shadow-sm max-w-full overflow-hidden"
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50/70 backdrop-blur-md border border-emerald-200/50 text-emerald-800 text-[10px] md:text-xs font-bold uppercase tracking-widest mb-6 shadow-[0_4px_14px_rgba(16,185,129,0.1)] max-w-full overflow-hidden"
           >
             <ShieldCheck className="w-3 h-3 md:w-4 md:h-4 text-emerald-500 shrink-0" />
             <span className="truncate">Top Doctors in Bihar</span>
@@ -49,10 +49,10 @@ export function HeroSection() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-2xl sm:text-4xl lg:text-5xl xl:text-6xl font-black tracking-tight leading-[1.15] text-slate-900 mb-4 w-full break-words px-2"
+            className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-black tracking-tight leading-[1.1] text-slate-900 mb-5 w-full break-words px-2"
           >
             Top Doctors, <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-primary to-emerald-600">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-blue-600 to-emerald-600">
               Now on Your Phone.
             </span>
           </motion.h1>
@@ -108,7 +108,7 @@ export function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
-            className="w-full max-w-full md:max-w-md bg-slate-50/50 backdrop-blur-sm border border-slate-200/60 rounded-2xl p-3 md:p-5 flex items-center gap-3 md:gap-4 shadow-sm box-border mx-2 md:mx-0"
+            className="w-full max-w-full md:max-w-md bg-white/70 backdrop-blur-xl border border-slate-200/50 rounded-2xl p-4 flex items-center gap-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)] box-border mx-2 md:mx-0"
           >
             <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-white flex items-center justify-center shrink-0 shadow-sm">
               <Zap className="w-5 h-5 md:w-6 md:h-6 text-primary animate-pulse shrink-0" />
