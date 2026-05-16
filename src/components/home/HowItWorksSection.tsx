@@ -29,10 +29,10 @@ export function HowItWorksSection() {
   ];
 
   return (
-    <section id="how-it-works" className="py-24 md:py-40 bg-white relative overflow-hidden">
+    <section id="how-it-works" className="py-16 md:py-24 bg-white relative overflow-hidden">
       <div className="container mx-auto px-4 max-w-6xl relative z-10">
-        <div className="text-center max-w-3xl mx-auto mb-20 md:mb-28">
-          <h2 className="text-4xl md:text-7xl font-black tracking-tight text-slate-900 mb-8">
+        <div className="text-center max-w-3xl mx-auto mb-12 md:mb-16">
+          <h2 className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tight text-slate-900 mb-6">
             Healthcare made <span className="text-primary">Simple.</span>
           </h2>
           <p className="text-xl md:text-2xl text-slate-700 font-bold leading-relaxed">

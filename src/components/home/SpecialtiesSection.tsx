@@ -36,7 +36,7 @@ export function SpecialtiesSection({ specialties }: SpecialtiesSectionProps) {
   const displaySpecialties = specialties || SPECIALTIES;
 
   return (
-    <section className="py-10 md:py-20 bg-white border-b border-slate-100 relative" id="specialties">
+    <section className="py-10 md:py-16 bg-white border-b border-slate-100 relative" id="specialties">
       <div className="container mx-auto px-4 max-w-6xl">
         <div className="flex flex-col md:flex-row items-start md:items-end justify-between mb-12 gap-6">
           <div className="max-w-xl">
