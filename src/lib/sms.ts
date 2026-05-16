@@ -31,7 +31,7 @@ export const sendSMS = async (phone: string, otp: string) => {
     } : {
       route: "v3",
       sender_id: "TXTIND", // Default generic sender ID
-      message: `Your JivniCare login OTP is ${otp}. Valid for 5 mins. Do not share this with anyone.`,
+      message: `Your JivniCare secure login OTP is ${otp}. Valid for 5 mins. Do not share this.`,
       language: "english",
       flash: 0,
       numbers: phone,
@@ -53,10 +53,13 @@ export const sendSMS = async (phone: string, otp: string) => {
       return true;
     } else {
       console.error(`[SMS] Fast2SMS Error:`, data);
+      // TODO: Implement fallback provider (e.g. Twilio / MSG91) here if Fast2SMS fails.
+      // trackEvent("sms_delivery_failed", { provider: "fast2sms", phone });
       return false;
     }
   } catch (error) {
     console.error(`[SMS] Network Error while sending SMS to ${phone}:`, error);
+    // TODO: Implement fallback provider here.
     return false;
   }
 };
