@@ -20,10 +20,10 @@ export function QueueOperationsMenu({ onAddOffline, compounderNote }: QueueOpera
           Add patients arriving directly at the clinic to the live digital queue. All patients follow a sequential order.
         </p>
 
-        <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <button 
             onClick={onAddOffline}
-            className="flex flex-col items-start p-5 rounded-2xl border-2 border-slate-100 hover:border-[#005da7] hover:bg-blue-50/50 transition-all text-left group w-full"
+            className="col-span-1 md:col-span-2 flex flex-col items-start p-5 rounded-2xl border-2 border-slate-100 hover:border-[#005da7] hover:bg-blue-50/50 transition-all text-left group w-full"
           >
             <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#005da7] flex items-center justify-center mb-4 group-hover:bg-[#005da7] group-hover:text-white transition-colors">
               <UserPlus className="w-5 h-5" />
@@ -32,6 +32,30 @@ export function QueueOperationsMenu({ onAddOffline, compounderNote }: QueueOpera
               <span className="font-bold text-slate-900 text-base mb-1 block">Add Offline Patient (Walk-in)</span>
               <span className="text-xs text-slate-500 font-medium">Issue a physical token number that integrates with the online queue.</span>
             </div>
+          </button>
+
+          <button 
+            onClick={() => {
+              if(window.confirm("Pause digital queue for 15 minutes? Patients will be notified of the delay.")) {
+                // Future API integration
+              }
+            }}
+            className="flex flex-col items-start p-4 rounded-2xl border border-amber-200 bg-amber-50 hover:bg-amber-100 transition-all text-left group w-full"
+          >
+            <span className="font-bold text-amber-900 text-sm mb-1 block">Take a Break (15m)</span>
+            <span className="text-[10px] text-amber-700 font-medium leading-tight">Temporarily pause queue advancement.</span>
+          </button>
+
+          <button 
+            onClick={() => {
+              if(window.confirm("EMERGENCY: Are you sure you want to halt all OPD operations today? All waiting patients will be notified.")) {
+                // Future API integration
+              }
+            }}
+            className="flex flex-col items-start p-4 rounded-2xl border border-red-200 bg-red-50 hover:bg-red-100 transition-all text-left group w-full"
+          >
+            <span className="font-bold text-red-900 text-sm mb-1 block">Emergency Halt OPD</span>
+            <span className="text-[10px] text-red-700 font-medium leading-tight">Cancel all remaining tokens today.</span>
           </button>
         </div>
       </div>

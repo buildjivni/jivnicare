@@ -85,6 +85,7 @@ export const viewport: Viewport = {
 };
 
 import { FirebaseAuthProvider } from "@/components/providers/FirebaseAuthProvider";
+import { MonitoringProvider } from "@/components/providers/MonitoringProvider";
 
 export default function RootLayout({
   children,
@@ -107,6 +108,7 @@ export default function RootLayout({
         suppressHydrationWarning
         className="min-h-screen flex flex-col bg-background text-foreground overflow-x-hidden"
       >
+        <MonitoringProvider />
         <GoogleAnalytics ga_id={process.env.NEXT_PUBLIC_GA_ID || ""} />
         <FirebaseAuthProvider>
           <div className="flex-1 flex flex-col">
