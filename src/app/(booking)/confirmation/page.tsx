@@ -104,7 +104,7 @@ export default function ConfirmationPage() {
             <CheckCircle2 className="w-10 h-10 text-emerald-500" />
           </div>
           <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">Booking Confirmed!</h1>
-          <p className="text-emerald-100 font-medium mt-2">Your live queue token has been generated.</p>
+          <p className="text-emerald-100 font-medium mt-2">Your appointment token is confirmed.</p>
         </div>
 
         {/* Digital Ticket */}
@@ -118,7 +118,7 @@ export default function ConfirmationPage() {
             
             <div className="mt-6 inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 px-4 py-2 rounded-full relative z-10">
               <Activity className="w-4 h-4 text-emerald-400" />
-              <p className="text-sm font-bold">Currently Serving: <span className="text-emerald-400">#{currentServing}</span></p>
+              <p className="text-sm font-bold">Doctor is currently seeing: <span className="text-emerald-400">#{currentServing}</span></p>
             </div>
           </div>
 
@@ -160,7 +160,7 @@ export default function ConfirmationPage() {
                 </div>
               </div>
               <Button variant="outline" className="rounded-xl font-bold border-slate-200 text-primary hover:bg-primary/10">
-                <Download className="w-4 h-4 mr-2" /> Download
+                <Download className="w-4 h-4 mr-2" /> Save Ticket
               </Button>
             </div>
           </div>
@@ -170,7 +170,7 @@ export default function ConfirmationPage() {
         <div className="mt-8 flex flex-col sm:flex-row gap-4 items-center justify-center">
           <Link href="/my-bookings" className="w-full sm:w-auto" onClick={resetBooking}>
             <Button className="w-full h-14 px-8 rounded-xl bg-primary hover:bg-primary/90 text-white font-black shadow-xl shadow-blue-900/20 text-lg">
-              Track Live Queue <ChevronRight className="w-5 h-5 ml-1" />
+              Track Your Wait Time <ChevronRight className="w-5 h-5 ml-1" />
             </Button>
           </Link>
           <Link href="/" className="w-full sm:w-auto" onClick={resetBooking}>

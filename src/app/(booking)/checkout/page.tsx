@@ -113,8 +113,8 @@ export default function CheckoutPage() {
             <Activity className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-blue-900">Live OPD Queue Enrollment</p>
-            <p className="text-xs text-blue-700">You are about to join a live physical queue. A sequential Token Number will be generated.</p>
+            <p className="text-sm font-semibold text-blue-900">Clinic Appointment Booking</p>
+            <p className="text-xs text-blue-700">You will receive a confirmed token number to see the doctor.</p>
           </div>
         </div>
 
@@ -125,8 +125,8 @@ export default function CheckoutPage() {
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-emerald-800">Booking Draft Restored</p>
-              <p className="text-xs text-emerald-600">Your previous progress has been automatically recovered.</p>
+              <p className="text-sm font-semibold text-emerald-800">Booking Details Saved</p>
+              <p className="text-xs text-emerald-600">We saved your progress so you can complete your booking easily.</p>
             </div>
           </div>
         )}

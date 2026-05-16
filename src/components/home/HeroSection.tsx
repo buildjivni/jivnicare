@@ -42,7 +42,7 @@ export function HeroSection() {
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50/70 backdrop-blur-md border border-emerald-200/50 text-emerald-800 text-[10px] md:text-xs font-black uppercase tracking-[0.2em] mb-8 shadow-[0_4px_14px_rgba(16,185,129,0.1)] max-w-full overflow-hidden"
           >
             <ShieldCheck className="w-3.5 h-3.5 md:w-4 md:h-4 text-emerald-500 shrink-0" />
-            <span className="truncate">Bihar's Unified Healthcare Platform</span>
+            <span className="truncate">Your Trusted Healthcare Partner</span>
           </motion.div>
 
           <motion.h1 
@@ -63,7 +63,7 @@ export function HeroSection() {
             transition={{ delay: 0.2 }}
             className="text-[14px] sm:text-base md:text-lg lg:text-xl text-slate-500 w-full font-bold leading-relaxed mb-8 md:mb-10 break-words px-2 sm:px-6 max-w-3xl"
           >
-            One secure identity for all your clinical needs. Book verified appointments with <strong className="text-slate-900">500+ specialists</strong> across Bihar and manage your digital health record instantly.
+            Book verified doctors and manage your family's health securely in one place. Trusted by <strong className="text-slate-900">thousands</strong> across Bihar.
           </motion.p>
 
           {/* ── SEARCH SYSTEM ───────────────────────── */}
@@ -75,7 +75,7 @@ export function HeroSection() {
           >
             <SmartSearchBar
               district="Patna"
-              placeholder="Search doctor, specialty..."
+              placeholder="Find doctors by name, symptom, or specialty..."
               className="w-full shadow-xl shadow-primary/5 border-slate-200"
             />
           </motion.div>
@@ -117,7 +117,7 @@ export function HeroSection() {
                 <span className="truncate">Safe & Verified Healthcare</span>
               </div>
               <p className="text-[11px] md:text-sm font-bold text-slate-800 leading-tight truncate">
-                Secure, end-to-end encrypted bookings.
+                Your medical data is 100% private and secure.
               </p>
             </div>
             <div className="ml-auto flex items-center gap-1 bg-white px-2 py-1 rounded-lg border border-slate-200 shrink-0">

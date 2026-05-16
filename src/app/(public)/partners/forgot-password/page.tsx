@@ -83,7 +83,7 @@ export default function ForgotPasswordPage() {
               <div className="mb-10 text-center sm:text-left">
                 <h2 className="text-3xl font-black text-slate-900 leading-tight tracking-tight">Security Reset</h2>
                 <p className="text-slate-500 font-bold mt-2 text-sm">
-                  Receive a recovery link for your professional account.
+                  Enter your email to safely reset your password.
                 </p>
               </div>
 

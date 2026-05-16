@@ -68,7 +68,7 @@ export function Footer() {
             </Link>
 
             <p className="text-slate-400 text-[13px] font-bold leading-relaxed max-w-xs">
-              JivniCare is Bihar&apos;s most trusted medical network — providing a single unified identity for clinical discovery, verified bookings, and digital health records.
+              Making quality healthcare simple, safe, and accessible for everyone in Bihar. Book verified doctors instantly.
             </p>
 
             {/* Trust Badges */}

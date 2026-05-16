@@ -212,8 +212,8 @@ function DoctorLoginContent() {
 
             <div className="space-y-6">
               <h1 className="text-[40px] font-black text-white leading-[1.1] tracking-tight">
-                Empowering <br />
-                <span className="text-emerald-300">Care Providers.</span>
+                A Modern Platform <br />
+                <span className="text-emerald-300">for Trusted Doctors.</span>
               </h1>
               <p className="text-emerald-100 font-medium text-lg max-w-xs leading-relaxed opacity-90">
                 Join 5,000+ medical professionals managing their digital practice with JivniCare.
@@ -312,7 +312,7 @@ function DoctorLoginContent() {
                           disabled={isLoading || phone.length < 10}
                           className="w-full h-16 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black text-lg shadow-[0_12px_24px_-8px_var(--primary)] active:scale-[0.98] transition-all flex items-center justify-center gap-3"
                         >
-                          {isLoading ? <RefreshCw className="w-6 h-6 animate-spin" /> : <>Get OTP Access <ArrowRight className="w-5 h-5" /></>}
+                          {isLoading ? <RefreshCw className="w-6 h-6 animate-spin" /> : <>Send Access Code <ArrowRight className="w-5 h-5" /></>}
                         </Button>
                       </motion.form>
                     ) : (
@@ -392,7 +392,7 @@ function DoctorLoginContent() {
                   <div className="mb-10 text-center md:text-left">
                     <h2 className="text-3xl font-black text-slate-900 tracking-tight">Verify Securely</h2>
                     <p className="text-slate-500 font-bold mt-2 text-sm leading-relaxed">
-                      Enter the 6-digit access code sent to <span className="text-slate-900 font-black">+91 {phone}</span>
+                      Enter the 6-digit code we sent to your mobile: <span className="text-slate-900 font-black">+91 {phone}</span>
                     </p>
                   </div>
 
@@ -420,7 +420,7 @@ function DoctorLoginContent() {
                       disabled={isLoading || otp.length < 6}
                       className="w-full h-16 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black text-lg shadow-[0_12px_24px_-8px_var(--primary)] transition-all flex items-center justify-center gap-3"
                     >
-                      {isLoading ? <RefreshCw className="w-6 h-6 animate-spin" /> : <>Verify & Access Portal <ShieldCheck className="w-5 h-5 text-emerald-300" /></>}
+                      {isLoading ? <RefreshCw className="w-6 h-6 animate-spin" /> : <>Securely Log In <ShieldCheck className="w-5 h-5 text-emerald-300" /></>}
                     </Button>
                   </form>
                   

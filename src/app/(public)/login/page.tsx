@@ -214,8 +214,8 @@ function PatientLoginContent() {
 
             <div className="space-y-6">
               <h1 className="text-[42px] font-black text-white leading-[1.1] tracking-tight">
-                One Identity. <br />
-                <span className="text-blue-200">Total Care.</span>
+                Your Health, <br />
+                <span className="text-blue-200">Fully Protected.</span>
               </h1>
               <p className="text-blue-100 font-medium text-lg max-w-xs leading-relaxed opacity-90">
                 Securely access your medical history and book instant appointments across our nationwide network.
@@ -258,7 +258,7 @@ function PatientLoginContent() {
                       <UserIcon className="w-7 h-7 text-primary" />
                     </div>
                     <h2 className="text-3xl font-black text-slate-900 tracking-tight">Welcome</h2>
-                    <p className="text-slate-500 font-bold mt-2 text-sm">Verify your mobile to continue.</p>
+                    <p className="text-slate-500 font-bold mt-2 text-sm">Enter your mobile number to log in or sign up safely.</p>
                   </div>
 
                   {error && (
@@ -299,7 +299,7 @@ function PatientLoginContent() {
                       {isLoading ? (
                         <RefreshCw className="w-6 h-6 animate-spin" />
                       ) : (
-                        <>Continue <ArrowRight className="w-5 h-5" /></>
+                        <>Send Secure OTP <ArrowRight className="w-5 h-5" /></>
                       )}
                     </Button>
                   </form>
@@ -371,7 +371,7 @@ function PatientLoginContent() {
                   <div className="mb-10 text-center md:text-left">
                     <h2 className="text-3xl font-black text-slate-900 tracking-tight">Verify Securely</h2>
                     <p className="text-slate-500 font-bold mt-2 text-sm leading-relaxed">
-                      Enter the 6-digit code we sent to <span className="text-slate-900 font-black">+91 {phone}</span>
+                      Enter the 6-digit code we sent to your mobile: <span className="text-slate-900 font-black">+91 {phone}</span>
                     </p>
                   </div>
 
@@ -403,7 +403,7 @@ function PatientLoginContent() {
                       {isLoading ? (
                         <RefreshCw className="w-6 h-6 animate-spin" />
                       ) : (
-                        <>Secure Login <ShieldCheck className="w-5 h-5 text-emerald-400" /></>
+                        <>Verify & Log In <ShieldCheck className="w-5 h-5 text-emerald-400" /></>
                       )}
                     </Button>
                   </form>
