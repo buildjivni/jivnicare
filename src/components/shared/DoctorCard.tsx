@@ -22,9 +22,9 @@ function getAvailabilityConfig(doctor: Doctor) {
   const status = doctor.availabilityStatus || doctor.available || "";
   const lower = status.toLowerCase();
   
-  if (lower.includes("instant") || lower.includes("12 mins") || lower.includes("opd open")) {
+  if (lower.includes("instant") || lower.includes("12 mins") || lower.includes("opd open") || doctor.isQueueActive) {
     return { 
-      label: status || "OPD Open",
+      label: "Accepting Walk-ins",
       pill: "text-emerald-700 bg-emerald-50 border-emerald-100", 
       dot: "bg-emerald-500",
       pulse: true
@@ -32,7 +32,7 @@ function getAvailabilityConfig(doctor: Doctor) {
   }
   if (lower.includes("today") || lower.includes("slot")) {
     return { 
-      label: status || "Available Today",
+      label: "Next Available Today",
       pill: "text-[#205E98] bg-blue-50 border-blue-100", 
       dot: "bg-[#205E98]",
       pulse: false
@@ -40,14 +40,14 @@ function getAvailabilityConfig(doctor: Doctor) {
   }
   if (lower.includes("tomorrow")) {
     return { 
-      label: status || "Tomorrow",
+      label: "Available Tomorrow",
       pill: "text-amber-700 bg-amber-50 border-amber-100", 
       dot: "bg-amber-500",
       pulse: false
     };
   }
   return { 
-    label: status || "Check Schedule",
+    label: "Check Schedule",
     pill: "text-slate-600 bg-slate-50 border-slate-200", 
     dot: "bg-slate-400",
     pulse: false

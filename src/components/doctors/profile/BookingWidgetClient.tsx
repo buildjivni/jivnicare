@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useBookingStore } from "@/store/useBookingStore";
 import { useAuthStore } from "@/store/useAuthStore";
 import type { Doctor } from "@/types";
+import { trackEvent } from "@/lib/analytics";
 
 interface BookingWidgetClientProps {
   doctor: Doctor;
@@ -24,6 +25,7 @@ export function BookingWidgetClient({ doctor, isMobileCTA = false, isClosedToday
 
   const handleBook = () => {
     if (isNavigating) return;
+    trackEvent("booking_initiated", { doctorId: doctor.id, service: selectedService, isMobile: isMobileCTA });
     setIsNavigating(true);
     setDoctor(doctor);
     setService(selectedService);
