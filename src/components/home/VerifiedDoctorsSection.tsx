@@ -14,15 +14,15 @@ interface VerifiedDoctorsSectionProps {
 
 export function VerifiedDoctorsSection({ doctors }: VerifiedDoctorsSectionProps) {
   return (
-    <section className="py-16 md:py-32 bg-white relative overflow-hidden">
+    <section className="py-12 md:py-20 bg-white relative overflow-hidden">
       <div className="absolute inset-0 bg-slate-50/50 pointer-events-none" />
       <div className="container mx-auto px-4 max-w-6xl relative z-10">
-        <div className="flex flex-col md:flex-row items-center justify-between mb-16 md:mb-24 gap-8">
+        <div className="flex flex-col md:flex-row items-center justify-between mb-12 md:mb-16 gap-6">
           <div className="max-w-3xl text-center md:text-left">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/10 border border-secondary/20 text-secondary text-xs font-black uppercase tracking-[0.2em] mb-8">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/10 border border-secondary/20 text-secondary text-xs font-black uppercase tracking-[0.2em] mb-6">
               <ShieldCheck className="w-4 h-4" /> 100% Verified Specialists
             </div>
-            <h2 className="text-4xl md:text-7xl font-black tracking-tight text-slate-900 mb-8 leading-[1.05]">
+            <h2 className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tight text-slate-900 mb-6 leading-[1.05]">
               Bihar&apos;s Most <br />
               <span className="text-primary">Trusted Doctors.</span>
             </h2>
