@@ -1,16 +1,11 @@
 import { 
   HeroSection, 
-  StatsSection, 
-  WhyJivniCareSection, 
   HowItWorksSection, 
-  ComparisonSection, 
   TrustSection, 
   CtaBannerSection, 
   SpecialtiesSection, 
   AvailableDoctorsSection,
-  TrustedBySection,
   PartnerCtaSection,
-  FeaturedArticlesSection,
 } from "@/components/home";
 import prisma from "@/lib/prisma";
 import type { Doctor } from "@/types";
@@ -40,19 +35,12 @@ export default async function Home() {
   return (
     <main className="flex flex-col min-h-screen w-full max-w-full overflow-x-hidden box-border">
       <HeroSection />
-      <TrustedBySection />
+      <TrustSection />
       <div className="bg-slate-50/50">
         <SpecialtiesSection specialties={specialties} />
       </div>
-      <StatsSection />
       <AvailableDoctorsSection doctors={featuredDoctors} />
-      <WhyJivniCareSection />
       <HowItWorksSection />
-      <div className="bg-slate-50/50">
-        <ComparisonSection />
-      </div>
-      <TrustSection />
-      <FeaturedArticlesSection />
       <PartnerCtaSection />
       <CtaBannerSection />
     </main>
