@@ -65,7 +65,9 @@ export const useAuthStore = create<AuthState>()(
 
       logout: () => {
         // 1. Sign out from Firebase Client
-        auth.signOut().catch(console.error);
+        if (auth) {
+          auth.signOut().catch(console.error);
+        }
 
         // 2. Clear store state immediately (synchronous)
         set({ user: null, token: null, isAuthenticated: false });

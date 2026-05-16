@@ -15,6 +15,11 @@ export function useFirebaseAuth() {
   const [fbUser, setFbUser] = useState<FirebaseUser | null>(null);
 
   useEffect(() => {
+    if (!auth) {
+      console.warn("Firebase Auth is not initialized. Check your environment variables.");
+      return;
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setFbUser(user);
       
