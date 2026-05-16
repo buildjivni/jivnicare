@@ -11,7 +11,13 @@ export async function GET(
     const { id: doctorId } = await params;
     
     const cacheKey = `queue_stats:${doctorId}`;
-    const cachedStats = await redis.get(cacheKey);
+    let cachedStats = null;
+    
+    try {
+      cachedStats = await redis.get(cacheKey);
+    } catch (redisError) {
+      console.warn("⚠️ Redis GET failed in queue-stats, skipping cache read:", redisError);
+    }
     
     if (cachedStats) {
       const stats = typeof cachedStats === 'string' ? JSON.parse(cachedStats) : cachedStats;
@@ -72,8 +78,12 @@ export async function GET(
       timings: daySchedule.isOpen ? `${daySchedule.start} - ${daySchedule.end}` : "Closed Today",
     };
 
-    // Cache the result in Redis for 10 seconds to protect MongoDB
-    await redis.setex(cacheKey, 10, JSON.stringify(queueData));
+    try {
+      // Cache the result in Redis for 10 seconds to protect MongoDB
+      await redis.setex(cacheKey, 10, JSON.stringify(queueData));
+    } catch (redisError) {
+      console.warn("⚠️ Redis caching failed in queue-stats, continuing without cache:", redisError);
+    }
 
     const response = NextResponse.json({
       success: true,
