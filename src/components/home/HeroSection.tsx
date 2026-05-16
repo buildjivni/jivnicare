@@ -3,19 +3,21 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ShieldCheck, Star } from "lucide-react";
+import { ShieldCheck, Thermometer, HeartPulse, Stethoscope, Baby, Activity, Siren } from "lucide-react";
 import { SmartSearchBar } from "@/components/shared/SmartSearchBar";
 import { LocationSelector } from "./LocationSelector";
+import { TrustBadge } from "@/components/trust/TrustBadge";
+import { OperationalProof } from "@/components/trust/OperationalProof";
 import { useAuthStore } from "@/store/useAuthStore";
 import { cn } from "@/lib/utils";
 
 const QUICK_CHIPS = [
-  { label: "Fever", icon: "🌡️" },
-  { label: "Heart", icon: "❤️" },
-  { label: "Skin", icon: "🩺" },
-  { label: "Child", icon: "👶" },
-  { label: "Dentist", icon: "🦷" },
-  { label: "Emergency", icon: "🚨" },
+  { label: "General Physician", icon: <Thermometer className="w-3.5 h-3.5" /> },
+  { label: "Cardiologist", icon: <HeartPulse className="w-3.5 h-3.5" /> },
+  { label: "Dermatologist", icon: <Activity className="w-3.5 h-3.5" /> },
+  { label: "Pediatrician", icon: <Baby className="w-3.5 h-3.5" /> },
+  { label: "Dentist", icon: <Stethoscope className="w-3.5 h-3.5" /> },
+  { label: "Emergency", icon: <Siren className="w-3.5 h-3.5 text-destructive" /> },
 ];
 
 export function HeroSection() {
@@ -32,30 +34,39 @@ export function HeroSection() {
       {/* Soft Background Accents */}
       <div className="absolute top-0 inset-x-0 h-[400px] bg-gradient-to-b from-blue-50/80 via-blue-50/20 to-transparent -z-10" />
       
-      <div className="container mx-auto px-4 w-full max-w-4xl relative z-10 box-border">
+      <div className="container mx-auto px-4 w-full max-w-5xl relative z-10 box-border">
         <div className="flex flex-col items-center text-center w-full max-w-full">
           
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6"
+          >
+            <TrustBadge type="privacy" text="HIPAA-Grade Privacy & Security" />
+          </motion.div>
+
           <motion.h1 
             initial={{ opacity: 0, y: -5 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-slate-900 mb-2 w-full break-words px-2"
+            transition={{ delay: 0.1 }}
+            className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-slate-900 mb-4 w-full break-words px-2 leading-tight"
           >
-            Find & Book Top Doctors
+            Premium Healthcare, <br className="hidden sm:block" /> Instantly Accessible.
           </motion.h1>
           <motion.p 
             initial={{ opacity: 0, y: -5 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="text-sm md:text-base text-slate-500 font-semibold mb-6 max-w-lg"
+            transition={{ delay: 0.15 }}
+            className="text-base md:text-lg text-slate-600 font-medium mb-10 max-w-2xl"
           >
-            Verified professionals, zero waiting time, and secure bookings.
+            Connect with strictly verified medical professionals and skip the waiting room with live, real-time OPD tracking.
           </motion.p>
 
           {/* ── DISCOVERY CONTAINER ───────────────────────── */}
           <motion.div 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
+            transition={{ delay: 0.2 }}
             className="w-full max-w-2xl bg-white p-3 md:p-4 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-slate-100 flex flex-col md:flex-row gap-3 mb-6"
           >
             <LocationSelector className="w-full md:w-auto md:max-w-[200px] shrink-0" />
@@ -82,26 +93,21 @@ export function HeroSection() {
                   href={`/doctors?q=${encodeURIComponent(chip.label)}`}
                   className="px-3 py-2 text-xs font-bold text-slate-600 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl transition-all flex items-center gap-1.5 shadow-sm shrink-0 active:scale-95"
                 >
-                  <span className="text-sm">{chip.icon}</span>
+                  <span className="text-muted-foreground">{chip.icon}</span>
                   {chip.label}
                 </Link>
               ))}
             </div>
           </motion.div>
 
-          {/* ── OFFICIAL PLATFORM BADGE (Compact) ── */}
+          {/* ── OPERATIONAL PROOF ── */}
           <motion.div 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="w-full max-w-sm mx-auto bg-white/70 backdrop-blur-md border border-emerald-100 rounded-2xl p-3 flex items-center justify-center gap-3 shadow-sm box-border"
+            className="w-full mt-4"
           >
-            <ShieldCheck className="w-5 h-5 text-emerald-500 shrink-0" />
-            <span className="text-xs font-bold text-slate-700">100% Private & Verified Healthcare</span>
-            <div className="flex items-center gap-1 border-l border-slate-200 pl-3">
-               <Star className="w-3.5 h-3.5 text-amber-400 fill-current" />
-               <span className="text-xs font-black text-slate-800">4.9</span>
-            </div>
+            <OperationalProof />
           </motion.div>
 
         </div>

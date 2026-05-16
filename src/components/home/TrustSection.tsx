@@ -6,11 +6,11 @@ import { ShieldCheck, CheckCircle2, Star, PhoneCall } from "lucide-react";
 
 export function TrustSection() {
   return (
-    <section className="py-14 md:py-24 relative bg-[#0B2136] overflow-hidden">
+    <section className="py-14 md:py-24 relative bg-slate-950 overflow-hidden">
       {/* Abstract Background */}
-      <div className="absolute inset-0 z-0">
-        <div className="absolute top-0 right-0 w-72 md:w-[500px] h-72 md:h-[500px] bg-primary rounded-full blur-[80px] md:blur-[120px] opacity-20 translate-x-1/3 -translate-y-1/3" />
-        <div className="absolute bottom-0 left-0 w-72 md:w-[500px] h-72 md:h-[500px] bg-[#258C54] rounded-full blur-[80px] md:blur-[120px] opacity-20 -translate-x-1/3 translate-y-1/3" />
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <div className="absolute top-0 right-0 w-72 md:w-[500px] h-72 md:h-[500px] bg-primary rounded-full blur-[100px] md:blur-[140px] opacity-20 translate-x-1/3 -translate-y-1/3" />
+        <div className="absolute bottom-0 left-0 w-72 md:w-[500px] h-72 md:h-[500px] bg-secondary rounded-full blur-[100px] md:blur-[140px] opacity-15 -translate-x-1/3 translate-y-1/3" />
       </div>
 
       <div className="container mx-auto px-4 max-w-6xl relative z-10">
@@ -23,27 +23,27 @@ export function TrustSection() {
             className="lg:w-1/2"
           >
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-white/90 text-xs font-bold uppercase tracking-widest mb-8 backdrop-blur-md">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" /> Secure & Confidential
+              <ShieldCheck className="w-4 h-4 text-secondary" /> Operational Integrity
             </div>
             <h2 className="text-3xl md:text-5xl font-black tracking-tight mb-6 text-white leading-tight">
-              Your Family&apos;s Health, <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-sky-400">
-                Our Responsibility.
+              A Medical Infrastructure <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-secondary to-primary">
+                You Can Trust.
               </span>
             </h2>
             <p className="text-base md:text-lg text-slate-300 leading-relaxed mb-8 max-w-lg font-medium">
-              When it comes to your health, trust is everything. On <span className="font-bold text-white">JivniCare</span>, your data, appointments, and doctors are 100% safe, verified, and reliable.
+              We operate with strict healthcare compliance. <span className="font-bold text-white">JivniCare</span> guarantees 100% doctor verification, medical data privacy, and a seamless, anxiety-free clinical experience.
             </p>
             
-            <div className="space-y-4">
+            <div className="space-y-5">
               {[
-                "We personally verify the medical degrees and experience of every doctor.",
-                "Your personal information and medical records are 100% private and secure.",
-                "Need help? Our friendly support team is always here for you."
+                "Strict multi-step verification for every doctor's medical degrees and active licenses.",
+                "End-to-end encryption for your medical records and personal health data.",
+                "Dedicated operational support team available 24/7 to assist with your appointments."
               ].map((item, i) => (
                 <div key={i} className="flex items-start gap-3">
-                  <CheckCircle2 className="w-6 h-6 text-emerald-400 shrink-0 mt-0.5" />
-                  <span className="text-slate-300">{item}</span>
+                  <CheckCircle2 className="w-6 h-6 text-secondary shrink-0 mt-0.5" />
+                  <span className="text-slate-300 font-medium leading-relaxed">{item}</span>
                 </div>
               ))}
             </div>
@@ -61,11 +61,11 @@ export function TrustSection() {
               
               <div className="relative z-10 space-y-8">
                 <div>
-                  <div className="text-emerald-400 text-5xl font-black mb-2">4.9/5</div>
+                  <div className="text-secondary text-5xl font-black mb-2">4.9/5</div>
                   <div className="flex text-amber-400 mb-2 gap-1">
                     <Star className="w-5 h-5 fill-current" /><Star className="w-5 h-5 fill-current" /><Star className="w-5 h-5 fill-current" /><Star className="w-5 h-5 fill-current" /><Star className="w-5 h-5 fill-current" />
                   </div>
-                  <p className="text-slate-300">Don&apos;t just take our word for it. See what our patients have to say.</p>
+                  <p className="text-slate-300 font-medium">Patient satisfaction score based on 15,000+ verified appointments.</p>
                 </div>
                 
                 <hr className="border-white/10" />

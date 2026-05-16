@@ -13,8 +13,8 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { NotificationBell } from "./NotificationBell";
 import { SmartSearchBar } from "./SmartSearchBar";
 import { cn } from "@/lib/utils";
+import { ShieldCheck } from "lucide-react";
 
-// Removed "For Partners" as it belongs in the footer/dedicated portal to keep patient UX clean
 const NAV_LINKS = [
   { label: "Find Doctors", href: "/doctors", icon: <Stethoscope className="w-4 h-4" /> },
   { label: "Articles", href: "/blog", icon: <Newspaper className="w-4 h-4" /> },
@@ -65,13 +65,13 @@ export function Header() {
     <>
       <header
         className={cn(
-          "sticky top-0 z-[100] w-full transition-all duration-500",
+          "sticky top-0 z-[100] w-full transition-all duration-300",
           scrolled
-            ? "bg-white/80 backdrop-blur-xl border-b border-slate-200/40 shadow-[0_4px_30px_rgba(0,0,0,0.02)] h-16 md:h-16"
+            ? "bg-white/90 backdrop-blur-xl border-b border-border shadow-soft h-16 md:h-16"
             : "bg-white/0 backdrop-blur-none border-b border-transparent h-16 md:h-20"
         )}
       >
-        <div className="container mx-auto px-4 md:px-6 h-full flex items-center justify-between gap-2 max-w-7xl w-full box-border">
+        <div className="container mx-auto px-4 md:px-6 h-full flex items-center justify-between gap-3 max-w-7xl w-full box-border">
 
           {/* ── MOBILE LEFT: Hamburger ── */}
           <div className="flex lg:hidden items-center shrink-0">
@@ -92,12 +92,12 @@ export function Header() {
             isDoctorsPage && pathname !== "/" ? "hidden lg:flex" : "flex-1 lg:flex-none"
           )}>
             <Link href="/" className="flex items-center gap-2 group shrink min-w-0">
-              <Logo className="h-8 md:h-10 w-auto shrink-0 transition-transform duration-300 hover:scale-105" />
+              <Logo className="h-9 md:h-11 w-auto shrink-0 transition-transform duration-300 group-hover:scale-[1.02]" />
             </Link>
           </div>
 
           {/* ── DESKTOP NAV ───────────────────── */}
-          <nav className="hidden lg:flex items-center gap-1 bg-slate-50/50 p-1 rounded-2xl border border-slate-100">
+          <nav className="hidden lg:flex items-center gap-1 bg-muted/30 p-1 rounded-2xl border border-border/50">
             {NAV_LINKS.filter(link => {
                // Strict filter: Only show "My Bookings" if logged in
                if (link.label === "My Bookings") return isLoggedIn;
@@ -109,10 +109,10 @@ export function Header() {
                   key={link.label}
                   href={link.href}
                   className={cn(
-                    "px-4 py-2.5 text-sm font-bold rounded-xl transition-all duration-300 ease-out active:scale-95",
+                    "px-4 py-2 text-sm font-semibold rounded-xl transition-all duration-200 active:scale-[0.98]",
                     isActive 
-                      ? "text-primary bg-white shadow-[0_2px_10px_-4px_rgba(0,0,0,0.1)] ring-1 ring-slate-100" 
-                      : "text-slate-500 hover:text-primary hover:bg-white/60"
+                      ? "text-primary bg-card shadow-sm ring-1 ring-border" 
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/80"
                   )}
                 >
                   {link.label}
@@ -137,7 +137,7 @@ export function Header() {
                   <button 
                     aria-label="User profile options"
                     onClick={() => setProfileOpen(!profileOpen)}
-                    className="flex items-center justify-center w-11 h-11 rounded-full bg-primary/5 border border-primary/10 text-primary hover:bg-primary/10 hover:shadow-sm transition-all duration-300 active:scale-95"
+                    className="flex items-center justify-center w-11 h-11 rounded-full bg-primary/5 border border-primary/10 text-primary hover:bg-primary/10 hover:shadow-sm transition-all duration-300 active:scale-[0.98]"
                   >
                     <User className="w-5 h-5" />
                   </button>
@@ -145,20 +145,27 @@ export function Header() {
                 </div>
               </>
             ) : (
-              <Link href="/login">
-                {/* Desktop Login */}
-                <Button variant="ghost" className="hidden lg:flex rounded-xl font-bold text-slate-600 hover:text-primary">
-                  Log In
-                </Button>
-                {/* Mobile Sign In CTA */}
-                <Button className="flex lg:hidden rounded-xl font-bold text-white bg-primary hover:bg-primary/90 h-10 px-4 text-xs shadow-md shadow-primary/20">
-                  Sign In
-                </Button>
-              </Link>
+              <div className="flex items-center gap-2">
+                <Link href="/partners" className="hidden xl:flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-primary transition-colors px-3">
+                  <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                  Join as Doctor
+                </Link>
+                <div className="hidden xl:block w-px h-6 bg-border mx-1" />
+                <Link href="/login">
+                  {/* Desktop Login */}
+                  <Button variant="ghost" className="hidden lg:flex font-semibold text-muted-foreground hover:text-foreground">
+                    Sign In
+                  </Button>
+                  {/* Mobile Sign In CTA */}
+                  <Button size="sm" className="flex lg:hidden shadow-sm">
+                    Sign In
+                  </Button>
+                </Link>
+              </div>
             )}
 
             <Link href="/doctors" className="hidden lg:block">
-              <Button aria-label="Book appointment" className="rounded-xl shadow-lg shadow-primary/20 hover:shadow-primary/30">
+              <Button aria-label="Book appointment" className="shadow-sm">
                 Book Appointment
               </Button>
             </Link>
