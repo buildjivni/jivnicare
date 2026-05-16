@@ -17,7 +17,11 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase for Next.js (Safe for SSR and Hot Reloading)
-const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-const auth = getAuth(app);
+// We only initialize if apiKey is present to prevent 'auth/invalid-api-key' errors during Vercel builds.
+const app = getApps().length > 0 
+  ? getApp() 
+  : (firebaseConfig.apiKey ? initializeApp(firebaseConfig) : null as any);
+
+const auth = app ? getAuth(app) : null as any;
 
 export { app, auth };
