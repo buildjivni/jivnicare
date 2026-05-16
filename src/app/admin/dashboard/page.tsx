@@ -141,8 +141,15 @@ function AdminDashboardContent() {
     };
 
     init();
-    const interval = setInterval(() => { fetchStats(); fetchHealth(); }, 30000);
-    return () => clearInterval(interval);
+    let timeoutId: NodeJS.Timeout;
+    const poll = async () => {
+      if (document.visibilityState === 'visible') {
+        await Promise.all([fetchStats(), fetchHealth()]);
+      }
+      timeoutId = setTimeout(poll, 30000);
+    };
+    poll();
+    return () => clearTimeout(timeoutId);
   }, []);
 
   const [platformStats, setPlatformStats] = useState<any>(null);

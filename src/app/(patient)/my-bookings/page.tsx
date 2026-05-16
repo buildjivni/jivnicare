@@ -80,11 +80,15 @@ export default function MyBookingsPage() {
   }, []);
 
   useEffect(() => {
-    fetchBookings();
-
-    // Live Tracking Polling (Every 60s)
-    const interval = setInterval(fetchBookings, 60000);
-    return () => clearInterval(interval);
+    let timeoutId: NodeJS.Timeout;
+    const poll = async () => {
+      if (document.visibilityState === 'visible') {
+        await fetchBookings();
+      }
+      timeoutId = setTimeout(poll, 60000); // 60s
+    };
+    poll();
+    return () => clearTimeout(timeoutId);
   }, [fetchBookings]);
 
   const handleShareWhatsApp = (booking: Booking) => {
