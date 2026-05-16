@@ -115,6 +115,7 @@ export interface BookingState {
     name: string;
     email: string;
     phone: string;
+    location: string;
   };
   generatedToken: QueueToken | null; // Will store the QueueToken from backend
 
@@ -124,7 +125,7 @@ export interface BookingState {
   setStep: (step: BookingState["step"]) => void;
   setService: (service: string | null) => void;
   setDoctor: (doctor: Doctor) => void;
-  setPatientDetails: (details: Partial<{ name: string; email: string; phone: string }>) => void;
+  setPatientDetails: (details: Partial<{ name: string; email: string; phone: string; location: string }>) => void;
   setGeneratedToken: (token: QueueToken | null) => void;
   resetBooking: () => void;
 }

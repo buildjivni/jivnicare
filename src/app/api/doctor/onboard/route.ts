@@ -84,7 +84,7 @@ export async function POST(request: Request) {
       let shortCode = generateShortCode();
       // Short code collision recovery
       for (let attempt = 0; attempt < 5; attempt++) {
-        const exists = await tx.doctor.findUnique({ where: { shortCode } });
+        const exists = await tx.doctor.findFirst({ where: { shortCode } });
         if (!exists) break;
         shortCode = generateShortCode();
       }
