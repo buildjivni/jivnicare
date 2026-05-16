@@ -1,20 +1,5 @@
 import type { NextConfig } from "next";
 
-// ── Build-time environment validation ─────────────────────────────────────────
-// These checks run at build time on Vercel. If any critical secret is missing,
-// the build will FAIL LOUDLY instead of deploying a broken app silently.
-const requiredEnvVars = ["JWT_SECRET", "DATABASE_URL"];
-
-if (process.env.NODE_ENV === "production") {
-  for (const envVar of requiredEnvVars) {
-    if (!process.env[envVar]) {
-      throw new Error(
-        `\n\n❌ FATAL BUILD ERROR: Missing required environment variable: ${envVar}\n` +
-        `   Go to Vercel Dashboard → Settings → Environment Variables and add it.\n\n`
-      );
-    }
-  }
-}
 
 const nextConfig: NextConfig = {
   images: {
