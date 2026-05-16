@@ -71,11 +71,30 @@ export function Header() {
             : "bg-white/0 backdrop-blur-none border-b border-transparent h-16 md:h-20"
         )}
       >
-        <div className="container mx-auto px-4 md:px-6 h-full flex items-center justify-between max-w-7xl w-full box-border">
+        <div className="container mx-auto px-4 md:px-6 h-full flex items-center justify-between gap-2 max-w-7xl w-full box-border">
 
-          <Link href="/" className="flex items-center gap-2 group shrink min-w-0">
-            <Logo className="h-8 md:h-10 w-auto shrink-0 transition-transform duration-300 hover:scale-105" />
-          </Link>
+          {/* ── MOBILE LEFT: Hamburger ── */}
+          <div className="flex lg:hidden items-center shrink-0">
+            <Button
+              aria-label="Toggle navigation menu"
+              variant="ghost"
+              size="icon"
+              className="rounded-xl w-11 h-11 text-slate-600 bg-slate-50 hover:bg-slate-100 border border-slate-100 transition-all duration-300 active:scale-95"
+              onClick={() => setMobileOpen((v) => !v)}
+            >
+              {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </Button>
+          </div>
+
+          {/* ── LOGO (Center on Mobile, Left on Desktop) ── */}
+          <div className={cn(
+            "flex items-center justify-center lg:justify-start shrink-0 transition-all",
+            isDoctorsPage && pathname !== "/" ? "hidden lg:flex" : "flex-1 lg:flex-none"
+          )}>
+            <Link href="/" className="flex items-center gap-2 group shrink min-w-0">
+              <Logo className="h-8 md:h-10 w-auto shrink-0 transition-transform duration-300 hover:scale-105" />
+            </Link>
+          </div>
 
           {/* ── DESKTOP NAV ───────────────────── */}
           <nav className="hidden lg:flex items-center gap-1 bg-slate-50/50 p-1 rounded-2xl border border-slate-100">
@@ -109,11 +128,11 @@ export function Header() {
             </div>
           )}
 
-          {/* ── DESKTOP ACTIONS ───────────────── */}
-          <div className="hidden lg:flex items-center gap-3">
+          {/* ── ACTIONS (Desktop & Mobile Right) ───────────────── */}
+          <div className="flex items-center justify-end gap-2 lg:gap-3 shrink-0">
             {isLoggedIn ? (
               <>
-                <NotificationBell token={token} />
+                <div className="hidden lg:block"><NotificationBell token={token} /></div>
                 <div className="relative" ref={profileRef}>
                   <button 
                     aria-label="User profile options"
@@ -127,42 +146,22 @@ export function Header() {
               </>
             ) : (
               <Link href="/login">
-                <Button variant="ghost" className="rounded-xl font-bold text-slate-600 hover:text-primary">
+                {/* Desktop Login */}
+                <Button variant="ghost" className="hidden lg:flex rounded-xl font-bold text-slate-600 hover:text-primary">
                   Log In
+                </Button>
+                {/* Mobile Sign In CTA */}
+                <Button className="flex lg:hidden rounded-xl font-bold text-white bg-primary hover:bg-primary/90 h-10 px-4 text-xs shadow-md shadow-primary/20">
+                  Sign In
                 </Button>
               </Link>
             )}
 
-            <Link href="/doctors">
+            <Link href="/doctors" className="hidden lg:block">
               <Button aria-label="Book appointment" className="rounded-xl shadow-lg shadow-primary/20 hover:shadow-primary/30">
                 Book Appointment
               </Button>
             </Link>
-          </div>
-
-          {/* ── MOBILE ACTIONS ────────────────── */}
-          <div className="flex lg:hidden items-center gap-2">
-            {isLoggedIn && (
-              <div className="relative" ref={mobileProfileRef}>
-                <button
-                  aria-label="User profile options"
-                  onClick={() => setProfileOpen(!profileOpen)}
-                  className="flex items-center justify-center w-11 h-11 rounded-full bg-primary/5 text-primary border border-primary/10 hover:bg-primary/10 transition-all duration-300 active:scale-95"
-                >
-                  <User className="w-5 h-5" />
-                </button>
-                <UserProfileDropdown isOpen={profileOpen} onLogout={handleLogout} />
-              </div>
-            )}
-            <Button
-              aria-label="Toggle navigation menu"
-              variant="ghost"
-              size="icon"
-              className="rounded-xl w-11 h-11 text-slate-600 bg-slate-50 hover:bg-slate-100 border border-slate-100 transition-all duration-300 active:scale-95"
-              onClick={() => setMobileOpen((v) => !v)}
-            >
-              {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </Button>
           </div>
         </div>
       </header>
