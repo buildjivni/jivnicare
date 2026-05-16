@@ -123,8 +123,8 @@ export function Footer() {
                         {...extraProps}
                         className={`text-sm hover:translate-x-1 inline-block transition-all duration-300 ${
                           "accent" in link && link.accent
-                            ? "text-emerald-400 font-semibold hover:text-emerald-300"
-                            : "hover:text-white"
+                            ? "text-emerald-500 font-semibold hover:text-emerald-600"
+                            : "text-slate-500 hover:text-primary"
                         }`}
                       >
                         {link.label}
@@ -150,7 +150,7 @@ export function Footer() {
                 <li key={spec}>
                   <Link
                     href={`/doctors?specialty=${encodeURIComponent(spec)}`}
-                    className="text-sm text-slate-400 hover:text-white hover:translate-x-1 inline-block transition-all duration-300"
+                    className="text-sm text-slate-500 hover:text-primary hover:translate-x-1 inline-block transition-all duration-300"
                   >
                     {spec}
                   </Link>
@@ -169,11 +169,11 @@ export function Footer() {
               </li>
               <li className="flex items-center gap-3">
                 <Phone className="w-4 h-4 text-primary shrink-0" />
-                <a href="tel:+919876543210" className="text-sm text-slate-400 hover:text-white transition-colors font-medium">+91 98765 43210</a>
+                <a href="tel:+919876543210" className="text-sm text-slate-500 hover:text-primary transition-colors font-medium">+91 98765 43210</a>
               </li>
               <li className="flex items-center gap-3">
                 <Mail className="w-4 h-4 text-primary shrink-0" />
-                <a href="mailto:support@jivnicare.com" className="text-sm text-slate-400 hover:text-white transition-colors font-medium">support@jivnicare.com</a>
+                <a href="mailto:support@jivnicare.com" className="text-sm text-slate-500 hover:text-primary transition-colors font-medium">support@jivnicare.com</a>
               </li>
               <li className="flex items-center gap-3 pt-1">
                 <Clock className="w-4 h-4 text-emerald-400 shrink-0" />
@@ -191,9 +191,9 @@ export function Footer() {
             <p>Made with <Heart className="w-3 h-3 inline text-rose-500 mx-0.5" /> in Bihar, India.</p>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-4">
-            <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
-            <Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
-            <Link href="/about" className="hover:text-white transition-colors">About</Link>
+            <Link href="/privacy" className="text-slate-500 hover:text-primary transition-colors">Privacy Policy</Link>
+            <Link href="/terms" className="text-slate-500 hover:text-primary transition-colors">Terms of Service</Link>
+            <Link href="/about" className="text-slate-500 hover:text-primary transition-colors">About</Link>
             <div className="flex items-center gap-1.5 text-emerald-400 font-bold bg-emerald-400/10 px-3 py-1 rounded-full border border-emerald-400/20">
               <ShieldCheck className="w-3.5 h-3.5" /> Secure & Verified
             </div>
