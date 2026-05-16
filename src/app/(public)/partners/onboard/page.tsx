@@ -272,20 +272,20 @@ export default function DoctorOnboardingFlow() {
         {/* Progress System */}
         <div className="mb-12">
           <div className="flex items-center justify-between mb-4 px-2">
-            <span className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Step {step} of 4</span>
-            <span className="text-[11px] font-black text-emerald-600 uppercase tracking-[0.2em]">{Math.round((step/4)*100)}% Complete</span>
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Step {step} of 4</span>
+            <span className="text-[11px] font-bold text-primary uppercase tracking-widest">{Math.round((step/4)*100)}% Complete</span>
           </div>
-          <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden p-0.5 border border-slate-200/50">
+          <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
             <motion.div 
               initial={{ width: 0 }}
               animate={{ width: `${(step/4)*100}%` }}
-              className="h-full bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full shadow-[0_0_12px_rgba(16,185,129,0.3)]"
+              className="h-full bg-primary"
             />
           </div>
         </div>
 
         {/* Form Container */}
-        <div className="bg-white/70 backdrop-blur-2xl rounded-[3rem] p-8 md:p-14 shadow-[0_32px_64px_-16px_rgba(16,185,129,0.08)] border border-white relative overflow-hidden">
+        <div className="bg-card rounded-[2rem] p-8 md:p-14 shadow-premium border border-border relative overflow-hidden">
           {/* Decorative Accent */}
           <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-50/50 rounded-bl-[5rem] -mr-16 -mt-16 pointer-events-none" />
 
@@ -314,7 +314,7 @@ export default function DoctorOnboardingFlow() {
                           placeholder="Dr. Rajesh Kumar" 
                           value={formData.fullName}
                           onChange={(e) => setFormData({...formData, fullName: e.target.value})}
-                          className={`h-16 rounded-2xl bg-slate-50/50 border-slate-200/60 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-600/50 font-black text-lg transition-all ${errors.fullName ? 'border-rose-500' : ''}`}
+                          className={`h-12 rounded-xl bg-card border-border focus:bg-card focus:ring-4 focus:ring-primary/10 focus:border-primary font-bold text-base transition-all ${errors.fullName ? 'border-destructive' : ''}`}
                         />
                       </div>
                       {errors.fullName && <p className="text-xs font-bold text-rose-500 mt-2 ml-1">{errors.fullName}</p>}
@@ -330,10 +330,10 @@ export default function DoctorOnboardingFlow() {
                               value={authPhone}
                               disabled={authStep === "otp"}
                               onChange={(e) => setAuthPhone(e.target.value.replace(/\D/g, ''))}
-                              className="h-16 rounded-2xl bg-slate-50/50 border-slate-200/60 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-600/50 font-black text-lg transition-all"
+                              className="h-12 rounded-xl bg-card border-border focus:bg-card focus:ring-4 focus:ring-primary/10 focus:border-primary font-bold text-base transition-all"
                             />
                             {authStep === "phone" && (
-                              <Button onClick={handleSendOtp} disabled={isAuthLoading || authPhone.length < 10} className="h-16 rounded-2xl px-6 bg-emerald-600 hover:bg-emerald-700 text-white font-black shadow-lg shadow-emerald-900/10">
+                              <Button onClick={handleSendOtp} disabled={isAuthLoading || authPhone.length < 10} className="h-12 rounded-xl px-6 bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-sm">
                                 {isAuthLoading ? <RefreshCw className="w-5 h-5 animate-spin" /> : "Verify"}
                               </Button>
                             )}
@@ -349,10 +349,10 @@ export default function DoctorOnboardingFlow() {
                                   placeholder="OTP Code" 
                                   value={authOtp}
                                   onChange={(e) => setAuthOtp(e.target.value.replace(/\D/g, ''))}
-                                  className="h-16 rounded-2xl bg-slate-50/50 border-emerald-200 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 font-black text-center tracking-[0.5em] text-xl"
+                                  className="h-12 rounded-xl bg-card border-primary/30 focus:bg-card focus:ring-4 focus:ring-primary/10 font-bold text-center tracking-widest text-lg"
                                   maxLength={6}
                                 />
-                                <Button onClick={handleVerifyOtp} disabled={isAuthLoading || authOtp.length < 6} className="h-16 rounded-2xl px-6 bg-emerald-700 text-white font-black">
+                                <Button onClick={handleVerifyOtp} disabled={isAuthLoading || authOtp.length < 6} className="h-12 rounded-xl px-6 bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-sm">
                                   {isAuthLoading ? <RefreshCw className="w-5 h-5 animate-spin" /> : "Confirm"}
                                 </Button>
                               </motion.div>
@@ -387,22 +387,22 @@ export default function DoctorOnboardingFlow() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                     <div className="group">
                       <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-3 block ml-1">Primary Specialization</label>
-                      <Input placeholder="e.g. Senior Cardiologist" value={formData.specialization} onChange={(e) => setFormData({...formData, specialization: e.target.value})} className="h-16 rounded-2xl bg-slate-50/50 border-slate-200/60 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-600/50 font-black text-lg transition-all" />
+                      <Input placeholder="e.g. Senior Cardiologist" value={formData.specialization} onChange={(e) => setFormData({...formData, specialization: e.target.value})} className="h-12 rounded-xl bg-card border-border focus:bg-card focus:ring-4 focus:ring-primary/10 focus:border-primary font-bold text-base transition-all" />
                       {errors.specialization && <p className="text-xs font-bold text-rose-500 mt-2 ml-1">{errors.specialization}</p>}
                     </div>
                     <div className="group">
                       <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-3 block ml-1">Qualifications</label>
-                      <Input placeholder="e.g. MBBS, MD (AIIMS)" value={formData.qualifications} onChange={(e) => setFormData({...formData, qualifications: e.target.value})} className="h-16 rounded-2xl bg-slate-50/50 border-slate-200/60 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-600/50 font-black text-lg transition-all" />
+                      <Input placeholder="e.g. MBBS, MD (AIIMS)" value={formData.qualifications} onChange={(e) => setFormData({...formData, qualifications: e.target.value})} className="h-12 rounded-xl bg-card border-border focus:bg-card focus:ring-4 focus:ring-primary/10 focus:border-primary font-bold text-base transition-all" />
                       {errors.qualifications && <p className="text-xs font-bold text-rose-500 mt-2 ml-1">{errors.qualifications}</p>}
                     </div>
                     <div className="group">
                       <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-3 block ml-1">Consultation Fee (₹)</label>
-                      <Input type="number" placeholder="500" value={formData.fee} onChange={(e) => setFormData({...formData, fee: e.target.value})} className="h-16 rounded-2xl bg-slate-50/50 border-slate-200/60 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-600/50 font-black text-xl transition-all" />
+                      <Input type="number" placeholder="500" value={formData.fee} onChange={(e) => setFormData({...formData, fee: e.target.value})} className="h-12 rounded-xl bg-card border-border focus:bg-card focus:ring-4 focus:ring-primary/10 focus:border-primary font-bold text-base transition-all" />
                       {errors.fee && <p className="text-xs font-bold text-rose-500 mt-2 ml-1">{errors.fee}</p>}
                     </div>
                     <div className="group">
                       <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-3 block ml-1">Years of Experience</label>
-                      <Input type="number" placeholder="12" value={formData.experience} onChange={(e) => setFormData({...formData, experience: e.target.value})} className="h-16 rounded-2xl bg-slate-50/50 border-slate-200/60 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-600/50 font-black text-xl transition-all" />
+                      <Input type="number" placeholder="12" value={formData.experience} onChange={(e) => setFormData({...formData, experience: e.target.value})} className="h-12 rounded-xl bg-card border-border focus:bg-card focus:ring-4 focus:ring-primary/10 focus:border-primary font-bold text-base transition-all" />
                     </div>
                   </div>
                 </div>
@@ -419,26 +419,26 @@ export default function DoctorOnboardingFlow() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <button 
                       onClick={() => setFormData({...formData, practiceType: "clinic"})} 
-                      className={`group p-10 rounded-[2.5rem] border-2 transition-all text-left relative overflow-hidden ${formData.practiceType === "clinic" ? "bg-emerald-50/50 border-emerald-600 shadow-xl" : "bg-white border-slate-100 hover:border-slate-200 shadow-sm"}`}
+                      className={`group p-8 rounded-2xl border-2 transition-all text-left relative overflow-hidden ${formData.practiceType === "clinic" ? "bg-primary/5 border-primary shadow-md" : "bg-card border-border hover:border-primary/30 shadow-sm"}`}
                     >
-                      <div className={`w-16 h-16 rounded-3xl flex items-center justify-center mb-8 transition-colors ${formData.practiceType === "clinic" ? "bg-emerald-600 text-white" : "bg-slate-50 text-slate-400 group-hover:bg-slate-100"}`}>
-                        <Building2 className="w-8 h-8" />
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-6 transition-colors ${formData.practiceType === "clinic" ? "bg-primary text-white" : "bg-slate-50 text-slate-400 group-hover:bg-slate-100"}`}>
+                        <Building2 className="w-6 h-6" />
                       </div>
-                      <h3 className="text-2xl font-black text-slate-900">Private Clinic</h3>
-                      <p className="text-slate-500 font-bold mt-2 leading-relaxed">Direct practice management and dedicated scheduling.</p>
-                      {formData.practiceType === "clinic" && <div className="absolute top-6 right-6 w-8 h-8 bg-emerald-600 rounded-full flex items-center justify-center shadow-lg"><CheckCircle2 className="w-5 h-5 text-white" /></div>}
+                      <h3 className="text-xl font-bold text-slate-900">Private Clinic</h3>
+                      <p className="text-sm text-slate-500 font-medium mt-2 leading-relaxed">Direct practice management and dedicated scheduling.</p>
+                      {formData.practiceType === "clinic" && <div className="absolute top-6 right-6 w-6 h-6 bg-primary rounded-full flex items-center justify-center"><CheckCircle2 className="w-4 h-4 text-white" /></div>}
                     </button>
 
                     <button 
                       onClick={() => setFormData({...formData, practiceType: "hospital"})} 
-                      className={`group p-10 rounded-[2.5rem] border-2 transition-all text-left relative overflow-hidden ${formData.practiceType === "hospital" ? "bg-blue-50/50 border-blue-600 shadow-xl" : "bg-white border-slate-100 hover:border-slate-200 shadow-sm"}`}
+                      className={`group p-8 rounded-2xl border-2 transition-all text-left relative overflow-hidden ${formData.practiceType === "hospital" ? "bg-blue-50/50 border-blue-600 shadow-md" : "bg-card border-border hover:border-blue-600/30 shadow-sm"}`}
                     >
-                      <div className={`w-16 h-16 rounded-3xl flex items-center justify-center mb-8 transition-colors ${formData.practiceType === "hospital" ? "bg-blue-600 text-white" : "bg-slate-50 text-slate-400 group-hover:bg-slate-100"}`}>
-                        <Hospital className="w-8 h-8" />
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-6 transition-colors ${formData.practiceType === "hospital" ? "bg-blue-600 text-white" : "bg-slate-50 text-slate-400 group-hover:bg-slate-100"}`}>
+                        <Hospital className="w-6 h-6" />
                       </div>
-                      <h3 className="text-2xl font-black text-slate-900">Hospital Facility</h3>
-                      <p className="text-slate-500 font-bold mt-2 leading-relaxed">Multi-specialty center consultation and ward management.</p>
-                      {formData.practiceType === "hospital" && <div className="absolute top-6 right-6 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center shadow-lg"><CheckCircle2 className="w-5 h-5 text-white" /></div>}
+                      <h3 className="text-xl font-bold text-slate-900">Hospital Facility</h3>
+                      <p className="text-sm text-slate-500 font-medium mt-2 leading-relaxed">Multi-specialty center consultation and ward management.</p>
+                      {formData.practiceType === "hospital" && <div className="absolute top-6 right-6 w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center"><CheckCircle2 className="w-4 h-4 text-white" /></div>}
                     </button>
                   </div>
                   {errors.practiceType && <p className="text-center text-sm font-black text-rose-500">{errors.practiceType}</p>}
@@ -456,17 +456,17 @@ export default function DoctorOnboardingFlow() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                     <div className="group md:col-span-2">
                       <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-3 block ml-1">{formData.practiceType === 'clinic' ? 'CLINIC NAME' : 'HOSPITAL NAME'}</label>
-                      <Input placeholder="The Heart Center" value={formData.practiceName} onChange={(e) => setFormData({...formData, practiceName: e.target.value})} className="h-16 rounded-2xl bg-slate-50/50 border-slate-200/60 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-600/50 font-black text-lg transition-all" />
+                      <Input placeholder="The Heart Center" value={formData.practiceName} onChange={(e) => setFormData({...formData, practiceName: e.target.value})} className="h-12 rounded-xl bg-card border-border focus:bg-card focus:ring-4 focus:ring-primary/10 focus:border-primary font-bold text-base transition-all" />
                       {errors.practiceName && <p className="text-xs font-bold text-rose-500 mt-2 ml-1">{errors.practiceName}</p>}
                     </div>
                     <div className="group">
                       <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-3 block ml-1">City</label>
-                      <Input placeholder="Patna" value={formData.city} onChange={(e) => setFormData({...formData, city: e.target.value})} className="h-16 rounded-2xl bg-slate-50/50 border-slate-200/60 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-600/50 font-black text-lg transition-all" />
+                      <Input placeholder="Patna" value={formData.city} onChange={(e) => setFormData({...formData, city: e.target.value})} className="h-12 rounded-xl bg-card border-border focus:bg-card focus:ring-4 focus:ring-primary/10 focus:border-primary font-bold text-base transition-all" />
                       {errors.city && <p className="text-xs font-bold text-rose-500 mt-2 ml-1">{errors.city}</p>}
                     </div>
                     <div className="group">
                       <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-3 block ml-1">Locality</label>
-                      <Input placeholder="Boring Road" value={formData.locality} onChange={(e) => setFormData({...formData, locality: e.target.value})} className="h-16 rounded-2xl bg-slate-50/50 border-slate-200/60 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-600/50 font-black text-lg transition-all" />
+                      <Input placeholder="Boring Road" value={formData.locality} onChange={(e) => setFormData({...formData, locality: e.target.value})} className="h-12 rounded-xl bg-card border-border focus:bg-card focus:ring-4 focus:ring-primary/10 focus:border-primary font-bold text-base transition-all" />
                       {errors.locality && <p className="text-xs font-bold text-rose-500 mt-2 ml-1">{errors.locality}</p>}
                     </div>
                   </div>
@@ -497,15 +497,15 @@ export default function DoctorOnboardingFlow() {
                 <Button 
                   onClick={handleNext} 
                   disabled={isSubmitting || (step === 1 && !isAuthenticated)} 
-                  className="h-18 min-w-[220px] rounded-2xl px-12 bg-[#065F46] hover:bg-[#047857] text-white font-black text-lg shadow-[0_20px_40px_-12px_rgba(6,95,70,0.3)] active:scale-[0.98] transition-all group relative overflow-hidden"
+                  className="h-12 min-w-[220px] rounded-xl px-10 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-sm shadow-md active:scale-95 transition-all group relative overflow-hidden"
                 >
                   <div className="relative z-10 flex items-center gap-3">
                     {isSubmitting ? (
-                      <>Processing Submission <RefreshCw className="w-5 h-5 animate-spin" /></>
+                      <>Processing Submission <RefreshCw className="w-4 h-4 animate-spin" /></>
                     ) : (
                       <>
                         {step === 4 ? "Submit Application" : "Continue Journey"} 
-                        <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                       </>
                     )}
                   </div>

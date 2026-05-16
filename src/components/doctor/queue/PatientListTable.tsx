@@ -22,20 +22,20 @@ export function PatientListTable({ patients }: PatientListTableProps) {
   const getStatusBadge = (status: PatientListItem["status"]) => {
     switch (status) {
       case "Waiting":
-        return <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-xs font-bold">● Waiting</span>;
+        return <span className="bg-amber-50 text-amber-700 border border-amber-200 px-3 py-1 rounded-full text-[10px] uppercase tracking-widest font-bold">Waiting</span>;
       case "Served":
-        return <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-xs font-bold">✔ Served</span>;
+        return <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1 rounded-full text-[10px] uppercase tracking-widest font-bold">Served</span>;
       case "Delayed":
-        return <span className="bg-red-50 text-red-600 px-3 py-1 rounded-full text-xs font-bold">● Delayed</span>;
+        return <span className="bg-red-50 text-red-700 border border-red-200 px-3 py-1 rounded-full text-[10px] uppercase tracking-widest font-bold">Delayed</span>;
       case "In-Person":
-        return <span className="bg-purple-50 text-purple-600 px-3 py-1 rounded-full text-xs font-bold">● In-Person</span>;
+        return <span className="bg-primary/10 text-primary border border-primary/20 px-3 py-1 rounded-full text-[10px] uppercase tracking-widest font-bold flex items-center gap-1"><span className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" /> In-Person</span>;
       default:
         return null;
     }
   };
 
   return (
-    <div className="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm mt-6">
+    <div className="bg-card rounded-2xl p-6 md:p-8 border border-border shadow-premium mt-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <h2 className="text-xl font-bold text-slate-900">Today's Appointment List</h2>
         <div className="flex items-center gap-3">
@@ -43,7 +43,7 @@ export function PatientListTable({ patients }: PatientListTableProps) {
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <Input 
               placeholder="Search patients..." 
-              className="pl-9 h-10 w-full sm:w-64 bg-slate-50 border-slate-200 rounded-xl text-sm"
+              className="pl-9 h-10 w-full sm:w-64 bg-slate-50 border-border rounded-xl text-sm focus:ring-primary/20"
             />
           </div>
           <button aria-label="Filter patients" className="h-10 w-10 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors">
@@ -78,7 +78,7 @@ export function PatientListTable({ patients }: PatientListTableProps) {
                   </div>
                 </td>
                 <td className="py-4 text-center">
-                  <span className="font-black text-[#5298D2]">#{patient.token}</span>
+                  <span className="font-black text-primary text-lg">#{patient.token}</span>
                 </td>
                 <td className="py-4 hidden md:table-cell">
                   <span className="text-sm font-bold text-slate-600">{patient.appointmentTime}</span>
@@ -96,7 +96,7 @@ export function PatientListTable({ patients }: PatientListTableProps) {
                         <History className="w-5 h-5" />
                       </button>
                     ) : (
-                      <button aria-label="More options" className="p-3 -m-1 text-slate-400 hover:text-[#5298D2] transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center">
+                      <button aria-label="More options" className="p-3 -m-1 text-slate-400 hover:text-primary transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center">
                         <MoreHorizontal className="w-5 h-5" />
                       </button>
                     )}
@@ -130,7 +130,7 @@ export function PatientListTable({ patients }: PatientListTableProps) {
                   </div>
                </div>
                <div className="text-right">
-                 <span className="font-black text-xl text-[#5298D2]">#{patient.token}</span>
+                 <span className="font-black text-xl text-primary">#{patient.token}</span>
                </div>
              </div>
              <div className="flex justify-between items-center pt-3 border-t border-slate-200">
@@ -141,7 +141,7 @@ export function PatientListTable({ patients }: PatientListTableProps) {
                      <History className="w-5 h-5" />
                    </button>
                  ) : (
-                   <button aria-label="More options" className="p-2 -m-1 text-slate-400 hover:text-[#5298D2] transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center">
+                   <button aria-label="More options" className="p-2 -m-1 text-slate-400 hover:text-primary transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center">
                      <MoreHorizontal className="w-5 h-5" />
                    </button>
                  )}

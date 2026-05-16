@@ -7,6 +7,7 @@ import {
   AvailableDoctorsSection,
   PartnerCtaSection,
 } from "@/components/home";
+import { HelpEcosystem } from "@/components/trust/HelpEcosystem";
 import prisma from "@/lib/prisma";
 import type { Doctor } from "@/types";
 import { mapPrismaDoctorToUI } from "@/lib/data-utils";
@@ -41,6 +42,11 @@ export default async function Home() {
       </div>
       <AvailableDoctorsSection doctors={featuredDoctors} />
       <HowItWorksSection />
+      
+      <div className="container mx-auto px-4 max-w-5xl py-16 md:py-24">
+        <HelpEcosystem />
+      </div>
+
       <PartnerCtaSection />
       <CtaBannerSection />
     </main>

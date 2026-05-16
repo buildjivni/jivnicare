@@ -63,6 +63,7 @@ function DoctorListingContent() {
 
   const [searchResult, setSearchResult] = useState<SearchResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isError, setIsError] = useState(false);
 
   // ── Fetch from API ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -70,6 +71,7 @@ function DoctorListingContent() {
 
     const fetchResults = async () => {
       setIsLoading(true);
+      setIsError(false);
       try {
         const res = await fetch(`/api/public/search?${searchParams.toString()}`);
         if (!res.ok) throw new Error("Search failed");
@@ -84,6 +86,7 @@ function DoctorListingContent() {
         }
       } catch (error) {
         console.error("Failed to fetch search results:", error);
+        if (isMounted) setIsError(true);
       } finally {
         if (isMounted) setIsLoading(false);
       }
@@ -170,8 +173,8 @@ function DoctorListingContent() {
                   <h1 className="text-2xl font-black text-slate-900 tracking-tight">
                     {query ? `Search results for "${query}"` : district ? `Doctors in ${district}` : 'Top Verified Doctors'}
                   </h1>
-                  <p className="text-sm font-medium text-slate-500 mt-0.5">
-                    {isLoading ? 'Searching...' : `${searchResult?.results.length || 0} specialists found`}
+                  <p className="text-sm font-medium text-slate-500 mt-0.5" aria-live="polite" aria-atomic="true">
+                    {isLoading ? 'Searching...' : isError ? 'Search unavailable' : `${searchResult?.results.length || 0} specialists found`}
                   </p>
                 </div>
                 
@@ -229,6 +232,22 @@ function DoctorListingContent() {
                 {[1, 2, 3, 4].map(i => (
                   <div key={i} className="h-48 skeleton-shimmer rounded-[2rem] bg-white border border-slate-100" />
                 ))}
+              </div>
+            ) : isError ? (
+              <div className="text-center py-20 bg-white rounded-[2.5rem] border border-slate-100 shadow-xl shadow-blue-900/5 px-6">
+                <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <AlertCircle className="w-9 h-9 text-red-400" />
+                </div>
+                <h3 className="text-xl font-black text-slate-900 mb-2">Couldn't Load Doctors</h3>
+                <p className="text-slate-500 font-medium max-w-sm mx-auto mb-6 leading-relaxed">
+                  There was a problem connecting to our servers. Your internet may be unstable, or our service may be momentarily down.
+                </p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="h-12 px-8 rounded-2xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all"
+                >
+                  Try Again
+                </button>
               </div>
             ) : (
               <DoctorList
