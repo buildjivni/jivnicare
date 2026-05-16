@@ -90,7 +90,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="hi-IN" className={`${geistSans.variable} h-full antialiased`}>
+    <html lang="hi-IN" className={`${geistSans.variable} antialiased`}>
       <head>
         {/* Website + Sitelinks Searchbox */}
         <script
@@ -105,7 +105,7 @@ export default function RootLayout({
       </head>
       <body
         suppressHydrationWarning
-        className="min-h-full flex flex-col bg-background text-foreground overflow-x-hidden"
+        className="min-h-screen flex flex-col bg-background text-foreground overflow-x-hidden"
       >
         <GoogleAnalytics ga_id={process.env.NEXT_PUBLIC_GA_ID || ""} />
         <FirebaseAuthProvider>
