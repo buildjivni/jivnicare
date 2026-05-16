@@ -75,11 +75,11 @@ export function NowCallingController({ currentPatient, onNext, onSkip, isLoading
         <div className="flex w-full gap-3">
           <Button onClick={onNext} disabled={isLoading} className="flex-1 h-12 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-md active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed">
             {isLoading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" /> : <ArrowRight className="w-4 h-4 mr-2" />} 
-            Next
+            Call Next Patient
           </Button>
           <Button onClick={onSkip} disabled={isLoading} variant="outline" className="flex-1 h-12 rounded-xl border-border text-slate-700 hover:bg-slate-100 font-bold active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed shadow-sm">
             {isLoading ? <div className="w-4 h-4 border-2 border-slate-300 border-t-slate-700 rounded-full animate-spin mr-2" /> : <SkipForward className="w-4 h-4 mr-2 text-slate-400" />} 
-            Skip
+            Skip Token
           </Button>
         </div>
       </div>
