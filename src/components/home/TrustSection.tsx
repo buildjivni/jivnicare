@@ -5,7 +5,7 @@ import { ShieldCheck, CheckCircle2, Star, PhoneCall, Quote, Calendar } from "luc
 
 export function TrustSection() {
   return (
-    <section className="py-16 md:py-32 relative bg-white overflow-hidden">
+    <section className="py-12 md:py-16 relative bg-white overflow-hidden">
       {/* Calm Medical Accents */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         <div className="absolute top-0 right-0 w-72 md:w-[600px] h-72 md:h-[600px] bg-primary/5 rounded-full blur-[120px] translate-x-1/3 -translate-y-1/3" />
