@@ -1,3 +1,6 @@
+"use client";
+
+import { motion } from "framer-motion";
 import Link from "next/link";
 import { Building2, Stethoscope, ArrowRight, ShieldCheck, Zap, Users, CheckCircle2, TrendingUp, CalendarCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,39 +11,46 @@ export default function PartnersPage() {
     <div className="min-h-screen bg-slate-50 font-sans selection:bg-emerald-100 selection:text-emerald-900">
       
       {/* ── HERO SECTION ─────────────────────────────────────────────────── */}
-      <section className="relative pt-24 pb-20 md:pt-32 md:pb-40 overflow-hidden bg-slate-950">
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.02] -z-10" />
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/3 -z-10" />
-        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[100px] translate-y-1/2 -translate-x-1/3 -z-10" />
-
+      <section className="relative pt-24 pb-20 md:pt-40 md:pb-48 overflow-hidden bg-white">
+        {/* Abstract Background Accents for depth */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(16,185,129,0.03),transparent)] pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(32,94,152,0.03),transparent)] pointer-events-none" />
+        
         <div className="max-w-6xl mx-auto px-4 md:px-6 relative z-10 text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-slate-300 text-[11px] font-bold uppercase tracking-widest mb-8 backdrop-blur-md shadow-2xl">
-            <Building2 className="w-3.5 h-3.5 text-emerald-400" />
-            JivniCare Healthcare Infrastructure
-          </div>
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-50 border border-slate-200 text-slate-500 text-[11px] font-black uppercase tracking-[0.2em] mb-10 shadow-sm"
+          >
+            <Building2 className="w-4 h-4 text-emerald-500" />
+            JivniCare For Healthcare Partners
+          </motion.div>
           
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-black text-white tracking-tight leading-[1.1] mb-6 max-w-4xl mx-auto">
-            Digitize your clinic. <br className="hidden md:block" />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">Scale your practice.</span>
+          <h1 className="text-4xl md:text-6xl lg:text-7xl font-black text-slate-900 tracking-tight leading-[1.05] mb-8 max-w-5xl mx-auto">
+            Grow your practice with <br />
+            Bihar&apos;s most trusted <br className="hidden md:block" />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-cyan-600">
+              digital healthcare platform.
+            </span>
           </h1>
           
-          <p className="text-lg md:text-xl text-slate-400 mb-10 max-w-2xl mx-auto font-medium leading-relaxed">
-            Join the premium network of verified doctors. Manage appointments, live queues, and patient records from one medical-grade dashboard.
+          <p className="text-lg md:text-xl text-slate-600 mb-12 max-w-2xl mx-auto font-medium leading-relaxed">
+            Join thousands of independent doctors and multi-specialty hospitals managing their OPD digitally. Zero setup costs. Maximum patient reach.
           </p>
           
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-5">
             <Link href="/partners/onboard" className="w-full sm:w-auto">
-              <Button className="h-14 px-8 rounded-xl bg-white hover:bg-slate-100 text-slate-900 font-bold text-sm w-full transition-all shadow-xl hover:scale-105 group">
-                Begin Practice Verification
-                <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+              <Button className="h-16 px-10 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-black text-base w-full sm:min-w-[280px] transition-all shadow-2xl shadow-slate-200 hover:scale-[1.02] active:scale-95 group">
+                Start Your Practice Online
+                <ArrowRight className="w-5 h-5 ml-3 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
           </div>
           
-          <div className="mt-10 flex flex-wrap justify-center items-center gap-6 text-[13px] font-bold text-slate-500">
-            <div className="flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-emerald-500" /> Bank-Grade Encryption</div>
-            <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Free Setup</div>
-            <div className="flex items-center gap-2"><Users className="w-4 h-4 text-emerald-500" /> Instant Patient Access</div>
+          <div className="mt-14 flex flex-wrap justify-center items-center gap-8 text-[11px] font-black text-slate-400 uppercase tracking-widest">
+            <div className="flex items-center gap-2.5"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> 100% Free Setup</div>
+            <div className="flex items-center gap-2.5"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Dedicated Dashboard</div>
+            <div className="flex items-center gap-2.5"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Verified Trust Badge</div>
           </div>
 
           {/* DASHBOARD PREVIEW UI */}

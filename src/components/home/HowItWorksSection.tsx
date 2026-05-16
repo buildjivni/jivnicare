@@ -1,97 +1,84 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { CheckCircle2, Search, UserCheck, Calendar, ShieldCheck } from "lucide-react";
+import { Search, Calendar, Building2, CheckCircle2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import Image from "next/image";
 import Link from "next/link";
-import { Logo } from "@/components/brand/Logo";
 import { fadeUp, staggerContainer } from "@/animations/variants";
 
 export function HowItWorksSection() {
-  return (
-    <section className="py-10 md:py-20 relative overflow-hidden border-t border-slate-100">
-      <div className="absolute inset-0 bg-gradient-to-b from-white to-slate-50/50 pointer-events-none" />
-      <div className="container mx-auto px-4 max-w-6xl relative z-10">
-        <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
-          <motion.div 
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="lg:w-5/12 space-y-6"
-          >
-            <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-slate-900 leading-tight">
-              Booking an Appointment <br className="hidden lg:block" />
-              is Now <span className="text-primary">Effortless</span>.
-            </h2>
-            <p className="text-base md:text-lg text-slate-600 leading-relaxed font-medium">
-              Book an appointment with the best doctors from your phone in just 2 minutes. No tension, no confusion.
-            </p>
-            
-            <div className="relative h-64 sm:h-80 w-full rounded-3xl overflow-hidden shadow-2xl mt-8 border border-slate-200/50">
-              <Image 
-                src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=800&auto=format&fit=crop" 
-                alt="Patient interacting with doctor" 
-                fill
-                className="object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent" />
-              <div className="absolute bottom-6 left-6 right-6">
-                <div className="bg-white/95 backdrop-blur-md p-4 rounded-2xl shadow-lg flex items-center gap-4">
-                  <div className="bg-primary/10 p-2.5 rounded-xl shrink-0">
-                    <Logo className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-1">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                      <p className="font-bold text-slate-900 text-sm">Appointment Confirmed</p>
-                    </div>
-                    <p className="text-xs text-slate-500">Dr. Priya Sharma • Today, 10:30 AM</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <Link href="/doctors">
-              <Button className="mt-8 h-12 px-8 rounded-full bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all font-semibold hidden lg:inline-flex text-white">
-                Book Now
-              </Button>
-            </Link>
-          </motion.div>
+  const STEPS = [
+    {
+      icon: <Search className="w-7 h-7" />,
+      title: "1. Search Doctor",
+      desc: "Find the best verified doctors in your city by specialty or hospital.",
+      color: "bg-blue-50 text-primary"
+    },
+    {
+      icon: <Calendar className="w-7 h-7" />,
+      title: "2. Book Appointment",
+      desc: "Select a time slot that works for you and confirm instantly.",
+      color: "bg-emerald-50 text-secondary"
+    },
+    {
+      icon: <CheckCircle2 className="w-7 h-7" />,
+      title: "3. Visit Clinic",
+      desc: "Go to the clinic and see your doctor. No more waiting in long lines.",
+      color: "bg-amber-50 text-amber-600"
+    }
+  ];
 
-          <motion.div 
-            variants={staggerContainer}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, amount: 0.1 }}
-            className="lg:w-7/12 grid grid-cols-1 sm:grid-cols-2 gap-6 w-full"
-          >
-            {[
-              { step: "01", icon: <Search className="w-6 h-6 text-primary" />, title: "Search by Health Concern", desc: "Select a doctor or department based on the health issue you need treated." },
-              { step: "02", icon: <UserCheck className="w-6 h-6 text-primary" />, title: "Choose the Right Doctor", desc: "Choose the best doctor for you by reviewing their qualifications, experience, and patient feedback." },
-              { step: "03", icon: <Calendar className="w-6 h-6 text-primary" />, title: "Pick a Convenient Time", desc: "Book a slot for when you are free. Morning, afternoon, or evening." },
-              { step: "04", icon: <ShieldCheck className="w-6 h-6 text-primary" />, title: "Appointment Confirmed!", desc: "Confirm your booking with one click. You will receive the appointment details via SMS instantly." },
-            ].map((step, i) => (
-              <motion.div key={i} variants={fadeUp} className="relative p-6 md:p-8 rounded-3xl bg-white border border-slate-200/60 shadow-sm hover:border-primary/30 transition-all hover:shadow-lg group">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center group-hover:scale-110 transition-transform">
-                    {step.icon}
-                  </div>
-                  <div className="text-4xl font-black text-slate-100 tracking-tighter group-hover:text-primary/10 transition-colors">{step.step}</div>
-                </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-2">{step.title}</h3>
-                <p className="text-slate-600 leading-relaxed text-sm md:text-base">{step.desc}</p>
-              </motion.div>
-            ))}
-          </motion.div>
-          
-          <Link href="/doctors" className="w-full lg:hidden">
-            <Button className="w-full h-14 rounded-full bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all font-semibold text-white">
-              Book Now
+  return (
+    <section id="how-it-works" className="py-20 md:py-32 bg-white relative overflow-hidden">
+      <div className="container mx-auto px-4 max-w-6xl relative z-10">
+        <div className="text-center max-w-3xl mx-auto mb-16 md:mb-24">
+          <h2 className="text-4xl md:text-6xl font-black tracking-tight text-slate-900 mb-6">
+            Healthcare made <span className="text-primary">Simple.</span>
+          </h2>
+          <p className="text-lg md:text-xl text-slate-500 font-medium leading-relaxed">
+            Three easy steps to get the medical care you deserve.
+          </p>
+        </div>
+
+        <motion.div 
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12"
+        >
+          {STEPS.map((step, i) => (
+            <motion.div 
+              key={i}
+              variants={fadeUp}
+              className="relative group flex flex-col items-center text-center"
+            >
+              <div className={`w-20 h-20 rounded-[2rem] ${step.color} flex items-center justify-center mb-8 shadow-sm group-hover:scale-110 group-hover:-rotate-3 transition-all duration-500`}>
+                {step.icon}
+              </div>
+              <h3 className="text-2xl font-black text-slate-900 mb-4">{step.title}</h3>
+              <p className="text-slate-500 font-medium leading-relaxed px-4">{step.desc}</p>
+              
+              {i < 2 && (
+                <div className="hidden md:block absolute top-10 left-[70%] w-full h-[2px] bg-gradient-to-r from-slate-100 via-slate-200 to-transparent -z-10" />
+              )}
+            </motion.div>
+          ))}
+        </motion.div>
+
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mt-20 md:mt-32 text-center"
+        >
+          <Link href="/doctors">
+            <Button size="lg" className="h-14 px-10 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black text-lg shadow-floating hover:shadow-premium transition-all active:scale-95 group">
+              Start Searching Now
+              <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
             </Button>
           </Link>
-        </div>
+        </motion.div>
       </div>
     </section>
   );

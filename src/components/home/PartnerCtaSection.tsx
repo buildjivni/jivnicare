@@ -30,14 +30,14 @@ export function PartnerCtaSection() {
             </div>
             
             <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-black tracking-tight mb-6 text-white leading-[1.1] break-words">
-              Digitize Your Practice. <br className="hidden sm:block" />
+              Grow your practice with <br className="hidden sm:block" />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">
-                Reach More Patients.
+                Bihar&apos;s most trusted platform.
               </span>
             </h2>
             
             <p className="text-base sm:text-lg text-slate-300 mb-6 max-w-2xl mx-auto lg:mx-0 leading-relaxed font-medium">
-              Join Bihar's fastest-growing healthcare network with <strong className="text-white">zero setup cost</strong>. Digitize your OPD in minutes, grow your patient reach, and build verified trust online.
+              Join thousands of independent doctors and multi-specialty hospitals managing their OPD digitally. <strong className="text-white">Zero setup costs</strong>. Maximum patient reach.
             </p>
 
             <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 sm:gap-6 mb-8 text-sm font-bold text-slate-400">

@@ -17,11 +17,13 @@
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
   
-  /* Brand JivniCare Colors */
+  /* Official JivniCare Branding (Blue #5298D2, Green #489C66) */
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
+  
+  /* Neutral & Functional */
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
@@ -32,100 +34,91 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
-  /* Centralized Border Radius System */
-  --radius-sm: calc(var(--radius) - 0.25rem); /* 12px -> 8px */
-  --radius-md: calc(var(--radius) - 0.125rem); /* 12px -> 10px */
-  --radius-lg: var(--radius); /* 12px */
-  --radius-xl: calc(var(--radius) + 0.5rem); /* 12px -> 20px */
-  --radius-2xl: calc(var(--radius) + 0.75rem); /* 12px -> 24px */
+  /* Centralized Border Radius System - Healthcare Softness */
+  --radius-sm: 0.5rem;   /* 8px */
+  --radius-md: 0.75rem;  /* 12px */
+  --radius-lg: 1rem;     /* 16px */
+  --radius-xl: 1.5rem;   /* 24px */
+  --radius-2xl: 2rem;    /* 32px */
 }
 
 @layer base {
+  * {
+    @apply border-border outline-ring/50 box-border;
+  }
+
+  html, body {
+    @apply overflow-x-hidden w-full max-w-full m-0 p-0 selection:bg-primary/10 selection:text-primary;
+    overscroll-behavior-y: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
   :root {
-    /* Medically Clean Backgrounds */
-    --background: #F8FAFC; /* slate-50 */
-    --foreground: #0F172A; /* slate-900 */
+    /* ─── MEDICAL CLEAN BASE ─── */
+    --background: #FFFFFF;
+    --foreground: #1E293B; /* slate-800 - High contrast but human */
     
     /* Surfaces */
     --card: #FFFFFF;
-    --card-foreground: #0F172A;
+    --card-foreground: #1E293B;
     --popover: #FFFFFF;
-    --popover-foreground: #0F172A;
+    --popover-foreground: #1E293B;
     
-    /* Primary: Trust Blue */
-    --primary: #205E98; /* Deepened the logo blue for better contrast & accessibility */
+    /* ─── OFFICIAL LOGO COLORS ─── */
+    --primary: #5298D2; /* Logo Blue - Calm & Trusted */
     --primary-foreground: #FFFFFF;
     
-    /* Secondary: Health Green */
-    --secondary: #22C55E; /* Emerald-500, brighter, highly active */
+    --secondary: #489C66; /* Logo Green - Healing & Fresh */
     --secondary-foreground: #FFFFFF;
     
-    /* Subtle Elements */
-    --muted: #F1F5F9; /* slate-100 */
+    /* ─── SUBTLE ACCENTS ─── */
+    --muted: #F8FAFC; /* slate-50 */
     --muted-foreground: #64748B; /* slate-500 */
     
-    /* Interaction & Highlights */
-    --accent: #EFF6FF; /* blue-50 */
-    --accent-foreground: #1E3A8A; /* blue-900 */
+    --accent: #F0F9FF; /* Sky Blue Tint */
+    --accent-foreground: #0369A1; /* blue-700 */
     
-    /* System States */
-    --destructive: #EF4444; /* red-500 */
-    --destructive-foreground: #FFFFFF;
-    
-    /* Borders & Inputs */
-    --border: #E2E8F0; /* slate-200 */
-    --input: #E2E8F0;
-    --ring: #93C5FD; /* blue-300 */
-    
-    /* Friendly, Modern Border Radius Base */
-    --radius: 0.75rem; /* 12px base */
-
-    /* Premium Fluid Typography Scale (Mobile-First) */
-    --fs-xs: clamp(0.7rem, 0.65rem + 0.25vw, 0.75rem);
-    --fs-sm: clamp(0.8rem, 0.75rem + 0.25vw, 0.875rem);
-    --fs-base: clamp(0.95rem, 0.9rem + 0.25vw, 1rem);
-    --fs-lg: clamp(1.05rem, 1rem + 0.25vw, 1.125rem);
-    --fs-xl: clamp(1.15rem, 1.1rem + 0.5vw, 1.25rem);
-    --fs-2xl: clamp(1.35rem, 1.25rem + 1vw, 1.5rem);
-    --fs-3xl: clamp(1.65rem, 1.5rem + 1.5vw, 2.25rem);
-    --fs-4xl: clamp(2.25rem, 2rem + 2.5vw, 3.5rem);
-    --fs-hero: clamp(2.75rem, 2.25rem + 5vw, 5rem);
-
-    /* Shadow Architecture */
-    --shadow-soft: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
-    --shadow-premium: 0 10px 40px -10px rgba(15, 23, 42, 0.08);
-    --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
-    --shadow-floating: 0 20px 40px -10px rgba(15, 23, 42, 0.12);
-  }
-  
-  .dark {
-    /* Clean Dark Mode Surfaces */
-    --background: #0B1120; /* Deep Slate */
-    --foreground: #F8FAFC;
-    
-    --card: #0F172A;
-    --card-foreground: #F8FAFC;
-    --popover: #0F172A;
-    --popover-foreground: #F8FAFC;
-    
-    --primary: #3B82F6; /* Brighter Blue for Dark Mode */
-    --primary-foreground: #FFFFFF;
-    
-    --secondary: #10B981; /* Emerald-500 */
-    --secondary-foreground: #FFFFFF;
-    
-    --muted: #1E293B; /* slate-800 */
-    --muted-foreground: #94A3B8; /* slate-400 */
-    
-    --accent: #1E293B;
-    --accent-foreground: #F8FAFC;
-    
+    /* ─── FUNCTIONAL ─── */
     --destructive: #EF4444;
     --destructive-foreground: #FFFFFF;
     
-    --border: #1E293B;
-    --input: #1E293B;
-    --ring: #3B82F6;
+    --border: #F1F5F9; /* slate-100 - Extra soft borders */
+    --input: #F1F5F9;
+    --ring: #5298D2; /* blue-300 */
+    
+    --radius: 1rem;
+
+    /* Mobile-Optimized Typography Scale */
+    --fs-xs: 0.75rem;
+    --fs-sm: 0.875rem;
+    --fs-base: 1rem;
+    --fs-lg: 1.125rem;
+    --fs-xl: 1.25rem;
+    --fs-2xl: 1.5rem;
+    --fs-3xl: 2rem;
+    --fs-4xl: 2.5rem;
+    --fs-hero: clamp(2.5rem, 8vw, 4rem);
+
+    /* Shadow Architecture - No heavy blacks */
+    --shadow-soft: 0 4px 12px rgba(82, 152, 210, 0.05);
+    --shadow-premium: 0 12px 32px -4px rgba(30, 41, 59, 0.08);
+    --shadow-glass: 0 8px 32px 0 rgba(82, 152, 210, 0.06);
+    --shadow-floating: 0 24px 48px -12px rgba(30, 41, 59, 0.12);
+  }
+  
+  /* Dark mode is disabled for healthcare consistency unless specifically asked, 
+     but we'll keep the slate base to avoid pure black */
+  .dark {
+    --background: #0F172A;
+    --foreground: #F8FAFC;
+    --card: #1E293B;
+    --card-foreground: #F8FAFC;
+    --primary: #60A5FA;
+    --secondary: #34D399;
+    --border: #334155;
+    --muted: #1E293B;
+    --muted-foreground: #94A3B8;
   }
 }
 
