@@ -26,7 +26,7 @@ export function VerifiedDoctorsSection({ doctors }: VerifiedDoctorsSectionProps)
               Bihar&apos;s Most <br />
               <span className="text-primary">Trusted Doctors.</span>
             </h2>
-            <p className="text-lg md:text-xl text-slate-500 font-bold max-w-xl leading-relaxed">
+            <p className="text-xl md:text-2xl text-slate-700 font-bold max-w-xl leading-relaxed">
               Book instant appointments with top-rated medical professionals across Bihar. Verified degrees, verified clinics.
             </p>
           </div>

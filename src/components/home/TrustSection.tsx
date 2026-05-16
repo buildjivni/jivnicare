@@ -28,7 +28,7 @@ export function TrustSection() {
               A Medical Platform <br />
               <span className="text-primary">Built on Trust.</span>
             </h2>
-            <p className="text-base md:text-lg text-slate-500 leading-relaxed mb-10 max-w-lg font-medium">
+            <p className="text-lg md:text-xl text-slate-700 leading-relaxed mb-10 max-w-lg font-bold">
               We understand that healthcare is personal. <span className="text-primary font-black">Jivni</span><span className="text-secondary font-black">Care</span> ensures every doctor is verified and every appointment is handled with professional care.
             </p>
             
@@ -43,8 +43,8 @@ export function TrustSection() {
                     {item.icon}
                   </div>
                   <div>
-                    <h4 className="text-slate-900 font-black text-lg mb-1">{item.title}</h4>
-                    <p className="text-slate-500 text-sm font-medium leading-relaxed">{item.desc}</p>
+                    <h4 className="text-slate-900 font-black text-lg md:text-xl mb-1">{item.title}</h4>
+                    <p className="text-slate-600 text-base font-medium leading-relaxed">{item.desc}</p>
                   </div>
                 </div>
               ))}
