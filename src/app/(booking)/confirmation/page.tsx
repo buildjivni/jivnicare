@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useBookingStore } from "@/store/useBookingStore";
-import { CheckCircle2, Calendar, Clock, MapPin, Download, ChevronRight, Activity } from "lucide-react";
+import { CheckCircle2, Calendar, MapPin, Download, ChevronRight, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
@@ -15,7 +15,6 @@ export default function ConfirmationPage() {
   const token = useBookingStore(state => state.generatedToken);
   const setGeneratedToken = useBookingStore(state => state.setGeneratedToken);
   const doctor = useBookingStore(state => state.selectedDoctor);
-  const setDoctor = useBookingStore(state => state.setDoctor);
   const resetBooking = useBookingStore(state => state.resetBooking);
 
   useEffect(() => {
@@ -33,7 +32,7 @@ export default function ConfirmationPage() {
         }
       } catch (e) { console.error("Hydration failed", e); }
     }
-  }, []);
+  }, [setGeneratedToken]);
 
   useEffect(() => {
     if (!mounted) return;
