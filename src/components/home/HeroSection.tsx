@@ -39,21 +39,21 @@ export function HeroSection() {
           <motion.div 
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50/70 backdrop-blur-md border border-emerald-200/50 text-emerald-800 text-[10px] md:text-xs font-bold uppercase tracking-widest mb-6 shadow-[0_4px_14px_rgba(16,185,129,0.1)] max-w-full overflow-hidden"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50/70 backdrop-blur-md border border-emerald-200/50 text-emerald-800 text-[10px] md:text-xs font-black uppercase tracking-[0.2em] mb-8 shadow-[0_4px_14px_rgba(16,185,129,0.1)] max-w-full overflow-hidden"
           >
-            <ShieldCheck className="w-3 h-3 md:w-4 md:h-4 text-emerald-500 shrink-0" />
-            <span className="truncate">Top Doctors in Bihar</span>
+            <ShieldCheck className="w-3.5 h-3.5 md:w-4 md:h-4 text-emerald-500 shrink-0" />
+            <span className="truncate">Bihar's Unified Healthcare Platform</span>
           </motion.div>
 
           <motion.h1 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-black tracking-tight leading-[1.1] text-slate-900 mb-5 w-full break-words px-2"
+            className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black tracking-tight leading-[1.05] text-slate-900 mb-6 w-full break-words px-2"
           >
-            Top Doctors, <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-blue-600 to-emerald-600">
-              Now on Your Phone.
+            Your Unified <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-blue-600 to-indigo-600">
+              Health Identity.
             </span>
           </motion.h1>
 
@@ -61,10 +61,9 @@ export function HeroSection() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-[13px] sm:text-sm md:text-base lg:text-lg text-slate-600 w-full font-medium leading-relaxed mb-6 md:mb-8 break-words px-2 sm:px-4"
+            className="text-[14px] sm:text-base md:text-lg lg:text-xl text-slate-500 w-full font-bold leading-relaxed mb-8 md:mb-10 break-words px-2 sm:px-6 max-w-3xl"
           >
-            Skip the hospital waiting rooms. Book confirmed appointments with the 
-            most trusted doctors in your city from the comfort of your home.
+            One secure identity for all your clinical needs. Book verified appointments with <strong className="text-slate-900">500+ specialists</strong> across Bihar and manage your digital health record instantly.
           </motion.p>
 
           {/* ── SEARCH SYSTEM ───────────────────────── */}
@@ -110,15 +109,15 @@ export function HeroSection() {
             transition={{ delay: 0.5 }}
             className="w-full max-w-full md:max-w-md bg-white/70 backdrop-blur-xl border border-slate-200/50 rounded-2xl p-4 flex items-center gap-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)] box-border mx-2 md:mx-0"
           >
-            <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-white flex items-center justify-center shrink-0 shadow-sm">
-              <Zap className="w-5 h-5 md:w-6 md:h-6 text-primary animate-pulse shrink-0" />
+            <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0 shadow-sm border border-emerald-100">
+              <ShieldCheck className="w-5 h-5 md:w-6 md:h-6 text-emerald-600 shrink-0" />
             </div>
             <div className="text-left flex-1 min-w-0">
-              <div className="flex items-center gap-1.5 text-[9px] md:text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-0.5 truncate">
-                <ShieldCheck className="w-3 h-3 shrink-0" /> <span className="truncate">Official Platform</span>
+              <div className="flex items-center gap-1.5 text-[9px] md:text-[10px] font-bold text-emerald-700 uppercase tracking-wider mb-0.5 truncate">
+                <span className="truncate">Safe & Verified Healthcare</span>
               </div>
               <p className="text-[11px] md:text-sm font-bold text-slate-800 leading-tight truncate">
-                Instant bookings via JivniCare
+                Secure, end-to-end encrypted bookings.
               </p>
             </div>
             <div className="ml-auto flex items-center gap-1 bg-white px-2 py-1 rounded-lg border border-slate-200 shrink-0">

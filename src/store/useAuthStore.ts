@@ -2,6 +2,12 @@
 //  JivniCare — Auth Store (Zustand)
 //  Manages authentication state, user role, and session.
 //  Persisted in localStorage for session continuity.
+//
+//  PD4 Changes:
+//  - Added `doctorId` to AuthUser for dashboard hydration
+//  - Added `updateUser()` action for post-onboarding role upgrade
+//  - Fixed async logout — now synchronous store clear + async cookie
+//  - `getRoleRedirect` is the single source of truth for routing
 // =============================================================
 
 import { create } from "zustand";
@@ -17,7 +23,11 @@ export interface AuthUser {
   role: UserRole;
   verified?: boolean;
   avatar?: string;
+  /** Linked doctor record ID — populated after onboarding completes */
+  doctorId?: string | null;
 }
+
+import { auth } from "@/lib/firebase/config";
 
 interface AuthState {
   user: AuthUser | null;
@@ -28,6 +38,8 @@ interface AuthState {
 
   // Actions
   login: (user: AuthUser, token?: string) => void;
+  /** Merge partial fields into existing user — used after role upgrade/onboarding */
+  updateUser: (partial: Partial<AuthUser>) => void;
   logout: () => void;
   setLoading: (loading: boolean) => void;
   setHasHydrated: (state: boolean) => void;
@@ -35,7 +47,7 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       token: null,
       isAuthenticated: false,
@@ -45,13 +57,21 @@ export const useAuthStore = create<AuthState>()(
       login: (user, token) =>
         set({ user, token: token ?? null, isAuthenticated: true, isLoading: false }),
 
-      logout: async () => {
-        try {
-          await fetch('/api/auth/logout', { method: 'POST' });
-        } catch (error) {
-          console.error("Logout error", error);
-        }
+      updateUser: (partial) => {
+        const current = get().user;
+        if (!current) return;
+        set({ user: { ...current, ...partial } });
+      },
+
+      logout: () => {
+        // 1. Sign out from Firebase Client
+        auth.signOut().catch(console.error);
+
+        // 2. Clear store state immediately (synchronous)
         set({ user: null, token: null, isAuthenticated: false });
+
+        // 3. Fire-and-forget server-side cleanup
+        fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
       },
 
       setLoading: (isLoading) => set({ isLoading }),
@@ -59,6 +79,8 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: "jivnicare-auth",
+      // Persist only what's needed for session continuity.
+      // token is NOT persisted (read from HttpOnly cookie on server).
       partialize: (state) => ({
         user: state.user,
         isAuthenticated: state.isAuthenticated,
@@ -70,16 +92,21 @@ export const useAuthStore = create<AuthState>()(
   )
 );
 
-// Role-based redirect helper
+// ── Routing Helpers ──────────────────────────────────────────────
+
+/**
+ * Single source of truth for role-based redirect target.
+ * Used by: login page, onboarding page, middleware.
+ */
 export function getRoleRedirect(role: UserRole): string {
   switch (role) {
     case "DOCTOR": return "/doctor/dashboard";
-    case "ADMIN": return "/admin/dashboard";
-    case "PATIENT": return "/";
-    default: return "/";
+    case "ADMIN":  return "/admin/dashboard";
+    case "PATIENT":
+    default:       return "/";
   }
 }
 
-export const isDoctor = (role: UserRole) => role === "DOCTOR";
-export const isAdmin = (role: UserRole) => role === "ADMIN";
+export const isDoctor  = (role: UserRole) => role === "DOCTOR";
+export const isAdmin   = (role: UserRole) => role === "ADMIN";
 export const isPatient = (role: UserRole) => role === "PATIENT";

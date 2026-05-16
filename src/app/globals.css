@@ -209,3 +209,136 @@ main {
   from { opacity: 0; transform: translateY(-8px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* ─── PHASE 4: Premium Motion System ─────────────────────────────────── */
+
+/* Global timing tokens */
+:root {
+  --ease-spring:    cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-smooth:    cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out:       cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out:    cubic-bezier(0.4, 0, 0.6, 1);
+  --duration-fast:  150ms;
+  --duration-base:  220ms;
+  --duration-slow:  400ms;
+  --duration-page:  280ms;
+}
+
+/* Smooth scroll platform-wide */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Premium focus ring system — replaces browser default */
+:focus-visible {
+  outline: 2px solid #205E98;
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+
+/* Shimmer skeleton animation */
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    oklch(0.93 0.01 250) 25%,
+    oklch(0.97 0.005 250) 50%,
+    oklch(0.93 0.01 250) 75%
+  );
+  background-size: 200% auto;
+  animation: shimmer 1.5s linear infinite;
+}
+
+/* Card entrance stagger */
+@keyframes cardEnter {
+  from { opacity: 0; transform: translateY(16px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.card-enter {
+  animation: cardEnter var(--duration-slow) var(--ease-spring) both;
+}
+
+.card-enter-1 { animation-delay: 60ms; }
+.card-enter-2 { animation-delay: 120ms; }
+.card-enter-3 { animation-delay: 180ms; }
+.card-enter-4 { animation-delay: 240ms; }
+.card-enter-5 { animation-delay: 300ms; }
+.card-enter-6 { animation-delay: 360ms; }
+
+/* Page-level fade-in */
+@keyframes pageFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.page-enter {
+  animation: pageFadeIn var(--duration-page) var(--ease-spring) both;
+}
+
+/* Subtle pulse for live/active indicators */
+@keyframes livePulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+
+.live-pulse {
+  animation: livePulse 2s ease-in-out infinite;
+}
+
+/* Slide-in from bottom (mobile drawers, modals) */
+@keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+.slide-up {
+  animation: slideUp var(--duration-slow) var(--ease-spring) both;
+}
+
+/* Trust badge pop-in */
+@keyframes badgePop {
+  0%   { transform: scale(0.8); opacity: 0; }
+  70%  { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.badge-pop {
+  animation: badgePop var(--duration-base) var(--ease-spring) both;
+}
+
+/* ─── Reduced Motion Safety ─────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* ─── Touch refinement ───────────────────────────────────────────────── */
+/* Minimum 44px touch targets — only standalone buttons and explicit CTA anchors */
+/* Using 44px globally on all <a> and <button> breaks nav pills, prose links, etc. */
+/* Instead, apply a safe CSS custom property for components to opt-in */
+:root {
+  --touch-min: 44px;
+}
+
+/* Prevent text size adjustment on orientation change */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Smooth momentum scrolling on iOS */
+.overflow-y-auto, .overflow-y-scroll {
+  -webkit-overflow-scrolling: touch;
+}

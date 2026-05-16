@@ -400,10 +400,15 @@ function DoctorDashboardContent() {
           {activeTab === "profile" && renderProfile()}
           {activeTab === "settings" && renderSettings()}
           {activeTab === "reviews" && (
-            <div className="flex flex-col items-center justify-center h-[60vh] text-center fade-in">
-              <Star className="w-16 h-16 text-slate-300 mb-4" />
-              <h2 className="text-2xl font-bold text-slate-900">No Reviews Yet</h2>
-              <p className="text-slate-500 mt-2">Patients will be able to rate you after their appointments.</p>
+            <div className="flex flex-col items-center justify-center h-[60vh] text-center fade-in px-4">
+              <div className="w-24 h-24 bg-amber-50 rounded-full flex items-center justify-center mb-6 relative shadow-sm border border-amber-100">
+                <Star className="w-10 h-10 text-amber-400 fill-current" />
+              </div>
+              <h2 className="text-2xl font-black text-slate-900 tracking-tight">Build Your Reputation</h2>
+              <p className="text-slate-500 mt-3 max-w-sm leading-relaxed">Patients you consult will be able to leave reviews and ratings here. 5-star ratings boost your visibility on JivniCare.</p>
+              <Button variant="outline" className="mt-6 rounded-xl border-slate-200 text-slate-700 font-bold hover:bg-slate-50 h-12 px-6 shadow-sm">
+                Share Clinic Link
+              </Button>
             </div>
           )}
         </div>

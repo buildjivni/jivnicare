@@ -68,6 +68,7 @@ model Media {
 
 model User {
   id         String   @id @default(uuid()) @map("_id")
+  firebaseUid String? @unique
   phone      String   @unique
   email      String?
   name       String?
@@ -128,17 +129,42 @@ model Doctor {
   commonSymptomsTreated       String[] @default([])
   certifications              String[] @default([])
   education                   String?
+  qualifications              String?  // Structured: "MBBS, MD Medicine"
   onlineConsultationAvailable Boolean  @default(false)
   emergencyConsultationAvailable Boolean @default(false)
 
   weeklySchedule              WeeklySchedule?
   clinicOperations            ClinicOperations?
 
+  // ── Future-Safe Identity Architecture (Doctor Discovery v2) ──
+  // QR-ready short code: 6-char alphanumeric (no ambiguous chars)
+  // Used for: /d/{shortCode} deep links, clinic QR codes, reception displays
+  shortCode          String?     @unique
+
+  // Clinic visual identity
+  clinicImage        String?     // CDN URL for clinic/hospital photo
+
+  // Social proof metrics (additive — updated via admin/analytics)
+  reviewCount        Int         @default(0)
+  totalConsultations Int         @default(0)
+
+  // Trust tier label — set deterministically during onboarding based on experience
+  // Examples: "Verified Doctor" | "Experienced Partner" | "Clinic Verified"
+  verifiedBadgeLabel String?
+
   createdAt          DateTime    @default(now())
   updatedAt          DateTime    @updatedAt
   
+  // ── Performance Indexes ──────────────────────────────────────
+  // Existing individual indexes preserved for backward compatibility
   @@index([district])
   @@index([verificationStatus])
+
+  // Composite: primary discovery query (district + verified filter)
+  @@index([district, verificationStatus])
+
+  // Top-rated discovery queries
+  @@index([rating, verificationStatus])
 }
 
 model Specialty {

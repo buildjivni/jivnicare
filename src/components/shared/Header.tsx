@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Menu, X, CalendarDays, Stethoscope, BookOpen, User } from "lucide-react";
+import { Menu, X, CalendarDays, Stethoscope, BookOpen, User, Newspaper } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import { Logo } from "@/components/brand/Logo";
@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 // Removed "For Partners" as it belongs in the footer/dedicated portal to keep patient UX clean
 const NAV_LINKS = [
   { label: "Find Doctors", href: "/doctors", icon: <Stethoscope className="w-4 h-4" /> },
-  { label: "Specialties", href: "/#specialties", icon: <BookOpen className="w-4 h-4" /> },
+  { label: "Articles", href: "/blog", icon: <Newspaper className="w-4 h-4" /> },
   { label: "My Bookings", href: "/my-bookings", icon: <CalendarDays className="w-4 h-4" /> },
 ];
 

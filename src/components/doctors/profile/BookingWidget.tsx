@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Stethoscope, Video, Users, Clock, Activity, Shield } from "lucide-react";
+import { Stethoscope, Video, Users, Clock, Activity, Shield, CheckCircle2, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import type { Doctor } from "@/types";
@@ -13,10 +13,6 @@ interface BookingWidgetProps {
   onBook: () => void;
   isNavigating?: boolean;
 }
-
-const SERVICE_BTN = "flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all";
-const ACTIVE_SERVICE = "border-primary bg-primary/5 text-primary";
-const INACTIVE_SERVICE = "border-border bg-background text-muted-foreground hover:border-primary/30 hover:bg-muted";
 
 export function BookingWidget({
   doctor,
@@ -34,138 +30,177 @@ export function BookingWidget({
     isClosedToday: false,
     timings: "",
   });
-
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
-
-    const fetchQueueStats = async () => {
+    const fetch_ = async () => {
       try {
         if (document.visibilityState === "visible") {
           const res = await fetch(`/api/public/doctor/${doctor.id}/queue-stats`);
           if (res.ok) {
             const data = await res.json();
-            if (data.success) {
-              setQueue(data.queue);
-            }
+            if (data.success) setQueue(data.queue);
           }
         }
-      } catch (err) {
-        console.error("Failed to fetch queue stats", err);
-      } finally {
+      } catch { /* silent */ }
+      finally {
         setIsLoading(false);
-        timeoutId = setTimeout(fetchQueueStats, 30000);
+        timeoutId = setTimeout(fetch_, 30000); // refresh every 30s
       }
     };
-
-    fetchQueueStats();
+    fetch_();
     return () => clearTimeout(timeoutId);
   }, [doctor.id]);
 
   const isAvailableToday = !queue.isClosedToday;
+  const fee = selectedService === "video" ? doctor.videoFee : doctor.fee;
+  const queueActive = queue.status === "ACTIVE" || queue.status === "NOT_STARTED";
 
   return (
-    <Card className="border-border/50 shadow-lg rounded-2xl bg-background overflow-hidden" id="mobile-booking-widget">
+    <Card className="border-slate-100 shadow-[0_4px_24px_rgba(0,0,0,0.08)] rounded-[22px] bg-white overflow-hidden">
       <CardContent className="p-0">
-        {/* Service Selection */}
-        <div className="p-5 bg-muted/30 border-b border-border/50">
-          <h3 className="font-bold text-lg mb-4">Select Consultation Type</h3>
-          <div className="grid grid-cols-2 gap-3">
-            <button onClick={() => onServiceChange("clinic")} className={`${SERVICE_BTN} ${selectedService === "clinic" ? ACTIVE_SERVICE : INACTIVE_SERVICE}`}>
-              <Stethoscope className="w-6 h-6 mb-2" />
-              <span className="font-medium text-sm">In-Clinic</span>
-              <span className="text-xs font-bold mt-1">{doctor.fee}</span>
+
+        {/* ── 1. Service Type Toggle ── */}
+        <div className="p-4 border-b border-slate-50">
+          <p className="text-[10.5px] font-bold text-slate-400 uppercase tracking-widest mb-3">
+            Consultation Type
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            {/* In-Clinic */}
+            <button
+              onClick={() => onServiceChange("clinic")}
+              className={[
+                "flex flex-col items-center gap-1.5 p-3 rounded-[14px] border-2 transition-all duration-200",
+                selectedService === "clinic"
+                  ? "border-[#205E98] bg-[#205E98]/6 text-[#205E98]"
+                  : "border-slate-100 bg-slate-50/50 text-slate-500 hover:border-slate-200 hover:bg-slate-50",
+              ].join(" ")}
+              aria-pressed={selectedService === "clinic"}
+            >
+              <Stethoscope className="w-4.5 h-4.5" />
+              <span className="text-[11.5px] font-bold">In-Clinic</span>
+              <span className="text-[12.5px] font-black tabular-nums">{doctor.fee}</span>
             </button>
-            <button onClick={() => onServiceChange("video")} className={`${SERVICE_BTN} ${selectedService === "video" ? ACTIVE_SERVICE : INACTIVE_SERVICE}`}>
-              <Video className="w-6 h-6 mb-2" />
-              <span className="font-medium text-sm">Video Call</span>
-              <span className="text-xs font-bold mt-1">{doctor.videoFee}</span>
+
+            {/* Video */}
+            <button
+              onClick={() => onServiceChange("video")}
+              className={[
+                "flex flex-col items-center gap-1.5 p-3 rounded-[14px] border-2 transition-all duration-200",
+                selectedService === "video"
+                  ? "border-[#205E98] bg-[#205E98]/6 text-[#205E98]"
+                  : "border-slate-100 bg-slate-50/50 text-slate-500 hover:border-slate-200 hover:bg-slate-50",
+              ].join(" ")}
+              aria-pressed={selectedService === "video"}
+            >
+              <Video className="w-4.5 h-4.5" />
+              <span className="text-[11.5px] font-bold">Video Call</span>
+              <span className="text-[12.5px] font-black tabular-nums">{doctor.videoFee}</span>
             </button>
           </div>
         </div>
 
-        {/* Live Queue Status */}
-        <div className="p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <Activity className="w-4 h-4 text-emerald-500" />
-            <h3 className="font-bold text-base">Live Queue Status</h3>
-            {isAvailableToday ? (
-              <span className="ml-auto text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                {queue.timings || "Open Now"}
-              </span>
-            ) : (
-              <span className="ml-auto text-[10px] font-bold text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                Closed
-              </span>
-            )}
-          </div>
+        {/* ── 2. Live Queue Status ── */}
+        <div className="p-4 space-y-3">
 
-          <div className="grid grid-cols-3 gap-3 mb-5">
-            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-center">
-              <p className="text-[10px] text-slate-500 font-bold uppercase mb-1">Current</p>
-              {isLoading ? (
-                <div className="h-7 w-12 bg-slate-200 rounded animate-pulse mx-auto" />
-              ) : (
-                <p className="text-xl font-black text-primary">#{queue.currentToken}</p>
-              )}
-            </div>
-            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-center">
-              <p className="text-[10px] text-slate-500 font-bold uppercase mb-1">In Queue</p>
-              {isLoading ? (
-                <div className="flex items-center justify-center gap-1">
-                  <Users className="w-3.5 h-3.5 text-amber-500 opacity-50" />
-                  <div className="h-7 w-8 bg-slate-200 rounded animate-pulse" />
-                </div>
-              ) : (
-                <div className="flex items-center justify-center gap-1">
-                  <Users className="w-3.5 h-3.5 text-amber-500" />
-                  <p className="text-xl font-black text-slate-800">{queue.totalInQueue}</p>
-                </div>
-              )}
-            </div>
-            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-center">
-              <p className="text-[10px] text-slate-500 font-bold uppercase mb-1">Est. Wait</p>
-              {isLoading ? (
-                <div className="flex items-center justify-center gap-1">
-                  <Clock className="w-3.5 h-3.5 text-emerald-500 opacity-50" />
-                  <div className="h-7 w-10 bg-slate-200 rounded animate-pulse" />
-                </div>
-              ) : (
-                <div className="flex items-center justify-center gap-1">
-                  <Clock className="w-3.5 h-3.5 text-emerald-500" />
-                  <p className="text-xl font-black text-slate-800">{queue.estimatedWait}m</p>
-                </div>
-              )}
+          {/* Queue header */}
+          <div className="flex items-center gap-2">
+            <Activity className={`w-3.5 h-3.5 shrink-0 ${isAvailableToday && queueActive ? "text-emerald-500" : "text-slate-400"}`} />
+            <span className="text-[12px] font-bold text-slate-700">Live Queue Status</span>
+            <div className={`ml-auto text-[9.5px] font-bold px-2 py-0.5 rounded-full border ${
+              isAvailableToday
+                ? "text-emerald-700 bg-emerald-50 border-emerald-200"
+                : "text-red-600 bg-red-50 border-red-100"
+            }`}>
+              {isAvailableToday ? (queue.timings || "Open Today") : "Closed"}
             </div>
           </div>
 
-          {/* Consultation Fee Highlight */}
-          <div className="bg-primary/5 border border-primary/10 rounded-xl p-4 mb-5 flex items-center justify-between">
+          {/* Queue metrics — 3-col */}
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              {
+                label: "Token",
+                value: isLoading ? null : `#${queue.currentToken}`,
+                icon: <Zap className="w-3 h-3 text-[#205E98]" />,
+                bg: "bg-[#205E98]/6 border-[#205E98]/15",
+              },
+              {
+                label: "In Queue",
+                value: isLoading ? null : String(queue.totalInQueue),
+                icon: <Users className="w-3 h-3 text-amber-500" />,
+                bg: "bg-amber-50/70 border-amber-100",
+              },
+              {
+                label: "Est. Wait",
+                value: isLoading ? null : `${queue.estimatedWait}m`,
+                icon: <Clock className="w-3 h-3 text-emerald-500" />,
+                bg: "bg-emerald-50/70 border-emerald-100",
+              },
+            ].map(({ label, value, icon, bg }) => (
+              <div key={label} className={`flex flex-col items-center p-2.5 rounded-[12px] border ${bg} text-center`}>
+                <div className="mb-1">{icon}</div>
+                {value === null ? (
+                  <div className="h-5 w-8 bg-slate-200 rounded animate-pulse mx-auto" />
+                ) : (
+                  <span className="font-black text-[15px] text-slate-900 leading-none tabular-nums">
+                    {value}
+                  </span>
+                )}
+                <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wide mt-1">
+                  {label}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* ── Fee highlight ── */}
+          <div className="flex items-center justify-between bg-slate-50 border border-slate-100 rounded-[14px] px-4 py-3">
             <div>
-              <p className="text-xs text-slate-500 font-semibold">Consultation Fee</p>
-              <p className="text-2xl font-black text-primary">
-                {selectedService === "video" ? doctor.videoFee : doctor.fee}
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">
+                {selectedService === "video" ? "Video Consult" : "In-Clinic Fee"}
               </p>
+              <p className="font-black text-[22px] text-[#205E98] leading-none tabular-nums mt-0.5">{fee}</p>
             </div>
             <div className="text-right">
-              <p className="text-xs text-slate-500 font-semibold">~{queue.avgTime} min</p>
-              <p className="text-xs text-slate-400">per patient</p>
+              <p className="text-[10px] text-slate-400 font-bold">Per Visit</p>
+              <p className="text-[11px] text-slate-500">~{queue.avgTime} min</p>
             </div>
           </div>
 
-          {/* Join Queue CTA — Desktop */}
+          {/* ── Book CTA — Desktop ── */}
           <div className="hidden md:block">
             <Button
               onClick={onBook}
               disabled={!isAvailableToday || isNavigating}
-              className="w-full h-14 rounded-xl bg-primary hover:bg-primary/90 hover:brightness-105 hover:shadow-xl shadow-md text-base font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className={[
+                "w-full h-12 rounded-[14px] text-[14px] font-bold",
+                "bg-[#205E98] hover:bg-[#1a4f82] text-white",
+                "shadow-[0_4px_16px_rgba(32,94,152,0.28)] hover:shadow-[0_6px_20px_rgba(32,94,152,0.36)]",
+                "active:scale-[0.98] transition-all duration-200",
+                "disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none",
+              ].join(" ")}
             >
-              {isNavigating ? "Redirecting..." : (!isAvailableToday ? "Closed Today" : "Join Queue — Book Now")}
+              {isNavigating
+                ? "Redirecting..."
+                : !isAvailableToday
+                ? "Closed Today"
+                : "Join Queue — Book Now"}
             </Button>
-            <p className="text-xs text-center text-muted-foreground mt-3 flex items-center justify-center gap-1.5">
-              <Shield className="w-3 h-3" /> Pay online or at the clinic
-            </p>
+          </div>
+
+          {/* ── Trust signals below CTA ── */}
+          <div className="grid grid-cols-2 gap-1.5 pt-0.5">
+            {[
+              { icon: <Shield className="w-3 h-3 text-emerald-500 shrink-0" />, text: "Secure payment" },
+              { icon: <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0" />, text: "Pay at clinic" },
+            ].map(({ icon, text }) => (
+              <div key={text} className="flex items-center gap-1.5">
+                {icon}
+                <span className="text-[10.5px] text-slate-500 font-medium">{text}</span>
+              </div>
+            ))}
           </div>
         </div>
       </CardContent>

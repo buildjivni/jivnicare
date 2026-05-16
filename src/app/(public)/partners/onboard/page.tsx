@@ -1,81 +1,125 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, CheckCircle2, Building2, Hospital, ShieldCheck, Camera, Upload, RefreshCw, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/store/useAuthStore";
+import { useAuthStore, getRoleRedirect } from "@/store/useAuthStore";
 import { Logo } from "@/components/brand/Logo";
 
+// Firebase Imports
+import { auth } from "@/lib/firebase/config";
+import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from "firebase/auth";
+
 const TOTAL_STEPS = 5; // Step 5 is Success
+const STORAGE_KEY_FORM = "jc_onboard_data_v1";
+const STORAGE_KEY_STEP = "jc_onboard_step_v1";
 
 export default function DoctorOnboardingFlow() {
   const router = useRouter();
   const [step, setStep] = useState(1);
-  const isAuthenticated = useAuthStore(state => state.isAuthenticated);
-  const user = useAuthStore(state => state.user);
-  const login = useAuthStore(state => state.login);
+  const { isAuthenticated, user, login, updateUser } = useAuthStore();
 
-  // Auto-redirect if already a DOCTOR
-  useEffect(() => {
-    if (isAuthenticated && user?.role === "DOCTOR") {
-      router.replace("/doctor/dashboard");
-    }
-  }, [isAuthenticated, user, router]);
-
-  // Auth State for Step 1
+  // ── AUTH STATE (STEP 1) ──────────────────────────────────────────────
   const [authPhone, setAuthPhone] = useState("");
   const [authOtp, setAuthOtp] = useState("");
   const [authStep, setAuthStep] = useState<"phone" | "otp">("phone");
   const [isAuthLoading, setIsAuthLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
-  const [resendTimer, setResendTimer] = useState(30);
+  
+  // Firebase Specific
+  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
+  const recaptchaVerifierRef = useRef<RecaptchaVerifier | null>(null);
 
-  useEffect(() => {
-    if (authStep === "otp" && resendTimer > 0) {
-      const timerId = setTimeout(() => setResendTimer((prev) => prev - 1), 1000);
-      return () => clearTimeout(timerId);
-    }
-  }, [authStep, resendTimer]);
-
+  // ── FORM DATA ────────────────────────────────────────────────────────
   const [formData, setFormData] = useState({
-    // Step 1: Basic (Name is required, Phone is handled via Auth)
-    fullName: user?.name || "",
-    // Step 2: Professional
+    fullName: "",
     gender: "", specialization: "", qualifications: "", experience: "", languages: "", fee: "", bio: "",
-    // Step 3: Practice Type
-    practiceType: "", // "clinic" or "hospital"
-    // Step 4: Practice Details
+    practiceType: "", 
     practiceName: "", practiceAddress: "", city: "", locality: "", landmark: "", contactNumber: "", workingDays: "", timings: "", department: "",
-    // Uploads
     profilePhotoUrl: "", medicalRegistrationUrl: "", clinicPhotoUrl: ""
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isUploading, setIsUploading] = useState<Record<string, boolean>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // ── AUTH LOGIC (STEP 1) ──────────────────────────────────────────────
+  // Initialize reCAPTCHA
+  const setupRecaptcha = () => {
+    if (recaptchaVerifierRef.current) return;
+    try {
+      recaptchaVerifierRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        'size': 'invisible',
+      });
+    } catch (err) {
+      console.error("reCAPTCHA setup error:", err);
+    }
+  };
+
+  // 1. Initialize from storage or user state
+  useEffect(() => {
+    const savedForm = sessionStorage.getItem(STORAGE_KEY_FORM);
+    const savedStep = sessionStorage.getItem(STORAGE_KEY_STEP);
+    
+    if (savedForm) {
+      try {
+        const parsed = JSON.parse(savedForm);
+        setFormData(prev => ({ ...prev, ...parsed }));
+      } catch (e) { console.error("Failed to parse saved onboarding data", e); }
+    } else if (user?.name) {
+      setFormData(prev => ({ ...prev, fullName: user.name }));
+    }
+
+    if (savedStep) {
+      const s = parseInt(savedStep);
+      if (s > 1 && s <= TOTAL_STEPS) setStep(s);
+    }
+  }, [user]);
+
+  // 2. Save to storage on change
+  useEffect(() => {
+    sessionStorage.setItem(STORAGE_KEY_FORM, JSON.stringify(formData));
+    sessionStorage.setItem(STORAGE_KEY_STEP, step.toString());
+  }, [formData, step]);
+
+  // 3. Auto-redirect if already a DOCTOR with a complete profile
+  useEffect(() => {
+    if (isAuthenticated && user?.role === "DOCTOR" && user?.doctorId) {
+      router.replace("/doctor/dashboard");
+    }
+  }, [isAuthenticated, user, router]);
+
+  // ── STEP 1 AUTH LOGIC ────────────────────────────────────────────────
+  
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (authPhone.length < 10) return;
     setIsAuthLoading(true);
     setAuthError(null);
+
+    setupRecaptcha();
+    const appVerifier = recaptchaVerifierRef.current;
+
+    if (!appVerifier) {
+      setAuthError("Security verification failed. Please refresh.");
+      setIsAuthLoading(false);
+      return;
+    }
+
     try {
-      const res = await fetch("/api/auth/send-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: authPhone }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to send OTP");
+      const formattedPhone = `+91${authPhone}`;
+      const confirmation = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
+      setConfirmationResult(confirmation);
       setAuthStep("otp");
-      setResendTimer(30);
     } catch (error: any) {
-      setAuthError(error.message);
+      console.error("Send OTP Error:", error);
+      setAuthError(error.message || "Failed to send OTP.");
+      if (recaptchaVerifierRef.current) {
+        recaptchaVerifierRef.current.clear();
+        recaptchaVerifierRef.current = null;
+      }
     } finally {
       setIsAuthLoading(false);
     }
@@ -83,33 +127,42 @@ export default function DoctorOnboardingFlow() {
 
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (authOtp.length < 4) return;
+    if (authOtp.length < 6 || !confirmationResult) return;
     setIsAuthLoading(true);
     setAuthError(null);
+
     try {
-      const res = await fetch("/api/auth/verify-otp", {
+      // 1. Verify with Firebase
+      const result = await confirmationResult.confirm(authOtp);
+      const idToken = await result.user.getIdToken();
+
+      // 2. Sync with JivniCare Session
+      const res = await fetch("/api/auth/session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: authPhone, otp: authOtp, name: formData.fullName || "Doctor" }),
+        body: JSON.stringify({ idToken, name: formData.fullName || "Doctor" }),
       });
+      
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Verification failed");
       
-      login({ id: data.user.id, name: data.user.name || "Doctor", role: data.user.role });
+      login(data.user);
       
-      if (data.user.role === 'DOCTOR') {
+      if (data.user.role === 'DOCTOR' && data.user.doctorId) {
+        sessionStorage.removeItem(STORAGE_KEY_FORM);
+        sessionStorage.removeItem(STORAGE_KEY_STEP);
         router.push("/doctor/dashboard");
       } else {
-        setStep(2); // Proceed to next onboarding step
+        setStep(2); 
       }
     } catch (error: any) {
-      setAuthError(error.message);
+      console.error("Verify OTP Error:", error);
+      setAuthError(error.code === "auth/invalid-verification-code" ? "Invalid OTP." : "Verification failed.");
     } finally {
       setIsAuthLoading(false);
     }
   };
 
-  // ── VALIDATION LOGIC ──────────────────────────────────────────────────
   const validateStep = (currentStep: number) => {
     const newErrors: Record<string, string> = {};
     let isValid = true;
@@ -139,7 +192,6 @@ export default function DoctorOnboardingFlow() {
       if (!formData.practiceName) { newErrors.practiceName = formData.practiceType === "clinic" ? "Clinic name required" : "Hospital name required"; isValid = false; }
       if (!formData.city) { newErrors.city = "City required"; isValid = false; }
       if (!formData.locality) { newErrors.locality = "Locality required"; isValid = false; }
-      if (formData.practiceType === "clinic" && !formData.contactNumber) { newErrors.contactNumber = "Clinic contact required"; isValid = false; }
     }
 
     setErrors(newErrors);
@@ -160,437 +212,359 @@ export default function DoctorOnboardingFlow() {
         const data = await res.json();
         
         if (res.ok && data.success) {
-          login({ id: data.user.id, name: data.user.name, role: data.user.role });
+          updateUser({ 
+            role: "DOCTOR", 
+            doctorId: data.doctor.id,
+            name: data.user.name || formData.fullName
+          });
+          sessionStorage.removeItem(STORAGE_KEY_FORM);
+          sessionStorage.removeItem(STORAGE_KEY_STEP);
           setStep(5);
         } else {
-          setErrors({ submit: data.error || "Failed to create profile. Please try again." });
+          setErrors({ submit: data.error || "Failed to submit onboarding." });
         }
       } catch (err) {
-        setErrors({ submit: "Network error occurred." });
+        setErrors({ submit: "A network error occurred." });
       } finally {
         setIsSubmitting(false);
       }
     } else {
-      setStep(prev => prev + 1);
-    }
-  };
-  
-  const handleBack = () => setStep(prev => prev - 1);
-
-  const handleInputChange = (field: string, value: string) => {
-    if (field === 'contactNumber') {
-      value = value.replace(/\D/g, '').slice(0, 10);
-    }
-    if (field === 'fullName') {
-      value = value.replace(/[^a-zA-Z\s]/g, '');
-    }
-    if (field === 'experience' || field === 'fee') {
-      value = value.replace(/\D/g, '');
-    }
-    setFormData(prev => ({ ...prev, [field]: value }));
-    if (errors[field]) setErrors(prev => ({ ...prev, [field]: "" })); 
-  };
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: string) => {
-    if (!e.target.files?.[0]) return;
-    const file = e.target.files[0];
-    setIsUploading(prev => ({ ...prev, [field]: true }));
-    try {
-      const response = await fetch(`/api/upload?filename=${encodeURIComponent(file.name)}`, {
-        method: 'POST',
-        body: file,
-      });
-      const newBlob = await response.json();
-      if (newBlob.url) {
-        setFormData(prev => ({ ...prev, [field]: newBlob.url }));
-        setErrors(prev => ({ ...prev, [field]: "" }));
-      } else {
-        throw new Error("No URL returned");
-      }
-    } catch (error) {
-      setErrors(prev => ({ ...prev, [field]: "Upload failed. Try again." }));
-    } finally {
-      setIsUploading(prev => ({ ...prev, [field]: false }));
+      setStep(step + 1);
+      window.scrollTo(0, 0);
     }
   };
 
-  // ── RENDERERS ────────────────────────────────────────────────────────
-  const renderStep1 = () => (
-    <div className="space-y-6">
-      <div className="mb-8">
-        <h2 className="text-3xl font-black text-slate-900 tracking-tight">Claim Your Practice</h2>
-        <p className="text-slate-500 font-medium mt-2">Join Bihar's fastest-growing digital healthcare network.</p>
-      </div>
-
-      <div>
-        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 block">Doctor's Full Name</label>
-        <Input 
-          placeholder="e.g. Dr. Ramesh Kumar" 
-          value={formData.fullName} 
-          onChange={e => handleInputChange('fullName', e.target.value)} 
-          className="h-14 rounded-xl bg-white border-slate-200 text-lg font-bold focus-visible:ring-4 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500 shadow-sm" 
-        />
-        {errors.fullName && <p className="text-xs font-bold text-red-500 mt-1">{errors.fullName}</p>}
-      </div>
-
-      {!isAuthenticated ? (
-        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 mt-6">
-          <h3 className="text-sm font-bold text-slate-900 mb-4 uppercase tracking-wider">Authentication Required</h3>
-          
-          {authError && (
-            <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-100 flex items-start gap-2">
-              <AlertCircle className="w-4 h-4 text-red-500 mt-0.5" />
-              <p className="text-sm font-semibold text-red-800">{authError}</p>
-            </div>
-          )}
-
-          {authStep === "phone" ? (
-            <form onSubmit={handleSendOtp} className="space-y-4">
-              <div>
-                <label className="text-xs font-bold text-slate-500 block mb-1">Mobile Number</label>
-                <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-500 border-r border-slate-300 pr-2">+91</span>
-                  <Input 
-                    type="tel" 
-                    maxLength={10}
-                    value={authPhone} 
-                    onChange={e => setAuthPhone(e.target.value.replace(/\D/g, ''))} 
-                    className="h-12 pl-16 rounded-xl border-slate-300 font-bold tracking-wide" 
-                    placeholder="98765 43210"
-                  />
-                </div>
-              </div>
-              <Button type="submit" disabled={isAuthLoading || authPhone.length < 10} className="w-full h-12 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white font-bold rounded-xl shadow-[0_8px_20px_rgba(5,150,105,0.2)] active:scale-[0.98]">
-                {isAuthLoading ? "Sending..." : "Verify Mobile Number"}
-              </Button>
-            </form>
-          ) : (
-            <form onSubmit={handleVerifyOtp} className="space-y-4">
-              <div>
-                <label className="text-xs font-bold text-slate-500 block mb-1">Enter 4-Digit OTP</label>
-                <Input 
-                  type="text" 
-                  maxLength={4}
-                  value={authOtp} 
-                  onChange={e => setAuthOtp(e.target.value.replace(/\D/g, ''))} 
-                  className="h-12 text-center text-xl tracking-[1em] font-black rounded-xl border-slate-300" 
-                  placeholder="••••"
-                />
-              </div>
-              <Button type="submit" disabled={isAuthLoading || authOtp.length < 4} className="w-full h-12 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white font-bold rounded-xl shadow-[0_8px_20px_rgba(5,150,105,0.2)] active:scale-[0.98]">
-                {isAuthLoading ? "Verifying..." : "Confirm Secure Login"}
-              </Button>
-              <div className="text-center mt-2">
-                <button type="button" onClick={handleSendOtp} disabled={resendTimer > 0} className="text-xs font-bold text-slate-500 hover:text-[#10b981] disabled:opacity-50">
-                  {resendTimer > 0 ? `Resend in ${resendTimer}s` : "Resend OTP"}
-                </button>
-              </div>
-            </form>
-          )}
-        </div>
-      ) : (
-        <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 mt-6 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <CheckCircle2 className="w-6 h-6 text-emerald-500" />
-            <div>
-              <p className="text-sm font-bold text-emerald-900">Verified Mobile</p>
-              <p className="text-xs text-emerald-700">{user?.phone || "Securely Authenticated"}</p>
-            </div>
-          </div>
-          <Button onClick={handleNext} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg shadow-md h-10 px-6">
-            Continue <ArrowRight className="w-4 h-4 ml-2" />
-          </Button>
-        </div>
-      )}
-    </div>
-  );
-
-  const renderStep2 = () => (
-    <div className="space-y-6">
-      <div className="mb-8">
-        <h2 className="text-3xl font-black text-slate-900 tracking-tight">Professional Details</h2>
-        <p className="text-slate-500 font-medium mt-2">Build patient trust with your verified credentials.</p>
-      </div>
-      
-      <div className="flex flex-col md:flex-row gap-4 mb-6">
-        <div className="flex-1 bg-amber-50 border border-amber-100 p-5 rounded-2xl relative shadow-sm">
-          <label className="text-xs font-bold text-amber-900 uppercase mb-3 block tracking-widest">Profile Photo</label>
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-white border-2 border-amber-200 overflow-hidden shrink-0 flex items-center justify-center relative shadow-sm">
-              {formData.profilePhotoUrl ? (
-                <img src={formData.profilePhotoUrl} alt="Profile" className="w-full h-full object-cover" />
-              ) : (
-                <Camera className="w-6 h-6 text-amber-400" />
-              )}
-            </div>
-            <div className="flex-1 relative">
-              <Input type="file" accept="image/*" onChange={(e) => handleFileUpload(e, 'profilePhotoUrl')} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
-              <Button type="button" variant="outline" className="w-full border-amber-200 text-amber-700 bg-white hover:bg-amber-100 font-bold h-10 pointer-events-none">
-                {isUploading['profilePhotoUrl'] ? "Uploading..." : formData.profilePhotoUrl ? "Change Photo" : "Upload Photo"}
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex-1 bg-emerald-50 border border-emerald-100 p-5 rounded-2xl relative shadow-sm">
-          <label className="text-xs font-bold text-emerald-900 uppercase mb-3 block tracking-widest">Medical Registration</label>
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-xl bg-white border-2 border-emerald-200 overflow-hidden shrink-0 flex items-center justify-center relative shadow-sm">
-              {formData.medicalRegistrationUrl ? (
-                <CheckCircle2 className="w-8 h-8 text-emerald-500" />
-              ) : (
-                <Upload className="w-6 h-6 text-emerald-400" />
-              )}
-            </div>
-            <div className="flex-1 relative">
-              <Input type="file" accept="image/*,.pdf" onChange={(e) => handleFileUpload(e, 'medicalRegistrationUrl')} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
-              <Button type="button" variant="outline" className="w-full border-emerald-200 text-emerald-700 bg-white hover:bg-emerald-100 font-bold h-10 pointer-events-none">
-                {isUploading['medicalRegistrationUrl'] ? "Uploading..." : formData.medicalRegistrationUrl ? "Change Doc" : "Upload Reg."}
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <div>
-          <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 block">Specialization *</label>
-          <Input placeholder="e.g. Cardiologist" value={formData.specialization} onChange={e => handleInputChange('specialization', e.target.value)} className="h-14 rounded-xl bg-white border-slate-200 font-bold focus-visible:ring-4 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500 shadow-sm" />
-          {errors.specialization && <p className="text-xs text-red-500 mt-1 font-bold">{errors.specialization}</p>}
-        </div>
-        <div>
-          <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 block">Degrees / Qualifications *</label>
-          <Input placeholder="e.g. MBBS, MD" value={formData.qualifications} onChange={e => handleInputChange('qualifications', e.target.value)} className="h-14 rounded-xl bg-white border-slate-200 font-bold focus-visible:ring-4 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500 shadow-sm" />
-          {errors.qualifications && <p className="text-xs text-red-500 mt-1 font-bold">{errors.qualifications}</p>}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
-        <div>
-          <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 block">Gender</label>
-          <select value={formData.gender} onChange={e => handleInputChange('gender', e.target.value)} className="w-full h-14 px-4 rounded-xl border border-slate-200 bg-slate-50 font-bold focus:ring-[#10b981]">
-            <option value="">Select</option><option value="male">Male</option><option value="female">Female</option>
-          </select>
-        </div>
-        <div>
-          <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 block">Years Exp.</label>
-          <Input type="text" placeholder="e.g. 5" value={formData.experience} onChange={e => handleInputChange('experience', e.target.value)} className="h-14 rounded-xl bg-white border-slate-200 font-bold text-center focus-visible:ring-4 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500 shadow-sm" />
-        </div>
-        <div className="col-span-2 md:col-span-1">
-          <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 block">Base Fee (₹) *</label>
-          <Input type="text" placeholder="500" value={formData.fee} onChange={e => handleInputChange('fee', e.target.value)} className="h-14 rounded-xl bg-white border-slate-200 font-black text-emerald-600 focus-visible:ring-4 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500 shadow-sm" />
-          {errors.fee && <p className="text-xs text-red-500 mt-1 font-bold">{errors.fee}</p>}
-        </div>
-      </div>
-
-      <div>
-        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 block">About / Biography</label>
-        <textarea placeholder="Briefly describe your experience and approach to patient care..." value={formData.bio} onChange={e => handleInputChange('bio', e.target.value)} className="w-full h-28 px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 font-medium focus:outline-none focus:ring-2 focus:ring-[#10b981]/50 focus:border-[#10b981] transition-all resize-none" />
-      </div>
-    </div>
-  );
-
-  const renderStep3 = () => (
-    <div className="space-y-6">
-      <div className="mb-8">
-        <h2 className="text-3xl font-black text-slate-900 tracking-tight">Select Practice Type</h2>
-        <p className="text-slate-500 font-medium mt-2">Where do you primarily consult patients? This determines how your profile appears to users.</p>
-      </div>
-      
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-        <div 
-          onClick={() => handleInputChange('practiceType', 'clinic')}
-          className={`cursor-pointer rounded-[2rem] p-8 border-2 transition-all duration-300 ${formData.practiceType === 'clinic' ? 'border-[#10b981] bg-[#10b981]/5 shadow-xl shadow-[#10b981]/10 -translate-y-1' : 'border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50'}`}
-        >
-          <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 transition-colors ${formData.practiceType === 'clinic' ? 'bg-[#10b981] text-white shadow-lg shadow-[#10b981]/40' : 'bg-slate-100 text-slate-400'}`}>
-            <Building2 className="w-8 h-8" />
-          </div>
-          <h3 className="text-2xl font-black text-slate-900 mb-2">Own Clinic</h3>
-          <p className="text-slate-500 font-medium leading-relaxed">You run your own private clinic. Full control over queue and location.</p>
-        </div>
-
-        <div 
-          onClick={() => handleInputChange('practiceType', 'hospital')}
-          className={`cursor-pointer rounded-[2rem] p-8 border-2 transition-all duration-300 ${formData.practiceType === 'hospital' ? 'border-[#0ea5e9] bg-[#0ea5e9]/5 shadow-xl shadow-[#0ea5e9]/10 -translate-y-1' : 'border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50'}`}
-        >
-          <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 transition-colors ${formData.practiceType === 'hospital' ? 'bg-[#0ea5e9] text-white shadow-lg shadow-[#0ea5e9]/40' : 'bg-slate-100 text-slate-400'}`}>
-            <Hospital className="w-8 h-8" />
-          </div>
-          <h3 className="text-2xl font-black text-slate-900 mb-2">Hospital Attach.</h3>
-          <p className="text-slate-500 font-medium leading-relaxed">You consult within a larger hospital or multi-specialty center.</p>
-        </div>
-      </div>
-      {errors.practiceType && <p className="text-sm font-bold text-red-500 text-center mt-4 bg-red-50 p-2 rounded-lg">{errors.practiceType}</p>}
-    </div>
-  );
-
-  const renderStep4 = () => {
-    const isClinic = formData.practiceType === "clinic";
-    return (
-      <div className="space-y-6">
-        <div className="mb-8">
-          <h2 className="text-3xl font-black text-slate-900 tracking-tight">{isClinic ? "Clinic Details" : "Hospital Attachment"}</h2>
-          <p className="text-slate-500 font-medium mt-2">Help patients easily find and reach your practice.</p>
-        </div>
-        
-        <div className="flex items-center gap-5 mb-6 p-5 rounded-[1.5rem] border border-slate-200 bg-white shadow-sm relative">
-          <div className="w-20 h-20 rounded-2xl bg-slate-50 border-2 border-slate-100 flex items-center justify-center text-slate-400 shrink-0 overflow-hidden">
-            {formData.clinicPhotoUrl ? (
-              <img src={formData.clinicPhotoUrl} alt="Practice" className="w-full h-full object-cover" />
-            ) : isClinic ? <Building2 className="w-8 h-8" /> : <Hospital className="w-8 h-8" />}
-          </div>
-          <div className="flex-1">
-            <p className="font-bold text-slate-900 mb-2">{isClinic ? "Clinic Photo" : "Hospital Photo"} <span className="text-slate-400 font-normal text-sm">(Optional)</span></p>
-            <div className="relative">
-              <Input type="file" accept="image/*" onChange={(e) => handleFileUpload(e, 'clinicPhotoUrl')} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
-              <Button type="button" variant="outline" className="w-full sm:w-auto border-slate-200 text-slate-700 bg-white hover:bg-slate-50 font-bold h-11 pointer-events-none">
-                {isUploading['clinicPhotoUrl'] ? "Uploading..." : formData.clinicPhotoUrl ? "Change Photo" : "Upload Exterior Photo"}
-              </Button>
-            </div>
-            {errors.clinicPhotoUrl && <p className="text-xs text-red-500 mt-2 font-bold">{errors.clinicPhotoUrl}</p>}
-          </div>
-        </div>
-
-        <div>
-          <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 block">{isClinic ? "Clinic Name *" : "Hospital Name *"}</label>
-          <Input placeholder={isClinic ? "e.g. Sanjeevani Clinic" : "e.g. Apollo Hospital"} value={formData.practiceName} onChange={e => handleInputChange('practiceName', e.target.value)} className="h-14 rounded-xl bg-white border-slate-200 font-bold focus-visible:ring-4 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500 shadow-sm" />
-          {errors.practiceName && <p className="text-xs text-red-500 mt-1 font-bold">{errors.practiceName}</p>}
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div>
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 block">City *</label>
-            <Input placeholder="e.g. Patna" value={formData.city} onChange={e => handleInputChange('city', e.target.value)} className="h-14 rounded-xl bg-white border-slate-200 font-bold focus-visible:ring-4 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500 shadow-sm" />
-            {errors.city && <p className="text-xs text-red-500 mt-1 font-bold">{errors.city}</p>}
-          </div>
-          <div>
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 block">Area / Locality *</label>
-            <Input placeholder="e.g. Kankarbagh" value={formData.locality} onChange={e => handleInputChange('locality', e.target.value)} className="h-14 rounded-xl bg-white border-slate-200 font-bold focus-visible:ring-4 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500 shadow-sm" />
-            {errors.locality && <p className="text-xs text-red-500 mt-1 font-bold">{errors.locality}</p>}
-          </div>
-        </div>
-
-        {isClinic && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div>
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 block">Full Address</label>
-              <Input placeholder="Street, building..." value={formData.practiceAddress} onChange={e => handleInputChange('practiceAddress', e.target.value)} className="h-14 rounded-xl bg-white border-slate-200 font-bold focus-visible:ring-4 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500 shadow-sm" />
-            </div>
-            <div>
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 block">Clinic Contact Number *</label>
-              <Input type="tel" placeholder="Phone for reception" value={formData.contactNumber} onChange={e => handleInputChange('contactNumber', e.target.value)} className="h-14 rounded-xl bg-white border-slate-200 font-bold focus-visible:ring-4 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500 shadow-sm" />
-              {errors.contactNumber && <p className="text-xs text-red-500 mt-1 font-bold">{errors.contactNumber}</p>}
-            </div>
-          </div>
-        )}
-      </div>
-    );
+  const handleBack = () => {
+    if (step > 1) {
+      setStep(step - 1);
+      window.scrollTo(0, 0);
+    }
   };
-
-  const renderStep5 = () => (
-    <div className="flex flex-col items-center justify-center text-center py-12 fade-in">
-      <div className="w-28 h-28 bg-[#10b981]/10 rounded-full flex items-center justify-center mb-8 text-[#10b981] ring-8 ring-[#10b981]/5">
-        <ShieldCheck className="w-14 h-14" />
-      </div>
-      <h2 className="text-4xl font-black text-slate-900 mb-4 tracking-tight">Application Submitted</h2>
-      <p className="text-lg text-slate-500 max-w-md mx-auto mb-10 font-medium">
-        Thank you, {formData.fullName || "Doctor"}. Your profile has been sent for priority verification.
-      </p>
-      
-      <Button onClick={() => router.push('/doctor/dashboard')} className="h-14 px-10 rounded-2xl font-black text-lg shadow-xl shadow-[#10b981]/20 bg-[#10b981] hover:bg-[#059669] hover:scale-105 transition-all text-white">
-        Go to Partner Dashboard <ArrowRight className="w-5 h-5 ml-2" />
-      </Button>
-    </div>
-  );
 
   return (
-    <div className="min-h-screen bg-slate-50/50 flex items-center justify-center p-4 font-sans py-12">
-      
-      <div className="bg-white w-full max-w-3xl rounded-[2.5rem] shadow-2xl shadow-slate-200/50 border border-slate-100 overflow-hidden relative">
-        {/* Top Header & Brand */}
-        <div className="p-6 md:p-8 border-b border-slate-100 flex justify-between items-center bg-white/80 backdrop-blur-md sticky top-0 z-20">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center shadow-lg">
-               <img src="/logo.png" alt="Logo" className="w-6 h-6 object-contain" />
-            </div>
-            <span className="font-black text-xl tracking-tight text-slate-900">Partner Setup</span>
-          </Link>
-          {step < 5 && <span className="text-sm font-bold text-slate-400 bg-slate-100 px-3 py-1 rounded-full">Step {step} of 4</span>}
-        </div>
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col relative overflow-hidden">
+      {/* ── Background Aesthetics ── */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+        <div className="absolute -top-[10%] -right-[10%] w-[40%] h-[40%] rounded-full bg-emerald-50/50 blur-[120px]" />
+        <div className="absolute top-[20%] -left-[10%] w-[30%] h-[30%] rounded-full bg-blue-50/40 blur-[120px]" />
+      </div>
 
-        {/* Progress Bar */}
-        {step < 5 && (
-          <div className="w-full bg-slate-50 h-2">
-            <div 
-              className="h-2 transition-all duration-700 ease-out bg-gradient-to-r from-[#34d399] to-[#059669]" 
-              style={{ width: `${(step / 4) * 100}%` }}
+      <div id="recaptcha-container"></div>
+      
+      {/* Header */}
+      <nav className="h-20 bg-white/80 backdrop-blur-md border-b border-slate-100 px-6 sm:px-12 flex items-center justify-between sticky top-0 z-50">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
+            <Logo />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-lg font-black text-slate-900 leading-none">Partner Onboarding</span>
+            <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mt-0.5">Professional Network</span>
+          </div>
+        </div>
+        <Link href="/" className="text-[11px] font-black text-slate-400 hover:text-rose-500 transition-all uppercase tracking-widest flex items-center gap-2 group">
+          Exit <span className="hidden sm:inline">Application</span> <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+        </Link>
+      </nav>
+
+      <main className="flex-1 max-w-4xl mx-auto w-full px-6 py-12 md:py-16 relative z-10">
+        
+        {/* Progress System */}
+        <div className="mb-12">
+          <div className="flex items-center justify-between mb-4 px-2">
+            <span className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Step {step} of 4</span>
+            <span className="text-[11px] font-black text-emerald-600 uppercase tracking-[0.2em]">{Math.round((step/4)*100)}% Complete</span>
+          </div>
+          <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden p-0.5 border border-slate-200/50">
+            <motion.div 
+              initial={{ width: 0 }}
+              animate={{ width: `${(step/4)*100}%` }}
+              className="h-full bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full shadow-[0_0_12px_rgba(16,185,129,0.3)]"
             />
           </div>
-        )}
+        </div>
 
         {/* Form Container */}
-        <div className="p-8 md:p-12 min-h-[450px]">
-          {/* Submit error banner */}
-          {errors.submit && (
-            <div className="mb-8 p-5 rounded-2xl bg-red-50 border border-red-100 flex items-start gap-4 animate-in fade-in slide-in-from-top-2">
-              <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center shrink-0">
-                <AlertCircle className="w-5 h-5 text-red-600" />
-              </div>
-              <div>
-                <p className="text-base font-black text-red-900">Submission Failed</p>
-                <p className="text-sm font-medium text-red-700 mt-1">{errors.submit}</p>
-              </div>
-            </div>
-          )}
-          
+        <div className="bg-white/70 backdrop-blur-2xl rounded-[3rem] p-8 md:p-14 shadow-[0_32px_64px_-16px_rgba(16,185,129,0.08)] border border-white relative overflow-hidden">
+          {/* Decorative Accent */}
+          <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-50/50 rounded-bl-[5rem] -mr-16 -mt-16 pointer-events-none" />
+
           <AnimatePresence mode="wait">
             <motion.div
               key={step}
-              initial={{ x: 20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: -20, opacity: 0 }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.4, ease: "circOut" }}
+              className="relative z-10"
             >
-              {step === 1 && renderStep1()}
-              {step === 2 && renderStep2()}
-              {step === 3 && renderStep3()}
-              {step === 4 && renderStep4()}
-              {step === 5 && renderStep5()}
+              {/* Step 1: Personal & Verification */}
+              {step === 1 && (
+                <div className="space-y-10">
+                  <div>
+                    <h1 className="text-4xl font-black text-slate-900 tracking-tight leading-tight">Begin Your <br />Partnership</h1>
+                    <p className="text-slate-500 font-bold mt-3 text-lg">Let&apos;s start with your professional identity.</p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    <div className="group">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-3 block ml-1">Full Name (As per Council)</label>
+                      <div className="relative">
+                        <Input 
+                          placeholder="Dr. Rajesh Kumar" 
+                          value={formData.fullName}
+                          onChange={(e) => setFormData({...formData, fullName: e.target.value})}
+                          className={`h-16 rounded-2xl bg-slate-50/50 border-slate-200/60 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-600/50 font-black text-lg transition-all ${errors.fullName ? 'border-rose-500' : ''}`}
+                        />
+                      </div>
+                      {errors.fullName && <p className="text-xs font-bold text-rose-500 mt-2 ml-1">{errors.fullName}</p>}
+                    </div>
+
+                    <div className="group">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-3 block ml-1">Mobile Verification</label>
+                      {!isAuthenticated ? (
+                        <div className="space-y-4">
+                          <div className="relative flex gap-2">
+                            <Input 
+                              placeholder="98765 43210" 
+                              value={authPhone}
+                              disabled={authStep === "otp"}
+                              onChange={(e) => setAuthPhone(e.target.value.replace(/\D/g, ''))}
+                              className="h-16 rounded-2xl bg-slate-50/50 border-slate-200/60 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-600/50 font-black text-lg transition-all"
+                            />
+                            {authStep === "phone" && (
+                              <Button onClick={handleSendOtp} disabled={isAuthLoading || authPhone.length < 10} className="h-16 rounded-2xl px-6 bg-emerald-600 hover:bg-emerald-700 text-white font-black shadow-lg shadow-emerald-900/10">
+                                {isAuthLoading ? <RefreshCw className="w-5 h-5 animate-spin" /> : "Verify"}
+                              </Button>
+                            )}
+                          </div>
+                          <AnimatePresence>
+                            {authStep === "otp" && (
+                              <motion.div 
+                                initial={{ opacity: 0, scale: 0.95 }} 
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="flex gap-2"
+                              >
+                                <Input 
+                                  placeholder="OTP Code" 
+                                  value={authOtp}
+                                  onChange={(e) => setAuthOtp(e.target.value.replace(/\D/g, ''))}
+                                  className="h-16 rounded-2xl bg-slate-50/50 border-emerald-200 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 font-black text-center tracking-[0.5em] text-xl"
+                                  maxLength={6}
+                                />
+                                <Button onClick={handleVerifyOtp} disabled={isAuthLoading || authOtp.length < 6} className="h-16 rounded-2xl px-6 bg-emerald-700 text-white font-black">
+                                  {isAuthLoading ? <RefreshCw className="w-5 h-5 animate-spin" /> : "Confirm"}
+                                </Button>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                          {authError && <p className="text-xs font-bold text-rose-500 flex items-center gap-1.5 ml-1"><AlertCircle className="w-3.5 h-3.5" /> {authError}</p>}
+                        </div>
+                      ) : (
+                        <div className="h-16 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-between px-6 shadow-inner">
+                          <div className="flex flex-col">
+                            <span className="text-[10px] font-bold text-emerald-600/60 uppercase tracking-widest">VERIFIED IDENTITY</span>
+                            <span className="text-emerald-800 font-black">+91 {user?.phone}</span>
+                          </div>
+                          <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center shadow-lg">
+                            <CheckCircle2 className="w-6 h-6 text-white" />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 2: Professional Details */}
+              {step === 2 && (
+                <div className="space-y-10">
+                  <div>
+                    <h1 className="text-4xl font-black text-slate-900 tracking-tight leading-tight">Expertise & <br />Experience</h1>
+                    <p className="text-slate-500 font-bold mt-3 text-lg">Define your professional clinical profile.</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    <div className="group">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-3 block ml-1">Primary Specialization</label>
+                      <Input placeholder="e.g. Senior Cardiologist" value={formData.specialization} onChange={(e) => setFormData({...formData, specialization: e.target.value})} className="h-16 rounded-2xl bg-slate-50/50 border-slate-200/60 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-600/50 font-black text-lg transition-all" />
+                      {errors.specialization && <p className="text-xs font-bold text-rose-500 mt-2 ml-1">{errors.specialization}</p>}
+                    </div>
+                    <div className="group">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-3 block ml-1">Qualifications</label>
+                      <Input placeholder="e.g. MBBS, MD (AIIMS)" value={formData.qualifications} onChange={(e) => setFormData({...formData, qualifications: e.target.value})} className="h-16 rounded-2xl bg-slate-50/50 border-slate-200/60 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-600/50 font-black text-lg transition-all" />
+                      {errors.qualifications && <p className="text-xs font-bold text-rose-500 mt-2 ml-1">{errors.qualifications}</p>}
+                    </div>
+                    <div className="group">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-3 block ml-1">Consultation Fee (₹)</label>
+                      <Input type="number" placeholder="500" value={formData.fee} onChange={(e) => setFormData({...formData, fee: e.target.value})} className="h-16 rounded-2xl bg-slate-50/50 border-slate-200/60 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-600/50 font-black text-xl transition-all" />
+                      {errors.fee && <p className="text-xs font-bold text-rose-500 mt-2 ml-1">{errors.fee}</p>}
+                    </div>
+                    <div className="group">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-3 block ml-1">Years of Experience</label>
+                      <Input type="number" placeholder="12" value={formData.experience} onChange={(e) => setFormData({...formData, experience: e.target.value})} className="h-16 rounded-2xl bg-slate-50/50 border-slate-200/60 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-600/50 font-black text-xl transition-all" />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 3: Practice Type Selection */}
+              {step === 3 && (
+                <div className="space-y-12">
+                   <div>
+                    <h1 className="text-4xl font-black text-slate-900 tracking-tight leading-tight">Clinical <br />Environment</h1>
+                    <p className="text-slate-500 font-bold mt-3 text-lg">Where will you be providing your services?</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <button 
+                      onClick={() => setFormData({...formData, practiceType: "clinic"})} 
+                      className={`group p-10 rounded-[2.5rem] border-2 transition-all text-left relative overflow-hidden ${formData.practiceType === "clinic" ? "bg-emerald-50/50 border-emerald-600 shadow-xl" : "bg-white border-slate-100 hover:border-slate-200 shadow-sm"}`}
+                    >
+                      <div className={`w-16 h-16 rounded-3xl flex items-center justify-center mb-8 transition-colors ${formData.practiceType === "clinic" ? "bg-emerald-600 text-white" : "bg-slate-50 text-slate-400 group-hover:bg-slate-100"}`}>
+                        <Building2 className="w-8 h-8" />
+                      </div>
+                      <h3 className="text-2xl font-black text-slate-900">Private Clinic</h3>
+                      <p className="text-slate-500 font-bold mt-2 leading-relaxed">Direct practice management and dedicated scheduling.</p>
+                      {formData.practiceType === "clinic" && <div className="absolute top-6 right-6 w-8 h-8 bg-emerald-600 rounded-full flex items-center justify-center shadow-lg"><CheckCircle2 className="w-5 h-5 text-white" /></div>}
+                    </button>
+
+                    <button 
+                      onClick={() => setFormData({...formData, practiceType: "hospital"})} 
+                      className={`group p-10 rounded-[2.5rem] border-2 transition-all text-left relative overflow-hidden ${formData.practiceType === "hospital" ? "bg-blue-50/50 border-blue-600 shadow-xl" : "bg-white border-slate-100 hover:border-slate-200 shadow-sm"}`}
+                    >
+                      <div className={`w-16 h-16 rounded-3xl flex items-center justify-center mb-8 transition-colors ${formData.practiceType === "hospital" ? "bg-blue-600 text-white" : "bg-slate-50 text-slate-400 group-hover:bg-slate-100"}`}>
+                        <Hospital className="w-8 h-8" />
+                      </div>
+                      <h3 className="text-2xl font-black text-slate-900">Hospital Facility</h3>
+                      <p className="text-slate-500 font-bold mt-2 leading-relaxed">Multi-specialty center consultation and ward management.</p>
+                      {formData.practiceType === "hospital" && <div className="absolute top-6 right-6 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center shadow-lg"><CheckCircle2 className="w-5 h-5 text-white" /></div>}
+                    </button>
+                  </div>
+                  {errors.practiceType && <p className="text-center text-sm font-black text-rose-500">{errors.practiceType}</p>}
+                </div>
+              )}
+
+              {/* Step 4: Infrastructure & Location */}
+              {step === 4 && (
+                <div className="space-y-10">
+                  <div>
+                    <h1 className="text-4xl font-black text-slate-900 tracking-tight leading-tight">Infrastructure <br />Details</h1>
+                    <p className="text-slate-500 font-bold mt-3 text-lg">Finalize your facility information for patient discovery.</p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    <div className="group md:col-span-2">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-3 block ml-1">{formData.practiceType === 'clinic' ? 'CLINIC NAME' : 'HOSPITAL NAME'}</label>
+                      <Input placeholder="The Heart Center" value={formData.practiceName} onChange={(e) => setFormData({...formData, practiceName: e.target.value})} className="h-16 rounded-2xl bg-slate-50/50 border-slate-200/60 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-600/50 font-black text-lg transition-all" />
+                      {errors.practiceName && <p className="text-xs font-bold text-rose-500 mt-2 ml-1">{errors.practiceName}</p>}
+                    </div>
+                    <div className="group">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-3 block ml-1">City</label>
+                      <Input placeholder="Patna" value={formData.city} onChange={(e) => setFormData({...formData, city: e.target.value})} className="h-16 rounded-2xl bg-slate-50/50 border-slate-200/60 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-600/50 font-black text-lg transition-all" />
+                      {errors.city && <p className="text-xs font-bold text-rose-500 mt-2 ml-1">{errors.city}</p>}
+                    </div>
+                    <div className="group">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-3 block ml-1">Locality</label>
+                      <Input placeholder="Boring Road" value={formData.locality} onChange={(e) => setFormData({...formData, locality: e.target.value})} className="h-16 rounded-2xl bg-slate-50/50 border-slate-200/60 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-600/50 font-black text-lg transition-all" />
+                      {errors.locality && <p className="text-xs font-bold text-rose-500 mt-2 ml-1">{errors.locality}</p>}
+                    </div>
+                  </div>
+
+                  {errors.submit && (
+                    <div className="p-5 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-3">
+                      <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
+                      <p className="text-sm font-black text-rose-900 leading-relaxed">{errors.submit}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Navigation Action Bar */}
+              <div className="mt-16 flex items-center justify-between pt-12 border-t border-slate-100">
+                {step > 1 ? (
+                  <button 
+                    onClick={handleBack} 
+                    className="flex items-center gap-3 text-[11px] font-black text-slate-400 hover:text-slate-900 transition-all uppercase tracking-[0.2em] group"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center group-hover:bg-slate-100 transition-colors">
+                      <ArrowLeft className="w-5 h-5" />
+                    </div>
+                    PREVIOUS STEP
+                  </button>
+                ) : <div />}
+
+                <Button 
+                  onClick={handleNext} 
+                  disabled={isSubmitting || (step === 1 && !isAuthenticated)} 
+                  className="h-18 min-w-[220px] rounded-2xl px-12 bg-[#065F46] hover:bg-[#047857] text-white font-black text-lg shadow-[0_20px_40px_-12px_rgba(6,95,70,0.3)] active:scale-[0.98] transition-all group relative overflow-hidden"
+                >
+                  <div className="relative z-10 flex items-center gap-3">
+                    {isSubmitting ? (
+                      <>Processing Submission <RefreshCw className="w-5 h-5 animate-spin" /></>
+                    ) : (
+                      <>
+                        {step === 4 ? "Submit Application" : "Continue Journey"} 
+                        <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                      </>
+                    )}
+                  </div>
+                  {/* Subtle inner glow */}
+                  <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                </Button>
+              </div>
             </motion.div>
           </AnimatePresence>
         </div>
 
-        {/* Bottom Navigation */}
-        {step < 5 && (
-          <div className="p-6 md:p-8 border-t border-slate-100 bg-slate-50 flex items-center justify-between sticky bottom-0 z-10">
-            <Button 
-              variant="ghost" 
-              onClick={handleBack} 
-              disabled={step === 1}
-              className={`h-12 px-6 rounded-xl font-bold text-base transition-all ${step === 1 ? 'opacity-0 pointer-events-none' : 'text-slate-600 hover:bg-white hover:shadow-sm'}`}
+        {/* Support Signal */}
+        <div className="mt-12 text-center">
+          <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center justify-center gap-4">
+            <span className="w-10 h-px bg-slate-200" />
+            SECURED BY <ShieldCheck className="w-4 h-4 text-emerald-600" /> AES-256 ENCRYPTION
+            <span className="w-10 h-px bg-slate-200" />
+          </p>
+        </div>
+      </main>
+
+      {/* ── SUCCESS STEP (MODAL) ── */}
+      <AnimatePresence>
+        {step === 5 && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="fixed inset-0 bg-emerald-900/40 backdrop-blur-xl flex items-center justify-center p-6 z-[100]"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              className="max-w-md w-full bg-white rounded-[3.5rem] p-12 md:p-16 shadow-[0_64px_128px_-32px_rgba(0,0,0,0.3)] text-center relative overflow-hidden"
             >
-              <ArrowLeft className="w-5 h-5 mr-2" /> Back
-            </Button>
-            
-            <Button 
-              onClick={step === 1 && !isAuthenticated ? () => validateStep(1) : handleNext} 
-              disabled={isSubmitting || (step === 1 && !isAuthenticated)}
-              className="h-14 px-8 rounded-xl text-white font-black text-lg shadow-xl shadow-slate-900/20 bg-slate-900 hover:bg-slate-800 hover:scale-[1.02] transition-all disabled:opacity-50 disabled:hover:scale-100"
-            >
-              {isSubmitting ? (
-                <span className="flex items-center gap-2">
-                  <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Processing...
-                </span>
-              ) : (
-                <span className="flex items-center gap-2">
-                  {step === 4 ? "Submit Profile" : "Continue"} <ArrowRight className="w-5 h-5 ml-2" />
-                </span>
-              )}
-            </Button>
-          </div>
+              {/* Success Burst Effect */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[200%] h-32 bg-gradient-to-b from-emerald-50 to-transparent pointer-events-none" />
+              
+              <div className="w-24 h-24 bg-emerald-500 rounded-[2.5rem] flex items-center justify-center mx-auto mb-10 shadow-2xl shadow-emerald-500/40 relative z-10 rotate-3">
+                <CheckCircle2 className="w-12 h-12 text-white" />
+              </div>
+              
+              <h2 className="text-4xl font-black text-slate-900 mb-4 tracking-tight leading-tight relative z-10">Verification <br />Successful</h2>
+              <p className="text-slate-500 font-bold mb-12 text-lg leading-relaxed relative z-10">Welcome to the future of healthcare. Your professional profile is now being processed.</p>
+              
+              <Button 
+                onClick={() => router.push("/doctor/dashboard")} 
+                className="w-full h-18 rounded-[1.5rem] bg-[#065F46] hover:bg-[#047857] text-white font-black text-xl shadow-2xl relative z-10 active:scale-95 transition-all"
+              >
+                Enter Dashboard
+              </Button>
+
+              <div className="mt-8 text-[11px] font-black text-slate-300 uppercase tracking-widest relative z-10">
+                APPLICATION ID: JC-{Math.random().toString(36).substr(2, 9).toUpperCase()}
+              </div>
+            </motion.div>
+          </motion.div>
         )}
-      </div>
+      </AnimatePresence>
     </div>
   );
 }
+

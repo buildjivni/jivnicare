@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
+import { generateDoctorSlug, generateAlternateSlug, generateShortCode } from '@/lib/slug';
 
 export async function POST(request: Request) {
   try {
@@ -69,13 +70,39 @@ export async function POST(request: Request) {
       });
 
       const safeName = fullName || existingUser.name || "doctor";
-      const doctorSlug = `${safeName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${Math.floor(Math.random() * 10000)}`;
+      
+      // ── Deterministic + collision-safe slug generation ─────
+      let doctorSlug = generateDoctorSlug(safeName, city);
+      // Collision recovery: up to 3 retries with alternate suffixes
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const exists = await tx.doctor.findUnique({ where: { slug: doctorSlug } });
+        if (!exists) break;
+        doctorSlug = generateAlternateSlug(doctorSlug);
+      }
+
+      // ── QR-ready short code generation ────────────────────
+      let shortCode = generateShortCode();
+      // Short code collision recovery
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const exists = await tx.doctor.findUnique({ where: { shortCode } });
+        if (!exists) break;
+        shortCode = generateShortCode();
+      }
+
+      // ── Derive badge label from experience ─────────────────
+      const expYears = parseInt(experience) || 0;
+      const verifiedBadgeLabel = expYears >= 15
+        ? 'Experienced Partner'
+        : expYears >= 5
+        ? 'Verified Doctor'
+        : 'Clinic Verified';
 
       const doctor = await tx.doctor.create({
         data: {
           userId: user.id,
           name: safeName,
           slug: doctorSlug,
+          shortCode,
           bio: bio || null,
           experience: parseInt(experience) || 0,
           fee: parseInt(fee) || 0,
@@ -84,10 +111,13 @@ export async function POST(request: Request) {
           gender: gender || null,
           languages: languages ? languages.split(',').map((l: string) => l.trim()).filter(Boolean) : [],
           education: qualifications,
+          qualifications: qualifications,
           specialtyIds: [specialtyRecord.id],
           verificationStatus: 'PENDING',
           profileImage: profilePhotoUrl || null,
-          medicalRegistrationNumber: medicalRegistrationUrl || null, // Storing URL here for simplicity
+          clinicImage: clinicPhotoUrl || null,
+          medicalRegistrationNumber: medicalRegistrationUrl || null,
+          verifiedBadgeLabel,
         }
       });
 
