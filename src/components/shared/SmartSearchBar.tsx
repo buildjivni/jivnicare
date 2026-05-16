@@ -203,6 +203,7 @@ export function SmartSearchBar({
 
   const activePlaceholder = placeholder ?? PLACEHOLDERS[phIdx];
 
+  return (
     <div ref={panelRef} className={cn(
       "relative w-full max-w-full transition-all duration-200 box-border", 
       className,
