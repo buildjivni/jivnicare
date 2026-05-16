@@ -46,7 +46,7 @@ function deriveBadgeLabel(experienceYears: number): string {
 async function generateUniqueShortCode(attempts = 10): Promise<string> {
   for (let i = 0; i < attempts; i++) {
     const code = generateShortCode();
-    const existing = await prisma.doctor.findUnique({
+    const existing = await prisma.doctor.findFirst({
       where: { shortCode: code },
       select: { id: true },
     });
