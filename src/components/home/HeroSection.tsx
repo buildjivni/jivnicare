@@ -78,7 +78,8 @@ export function HeroSection() {
               <SmartSearchBar
                 district="Patna"
                 placeholder="Search doctors, symptoms..."
-                className="w-full border-transparent shadow-none hover:shadow-none hover:border-transparent bg-slate-50 md:h-[60px] rounded-2xl"
+                className="w-full"
+                innerClassName="border-transparent shadow-none hover:shadow-none hover:border-transparent bg-slate-50 md:h-[60px]"
               />
             </div>
           </motion.div>

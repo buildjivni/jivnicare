@@ -45,6 +45,7 @@ interface SmartSearchBarProps {
   district?: string;
   compact?: boolean;
   className?: string;
+  innerClassName?: string;
   onSearch?: (q: string) => void;
 }
 
@@ -54,6 +55,7 @@ export function SmartSearchBar({
   district,
   compact = false,
   className,
+  innerClassName,
   onSearch,
 }: SmartSearchBarProps) {
   const router = useRouter();
@@ -201,11 +203,10 @@ export function SmartSearchBar({
 
   const activePlaceholder = placeholder ?? PLACEHOLDERS[phIdx];
 
-  return (
     <div ref={panelRef} className={cn(
       "relative w-full max-w-full transition-all duration-200 box-border", 
-      focused && "max-md:fixed max-md:inset-0 max-md:z-[200] max-md:bg-white max-md:p-4 max-md:flex max-md:flex-col",
-      !focused && className
+      className,
+      focused && "max-md:!fixed max-md:!inset-0 max-md:!z-[200] max-md:!bg-white max-md:!p-4 max-md:!flex max-md:!flex-col max-md:!max-w-none max-md:!w-full max-md:!h-[100dvh] max-md:!rounded-none"
     )}>
 
       {/* ── MOBILE FULL SCREEN HEADER ───────────────────────────────────────── */}
@@ -231,6 +232,7 @@ export function SmartSearchBar({
               ? "border-destructive shadow-[0_0_0_4px_rgba(239,68,68,0.12)] bg-white"
               : "border-primary ring-4 ring-primary/10 bg-white"
             : "border-slate-100 bg-white shadow-soft hover:border-slate-200 hover:shadow-premium",
+          !focused && innerClassName
         )}
       >
         {/* Left icon */}
@@ -254,7 +256,7 @@ export function SmartSearchBar({
           onKeyDown={handleKey}
           placeholder={activePlaceholder}
           className={cn(
-            "flex-1 w-full min-w-0 h-full bg-transparent outline-none text-slate-900 placeholder:text-slate-400 placeholder:transition-all px-1",
+            "flex-1 w-full min-w-0 h-full bg-transparent border-none outline-none focus:outline-none focus:ring-0 shadow-none text-slate-900 placeholder:text-slate-400 placeholder:transition-all px-1",
             compact ? "text-[13px] md:text-sm" : "text-base md:text-[15px] font-medium"
           )}
           autoComplete="off"
