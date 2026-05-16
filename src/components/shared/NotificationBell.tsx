@@ -87,7 +87,7 @@ export function NotificationBell({ token }: { token?: string | null }) {
   // Load notifications when panel opens
   useEffect(() => {
     if (!open || !token) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+     
     setLoading(true);
     apiFetch("/notifications?limit=15", token)
       .then((data) => setNotifications(data.notifications ?? []))
