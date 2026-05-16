@@ -41,7 +41,7 @@ export default async function QRRedirectPage({ params }: PageProps) {
   }
 
   // Resolve shortCode → doctor slug (case-insensitive lookup)
-  const doctor = await prisma.doctor.findUnique({
+  const doctor = await prisma.doctor.findFirst({
     where: { shortCode: shortCode.toUpperCase() },
     select: { slug: true, verificationStatus: true },
   });
