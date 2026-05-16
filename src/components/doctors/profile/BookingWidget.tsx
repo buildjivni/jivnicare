@@ -179,14 +179,19 @@ export function BookingWidget({
                 "bg-[#205E98] hover:bg-[#1a4f82] text-white",
                 "shadow-[0_4px_16px_rgba(32,94,152,0.28)] hover:shadow-[0_6px_20px_rgba(32,94,152,0.36)]",
                 "active:scale-[0.98] transition-all duration-200",
-                "disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none",
+                "disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none flex items-center justify-center gap-2",
               ].join(" ")}
             >
               {isNavigating
                 ? "Redirecting..."
                 : !isAvailableToday
                 ? "Closed Today"
-                : "Join Queue — Book Now"}
+                : (
+                  <>
+                    <Shield className="w-4 h-4 text-white/90" />
+                    Confirm Clinic Visit
+                  </>
+                )}
             </Button>
           </div>
 

@@ -132,6 +132,7 @@ export async function GET(request: Request) {
         available: isAvailableToday ? "Today" : "Check Schedule",
         isQueueActive,
         queueWaitMinutes,
+        patientsWaiting: waitingPatients,
         tags: [...doc.specialties.map(s => s.name), ...doc.keywords.map(k => k.term)],
         about: doc.bio || "",
       } as any;

@@ -129,9 +129,23 @@ export function DoctorCard({ doctor, className }: DoctorCardProps) {
 
         {/* Live Indicator or Mode */}
         {doctor.isQueueActive && (
-          <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/90 backdrop-blur-md text-[#205E98] border border-blue-100 shadow-sm text-[11px] font-black uppercase tracking-wider">
-            <Activity className="w-3 h-3" />
-            Live Queue
+          <div className="absolute top-3 left-3 z-10 flex flex-col gap-0.5">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/95 backdrop-blur-md text-[#205E98] border border-blue-100 shadow-sm text-[11px] font-black uppercase tracking-wider">
+              <Activity className="w-3 h-3 text-[#205E98] animate-pulse" />
+              Live Queue
+            </div>
+            {doctor.queueWaitMinutes !== undefined && (
+              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-black/70 backdrop-blur-md text-white text-[9.5px] font-bold shadow-sm self-start ml-0.5 border border-white/10">
+                <Clock className="w-2.5 h-2.5 text-emerald-400" />
+                <span>Wait: {doctor.queueWaitMinutes === 0 ? 'None' : `${doctor.queueWaitMinutes}m`}</span>
+                {doctor.patientsWaiting !== undefined && doctor.patientsWaiting > 0 && (
+                  <>
+                    <span className="w-1 h-1 rounded-full bg-white/30" />
+                    <span className="text-white/90">{doctor.patientsWaiting} Ahead</span>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -252,7 +266,7 @@ export function DoctorCard({ doctor, className }: DoctorCardProps) {
             <div className="flex-1 max-w-[170px] relative z-40">
               <button
                 className={cn(
-                  "w-full h-[44px] rounded-[14px] bg-gradient-to-b from-primary to-[#4382b5] text-white font-bold text-[13px] tracking-wide",
+                  "w-full h-[40px] rounded-[12px] bg-gradient-to-b from-primary to-[#4382b5] text-white font-bold text-[13px] tracking-wide",
                   "flex items-center justify-center gap-1.5",
                   "shadow-[0_4px_12px_rgba(82,152,210,0.25),inset_0_1px_1px_rgba(255,255,255,0.3)]",
                   "border border-[#3c76a6]/80",
@@ -260,9 +274,12 @@ export function DoctorCard({ doctor, className }: DoctorCardProps) {
                   "active:scale-[0.98] transition-all duration-200 group"
                 )}
               >
-                <span>Book Appointment</span>
+                <span>Book Clinic Visit</span>
                 <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform opacity-80" />
               </button>
+              <p className="text-center mt-1.5 text-[9.5px] font-bold text-emerald-600 flex items-center justify-center gap-0.5">
+                <ShieldCheck className="w-3 h-3" /> Confirmed Booking
+              </p>
             </div>
           </div>
         </div>
