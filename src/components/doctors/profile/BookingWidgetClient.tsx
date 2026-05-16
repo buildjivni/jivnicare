@@ -40,9 +40,9 @@ export function BookingWidgetClient({ doctor, isMobileCTA = false, isClosedToday
       <Button
         onClick={handleBook}
         disabled={isNavigating || isClosedToday}
-        className="flex-1 h-12 rounded-xl text-base font-bold shadow-md transition-all bg-primary hover:bg-[#1a4b7a] text-white disabled:opacity-70 disabled:cursor-not-allowed"
+        className="flex-1 h-12 rounded-xl text-base font-bold shadow-md transition-all bg-primary hover:bg-[#1a4b7a] text-white disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
       >
-        {isNavigating ? "Redirecting..." : (isClosedToday ? "Closed Today" : "Join Queue — Book Now")}
+        {isNavigating ? "Redirecting..." : isClosedToday ? "Closed Today" : "Confirm Clinic Visit"}
       </Button>
     );
   }
