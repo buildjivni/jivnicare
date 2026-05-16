@@ -39,18 +39,44 @@ export async function GET(request: Request) {
       ];
     }
     
-    const district = searchParams.get('district') || '';
+    // ── Additional Filters ──────────────────────────────────────────────
+    const district = searchParams.get('district') || 'Patna';
+    const minExperience = parseInt(searchParams.get('minExperience') || '0', 10);
+    const maxFee = parseInt(searchParams.get('maxFee') || '10000', 10);
+    const availability = searchParams.get('availability'); // 'any', 'today'
+    const sort = searchParams.get('sort') || 'recommended';
 
-    // Fetch verified doctors from DB with pagination/limit
-    const limit = parseInt(searchParams.get('limit') || '30', 10);
+    if (minExperience > 0) {
+      whereClause.experience = { gte: minExperience };
+    }
     
+    if (maxFee < 10000) {
+      whereClause.fee = { lte: maxFee };
+    }
+
+    // ── Fetch verified doctors from DB ───────────────────────────────────
     const dbDoctors = await prisma.doctor.findMany({
       where: whereClause,
-      take: limit,
       include: {
         specialties: true,
         keywords: true,
         weeklySchedule: true,
+        clinicOperations: true,
+        dailyQueues: {
+          where: {
+            date: {
+              gte: new Date(new Date().setHours(0, 0, 0, 0)),
+              lt:  new Date(new Date().setHours(23, 59, 59, 999)),
+            }
+          },
+          select: {
+            status: true,
+            issuedTokensCount: true,
+            currentActiveToken: true,
+            maxCapacity: true,
+          },
+          take: 1,
+        }
       }
     });
 
@@ -58,9 +84,9 @@ export async function GET(request: Request) {
     const todayIndex = new Date().getDay();
     const todayString = daysOfWeek[todayIndex];
 
-    // Map Prisma Doctor to Frontend UI Doctor Type
-    const mappedDoctors: Doctor[] = dbDoctors.map(doc => {
-      // Calculate real availability
+    // ── Map Prisma Doctor → Frontend Doctor type ─────────────────────────
+    let mappedDoctors: Doctor[] = dbDoctors.map(doc => {
+      // ... same mapping logic as before ...
       let isAvailableToday = false;
       let nextTime = "N/A";
       
@@ -72,28 +98,76 @@ export async function GET(request: Request) {
         }
       }
 
+      const todayQueue = doc.dailyQueues?.[0];
+      const isQueueActive = todayQueue
+        ? (todayQueue.status === 'ACTIVE' || todayQueue.status === 'NOT_STARTED')
+          && !(doc.clinicOperations?.isClosedToday ?? false)
+          && !(doc.clinicOperations?.pauseOnlineBooking ?? false)
+        : false;
+
+      const avgConsultTime = doc.averageConsultationTime || 15;
+      const waitingPatients = todayQueue
+        ? Math.max(0, (todayQueue.issuedTokensCount || 0) - (todayQueue.currentActiveToken || 0))
+        : 0;
+      const queueWaitMinutes = isQueueActive ? waitingPatients * avgConsultTime : undefined;
+
       return {
         id: doc.id,
+        slug: doc.slug || doc.id,
         name: doc.name,
         specialty: doc.specialties.length > 0 ? doc.specialties[0].name : "General Physician",
+        qualifications: doc.education ? doc.education.split(',')[0] : 'MBBS',
         clinic: doc.hospitalName,
         location: doc.district,
-        rating: doc.rating || (doc.verificationStatus === 'VERIFIED' ? 4.5 : 0), // Base rating for verified doctors
-        reviews: doc.rating > 0 ? 12 : 0, // Using static realistic number instead of Math.random() to prevent UI jitter
-        experience: `${doc.experience} Years`,
-        fee: `₹${doc.fee}`,
-        videoFee: `₹${doc.consultationFee || 300}`,
-        image: doc.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(doc.name)}&background=random`,
-        bgImage: "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?q=80&w=1200",
+        rating: doc.rating || (doc.verificationStatus === 'VERIFIED' ? 4.5 : 0),
+        reviewCount: (doc as any).reviewCount || 0,
+        totalConsultations: (doc as any).totalConsultations || 0,
+        verifiedBadgeLabel: (doc as any).verifiedBadgeLabel || (doc.experience >= 15 ? 'Experienced' : 'Verified'),
+        experience: doc.experience,
+        experienceStr: `${doc.experience} Years`,
+        fee: doc.fee,
+        feeStr: `₹${doc.fee}`,
+        image: doc.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(doc.name)}&background=5298D2&color=fff&size=128`,
+        isAvailableToday,
         available: isAvailableToday ? "Today" : "Check Schedule",
+        isQueueActive,
+        queueWaitMinutes,
         tags: [...doc.specialties.map(s => s.name), ...doc.keywords.map(k => k.term)],
-        about: doc.bio || "Experienced and dedicated doctor.",
-        education: doc.education || "MBBS, MD",
-        nextAvailable: isAvailableToday ? nextTime : "N/A"
-      };
+        about: doc.bio || "",
+      } as any;
     });
 
-    // Run the fuzzy search algorithm for final scoring (typo tolerance)
+    // ── Availability Filtering ──────────────────────────────────────────
+    if (availability === 'today') {
+      mappedDoctors = mappedDoctors.filter(d => d.isAvailableToday);
+    }
+
+    // ── Discovery Intelligence: Sorting ──────────────────────────────────
+    mappedDoctors.sort((a, b) => {
+      // 1. Prioritize active queues in 'recommended'
+      if (sort === 'recommended') {
+        if (a.isQueueActive && !b.isQueueActive) return -1;
+        if (!a.isQueueActive && b.isQueueActive) return 1;
+        return (b.rating || 0) - (a.rating || 0);
+      }
+      
+      // 2. Experience
+      if (sort === 'experience') return b.experience - a.experience;
+      
+      // 3. Fee (Low to High)
+      if (sort === 'fee_low') return a.fee - b.fee;
+      
+      // 4. Wait Time (Only for active queues)
+      if (sort === 'wait_time') {
+        const waitA = a.isQueueActive ? (a.queueWaitMinutes || 0) : 9999;
+        const waitB = b.isQueueActive ? (b.queueWaitMinutes || 0) : 9999;
+        return waitA - waitB;
+      }
+
+      return 0;
+    });
+
+    // Run the fuzzy search algorithm for final scoring if query exists
     const searchResult = searchDoctors(query, mappedDoctors, district);
 
     return NextResponse.json(searchResult);

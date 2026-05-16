@@ -217,14 +217,16 @@ export default function MyBookingsPage() {
             ))}
           </div>
         ) : (
-          <div className="bg-white rounded-[40px] p-12 text-center border border-slate-100 shadow-sm">
-            <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Search className="w-10 h-10 text-slate-200" />
+          <div className="bg-white rounded-[40px] p-12 text-center border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.04)] max-w-2xl mx-auto relative overflow-hidden">
+            <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none" />
+            <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6 relative">
+              <div className="absolute inset-0 rounded-full border-4 border-white" />
+              <Search className="w-10 h-10 text-primary" />
             </div>
-            <h2 className="text-xl font-black text-slate-900">No bookings yet</h2>
-            <p className="text-slate-500 mt-2 max-w-xs mx-auto">Your medical consultation history and active tokens will appear here.</p>
-            <Button onClick={() => window.location.href = "/doctors"} className="mt-8 h-14 px-8 rounded-2xl bg-primary hover:bg-[#1a4b7a] font-bold">
-              Find a Doctor
+            <h2 className="text-2xl font-black text-slate-900 tracking-tight">Your Health Journey Starts Here</h2>
+            <p className="text-slate-500 font-medium mt-3 max-w-md mx-auto leading-relaxed">Book a consultation with top verified doctors. Your active tokens and complete medical history will securely appear here.</p>
+            <Button onClick={() => window.location.href = "/doctors"} className="mt-8 h-14 px-8 rounded-2xl bg-gradient-to-b from-primary/90 to-primary hover:from-primary hover:to-[#1a4b7a] font-bold shadow-[0_8px_20px_rgba(82,152,210,0.2)] hover:shadow-[0_12px_25px_rgba(82,152,210,0.3)] transition-all text-white active:scale-[0.98]">
+              Explore Top Doctors <ChevronRight className="w-5 h-5 ml-1" />
             </Button>
           </div>
         )}

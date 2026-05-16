@@ -107,8 +107,12 @@ export function PatientListTable({ patients }: PatientListTableProps) {
           </tbody>
         </table>
         {patients.length === 0 && (
-          <div className="text-center py-10 text-slate-500 font-medium">
-            No patients found.
+          <div className="text-center py-16 px-4 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200 m-6 flex flex-col items-center">
+            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm">
+              <Search className="w-8 h-8 text-slate-300" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-800">Your Queue is Clear</h3>
+            <p className="text-slate-500 font-medium mt-1 max-w-sm text-sm">New walk-in and online bookings will appear here instantly. Take a quick break!</p>
           </div>
         )}
       </div>
@@ -146,8 +150,12 @@ export function PatientListTable({ patients }: PatientListTableProps) {
            </div>
         ))}
         {patients.length === 0 && (
-          <div className="text-center py-10 text-slate-500 font-medium">
-            No patients found.
+          <div className="text-center py-12 px-4 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200 flex flex-col items-center">
+            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mb-3 shadow-sm">
+              <Search className="w-6 h-6 text-slate-300" />
+            </div>
+            <h3 className="text-base font-bold text-slate-800">Your Queue is Clear</h3>
+            <p className="text-slate-500 font-medium mt-1 text-xs max-w-[200px]">New bookings will appear here.</p>
           </div>
         )}
       </div>

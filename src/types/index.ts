@@ -7,24 +7,65 @@
 // ── Doctor & Medical Data ─────────────────────────────────────
 
 export interface Doctor {
+  // ── Core Identity ──────────────────────────────────────────
   id: string;
+  uniqueDoctorId?: string;  // For internal system mapping
   name: string;
-  specialty: string;
-  clinic: string;
-  location: string;
+  slug?: string;            // URL-safe SEO slug: "dr-rajesh-kumar-pat-1k9z2x"
+  publicSlug?: string;      // Public profile URL part
+  shortCode?: string;       // QR-ready 6-char code: "DBG4K2"
+  qrCodeReady?: boolean;    // Flag for QR service generation
+
+  // ── Medical Credentials ────────────────────────────────────
+  specialty: string;        // Primary specialization
+  qualifications?: string;  // Degree pills: "MBBS, MD Medicine"
+  experience: string;       // "12 Years"
+  education: string;        // Full education string (profile page)
+  verificationStatus?: 'Verified' | 'Pending' | 'GovtRegistered' | 'JivniCareVerified';
+  registrationNumber?: string;
+
+  // ── Practice & Location ────────────────────────────────────
+  clinic: string;           // Hospital/clinic name
+  hospitalSlug?: string;    // Link to hospital profile
+  hospitalType?: string;    // "Multi-speciality", "Clinic", etc.
+  location: string;         // District / city
+  locality?: string;        // Specific area: "Anisabad"
+  landmark?: string;        // Nearby landmark
+  distance?: string;        // "1.2 km away"
+  
+  // ── Media ─────────────────────────────────────────────────
+  image: string;            // Doctor profile photo URL
+  bgImage: string;          // Clinic/facility banner image (legacy)
+  clinicImage?: string;     // Clinic photo URL (new, preferred over bgImage)
+
+  // ── Trust & Social Proof ───────────────────────────────────
   rating: number;
-  reviews: number;
-  experience: string;
-  fee: string;
-  videoFee: string;
-  image: string;
-  bgImage: string;
-  available: string;
-  tags: string[];
-  about: string;
-  education: string;
-  averageConsultationTime?: number;
-  nextAvailable?: string;
+  reviews: number;          // Legacy review count
+  reviewCount?: number;     // Real verified review count
+  totalConsultations?: number; // "5k+ Consultations" social proof
+  verifiedBadgeLabel?: string; // "Verified Doctor" / "Clinic Verified"
+  patientTrustLabel?: string;  // "Trusted by 500+ patients"
+
+  // ── Availability & Queue ───────────────────────────────────
+  available: string;        // "Today" / "Tomorrow" / "Check Schedule"
+  availabilityStatus?: string; // "Available in 12 mins", "Next Slot: 4:30 PM", "OPD Open"
+  nextAvailable?: string;   // Time string: "9:00 AM"
+  isQueueActive?: boolean;  // Whether today's live queue is running
+  queueWaitMinutes?: number; // Approx wait time in minutes
+  patientsWaiting?: number;  // "7 Patients Waiting"
+  onboardingStage?: string;
+
+  // ── Fees & Modes ──────────────────────────────────────────
+  fee: string;              // "₹400"
+  videoFee?: string;        // "₹300" (online)
+  consultationModes?: ('OPD' | 'Video' | 'HomeVisit')[];
+  languages?: string[];     // ["Hindi", "English"]
+
+  // ── Discovery & Search ────────────────────────────────────
+  tags: string[];           // Specialty + keyword tags for search
+  searchableKeywords?: string[];
+  about: string;            // Bio / description
+  averageConsultationTime?: number; // minutes
 }
 
 export interface Specialty {

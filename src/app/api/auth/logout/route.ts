@@ -1,13 +1,16 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function POST() {
-  const response = NextResponse.json({ success: true, message: "Logged out successfully" });
+/**
+ * JivniCare Auth — Logout
+ * POST /api/auth/logout
+ */
+
+export async function POST(request: NextRequest) {
+  const response = NextResponse.json({ status: "success" });
   
+  // Clear the session cookie
   response.cookies.set("auth-token", "", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    expires: new Date(0), // Expire immediately
+    maxAge: 0,
     path: "/",
   });
 

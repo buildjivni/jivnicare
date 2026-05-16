@@ -14,6 +14,9 @@ export default function robots(): MetadataRoute.Robots {
         '/api/',
         '/internal-admin/',
         '/login/',
+        '/d/',          // QR shortCode resolver — not indexable content
+        '/my-bookings/', // Private patient data
+        '/confirmation/', // Post-booking confirmation
       ],
     },
     sitemap: `${SITE_CONFIG.baseUrl}/sitemap.xml`,

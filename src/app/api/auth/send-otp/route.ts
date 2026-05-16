@@ -108,10 +108,15 @@ export async function POST(request: Request) {
       // But we can return a flag if needed.
     }
 
+    // Check if user exists to tell the UI whether to ask for a name
+    const existingUser = await prisma.user.findUnique({
+      where: { phone },
+      select: { id: true }
+    });
+
     return NextResponse.json({
       message: 'OTP sent successfully',
-      // DO NOT RETURN OTP IN PRODUCTION (only left for debugging locally if needed)
-      // dev_otp: process.env.NODE_ENV !== 'production' ? otp : undefined, 
+      userExists: !!existingUser,
     });
   } catch (error) {
     console.error('Send OTP Error:', error);

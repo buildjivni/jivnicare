@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowRight, Building2, Stethoscope, ShieldCheck } from "lucide-react";
+import { ArrowRight, Building2, Stethoscope, ShieldCheck, Zap } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
@@ -36,9 +36,15 @@ export function PartnerCtaSection() {
               </span>
             </h2>
             
-            <p className="text-base sm:text-lg text-slate-300 mb-8 max-w-2xl mx-auto lg:mx-0 leading-relaxed font-medium">
-              Join Bihar's fastest-growing healthcare network. Manage your OPD digitally, reduce no-shows, and build verified trust online.
+            <p className="text-base sm:text-lg text-slate-300 mb-6 max-w-2xl mx-auto lg:mx-0 leading-relaxed font-medium">
+              Join Bihar's fastest-growing healthcare network with <strong className="text-white">zero setup cost</strong>. Digitize your OPD in minutes, grow your patient reach, and build verified trust online.
             </p>
+
+            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 sm:gap-6 mb-8 text-sm font-bold text-slate-400">
+              <span className="flex items-center gap-1.5"><ShieldCheck className="w-4 h-4 text-emerald-400" /> Verified Identity</span>
+              <span className="flex items-center gap-1.5"><Zap className="w-4 h-4 text-emerald-400" /> Smart OPD Manager</span>
+              <span className="flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded-md border border-emerald-500/20">Free for first 50 Clinics</span>
+            </div>
 
             <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 w-full">
               <Link href="/partners" className="w-full sm:w-auto">

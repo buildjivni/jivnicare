@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
-import { Header, Footer } from "@/components/shared";
 import { GoogleAnalytics } from "@/components/shared/GoogleAnalytics";
 import { SITE_CONFIG } from "@/lib/seo/metadata";
 import { websiteSchema, organizationSchema } from "@/lib/seo/jsonld";
@@ -85,6 +84,8 @@ export const viewport: Viewport = {
   themeColor: SITE_CONFIG.themeColor,
 };
 
+import { FirebaseAuthProvider } from "@/components/providers/FirebaseAuthProvider";
+
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
@@ -107,9 +108,11 @@ export default function RootLayout({
         className="min-h-full flex flex-col bg-background text-foreground overflow-x-hidden"
       >
         <GoogleAnalytics ga_id={process.env.NEXT_PUBLIC_GA_ID || ""} />
-        <div className="flex-1 flex flex-col">
-          {children}
-        </div>
+        <FirebaseAuthProvider>
+          <div className="flex-1 flex flex-col">
+            {children}
+          </div>
+        </FirebaseAuthProvider>
       </body>
     </html>
   );

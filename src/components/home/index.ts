@@ -9,3 +9,4 @@ export * from './SpecialtiesSection';
 export * from './AvailableDoctorsSection';
 export * from './TrustedBySection';
 export * from './PartnerCtaSection';
+export * from './FeaturedArticlesSection';
