@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { BrandName } from "@/components/brand/BrandName";
 
 // Firebase Imports
 import { auth } from "@/lib/firebase/config";
@@ -75,9 +74,9 @@ export default function ForgotPasswordPage() {
                   Check your inbox for instructions to reset your password securely.
                 </p>
               </div>
-              <Button asChild className="w-full h-16 rounded-2xl bg-[#065F46] hover:bg-[#047857] text-white font-black text-lg shadow-lg">
-                <Link href="/partners/login">Return to Portal</Link>
-              </Button>
+              <Link href="/partners/login" className="flex items-center justify-center w-full h-16 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black text-lg shadow-lg">
+                Return to Portal
+              </Link>
             </motion.div>
           ) : (
             <motion.div key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
@@ -106,7 +105,7 @@ export default function ForgotPasswordPage() {
                       placeholder="doctor@jivnicare.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="h-16 pl-14 rounded-2xl bg-slate-50/50 border-slate-200/60 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-600/50 font-black text-lg transition-all shadow-sm"
+                      className="h-16 pl-14 rounded-2xl bg-slate-50/50 border-slate-200/60 focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary/50 font-black text-lg transition-all shadow-sm"
                     />
                   </div>
                 </div>
@@ -114,9 +113,9 @@ export default function ForgotPasswordPage() {
                 <Button 
                   type="submit" 
                   disabled={isLoading || !email}
-                  className="w-full h-16 rounded-2xl bg-[#065F46] hover:bg-[#047857] text-white font-black text-lg shadow-[0_12px_24px_-8px_rgba(6,95,70,0.3)] transition-all flex items-center justify-center gap-3"
+                  className="w-full h-16 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black text-lg shadow-[0_12px_24px_-8px_var(--primary)] transition-all flex items-center justify-center gap-3"
                 >
-                  {isLoading ? "Sending Link..." : <>Send Reset Link <ShieldCheck className="w-5 h-5 text-emerald-300" /></>}
+                  {isLoading ? "Sending Link..." : <>Send Reset Link <ShieldCheck className="w-5 h-5 text-blue-300" /></>}
                 </Button>
               </form>
             </motion.div>
@@ -124,8 +123,8 @@ export default function ForgotPasswordPage() {
         </AnimatePresence>
 
         <div className="mt-12 text-center opacity-30 grayscale flex items-center justify-center gap-2">
-           <img src="/logo.png" alt="Logo" className="w-4 h-4" />
-           <span className="text-[10px] font-black text-slate-900 tracking-widest uppercase"><BrandName /> Health System</span>
+           <img src="/logo.png" alt="Logo" className="w-4 h-auto" />
+           <span className="text-[10px] font-black text-slate-900 tracking-widest uppercase">Health System</span>
         </div>
       </motion.div>
     </div>

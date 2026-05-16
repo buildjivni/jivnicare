@@ -5,7 +5,6 @@ import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/brand/Logo";
-import { BrandName } from "@/components/brand/BrandName";
 
 export function CtaBannerSection() {
   return (
@@ -19,13 +18,13 @@ export function CtaBannerSection() {
         className="container mx-auto px-4 max-w-4xl text-center relative z-10"
       >
         <div className="inline-block mb-8">
-          <Logo className="w-16 h-16" />
+          <Logo className="h-10 md:h-14 w-auto" />
         </div>
         <h2 className="text-4xl md:text-6xl font-black tracking-tight mb-6 text-slate-900">
           Need to See a Doctor?
         </h2>
         <p className="text-xl text-slate-600 mb-10 max-w-2xl mx-auto leading-relaxed">
-          Thousands of patients trust <BrandName />. Booking is 100% free, fast, and secure.
+          Thousands of patients trust <strong className="text-slate-900">JivniCare</strong>. Booking is 100% free, fast, and secure.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link href="/doctors">

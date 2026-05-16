@@ -1,0 +1,48 @@
+﻿src/app/(public)/doctors/[slug]/page.tsx(60,18): error TS2552: Cannot find name 'generateDoctorMetadata'. Did you mean 'generateMetadata'?
+src/app/(public)/doctors/page.tsx(209,47): error TS2339: Property 'type' does not exist on type '{ id: string; label: string; }'.
+src/app/(public)/doctors/page.tsx(209,97): error TS2339: Property 'value' does not exist on type '{ id: string; label: string; }'.
+src/app/(public)/login/page.tsx(185,8): error TS2552: Cannot find name 'motion'. Did you mean 'Option'?
+src/app/(public)/login/page.tsx(246,14): error TS2304: Cannot find name 'AnimatePresence'.
+src/app/(public)/login/page.tsx(249,18): error TS2552: Cannot find name 'motion'. Did you mean 'Option'?
+src/app/(public)/login/page.tsx(265,22): error TS2304: Cannot find name 'motion'.
+src/app/(public)/login/page.tsx(271,23): error TS2304: Cannot find name 'motion'.
+src/app/(public)/login/page.tsx(306,19): error TS2552: Cannot find name 'motion'. Did you mean 'Option'?
+src/app/(public)/login/page.tsx(311,18): error TS2552: Cannot find name 'motion'. Did you mean 'Option'?
+src/app/(public)/login/page.tsx(353,19): error TS2552: Cannot find name 'motion'. Did you mean 'Option'?
+src/app/(public)/login/page.tsx(358,18): error TS2552: Cannot find name 'motion'. Did you mean 'Option'?
+src/app/(public)/login/page.tsx(425,19): error TS2304: Cannot find name 'motion'.
+src/app/(public)/login/page.tsx(427,15): error TS2304: Cannot find name 'AnimatePresence'.
+src/app/(public)/login/page.tsx(440,9): error TS2552: Cannot find name 'motion'. Did you mean 'Option'?
+src/app/(public)/partners/forgot-password/page.tsx(78,23): error TS2322: Type '{ children: Element; asChild: true; className: string; }' is not assignable to type 'IntrinsicAttributes & ButtonProps & VariantProps<(props?: (ConfigVariants<{ variant: { default: string; outline: string; secondary: string; ghost: string; destructive: string; link: string; }; size: { ...; }; }> & ClassProp) | undefined) => string>'.
+  Property 'asChild' does not exist on type 'IntrinsicAttributes & ButtonProps & VariantProps<(props?: (ConfigVariants<{ variant: { default: string; outline: string; secondary: string; ghost: string; destructive: string; link: string; }; size: { ...; }; }> & ClassProp) | undefined) => string>'.
+src/app/(public)/partners/login/page.tsx(183,8): error TS2304: Cannot find name 'motion'.
+src/app/(public)/partners/login/page.tsx(241,14): error TS2304: Cannot find name 'AnimatePresence'.
+src/app/(public)/partners/login/page.tsx(243,18): error TS2304: Cannot find name 'motion'.
+src/app/(public)/partners/login/page.tsx(272,22): error TS2304: Cannot find name 'motion'.
+src/app/(public)/partners/login/page.tsx(279,23): error TS2304: Cannot find name 'motion'.
+src/app/(public)/partners/login/page.tsx(282,20): error TS2304: Cannot find name 'AnimatePresence'.
+src/app/(public)/partners/login/page.tsx(284,24): error TS2304: Cannot find name 'motion'.
+src/app/(public)/partners/login/page.tsx(317,25): error TS2304: Cannot find name 'motion'.
+src/app/(public)/partners/login/page.tsx(319,24): error TS2304: Cannot find name 'motion'.
+src/app/(public)/partners/login/page.tsx(344,68): error TS2322: Type '{ children: string; href: string; size: string; className: string; }' is not assignable to type 'IntrinsicAttributes & Omit<AnchorHTMLAttributes<HTMLAnchorElement>, keyof LinkProps<any>> & LinkProps<...> & { ...; } & RefAttributes<...>'.
+  Property 'size' does not exist on type 'IntrinsicAttributes & Omit<AnchorHTMLAttributes<HTMLAnchorElement>, keyof LinkProps<any>> & LinkProps<...> & { ...; } & RefAttributes<...>'.
+src/app/(public)/partners/login/page.tsx(365,25): error TS2304: Cannot find name 'motion'.
+src/app/(public)/partners/login/page.tsx(367,21): error TS2304: Cannot find name 'AnimatePresence'.
+src/app/(public)/partners/login/page.tsx(377,19): error TS2304: Cannot find name 'motion'.
+src/app/(public)/partners/login/page.tsx(379,18): error TS2304: Cannot find name 'motion'.
+src/app/(public)/partners/login/page.tsx(438,19): error TS2304: Cannot find name 'motion'.
+src/app/(public)/partners/login/page.tsx(440,15): error TS2304: Cannot find name 'AnimatePresence'.
+src/app/(public)/partners/login/page.tsx(444,9): error TS2304: Cannot find name 'motion'.
+src/app/api/auth/session/route.ts(30,13): error TS2353: Object literal may only specify known properties, and 'firebaseUid' does not exist in type 'UserWhereInput'.
+src/app/api/auth/session/route.ts(42,11): error TS2353: Object literal may only specify known properties, and 'firebaseUid' does not exist in type '(Without<UserCreateInput, UserUncheckedCreateInput> & UserUncheckedCreateInput) | (Without<...> & UserCreateInput)'.
+src/app/api/auth/session/route.ts(50,22): error TS2339: Property 'firebaseUid' does not exist on type '{ password: string | null; id: string; name: string | null; createdAt: Date; updatedAt: Date; phone: string; email: string | null; role: Role; isVerified: boolean; }'.
+src/app/api/auth/session/route.ts(54,17): error TS2353: Object literal may only specify known properties, and 'firebaseUid' does not exist in type '(Without<UserUpdateInput, UserUncheckedUpdateInput> & UserUncheckedUpdateInput) | (Without<...> & UserUpdateInput)'.
+src/app/api/auth/session/route.ts(63,22): error TS2339: Property 'doctor' does not exist on type '{ password: string | null; id: string; name: string | null; createdAt: Date; updatedAt: Date; phone: string; email: string | null; role: Role; isVerified: boolean; }'.
+src/app/api/auth/session/route.ts(79,24): error TS2339: Property 'doctor' does not exist on type '{ password: string | null; id: string; name: string | null; createdAt: Date; updatedAt: Date; phone: string; email: string | null; role: Role; isVerified: boolean; }'.
+src/app/api/public/search/route.ts(142,51): error TS2339: Property 'isAvailableToday' does not exist on type 'Doctor'.
+src/app/api/public/search/route.ts(155,41): error TS2362: The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+src/app/api/public/search/route.ts(155,56): error TS2363: The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+src/app/api/public/search/route.ts(158,38): error TS2362: The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+src/app/api/public/search/route.ts(158,46): error TS2363: The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+src/components/doctors/profile/DoctorProfileView.tsx(184,78): error TS2322: Type '{ className: string; title: string; }' is not assignable to type 'IntrinsicAttributes & Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>'.
+  Property 'title' does not exist on type 'IntrinsicAttributes & Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>'.

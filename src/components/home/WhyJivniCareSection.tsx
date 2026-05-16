@@ -3,7 +3,6 @@
 import { motion } from "framer-motion";
 import { Shield, ShieldCheck, Zap, Clock, HeartHandshake, Users, Activity } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
-import { BrandName } from "@/components/brand/BrandName";
 import Image from "next/image";
 import { fadeUp, staggerContainer } from "@/animations/variants";
 
@@ -23,12 +22,12 @@ export function WhyJivniCareSection() {
             </span>
             <h2 className="text-3xl md:text-5xl font-black tracking-tight text-slate-900 mb-6 leading-tight">
               Why Choose <br className="hidden md:block" />
-              <span className="inline-block relative">
-                <BrandName className="text-3xl md:text-5xl" />
+              <span className="inline-block relative text-primary">
+                JivniCare
               </span>
             </h2>
             <p className="text-base md:text-lg text-slate-600 leading-relaxed font-medium">
-              Say goodbye to long clinic queues. <BrandName /> connects you with the best and most trusted doctors in your city, completely hassle-free.
+              Say goodbye to long clinic queues. <strong className="text-slate-900">JivniCare</strong> connects you with the best and most trusted doctors in your city, completely hassle-free.
             </p>
           </motion.div>
         </div>
@@ -53,7 +52,9 @@ export function WhyJivniCareSection() {
               <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent" />
               
               <div className="absolute bottom-8 left-8 right-8 text-white">
-                <Logo className="w-12 h-12 mb-4 drop-shadow-md" />
+                <div className="bg-white/90 w-fit px-4 py-2 rounded-xl mb-4 backdrop-blur-sm">
+                  <Logo className="h-8 w-auto drop-shadow-md" />
+                </div>
                 <h3 className="text-2xl font-bold mb-2">Care You Can Trust</h3>
                 <p className="text-white/80 text-sm">Join thousands of patients who trust our verified medical professionals.</p>
               </div>
@@ -79,7 +80,7 @@ export function WhyJivniCareSection() {
                 icon: <ShieldCheck className="w-6 h-6 text-[#258C54]" />,
                 bg: "bg-emerald-50/80",
                 title: "100% Verified Doctors",
-                desc: <>We strictly verify the credentials of every doctor on <BrandName />. Your safety and health are our top priorities.</>,
+                desc: <>We strictly verify the credentials of every doctor on <strong>JivniCare</strong>. Your safety and health are our top priorities.</>,
               },
               {
                 icon: <Clock className="w-6 h-6 text-amber-500" />,

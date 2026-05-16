@@ -6,7 +6,6 @@ import { useBookingStore } from "@/store/useBookingStore";
 import { CheckCircle2, Calendar, Clock, MapPin, Download, ChevronRight, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { BrandName } from "@/components/brand/BrandName";
 
 export default function ConfirmationPage() {
   const router = useRouter();

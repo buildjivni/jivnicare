@@ -4,7 +4,6 @@ import { MapPin, CalendarDays, Lock } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent } from "@/components/ui/card";
-import { BrandName } from "@/components/brand/BrandName";
 import { Doctor } from "@/types";
 
 interface OrderSummaryProps {
@@ -83,7 +82,7 @@ export function OrderSummary({ doctor, type }: OrderSummaryProps) {
       </Card>
       <div className="flex items-center gap-3 p-4 rounded-2xl bg-emerald-50 border border-emerald-100 text-emerald-700 text-sm">
         <Lock className="w-5 h-5 shrink-0" />
-        <p>Your booking is secure. <BrandName /> will instantly reserve your place in the clinic's live queue.</p>
+        <p>Your booking is secure. <strong className="font-bold">JivniCare</strong> will instantly reserve your place in the clinic's live queue.</p>
       </div>
     </div>
   );

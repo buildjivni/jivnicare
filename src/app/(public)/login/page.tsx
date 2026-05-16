@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuthStore, getRoleRedirect } from "@/store/useAuthStore";
 import Link from "next/link";
-import { BrandName } from "@/components/brand/BrandName";
+import { motion, AnimatePresence } from "framer-motion";
 
 // Firebase Imports
 import { auth } from "@/lib/firebase/config";
@@ -431,7 +431,7 @@ function PatientLoginContent() {
                 Secure Portal &bull; <Link href="/privacy" className="hover:text-slate-600">Privacy</Link> &bull; <Link href="/terms" className="hover:text-slate-600">Terms</Link>
               </p>
               <div className="mt-4 flex items-center justify-center gap-2 opacity-30 grayscale">
-                 <img src="/logo.png" alt="Logo" className="w-4 h-4" />
+                 <img src="/logo.png" alt="Logo" className="h-4 w-auto" />
                  <span className="text-[10px] font-black text-slate-900">JivniCare Health System</span>
               </div>
             </div>
