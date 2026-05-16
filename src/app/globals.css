@@ -137,6 +137,44 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
+  /* ─── Premium Shadow Utilities ─────────────────────────────────── */
+  .shadow-soft {
+    box-shadow: var(--shadow-soft);
+  }
+  .shadow-premium {
+    box-shadow: var(--shadow-premium);
+  }
+  .shadow-glass {
+    box-shadow: var(--shadow-glass);
+  }
+  .shadow-floating {
+    box-shadow: var(--shadow-floating);
+  }
+
+  /* ─── Accessible Touch Targets ────────────────────────────────── */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* ─── Visually hidden but accessible ──────────────────────────── */
+  .sr-only-focusable:focus {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+  }
+
+  /* ─── High-contrast text tokens ───────────────────────────────── */
+  .text-high-contrast {
+    color: #0F172A;
+  }
+  .text-medium-contrast {
+    color: #334155;
+  }
 }
 
 /* Strict Mobile Viewport Protection */

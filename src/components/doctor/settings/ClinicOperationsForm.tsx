@@ -41,7 +41,7 @@ export function ClinicOperationsForm({ initialData, onSave, isSaving }: ClinicOp
         <Button 
           onClick={handleSave} 
           disabled={isSaving || savedSuccess}
-          className={`font-bold rounded-xl px-6 shadow-lg shadow-slate-900/20 w-full sm:w-auto transition-all ${savedSuccess ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-slate-900 hover:bg-slate-800 text-white'}`}
+          className={`font-bold rounded-xl px-6 h-12 shadow-sm w-full sm:w-auto transition-all ${savedSuccess ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-primary hover:bg-primary/90 text-primary-foreground'}`}
         >
           {isSaving ? (
             <div className="flex items-center gap-2">
@@ -62,7 +62,7 @@ export function ClinicOperationsForm({ initialData, onSave, isSaving }: ClinicOp
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Fee Setting */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+        <div className="bg-card rounded-2xl p-5 border border-border shadow-soft hover:shadow-premium transition-shadow">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center text-emerald-600">
               <Wallet className="w-5 h-5" />
@@ -75,14 +75,14 @@ export function ClinicOperationsForm({ initialData, onSave, isSaving }: ClinicOp
               type="number"
               value={data.fee}
               onChange={(e) => setData({ ...data, fee: e.target.value })}
-              className="h-14 pl-10 rounded-xl bg-slate-50 border-none font-black text-2xl text-slate-900 focus-visible:ring-emerald-500/20"
+              className="h-14 pl-10 rounded-xl bg-background border border-input shadow-sm font-black text-2xl text-slate-900 focus-visible:ring-primary/20"
             />
           </div>
           <p className="text-[10px] text-slate-400 mt-3 font-medium">Standard fee per consultation</p>
         </div>
 
         {/* Capacity Setting */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+        <div className="bg-card rounded-2xl p-5 border border-border shadow-soft hover:shadow-premium transition-shadow">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-primary">
               <Users className="w-5 h-5" />
@@ -93,13 +93,13 @@ export function ClinicOperationsForm({ initialData, onSave, isSaving }: ClinicOp
             type="number"
             value={data.maxCapacity}
             onChange={(e) => setData({ ...data, maxCapacity: e.target.value })}
-            className="h-14 rounded-xl bg-slate-50 border-none font-black text-2xl text-slate-900 focus-visible:ring-primary/20"
+            className="h-14 rounded-xl bg-background border border-input shadow-sm font-black text-2xl text-slate-900 focus-visible:ring-primary/20"
           />
           <p className="text-[10px] text-slate-400 mt-3 font-medium">Total Online + Walk-in limit</p>
         </div>
 
         {/* Avg Time Setting */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+        <div className="bg-card rounded-2xl p-5 border border-border shadow-soft hover:shadow-premium transition-shadow">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
               <Timer className="w-5 h-5" />
@@ -111,7 +111,7 @@ export function ClinicOperationsForm({ initialData, onSave, isSaving }: ClinicOp
               type="number"
               value={data.averageConsultationTime}
               onChange={(e) => setData({ ...data, averageConsultationTime: e.target.value })}
-              className="h-14 pr-16 rounded-xl bg-slate-50 border-none font-black text-2xl text-slate-900 focus-visible:ring-amber-500/20"
+              className="h-14 pr-16 rounded-xl bg-background border border-input shadow-sm font-black text-2xl text-slate-900 focus-visible:ring-primary/20"
             />
             <span className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 text-sm">min</span>
           </div>
@@ -119,7 +119,7 @@ export function ClinicOperationsForm({ initialData, onSave, isSaving }: ClinicOp
         </div>
       </div>
 
-      <div className="bg-blue-50/50 border border-blue-100 rounded-2xl p-4 flex gap-3">
+      <div className="bg-primary/5 border border-primary/10 rounded-2xl p-4 flex gap-3">
         <Info className="w-5 h-5 text-primary shrink-0 mt-0.5" />
         <p className="text-xs text-slate-600 leading-relaxed">
           <strong>Note:</strong> Changes to daily capacity will apply to new clinic days. Ongoing queues for today will maintain their current limits unless manually adjusted.

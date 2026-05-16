@@ -74,7 +74,7 @@ export function WeeklyScheduleEditor({ initialSchedule, onSave, isSaving }: Week
         <Button 
           onClick={() => onSave(schedule)} 
           disabled={isSaving}
-          className="bg-primary hover:bg-primary/90 text-white font-bold rounded-xl px-6 shadow-lg shadow-primary/20"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl px-6 h-12 shadow-sm transition-all"
         >
           {isSaving ? "Saving..." : "Save Schedule"}
         </Button>
@@ -89,8 +89,8 @@ export function WeeklyScheduleEditor({ initialSchedule, onSave, isSaving }: Week
               className={cn(
                 "group flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl border-2 transition-all",
                 daySched.isOpen 
-                  ? "bg-white border-slate-100 shadow-sm" 
-                  : "bg-slate-50/50 border-transparent opacity-70"
+                  ? "bg-card border-border shadow-soft" 
+                  : "bg-slate-50/50 border-dashed border-border opacity-70"
               )}
             >
               <div className="flex items-center gap-4 mb-3 sm:mb-0">
@@ -124,7 +124,7 @@ export function WeeklyScheduleEditor({ initialSchedule, onSave, isSaving }: Week
                       aria-label={`${day.label} opening time`}
                       value={daySched.start}
                       onChange={(e) => updateTime(day.id, 'start', e.target.value)}
-                      className="pl-9 pr-3 py-2 rounded-xl border border-slate-200 bg-slate-50 font-bold text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                      className="pl-9 pr-3 py-2 h-10 rounded-xl border border-input bg-background shadow-sm font-bold text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                     />
                   </div>
                   <span className="text-slate-400 font-bold">to</span>
@@ -135,7 +135,7 @@ export function WeeklyScheduleEditor({ initialSchedule, onSave, isSaving }: Week
                       aria-label={`${day.label} closing time`}
                       value={daySched.end}
                       onChange={(e) => updateTime(day.id, 'end', e.target.value)}
-                      className="pl-9 pr-3 py-2 rounded-xl border border-slate-200 bg-slate-50 font-bold text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                      className="pl-9 pr-3 py-2 h-10 rounded-xl border border-input bg-background shadow-sm font-bold text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                     />
                   </div>
                 </div>

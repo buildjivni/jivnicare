@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { 
   Calendar, Clock, MapPin, ChevronRight, 
@@ -28,15 +28,7 @@ export default function MyBookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    fetchBookings();
-
-    // Live Tracking Polling (Every 60s)
-    const interval = setInterval(fetchBookings, 60000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const fetchBookings = async () => {
+  const fetchBookings = useCallback(async () => {
     try {
       const res = await fetch("/api/patient/my-bookings");
       const data = await res.json();
@@ -85,7 +77,15 @@ export default function MyBookingsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchBookings();
+
+    // Live Tracking Polling (Every 60s)
+    const interval = setInterval(fetchBookings, 60000);
+    return () => clearInterval(interval);
+  }, [fetchBookings]);
 
   const handleShareWhatsApp = (booking: Booking) => {
     const text = `*JivniCare Token Detail*\n\n` +
@@ -217,17 +217,36 @@ export default function MyBookingsPage() {
             ))}
           </div>
         ) : (
-          <div className="bg-white rounded-[40px] p-12 text-center border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.04)] max-w-2xl mx-auto relative overflow-hidden">
-            <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none" />
-            <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6 relative">
-              <div className="absolute inset-0 rounded-full border-4 border-white" />
-              <Search className="w-10 h-10 text-primary" />
+          <div className="space-y-5">
+            <div className="bg-white rounded-[40px] p-10 text-center border border-slate-100 shadow-soft max-w-2xl mx-auto relative overflow-hidden">
+              <div className="absolute top-0 inset-x-0 h-24 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none" />
+              <div className="w-20 h-20 bg-primary/8 rounded-3xl flex items-center justify-center mx-auto mb-5 border border-primary/10">
+                <Search className="w-9 h-9 text-primary" />
+              </div>
+              <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-2">No Active Tokens Yet</h2>
+              <p className="text-slate-500 font-medium max-w-md mx-auto leading-relaxed mb-8">
+                Your active queue tokens and appointment history will appear here. Book a consultation to get started.
+              </p>
+              <Button onClick={() => window.location.href = "/doctors"} className="h-14 px-8 rounded-2xl bg-primary hover:bg-primary/90 font-bold shadow-lg shadow-primary/20 transition-all text-white">
+                Explore Verified Doctors <ChevronRight className="w-5 h-5 ml-1" />
+              </Button>
             </div>
-            <h2 className="text-2xl font-black text-slate-900 tracking-tight">Your Health Journey Starts Here</h2>
-            <p className="text-slate-500 font-medium mt-3 max-w-md mx-auto leading-relaxed">Book a consultation with top verified doctors. Your active tokens and complete medical history will securely appear here.</p>
-            <Button onClick={() => window.location.href = "/doctors"} className="mt-8 h-14 px-8 rounded-2xl bg-gradient-to-b from-primary/90 to-primary hover:from-primary hover:to-[#1a4b7a] font-bold shadow-[0_8px_20px_rgba(82,152,210,0.2)] hover:shadow-[0_12px_25px_rgba(82,152,210,0.3)] transition-all text-white active:scale-[0.98]">
-              Explore Top Doctors <ChevronRight className="w-5 h-5 ml-1" />
-            </Button>
+
+            {/* Quick-book suggestion strip */}
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-soft p-5 max-w-2xl mx-auto">
+              <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Popular Specialties to Book</p>
+              <div className="flex flex-wrap gap-2">
+                {["General Physician", "Dermatologist", "Orthopedic", "Gynecologist", "Cardiologist"].map(s => (
+                  <button
+                    key={s}
+                    onClick={() => window.location.href = `/doctors?specialty=${encodeURIComponent(s)}`}
+                    className="px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm font-bold text-slate-700 hover:bg-blue-50 hover:border-primary/20 hover:text-primary transition-all"
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 

@@ -400,18 +400,33 @@ export function DoctorProfileView({ doctor }: DoctorProfileViewProps) {
             </div>
           </div>
 
-          <div className="pt-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {[
-              "Verified by JivniCare Medical Team",
-              "Real-time queue updates",
-              "Transparent consultation fees",
-              "Book in under 60 seconds",
-            ].map((point) => (
-              <div key={point} className="flex items-center gap-2">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                <span className="text-[11.5px] text-slate-600 font-medium">{point}</span>
+          <div className="pt-3">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">
+              JivniCare Trust Guarantees
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="flex items-start gap-2.5 p-3 rounded-xl bg-emerald-50/50 border border-emerald-100/50">
+                <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="text-[12px] font-bold text-emerald-900 leading-tight">100% Verified Medical License</h4>
+                  <p className="text-[11px] text-emerald-700/80 font-medium leading-snug mt-0.5">Credentials strictly verified by our medical compliance team.</p>
+                </div>
               </div>
-            ))}
+              <div className="flex items-start gap-2.5 p-3 rounded-xl bg-blue-50/50 border border-blue-100/50">
+                <Zap className="w-5 h-5 text-[#205E98] shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="text-[12px] font-bold text-[#205E98] leading-tight">Real-Time Queue Transparency</h4>
+                  <p className="text-[11px] text-[#205E98]/80 font-medium leading-snug mt-0.5">Live tracking means zero unexpected waiting room delays.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-2.5 p-3 rounded-xl bg-slate-50 border border-slate-100">
+                <ShieldCheck className="w-5 h-5 text-slate-600 shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="text-[12px] font-bold text-slate-700 leading-tight">Secure Booking & Privacy</h4>
+                  <p className="text-[11px] text-slate-500 font-medium leading-snug mt-0.5">End-to-end encryption for your health data and appointments.</p>
+                </div>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>

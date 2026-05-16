@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useBookingStore } from "@/store/useBookingStore";
-import { CheckCircle2, Calendar, MapPin, Download, ChevronRight, Activity } from "lucide-react";
+import { CheckCircle2, Calendar, MapPin, Download, ChevronRight, Activity, ShieldCheck, PhoneCall, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
@@ -161,6 +161,46 @@ export default function ConfirmationPage() {
               <Button variant="outline" className="rounded-xl font-bold border-slate-200 text-primary hover:bg-primary/10">
                 <Download className="w-4 h-4 mr-2" /> Save Ticket
               </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Patient Confidence & Trust Layer ── */}
+        <div className="mt-6 space-y-4">
+          <div className="bg-white rounded-2xl p-5 shadow-lg border border-slate-100 flex items-start gap-4">
+            <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center shrink-0 mt-0.5">
+              <ShieldCheck className="w-5 h-5 text-[#205E98]" />
+            </div>
+            <div>
+              <h4 className="text-[15px] font-black text-slate-900 mb-1">What Happens Next?</h4>
+              <p className="text-[13px] text-slate-600 font-medium leading-relaxed">
+                Your slot is locked. Please reach the clinic 10 minutes before your estimated time. If you miss your exact turn, your token will be pushed down slightly, so you don't lose your booking.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="bg-white rounded-2xl p-5 shadow-lg border border-slate-100 flex items-start gap-3">
+              <Info className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+              <div>
+                <h4 className="text-[13px] font-black text-slate-900 mb-1">Cancellation Policy</h4>
+                <p className="text-[12px] text-slate-600 font-medium leading-relaxed">
+                  You can cancel anytime before the consultation begins directly from the "Track Your Wait Time" page.
+                </p>
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-2xl p-5 shadow-lg border border-slate-100 flex items-start gap-3">
+              <PhoneCall className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+              <div>
+                <h4 className="text-[13px] font-black text-slate-900 mb-1">Need Assistance?</h4>
+                <p className="text-[12px] text-slate-600 font-medium leading-relaxed mb-2">
+                  Our dedicated operational support team is available to help you.
+                </p>
+                <a href="tel:+918000000000" className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md inline-block">
+                  Call Support Team
+                </a>
+              </div>
             </div>
           </div>
         </div>

@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { 
   LayoutDashboard, Users, UserCircle, Settings, Star, 
   LogOut, Wallet, CalendarX, Link as LinkIcon, AlertCircle, ShieldCheck,
-  X, Menu
+  X, Menu, TrendingUp, RefreshCw
 } from "lucide-react";
 import { QueueStatCards } from "@/components/doctor/queue/QueueStatCards";
 import { NowCallingController } from "@/components/doctor/queue/NowCallingController";
@@ -184,37 +184,37 @@ function DoctorDashboardContent() {
     return (
       <>
         {mobileMenuOpen && (
-          <div className="fixed inset-0 bg-slate-900/50 z-40 md:hidden" onClick={() => setMobileMenuOpen(false)} />
+          <div className="fixed inset-0 bg-slate-900/50 z-40 md:hidden backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)} />
         )}
-        <div className={`w-72 bg-white border-r border-slate-200 flex flex-col h-screen shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-50 fixed md:relative transition-transform duration-300 ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
-          <div className="p-6 pb-2 border-b border-slate-100 flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <img src="/logo.png" alt="JivniCare Logo" className="w-8 h-8 object-contain" />
+        <div className={`w-64 bg-card border-r border-border flex flex-col h-screen shrink-0 z-50 fixed md:relative transition-transform duration-300 ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+          <div className="p-6 border-b border-border flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center">
+                 <span className="text-white font-black text-sm">JC</span>
+              </div>
               <div>
-                <h2 className="text-xl font-black tracking-tight">
-                  <span className="text-primary">Jivni</span><span className="text-emerald-600">Care</span>
-                </h2>
-                <p className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">Doctor Portal</p>
+                <h2 className="text-lg font-black tracking-tight text-slate-900 leading-none">JivniCare</h2>
+                <p className="text-[9px] font-bold text-emerald-600 tracking-widest uppercase mt-0.5">Doctor Panel</p>
               </div>
             </div>
-            <button className="md:hidden text-slate-500 hover:bg-slate-100 p-2 rounded-full" onClick={() => setMobileMenuOpen(false)}>
+            <button className="md:hidden text-slate-500 hover:bg-slate-100 p-2 rounded-xl" onClick={() => setMobileMenuOpen(false)}>
               <X className="w-5 h-5" />
             </button>
           </div>
-          <div className="p-4 flex flex-col gap-2 flex-1 overflow-y-auto">
+          <div className="p-4 flex flex-col gap-1 flex-1 overflow-y-auto">
             {tabs.map(tab => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
               return (
-                <button key={tab.id} onClick={() => { router.push(`?tab=${tab.id}`); setMobileMenuOpen(false); }} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all min-h-[44px] ${isActive ? 'bg-primary/10 text-primary shadow-sm border-l-4 border-l-primary' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 border-l-4 border-l-transparent'}`}>
+                <button key={tab.id} onClick={() => { router.push(`?tab=${tab.id}`); setMobileMenuOpen(false); }} className={`flex items-center gap-3 px-4 h-12 rounded-xl font-bold transition-all text-sm ${isActive ? 'bg-primary/10 text-primary shadow-sm' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}>
                   <Icon className={`w-5 h-5 ${isActive ? 'text-primary' : ''}`} /> {tab.label}
                 </button>
               );
             })}
           </div>
-          <div className="p-4 border-t border-slate-100 bg-slate-50">
-            <button onClick={() => { useAuthStore.getState().logout(); window.location.href = "/"; }} className="flex items-center justify-center gap-3 px-4 py-3 w-full rounded-xl font-bold text-red-600 hover:bg-red-100 transition-all border border-red-200 shadow-sm bg-white">
-              <LogOut className="w-5 h-5" /> Sign Out
+          <div className="p-4 border-t border-border">
+            <button onClick={() => { useAuthStore.getState().logout(); window.location.href = "/"; }} className="flex items-center justify-center gap-3 h-12 w-full rounded-xl font-bold text-rose-600 hover:bg-rose-50 transition-all border border-rose-200 shadow-sm bg-white text-sm">
+              <LogOut className="w-4 h-4" /> Secure Sign Out
             </button>
           </div>
         </div>
@@ -222,50 +222,84 @@ function DoctorDashboardContent() {
     );
   };
 
-  const renderOverview = () => (
+  const renderOverview = () => {
+    const currentPatient = patients.find(p => p.status === "In-Person" || p.status === "Waiting") || null;
+    return (
     <div className="max-w-5xl fade-in">
-      <div className="mb-8">
-        <h1 className="text-3xl font-black text-slate-900">Welcome back, {profileData.name}</h1>
-        <p className="text-slate-500 mt-1">Here is what's happening at your clinic today.</p>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
+        <div>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Command Center</h1>
+          <p className="text-slate-500 mt-1 font-medium">{profileData.name} • Active Operations</p>
+        </div>
+        <div className="flex items-center gap-3 bg-card border border-border px-4 py-2 rounded-xl shadow-sm">
+          <span className="text-sm font-bold text-slate-700">Status: <span className={!leaveMode ? 'text-emerald-600' : 'text-red-500'}>{!leaveMode ? "Open" : "Closed"}</span></span>
+          <div onClick={toggleLeaveMode} className={`w-10 h-6 rounded-full relative cursor-pointer transition-colors ${!leaveMode ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+            <div className={`w-4 h-4 bg-white rounded-full absolute top-1 shadow-sm transition-transform ${!leaveMode ? 'right-1' : 'left-1'}`} />
+          </div>
+        </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col justify-between">
-          <div className="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center mb-4 text-emerald-600">
-            <Wallet className="w-6 h-6" />
-          </div>
-          <p className="text-sm font-bold text-slate-500">Estimated Earnings</p>
-          <h3 className="text-3xl font-black text-slate-900 mt-1">₹{(queueStats.completed * parseInt(settingsData.fee || "0")).toLocaleString()}</h3>
-        </div>
-        <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col justify-between">
-          <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center mb-4 text-primary">
-            <Users className="w-6 h-6" />
-          </div>
-          <p className="text-sm font-bold text-slate-500">Patients Seen</p>
-          <h3 className="text-3xl font-black text-slate-900 mt-1">{queueStats.completed}</h3>
-        </div>
-        <div className="rounded-3xl p-6 shadow-xl flex flex-col justify-between relative overflow-hidden" style={{ background: `linear-gradient(135deg, ${BrandColors.blue}, ${BrandColors.green})` }}>
-          <p className="text-sm font-bold text-white relative z-10">Profile Completeness</p>
-          <div className="relative z-10">
-            <h3 className="text-3xl font-black text-white mt-1">{profileCompleteness}%</h3>
-            <div className="w-full bg-white/30 h-2 rounded-full mt-4 mb-2">
-              <div className="bg-white h-2 rounded-full shadow-[0_0_10px_rgba(255,255,255,0.5)]" style={{ width: `${profileCompleteness}%` }} />
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+         <div className="lg:col-span-2 bg-card rounded-2xl border border-border shadow-premium overflow-hidden flex flex-col">
+           <div className="p-5 border-b border-border bg-slate-50 flex justify-between items-center">
+             <h2 className="font-bold text-slate-900 flex items-center gap-2 text-sm"><Users className="w-4 h-4 text-primary"/> Active Queue</h2>
+             <button onClick={() => router.push('?tab=queue')} className="text-sm font-bold text-primary hover:text-primary/80">View All</button>
+           </div>
+           <div className="p-6 flex-1 flex flex-col justify-center">
+             {currentPatient ? (
+               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                 <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-full bg-primary/10 text-primary flex items-center justify-center font-black text-2xl border border-primary/20">{currentPatient.initials || 'U'}</div>
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Current Patient</span>
+                      <h3 className="text-2xl font-black text-slate-900">{currentPatient.name}</h3>
+                      <p className="text-sm text-slate-500 font-medium">Token #{currentPatient.token} • Wait: {currentPatient.waitTime}m</p>
+                    </div>
+                 </div>
+                 <Button onClick={() => handleNextPatient(false)} disabled={isProcessingMutation} className="h-12 px-6 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-md w-full sm:w-auto">
+                   {isProcessingMutation ? <RefreshCw className="w-4 h-4 animate-spin" /> : "Call Next"}
+                 </Button>
+               </div>
+             ) : (
+               <div className="text-center text-slate-500 font-medium py-8">
+                 No active patients waiting.
+               </div>
+             )}
+           </div>
+         </div>
+         <div className="bg-emerald-600 rounded-2xl border border-emerald-500 shadow-premium p-6 text-white flex flex-col justify-between relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-4 opacity-10"><Wallet className="w-24 h-24 text-white" /></div>
+            <div className="relative z-10">
+              <span className="text-emerald-100 text-[10px] font-bold uppercase tracking-widest">Today's Revenue</span>
+              <h3 className="text-4xl font-black mt-2">₹{(queueStats.completed * parseInt(settingsData.fee || "0")).toLocaleString()}</h3>
             </div>
-          </div>
-        </div>
+            <div className="relative z-10 mt-6 pt-4 border-t border-emerald-500/50 flex justify-between items-center">
+               <span className="text-emerald-100 font-medium text-sm">Patients Served: <strong>{queueStats.completed}</strong></span>
+            </div>
+         </div>
       </div>
-      <h2 className="text-xl font-bold text-slate-900 mb-4">Quick Actions</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <button onClick={() => router.push('?tab=queue')} className="bg-white border border-slate-200 p-4 rounded-2xl text-left hover:shadow-md transition-all group">
-          <Users className="w-6 h-6 mb-3 group-hover:scale-110 transition-transform text-primary" />
+
+      <h2 className="text-lg font-bold text-slate-900 mb-4 tracking-tight">Quick Actions</h2>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <button onClick={() => router.push('?tab=queue')} className="bg-card border border-border p-5 rounded-2xl text-left hover:shadow-premium hover:border-primary/30 transition-all group">
+          <Users className="w-6 h-6 mb-3 text-slate-400 group-hover:text-primary transition-colors" />
           <p className="font-bold text-slate-900">Manage Queue</p>
         </button>
-        <button onClick={toggleLeaveMode} className={`p-4 rounded-2xl text-left border transition-all ${leaveMode ? 'bg-red-50 border-red-200' : 'bg-white border-slate-200 hover:border-red-500 hover:shadow-md'}`}>
-          <CalendarX className={`w-6 h-6 mb-3 ${leaveMode ? 'text-red-600' : 'text-slate-600'}`} />
+        <button onClick={() => router.push('?tab=settings')} className="bg-card border border-border p-5 rounded-2xl text-left hover:shadow-premium transition-all group">
+          <Settings className="w-6 h-6 mb-3 text-slate-400 group-hover:text-slate-900 transition-colors" />
+          <p className="font-bold text-slate-900">Clinic Settings</p>
+        </button>
+        <button onClick={() => router.push('?tab=profile')} className="bg-card border border-border p-5 rounded-2xl text-left hover:shadow-premium transition-all group">
+          <UserCircle className="w-6 h-6 mb-3 text-slate-400 group-hover:text-slate-900 transition-colors" />
+          <p className="font-bold text-slate-900">Edit Profile</p>
+        </button>
+        <button onClick={toggleLeaveMode} className={`p-5 rounded-2xl text-left border transition-all ${leaveMode ? 'bg-red-50 border-red-200 shadow-sm' : 'bg-card border-border hover:border-red-500 hover:shadow-premium'}`}>
+          <CalendarX className={`w-6 h-6 mb-3 ${leaveMode ? 'text-red-600' : 'text-slate-400'}`} />
           <p className={`font-bold ${leaveMode ? 'text-red-700' : 'text-slate-900'}`}>{leaveMode ? 'Resume Bookings' : 'Mark Holiday Today'}</p>
         </button>
       </div>
     </div>
-  );
+  )};
 
   const renderQueue = () => {
     const currentPatient = patients.find(p => p.status === "In-Person") || null;
@@ -400,15 +434,79 @@ function DoctorDashboardContent() {
           {activeTab === "profile" && renderProfile()}
           {activeTab === "settings" && renderSettings()}
           {activeTab === "reviews" && (
-            <div className="flex flex-col items-center justify-center h-[60vh] text-center fade-in px-4">
-              <div className="w-24 h-24 bg-amber-50 rounded-full flex items-center justify-center mb-6 relative shadow-sm border border-amber-100">
-                <Star className="w-10 h-10 text-amber-400 fill-current" />
+            <div className="max-w-4xl fade-in pb-20">
+              <div className="mb-8">
+                <h1 className="text-3xl font-black text-slate-900">Reviews & Reputation</h1>
+                <p className="text-slate-500 mt-1">Track how patients rate your consultations and build your online credibility.</p>
               </div>
-              <h2 className="text-2xl font-black text-slate-900 tracking-tight">Build Your Reputation</h2>
-              <p className="text-slate-500 mt-3 max-w-sm leading-relaxed">Patients you consult will be able to leave reviews and ratings here. 5-star ratings boost your visibility on JivniCare.</p>
-              <Button variant="outline" className="mt-6 rounded-xl border-slate-200 text-slate-700 font-bold hover:bg-slate-50 h-12 px-6 shadow-sm">
-                Share Clinic Link
-              </Button>
+
+              {/* Rating Overview */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+                <div className="bg-white rounded-2xl border border-border shadow-soft p-6 text-center col-span-1">
+                  <div className="text-5xl font-black text-amber-500 mb-2">4.8</div>
+                  <div className="flex justify-center gap-1 mb-3">
+                    {[1,2,3,4,5].map(i => <Star key={i} className={`w-5 h-5 ${i <= 4 ? "fill-amber-400 text-amber-400" : "fill-amber-200 text-amber-200"}`} />)}
+                  </div>
+                  <p className="text-sm font-medium text-slate-500">Overall Rating</p>
+                </div>
+                <div className="bg-white rounded-2xl border border-border shadow-soft p-6 md:col-span-2">
+                  <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Rating Breakdown</p>
+                  <div className="space-y-2.5">
+                    {[{stars: 5, pct: 72}, {stars: 4, pct: 18}, {stars: 3, pct: 7}, {stars: 2, pct: 2}, {stars: 1, pct: 1}].map(r => (
+                      <div key={r.stars} className="flex items-center gap-3">
+                        <span className="text-xs font-bold text-slate-600 w-4">{r.stars}</span>
+                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400 shrink-0" />
+                        <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                          <div className="h-full bg-amber-400 rounded-full" style={{width: `${r.pct}%`}} />
+                        </div>
+                        <span className="text-xs text-slate-400 font-medium w-8 text-right">{r.pct}%</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Trust Nudge */}
+              <div className="bg-gradient-to-r from-primary/5 to-emerald-50/50 rounded-2xl border border-primary/10 p-6 flex flex-col sm:flex-row items-start sm:items-center gap-5 mb-8">
+                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                  <ShieldCheck className="w-6 h-6 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-black text-slate-900 mb-1">Boost Your Profile Visibility</h3>
+                  <p className="text-sm text-slate-600 font-medium leading-relaxed">Doctors with 10+ reviews appear higher in search results. Share your clinic link with patients to collect reviews.</p>
+                </div>
+                <Button className="h-11 px-6 rounded-xl bg-primary text-white font-bold shrink-0 shadow-sm hover:bg-primary/90 transition-all">
+                  <LinkIcon className="w-4 h-4 mr-2" /> Copy Clinic Link
+                </Button>
+              </div>
+
+              {/* Recent Reviews Placeholder */}
+              <div className="bg-white rounded-2xl border border-border shadow-soft p-6">
+                <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-5">Recent Patient Feedback</p>
+                <div className="space-y-5">
+                  {[
+                    {name: "R. Verma", rating: 5, time: "2 days ago", comment: "Doctor explained everything clearly. Very professional."},
+                    {name: "Priya S.", rating: 5, time: "1 week ago", comment: "Queue system was great, no waiting at clinic. Highly recommend."},
+                    {name: "Amit K.", rating: 4, time: "2 weeks ago", comment: "Good experience overall. Clinic was clean and well-managed."},
+                  ].map((r, i) => (
+                    <div key={i} className="flex items-start gap-4 pb-5 border-b border-slate-50 last:border-0 last:pb-0">
+                      <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-xs font-black text-primary shrink-0">
+                        {r.name.charAt(0)}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-bold text-slate-900 text-sm">{r.name}</span>
+                          <span className="text-xs text-slate-400">{r.time}</span>
+                        </div>
+                        <div className="flex gap-0.5 mb-1.5">
+                          {[1,2,3,4,5].map(s => <Star key={s} className={`w-3.5 h-3.5 ${s <= r.rating ? "fill-amber-400 text-amber-400" : "text-slate-200 fill-slate-200"}`} />)}
+                        </div>
+                        <p className="text-sm text-slate-600 font-medium leading-relaxed">{r.comment}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
         </div>

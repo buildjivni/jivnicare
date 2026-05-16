@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ShieldCheck, CheckCircle2, Star, PhoneCall } from "lucide-react";
+import { ShieldCheck, CheckCircle2, Star, PhoneCall, Quote } from "lucide-react";
 
 
 export function TrustSection() {
@@ -59,25 +59,55 @@ export function TrustSection() {
             <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-8 md:p-10 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
               
-              <div className="relative z-10 space-y-8">
-                <div>
-                  <div className="text-secondary text-5xl font-black mb-2">4.9/5</div>
-                  <div className="flex text-amber-400 mb-2 gap-1">
-                    <Star className="w-5 h-5 fill-current" /><Star className="w-5 h-5 fill-current" /><Star className="w-5 h-5 fill-current" /><Star className="w-5 h-5 fill-current" /><Star className="w-5 h-5 fill-current" />
-                  </div>
-                  <p className="text-slate-300 font-medium">Patient satisfaction score based on 15,000+ verified appointments.</p>
-                </div>
-                
-                <hr className="border-white/10" />
-                
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-full bg-primary flex items-center justify-center shrink-0">
-                    <PhoneCall className="w-6 h-6 text-white" />
+              <div className="relative z-10 space-y-6">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
+                    <ShieldCheck className="w-6 h-6 text-emerald-400" />
                   </div>
                   <div>
-                    <h4 className="text-white font-bold text-lg">Need Assistance?</h4>
-                    <p className="text-slate-400 text-sm">Our dedicated team is always ready to help you.</p>
+                    <h4 className="text-white font-bold text-lg leading-tight">Verified Experiences</h4>
+                    <p className="text-slate-400 text-sm">Real stories from our patients.</p>
                   </div>
+                </div>
+                
+                <div className="space-y-4">
+                  {/* Testimonial 1 */}
+                  <div className="bg-white/10 p-5 rounded-2xl border border-white/5 backdrop-blur-md relative hover:bg-white/15 transition-colors">
+                    <div className="absolute top-4 right-4 text-secondary/30"><Quote className="w-8 h-8" /></div>
+                    <div className="flex gap-1.5 mb-3">
+                      <Star className="w-4 h-4 fill-amber-400 text-amber-400" /><Star className="w-4 h-4 fill-amber-400 text-amber-400" /><Star className="w-4 h-4 fill-amber-400 text-amber-400" /><Star className="w-4 h-4 fill-amber-400 text-amber-400" /><Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                    </div>
+                    <p className="text-white text-[15px] font-medium leading-relaxed italic mb-4">"Got my token online and didn't have to wait in the clinic at all. The live queue tracking is incredibly accurate."</p>
+                    <div className="flex items-center gap-3">
+                       <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center text-xs font-black text-white shadow-sm">RV</div>
+                       <p className="text-sm text-white font-bold tracking-tight">Rahul V. <span className="text-emerald-400 font-medium ml-1 flex items-center inline-flex gap-1"><CheckCircle2 className="w-3 h-3"/> Verified</span></p>
+                    </div>
+                  </div>
+
+                  {/* Testimonial 2 */}
+                  <div className="bg-white/10 p-5 rounded-2xl border border-white/5 backdrop-blur-md relative hover:bg-white/15 transition-colors">
+                    <div className="absolute top-4 right-4 text-secondary/30"><Quote className="w-8 h-8" /></div>
+                    <div className="flex gap-1.5 mb-3">
+                      <Star className="w-4 h-4 fill-amber-400 text-amber-400" /><Star className="w-4 h-4 fill-amber-400 text-amber-400" /><Star className="w-4 h-4 fill-amber-400 text-amber-400" /><Star className="w-4 h-4 fill-amber-400 text-amber-400" /><Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                    </div>
+                    <p className="text-white text-[15px] font-medium leading-relaxed italic mb-4">"The doctor verification badge gave me absolute peace of mind. Very professional healthcare platform."</p>
+                    <div className="flex items-center gap-3">
+                       <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-xs font-black text-white shadow-sm">SG</div>
+                       <p className="text-sm text-white font-bold tracking-tight">Sneha G. <span className="text-emerald-400 font-medium ml-1 flex items-center inline-flex gap-1"><CheckCircle2 className="w-3 h-3"/> Verified</span></p>
+                    </div>
+                  </div>
+                </div>
+                
+                <hr className="border-white/10 my-4" />
+                
+                <div className="flex items-center justify-between">
+                   <div className="flex -space-x-2">
+                     <div className="w-8 h-8 rounded-full border-2 border-slate-900 bg-slate-200" />
+                     <div className="w-8 h-8 rounded-full border-2 border-slate-900 bg-slate-300" />
+                     <div className="w-8 h-8 rounded-full border-2 border-slate-900 bg-slate-400" />
+                     <div className="w-8 h-8 rounded-full border-2 border-slate-900 bg-slate-800 flex items-center justify-center text-[10px] font-bold text-white">+15k</div>
+                   </div>
+                   <p className="text-xs font-bold text-slate-400">Join 15,000+ Happy Patients</p>
                 </div>
               </div>
             </div>

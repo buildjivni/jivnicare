@@ -21,26 +21,26 @@ interface NowCallingControllerProps {
 export function NowCallingController({ currentPatient, onNext, onSkip, isLoading = false }: NowCallingControllerProps) {
   if (!currentPatient) {
     return (
-      <div className="bg-white rounded-3xl p-8 border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-center h-full min-h-[320px]">
-        <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 mb-4">
+      <div className="bg-card rounded-2xl p-8 border-2 border-dashed border-border flex flex-col items-center justify-center text-center h-full min-h-[320px]">
+        <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 mb-4 shadow-sm border border-border">
           <User className="w-8 h-8" />
         </div>
         <h3 className="text-xl font-bold text-slate-700">Queue Empty</h3>
-        <p className="text-sm text-slate-500 mt-2">No patients currently waiting.</p>
+        <p className="text-sm text-slate-500 mt-2 font-medium">No patients currently waiting.</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm relative h-full flex flex-col">
+    <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-premium relative h-full flex flex-col">
       {/* Blue Left Border Accent */}
-      <div className="absolute left-0 top-0 bottom-0 w-2 bg-[#005da7]" />
+      <div className="absolute left-0 top-0 bottom-0 w-2 bg-primary" />
       
       <div className="p-6 md:p-8 flex-1">
         <div className="flex justify-between items-start mb-6">
           <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-[#005da7] bg-blue-50 px-2 py-1 rounded-md">Now Calling</span>
-            <h2 className="text-4xl font-black text-slate-900 mt-2">Token #{currentPatient.token}</h2>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-primary bg-primary/10 px-3 py-1.5 rounded-md">Now Calling</span>
+            <h2 className="text-4xl font-black text-slate-900 mt-3">Token #{currentPatient.token}</h2>
           </div>
           <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center text-slate-500">
             <User className="w-6 h-6" />
@@ -71,14 +71,14 @@ export function NowCallingController({ currentPatient, onNext, onSkip, isLoading
         </div>
       </div>
 
-      <div className="p-4 sm:p-6 bg-slate-50 border-t border-slate-100 flex flex-col sm:flex-row items-center gap-3">
+      <div className="p-4 sm:p-6 bg-slate-50 border-t border-border flex flex-col sm:flex-row items-center gap-3">
         <div className="flex w-full gap-3">
-          <Button onClick={onNext} disabled={isLoading} className="flex-1 h-14 rounded-2xl bg-[#5298D2] hover:bg-[#417fb1] text-white font-black text-lg shadow-xl shadow-blue-500/20 active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed">
-            {isLoading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" /> : <ArrowRight className="w-5 h-5 mr-2" />} 
+          <Button onClick={onNext} disabled={isLoading} className="flex-1 h-12 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-md active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed">
+            {isLoading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" /> : <ArrowRight className="w-4 h-4 mr-2" />} 
             Next
           </Button>
-          <Button onClick={onSkip} disabled={isLoading} variant="outline" className="flex-1 h-14 rounded-2xl border-slate-300 text-slate-700 hover:bg-white font-bold active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed">
-            {isLoading ? <div className="w-5 h-5 border-2 border-slate-300 border-t-slate-700 rounded-full animate-spin mr-2" /> : <SkipForward className="w-5 h-5 mr-2 text-slate-400" />} 
+          <Button onClick={onSkip} disabled={isLoading} variant="outline" className="flex-1 h-12 rounded-xl border-border text-slate-700 hover:bg-slate-100 font-bold active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed shadow-sm">
+            {isLoading ? <div className="w-4 h-4 border-2 border-slate-300 border-t-slate-700 rounded-full animate-spin mr-2" /> : <SkipForward className="w-4 h-4 mr-2 text-slate-400" />} 
             Skip
           </Button>
         </div>
