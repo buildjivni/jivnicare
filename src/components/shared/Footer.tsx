@@ -2,7 +2,6 @@ import Link from "next/link";
 import { MapPin, Phone, Mail, ShieldCheck, Clock, Heart, Newspaper, Users, Briefcase } from "lucide-react";
 import { HEALTHCARE_SPECIALTIES } from "@/lib/seo/metadata";
 import { Logo } from "@/components/brand/Logo";
-import { BrandName } from "@/components/brand/BrandName";
 
 const FOOTER_SECTIONS = [
   {
@@ -60,12 +59,11 @@ export function Footer() {
           {/* Brand & Mission */}
           <div className="lg:col-span-4 space-y-6 pr-0 lg:pr-10">
             <Link href="/" className="flex items-center gap-3 group w-fit">
-              <div className="w-12 h-12 bg-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-900/20 group-hover:scale-105 transition-transform">
-                <Logo className="w-8 h-8" />
+              <div className="bg-white px-4 py-2.5 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
+                <Logo className="h-8 w-auto" />
               </div>
               <div>
-                <BrandName className="text-2xl text-white" />
-                <span className="block text-[10px] font-black tracking-[0.3em] text-emerald-500 uppercase leading-none mt-1.5">Unified Healthcare</span>
+                <span className="block text-[10px] font-black tracking-[0.3em] text-primary uppercase leading-none">Unified Healthcare</span>
               </div>
             </Link>
 

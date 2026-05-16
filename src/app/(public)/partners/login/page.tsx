@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/useAuthStore";
 import Link from "next/link";
-import { BrandName } from "@/components/brand/BrandName";
+import { motion, AnimatePresence } from "framer-motion";
 
 // Firebase Imports
 import { auth } from "@/lib/firebase/config";
@@ -186,7 +186,7 @@ function DoctorLoginContent() {
         className="w-full max-w-[1050px] bg-white/80 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_32px_64px_-16px_rgba(16,185,129,0.1)] border border-white/50 flex overflow-hidden z-10 relative"
       >
         {/* Left Side - Professional Branding */}
-        <div className="w-[45%] bg-[#065F46] p-12 lg:p-16 flex flex-col justify-between relative overflow-hidden hidden md:flex">
+        <div className="w-[45%] bg-primary p-12 lg:p-16 flex flex-col justify-between relative overflow-hidden hidden md:flex">
           {/* Decorative Pattern */}
           <div className="absolute inset-0 opacity-[0.05] pointer-events-none">
             <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
@@ -202,7 +202,7 @@ function DoctorLoginContent() {
           <div className="relative z-10">
             <Link href="/" className="flex items-center gap-3 mb-12 group">
               <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-xl group-hover:scale-105 transition-transform duration-300">
-                 <img src="/logo.png" alt="JivniCare Logo" className="w-8 h-8 object-contain" />
+                 <img src="/logo.png" alt="JivniCare Logo" className="h-8 w-auto object-contain" />
               </div>
               <div className="flex flex-col">
                 <span className="text-2xl font-black text-white leading-none">JivniCare</span>
@@ -303,14 +303,14 @@ function DoctorLoginContent() {
                               placeholder="98765 43210"
                               value={phone}
                               onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
-                              className="h-16 pl-20 rounded-2xl bg-slate-50/50 border-slate-200/60 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-600/50 font-black text-xl tracking-wide transition-all shadow-sm"
+                              className="h-16 pl-20 rounded-2xl bg-slate-50/50 border-slate-200/60 focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary/50 font-black text-xl tracking-wide transition-all shadow-sm"
                             />
                           </div>
                         </div>
                         <Button 
                           type="submit" 
                           disabled={isLoading || phone.length < 10}
-                          className="w-full h-16 rounded-2xl bg-[#065F46] hover:bg-[#047857] text-white font-black text-lg shadow-[0_12px_24px_-8px_rgba(6,95,70,0.3)] active:scale-[0.98] transition-all flex items-center justify-center gap-3"
+                          className="w-full h-16 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black text-lg shadow-[0_12px_24px_-8px_var(--primary)] active:scale-[0.98] transition-all flex items-center justify-center gap-3"
                         >
                           {isLoading ? <RefreshCw className="w-6 h-6 animate-spin" /> : <>Get OTP Access <ArrowRight className="w-5 h-5" /></>}
                         </Button>
@@ -334,14 +334,14 @@ function DoctorLoginContent() {
                               placeholder="doctor@clinic.com"
                               value={email}
                               onChange={(e) => setEmail(e.target.value)}
-                              className="h-16 pl-14 rounded-2xl bg-slate-50/50 border-slate-200/60 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-600/50 font-black text-lg transition-all shadow-sm"
+                              className="h-16 pl-14 rounded-2xl bg-slate-50/50 border-slate-200/60 focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary/50 font-black text-lg transition-all shadow-sm"
                             />
                           </div>
                         </div>
                         <div className="group">
                           <div className="flex justify-between items-center mb-2.5 px-1">
                             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] block">Password</label>
-                            <Link href="/partners/forgot-password" size="sm" className="text-[10px] font-black text-emerald-600 hover:text-emerald-700 tracking-wider">FORGOT?</Link>
+                            <Link href="/partners/forgot-password" className="text-[10px] font-black text-emerald-600 hover:text-emerald-700 tracking-wider">FORGOT?</Link>
                           </div>
                           <div className="relative">
                             <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-400" />
@@ -351,14 +351,14 @@ function DoctorLoginContent() {
                               placeholder="••••••••"
                               value={password}
                               onChange={(e) => setPassword(e.target.value)}
-                              className="h-16 pl-14 rounded-2xl bg-slate-50/50 border-slate-200/60 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-600/50 font-black text-lg transition-all shadow-sm"
+                              className="h-16 pl-14 rounded-2xl bg-slate-50/50 border-slate-200/60 focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary/50 font-black text-lg transition-all shadow-sm"
                             />
                           </div>
                         </div>
                         <Button 
                           type="submit" 
                           disabled={isLoading || !email || !password}
-                          className="w-full h-16 rounded-2xl bg-[#065F46] hover:bg-[#047857] text-white font-black text-lg shadow-[0_12px_24px_-8px_rgba(6,95,70,0.3)] active:scale-[0.98] transition-all flex items-center justify-center gap-3"
+                          className="w-full h-16 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black text-lg shadow-[0_12px_24px_-8px_var(--primary)] active:scale-[0.98] transition-all flex items-center justify-center gap-3"
                         >
                           {isLoading ? <RefreshCw className="w-6 h-6 animate-spin" /> : <>Sign In <ArrowRight className="w-5 h-5" /></>}
                         </Button>
@@ -412,13 +412,13 @@ function DoctorLoginContent() {
                         placeholder="••••••"
                         value={otp}
                         onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                        className="h-20 text-center rounded-[1.5rem] bg-slate-50/50 border-slate-200 focus:bg-white focus:ring-8 focus:ring-emerald-500/5 focus:border-emerald-600 font-black text-4xl tracking-[0.4em] transition-all placeholder:text-slate-200"
+                        className="h-20 text-center rounded-[1.5rem] bg-slate-50/50 border-slate-200 focus:bg-white focus:ring-8 focus:ring-primary/5 focus:border-primary font-black text-4xl tracking-[0.4em] transition-all placeholder:text-slate-200"
                       />
                     </div>
                     <Button 
                       type="submit" 
                       disabled={isLoading || otp.length < 6}
-                      className="w-full h-16 rounded-2xl bg-[#065F46] hover:bg-[#047857] text-white font-black text-lg shadow-[0_12px_24px_-8px_rgba(6,95,70,0.3)] transition-all flex items-center justify-center gap-3"
+                      className="w-full h-16 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black text-lg shadow-[0_12px_24px_-8px_var(--primary)] transition-all flex items-center justify-center gap-3"
                     >
                       {isLoading ? <RefreshCw className="w-6 h-6 animate-spin" /> : <>Verify & Access Portal <ShieldCheck className="w-5 h-5 text-emerald-300" /></>}
                     </Button>

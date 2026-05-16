@@ -122,7 +122,7 @@ function DoctorListingContent() {
   };
 
   const activeChips = useMemo(() => {
-    const chips = [];
+    const chips: { id: string; label: string; type?: string; value?: string }[] = [];
     if (availability !== 'any') chips.push({ id: 'availability', label: availability === 'today' ? 'Available Today' : 'Tomorrow' });
     if (maxFee !== '10000') chips.push({ id: 'maxFee', label: `Fee under ₹${maxFee}` });
     if (minExperience !== '0') chips.push({ id: 'minExperience', label: `${minExperience}+ Years Experience` });

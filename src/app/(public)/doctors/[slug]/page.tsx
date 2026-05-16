@@ -6,7 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import prisma from "@/lib/prisma";
 import { DoctorProfileView } from "@/components/doctors/profile/DoctorProfileView";
 import { BookingWidgetClient } from "@/components/doctors/profile/BookingWidgetClient";
-import { SITE_CONFIG } from "@/lib/seo/metadata";
+import { SITE_CONFIG, generateDoctorMetadata } from "@/lib/seo/metadata";
 import { physicianSchema, breadcrumbSchema } from "@/lib/seo/jsonld";
 import { JsonLd } from "@/components/seo/JsonLd";
 import type { Doctor } from "@/types";

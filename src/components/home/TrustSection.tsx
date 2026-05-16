@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { ShieldCheck, CheckCircle2, Star, PhoneCall } from "lucide-react";
-import { BrandName } from "@/components/brand/BrandName";
+
 
 export function TrustSection() {
   return (
@@ -32,7 +32,7 @@ export function TrustSection() {
               </span>
             </h2>
             <p className="text-base md:text-lg text-slate-300 leading-relaxed mb-8 max-w-lg font-medium">
-              When it comes to your health, trust is everything. On <BrandName />, your data, appointments, and doctors are 100% safe, verified, and reliable.
+              When it comes to your health, trust is everything. On <span className="font-bold text-white">JivniCare</span>, your data, appointments, and doctors are 100% safe, verified, and reliable.
             </p>
             
             <div className="space-y-4">

@@ -7,7 +7,6 @@ import { Menu, X, CalendarDays, Stethoscope, BookOpen, User, Newspaper } from "l
 import { Button } from "@/components/ui/button";
 
 import { Logo } from "@/components/brand/Logo";
-import { BrandName } from "@/components/brand/BrandName";
 import { MobileNav } from "./MobileNav";
 import { UserProfileDropdown } from "./UserProfileDropdown";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -75,8 +74,7 @@ export function Header() {
         <div className="container mx-auto px-4 md:px-6 h-full flex items-center justify-between max-w-7xl w-full box-border">
 
           <Link href="/" className="flex items-center gap-2 group shrink min-w-0">
-            <Logo className="w-12 h-12 md:w-16 md:h-16 shrink-0 transition-transform duration-300 hover:scale-105" />
-            <BrandName className={cn("text-lg md:text-2xl font-black tracking-tight truncate", isDoctorsPage && pathname !== "/" ? "hidden lg:block" : "block")} />
+            <Logo className="h-8 md:h-10 w-auto shrink-0 transition-transform duration-300 hover:scale-105" />
           </Link>
 
           {/* ── DESKTOP NAV ───────────────────── */}

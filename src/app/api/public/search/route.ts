@@ -152,10 +152,10 @@ export async function GET(request: Request) {
       }
       
       // 2. Experience
-      if (sort === 'experience') return b.experience - a.experience;
+      if (sort === 'experience') return parseInt(b.experience as string) - parseInt(a.experience as string);
       
       // 3. Fee (Low to High)
-      if (sort === 'fee_low') return a.fee - b.fee;
+      if (sort === 'fee_low') return parseInt((a.fee as string).replace(/\D/g, '')) - parseInt((b.fee as string).replace(/\D/g, ''));
       
       // 4. Wait Time (Only for active queues)
       if (sort === 'wait_time') {

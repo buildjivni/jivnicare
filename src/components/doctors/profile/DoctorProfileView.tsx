@@ -181,7 +181,9 @@ export function DoctorProfileView({ doctor }: DoctorProfileViewProps) {
               <h1 className="font-black text-[22px] md:text-[26px] text-slate-900 leading-tight tracking-tight">
                 {doctor.name}
               </h1>
-              <BadgeCheck className="w-5 h-5 text-[#205E98] shrink-0 mt-1.5" title={badge} />
+              <span title={badge} className="shrink-0 mt-1.5 flex items-center">
+                <BadgeCheck className="w-5 h-5 text-[#205E98]" />
+              </span>
             </div>
 
             <div className="flex items-center gap-2 mt-1 flex-wrap">

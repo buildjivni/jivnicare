@@ -54,6 +54,7 @@ export interface Doctor {
   queueWaitMinutes?: number; // Approx wait time in minutes
   patientsWaiting?: number;  // "7 Patients Waiting"
   onboardingStage?: string;
+  isAvailableToday?: boolean;
 
   // ── Fees & Modes ──────────────────────────────────────────
   fee: string;              // "₹400"

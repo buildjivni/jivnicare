@@ -1,0 +1,453 @@
+
+C:\Users\dharm\Downloads\antigravity\prisma\seed.js
+  1:91  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  2:16  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+C:\Users\dharm\Downloads\antigravity\scripts\load-test-booking.ts
+  1:1  error  Do not use "@ts-nocheck" because it alters compilation errors  @typescript-eslint/ban-ts-comment
+
+C:\Users\dharm\Downloads\antigravity\seed-admin.js
+  4:26  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  5:16  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+C:\Users\dharm\Downloads\antigravity\src\app\(booking)\checkout\page.tsx
+  70:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\dharm\Downloads\antigravity\src\app\(booking)\checkout\page.tsx:70:5
+  68 |
+  69 |   useEffect(() => {
+> 70 |     setMounted(true);
+     |     ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  71 |   }, []);
+  72 |
+  73 |   // After hydration: run auth + booking guards  react-hooks/set-state-in-effect
+
+C:\Users\dharm\Downloads\antigravity\src\app\(patient)\my-bookings\page.tsx
+  32:5  error  Error: Cannot access variable before it is declared
+
+`fetchBookings` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\dharm\Downloads\antigravity\src\app\(patient)\my-bookings\page.tsx:32:5
+  30 |
+  31 |   useEffect(() => {
+> 32 |     fetchBookings();
+     |     ^^^^^^^^^^^^^ `fetchBookings` accessed before it is declared
+  33 |
+  34 |     // Live Tracking Polling (Every 60s)
+  35 |     const interval = setInterval(fetchBookings, 60000);
+
+C:\Users\dharm\Downloads\antigravity\src\app\(patient)\my-bookings\page.tsx:39:3
+  37 |   }, []);
+  38 |
+> 39 |   const fetchBookings = async () => {
+     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 40 |     try {
+     | ^^^^^^^^^
+> 41 |       const res = await fetch("/api/patient/my-bookings");
+     …
+     | ^^^^^^^^^
+> 87 |     }
+     | ^^^^^^^^^
+> 88 |   };
+     | ^^^^^ `fetchBookings` is declared here
+  89 |
+  90 |   const handleShareWhatsApp = (booking: Booking) => {
+  91 |     const text = `*JivniCare Token Detail*\n\n` +  react-hooks/immutability
+
+C:\Users\dharm\Downloads\antigravity\src\app\(public)\about\page.tsx
+   57:15   error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+   57:33   error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+   90:23   error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+   90:225  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  138:17   error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  162:15   error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  165:15   error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  165:192  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Users\dharm\Downloads\antigravity\src\app\(public)\blog\[slug]\page.tsx
+  104:11  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  180:21  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\dharm\Downloads\antigravity\src\app\(public)\blog\page.tsx
+   45:17  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  115:21  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\dharm\Downloads\antigravity\src\app\(public)\doctors\[slug]\page.tsx
+  76:7  error  'doc' is never reassigned. Use 'const' instead  prefer-const
+
+C:\Users\dharm\Downloads\antigravity\src\app\(public)\login\page.tsx
+   41:20  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\dharm\Downloads\antigravity\src\app\(public)\login\page.tsx:41:20
+  39 |     const savedName = sessionStorage.getItem("jc_login_name");
+  40 |     const savedPhone = sessionStorage.getItem("jc_login_phone");
+> 41 |     if (savedName) setName(savedName);
+     |                    ^^^^^^^ Avoid calling setState() directly within an effect
+  42 |     if (savedPhone) setPhone(savedPhone);
+  43 |   }, []);
+  44 |  react-hooks/set-state-in-effect
+   56:7   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\dharm\Downloads\antigravity\src\app\(public)\login\page.tsx:56:7
+  54 |       return () => clearTimeout(timerId);
+  55 |     } else if (resendTimer === 0) {
+> 56 |       setCanResend(true);
+     |       ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  57 |     }
+  58 |   }, [step, resendTimer]);
+  59 |                                                                                             react-hooks/set-state-in-effect
+  208:18  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @next/next/no-img-element
+  435:18  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @next/next/no-img-element
+
+C:\Users\dharm\Downloads\antigravity\src\app\(public)\partners\forgot-password\page.tsx
+  127:12  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\dharm\Downloads\antigravity\src\app\(public)\partners\login\page.tsx
+   61:7   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\dharm\Downloads\antigravity\src\app\(public)\partners\login\page.tsx:61:7
+  59 |       return () => clearTimeout(timerId);
+  60 |     } else if (resendTimer === 0) {
+> 61 |       setCanResend(true);
+     |       ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  62 |     }
+  63 |   }, [step, resendTimer]);
+  64 |  react-hooks/set-state-in-effect
+  206:18  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                @next/next/no-img-element
+
+C:\Users\dharm\Downloads\antigravity\src\app\(public)\partners\onboard\page.tsx
+   69:9   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\dharm\Downloads\antigravity\src\app\(public)\partners\onboard\page.tsx:69:9
+  67 |       try {
+  68 |         const parsed = JSON.parse(savedForm);
+> 69 |         setFormData(prev => ({ ...prev, ...parsed }));
+     |         ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  70 |       } catch (e) { console.error("Failed to parse saved onboarding data", e); }
+  71 |     } else if (user?.name) {
+  72 |       setFormData(prev => ({ ...prev, fullName: user.name }));  react-hooks/set-state-in-effect
+  561:37  error  Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+C:\Users\dharm\Downloads\antigravity\src\app\(public)\partners\onboard\page.tsx:561:37
+  559 |
+  560 |               <div className="mt-8 text-[11px] font-black text-slate-300 uppercase tracking-widest relative z-10">
+> 561 |                 APPLICATION ID: JC-{Math.random().toString(36).substr(2, 9).toUpperCase()}
+      |                                     ^^^^^^^^^^^^^ Cannot call impure function
+  562 |               </div>
+  563 |             </motion.div>
+  564 |           </motion.div>                                                                                                                                                                                                                                                                                                                                                                            react-hooks/purity
+
+C:\Users\dharm\Downloads\antigravity\src\app\(public)\partners\page.tsx
+   25:42  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  107:17  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Users\dharm\Downloads\antigravity\src\app\admin\dashboard\page.tsx
+  102:11  error    Error: Cannot access variable before it is declared
+
+`setPlatformStats` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\dharm\Downloads\antigravity\src\app\admin\dashboard\page.tsx:102:11
+  100 |         const data = await res.json();
+  101 |         if (data.success) {
+> 102 |           setPlatformStats(data.stats);
+      |           ^^^^^^^^^^^^^^^^ `setPlatformStats` accessed before it is declared
+  103 |         }
+  104 |       } catch (e) { console.error("Stats fetch failed", e); }
+  105 |     };
+
+C:\Users\dharm\Downloads\antigravity\src\app\admin\dashboard\page.tsx:148:25
+  146 |   }, []);
+  147 |
+> 148 |   const [platformStats, setPlatformStats] = useState<any>(null);
+      |                         ^^^^^^^^^^^^^^^^ `setPlatformStats` is declared here
+  149 |   const [queueHealth, setQueueHealth] = useState<any[]>([]);
+  150 |   const [patients, setPatients] = useState<any[]>([]);
+  151 |   const [bookings, setBookings] = useState<any[]>([]);                                                                       react-hooks/immutability
+  112:11  error    Error: Cannot access variable before it is declared
+
+`setQueueHealth` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\dharm\Downloads\antigravity\src\app\admin\dashboard\page.tsx:112:11
+  110 |         const data = await res.json();
+  111 |         if (data.success) {
+> 112 |           setQueueHealth(data.queues);
+      |           ^^^^^^^^^^^^^^ `setQueueHealth` accessed before it is declared
+  113 |         }
+  114 |       } catch (e) { console.error("Health fetch failed", e); }
+  115 |     };
+
+C:\Users\dharm\Downloads\antigravity\src\app\admin\dashboard\page.tsx:149:23
+  147 |
+  148 |   const [platformStats, setPlatformStats] = useState<any>(null);
+> 149 |   const [queueHealth, setQueueHealth] = useState<any[]>([]);
+      |                       ^^^^^^^^^^^^^^ `setQueueHealth` is declared here
+  150 |   const [patients, setPatients] = useState<any[]>([]);
+  151 |   const [bookings, setBookings] = useState<any[]>([]);
+  152 |   const [patientSearch, setPatientSearch] = useState("");                                   react-hooks/immutability
+  122:11  error    Error: Cannot access variable before it is declared
+
+`setPatients` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\dharm\Downloads\antigravity\src\app\admin\dashboard\page.tsx:122:11
+  120 |         const data = await res.json();
+  121 |         if (data.success) {
+> 122 |           setPatients(data.patients);
+      |           ^^^^^^^^^^^ `setPatients` accessed before it is declared
+  123 |         }
+  124 |       } catch (e) { console.error("Patients fetch failed", e); }
+  125 |     };
+
+C:\Users\dharm\Downloads\antigravity\src\app\admin\dashboard\page.tsx:150:20
+  148 |   const [platformStats, setPlatformStats] = useState<any>(null);
+  149 |   const [queueHealth, setQueueHealth] = useState<any[]>([]);
+> 150 |   const [patients, setPatients] = useState<any[]>([]);
+      |                    ^^^^^^^^^^^ `setPatients` is declared here
+  151 |   const [bookings, setBookings] = useState<any[]>([]);
+  152 |   const [patientSearch, setPatientSearch] = useState("");
+  153 |   const [modReason, setModReason] = useState("");  react-hooks/immutability
+  132:11  error    Error: Cannot access variable before it is declared
+
+`setBookings` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\dharm\Downloads\antigravity\src\app\admin\dashboard\page.tsx:132:11
+  130 |         const data = await res.json();
+  131 |         if (data.success) {
+> 132 |           setBookings(data.bookings);
+      |           ^^^^^^^^^^^ `setBookings` accessed before it is declared
+  133 |         }
+  134 |       } catch (e) { console.error("Bookings fetch failed", e); }
+  135 |     };
+
+C:\Users\dharm\Downloads\antigravity\src\app\admin\dashboard\page.tsx:151:20
+  149 |   const [queueHealth, setQueueHealth] = useState<any[]>([]);
+  150 |   const [patients, setPatients] = useState<any[]>([]);
+> 151 |   const [bookings, setBookings] = useState<any[]>([]);
+      |                    ^^^^^^^^^^^ `setBookings` is declared here
+  152 |   const [patientSearch, setPatientSearch] = useState("");
+  153 |   const [modReason, setModReason] = useState("");
+  154 |   const [isModModalOpen, setIsModModalOpen] = useState(false);    react-hooks/immutability
+  221:16  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   @next/next/no-img-element
+  361:13  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   @next/next/no-img-element
+
+C:\Users\dharm\Downloads\antigravity\src\app\admin\login\page.tsx
+  59:18  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  88:15  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\dharm\Downloads\antigravity\src\app\doctor\dashboard\page.tsx
+  147:21  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\dharm\Downloads\antigravity\src\app\doctor\dashboard\page.tsx:147:21
+  145 |   };
+  146 |
+> 147 |   useEffect(() => { fetchProfile(); }, []);
+      |                     ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  148 |
+  149 |   const handleUpdateSettings = async (updates: any) => {
+  150 |     setIsSaving(true);  react-hooks/set-state-in-effect
+  192:15  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        @next/next/no-img-element
+  229:56  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                react/no-unescaped-entities
+
+C:\Users\dharm\Downloads\antigravity\src\components\brand\Logo.tsx
+  6:5  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\dharm\Downloads\antigravity\src\components\checkout\OrderSummary.tsx
+  86:97  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Users\dharm\Downloads\antigravity\src\components\checkout\PatientDetailsForm.tsx
+   34:19   warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps')
+  177:113  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                 react/no-unescaped-entities
+
+C:\Users\dharm\Downloads\antigravity\src\components\doctor\queue\PatientListTable.tsx
+  40:63  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Users\dharm\Downloads\antigravity\src\components\doctor\queue\QueueOperationsMenu.tsx
+  45:15  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  45:32  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+
+C:\Users\dharm\Downloads\antigravity\src\components\doctor\settings\WeeklyScheduleEditor.tsx
+  72:64  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Users\dharm\Downloads\antigravity\src\components\doctors\DoctorFilters.tsx
+  188:12  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+C:\Users\dharm\Downloads\antigravity\src\components\doctors\DoctorFilters.tsx:188:12
+  186 |       <aside className="hidden md:block w-64 shrink-0 sticky top-28 self-start">
+  187 |         <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
+> 188 |           <FilterContent />
+      |            ^^^^^^^^^^^^^ This component is created during render
+  189 |         </div>
+  190 |       </aside>
+  191 |
+
+C:\Users\dharm\Downloads\antigravity\src\components\doctors\DoctorFilters.tsx:58:25
+   56 |   const visibleSpecialties = showAllSpecialties ? HEALTHCARE_SPECIALTIES : HEALTHCARE_SPECIALTIES.slice(0, 6);
+   57 |
+>  58 |   const FilterContent = () => (
+      |                         ^^^^^^^
+>  59 |     <div className="space-y-6" role="group" aria-label="Filter doctors">
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>  60 |       {/* Header */}
+      …
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 180 |     </div>
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 181 |   );
+      | ^^^^ The component is created during render here
+  182 |
+  183 |   return (
+  184 |     <>                                        react-hooks/static-components
+  230:18  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+C:\Users\dharm\Downloads\antigravity\src\components\doctors\DoctorFilters.tsx:230:18
+  228 |               
+  229 |               <div className="overflow-y-auto p-6 pb-24">
+> 230 |                 <FilterContent />
+      |                  ^^^^^^^^^^^^^ This component is created during render
+  231 |               </div>
+  232 |
+  233 |               <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-white via-white to-transparent pt-12">
+
+C:\Users\dharm\Downloads\antigravity\src\components\doctors\DoctorFilters.tsx:58:25
+   56 |   const visibleSpecialties = showAllSpecialties ? HEALTHCARE_SPECIALTIES : HEALTHCARE_SPECIALTIES.slice(0, 6);
+   57 |
+>  58 |   const FilterContent = () => (
+      |                         ^^^^^^^
+>  59 |     <div className="space-y-6" role="group" aria-label="Filter doctors">
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>  60 |       {/* Header */}
+      …
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 180 |     </div>
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 181 |   );
+      | ^^^^ The component is created during render here
+  182 |
+  183 |   return (
+  184 |     <>  react-hooks/static-components
+
+C:\Users\dharm\Downloads\antigravity\src\components\home\FeaturedArticlesSection.tsx
+  38:19  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\dharm\Downloads\antigravity\src\components\home\HeroSection.tsx
+  24:19  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\dharm\Downloads\antigravity\src\components\home\HeroSection.tsx:24:19
+  22 |   const [mounted, setMounted] = useState(false);
+  23 |   
+> 24 |   useEffect(() => setMounted(true), []);
+     |                   ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  25 |   const isLoggedIn = mounted ? isAuthenticated : false;
+  26 |
+  27 |   if (isLoggedIn && (user?.role === "DOCTOR" || user?.role === "ADMIN")) return null;  react-hooks/set-state-in-effect
+  45:45  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                react/no-unescaped-entities
+
+C:\Users\dharm\Downloads\antigravity\src\components\home\PartnerCtaSection.tsx
+  40:25  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Users\dharm\Downloads\antigravity\src\components\shared\Header.tsx
+  35:19  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\dharm\Downloads\antigravity\src\components\shared\Header.tsx:35:19
+  33 |   const [mounted, setMounted] = useState(false);
+  34 |   
+> 35 |   useEffect(() => setMounted(true), []);
+     |                   ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  36 |   
+  37 |   // Hardened auth check for hydration safety
+  38 |   const isLoggedIn = mounted ? isAuthenticated : false;  react-hooks/set-state-in-effect
+
+C:\Users\dharm\Downloads\antigravity\src\components\shared\RoleGuard.tsx
+  22:7  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\dharm\Downloads\antigravity\src\components\shared\RoleGuard.tsx:22:7
+  20 |   useEffect(() => {
+  21 |     if (_hasHydrated) {
+> 22 |       setMounted(true);
+     |       ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  23 |     }
+  24 |   }, [_hasHydrated]);
+  25 |  react-hooks/set-state-in-effect
+
+C:\Users\dharm\Downloads\antigravity\src\components\shared\SmartSearchBar.tsx
+   93:3   warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps')
+   98:5   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\dharm\Downloads\antigravity\src\components\shared\SmartSearchBar.tsx:98:5
+   96 |   // Load trending + recents on mount
+   97 |   useEffect(() => {
+>  98 |     setTrending(getTopSearches(6));
+      |     ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+   99 |     try {
+  100 |       const stored = localStorage.getItem("jivnicare_recent_searches");
+  101 |       if (stored) setRecentSearches(JSON.parse(stored).slice(0, 5));  react-hooks/set-state-in-effect
+  320:15  warning  Elements with the ARIA role "option" must have the following attributes defined: aria-selected                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         jsx-a11y/role-has-required-aria-props
+  422:19  warning  Elements with the ARIA role "option" must have the following attributes defined: aria-selected                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         jsx-a11y/role-has-required-aria-props
+
+✖ 62 problems (43 errors, 19 warnings)
+  1 error and 2 warnings potentially fixable with the `--fix` option.

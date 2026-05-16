@@ -15,11 +15,11 @@
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
-  /* JivniCare Blue */
-  --color-primary: #205E98;
+  /* JivniCare Blue (From Logo) */
+  --color-primary: #4A8EC2;
   --color-primary-foreground: #FFFFFF;
-  /* JivniCare Green */
-  --color-secondary: #489C66;
+  /* JivniCare Green (From Logo) */
+  --color-secondary: #4E9D56;
   --color-secondary-foreground: #FFFFFF;
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
@@ -49,11 +49,11 @@
     --card-foreground: oklch(0.145 0 0);
     --popover: oklch(1 0 0);
     --popover-foreground: oklch(0.145 0 0);
-    /* JivniCare Blue */
-    --primary: #205E98;
+    /* JivniCare Blue (From Logo) */
+    --primary: #4A8EC2;
     --primary-foreground: #FFFFFF;
-    /* JivniCare Green */
-    --secondary: #489C66;
+    /* JivniCare Green (From Logo) */
+    --secondary: #4E9D56;
     --secondary-foreground: #FFFFFF;
     --muted: oklch(0.96 0.01 250);
     --muted-foreground: oklch(0.556 0 0);
@@ -102,11 +102,11 @@
     --card-foreground: oklch(0.985 0 0);
     --popover: oklch(0.12 0.02 250);
     --popover-foreground: oklch(0.985 0 0);
-    /* JivniCare Blue */
-    --primary: #205E98;
+    /* JivniCare Blue (From Logo) */
+    --primary: #4A8EC2;
     --primary-foreground: #FFFFFF;
-    /* JivniCare Green */
-    --secondary: #489C66;
+    /* JivniCare Green (From Logo) */
+    --secondary: #4E9D56;
     --secondary-foreground: #FFFFFF;
     --muted: oklch(0.18 0.02 250);
     --muted-foreground: oklch(0.708 0 0);

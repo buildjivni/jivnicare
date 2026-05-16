@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { ShieldCheck, ArrowLeft, HeartPulse } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { BrandName } from "@/components/brand/BrandName";
 
 export default function NotFound() {
   return (
@@ -32,7 +31,7 @@ export default function NotFound() {
           aria-label="Return to JivniCare home"
           className="rounded-2xl h-12 px-8 bg-primary hover:bg-primary/90 font-bold text-white flex items-center gap-2 shadow-lg shadow-primary/20"
         >
-          <ArrowLeft className="w-4 h-4" /> Return to <BrandName />
+          <ArrowLeft className="w-4 h-4" /> Return to JivniCare
         </Button>
       </Link>
     </div>

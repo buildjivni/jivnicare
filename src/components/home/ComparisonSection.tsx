@@ -3,7 +3,6 @@
 import { motion } from "framer-motion";
 import { CheckCircle2, XCircle } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
-import { BrandName } from "@/components/brand/BrandName";
 
 export function ComparisonSection() {
   return (
@@ -17,10 +16,10 @@ export function ComparisonSection() {
           className="text-center max-w-3xl mx-auto mb-16"
         >
           <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-slate-900 mb-6">
-            The <BrandName className="text-3xl md:text-5xl" /> Advantage
+            The <strong className="text-primary">JivniCare</strong> Advantage
           </h2>
           <p className="text-lg text-slate-600 leading-relaxed">
-            See the difference between standing in clinic queues and smart booking with <BrandName />.
+            See the difference between standing in clinic queues and smart booking with <strong className="text-slate-900">JivniCare</strong>.
           </p>
         </motion.div>
 
@@ -41,8 +40,7 @@ export function ComparisonSection() {
               </div>
               <div className="p-6 md:p-8 text-center font-black text-primary flex flex-col items-center gap-2 bg-primary/5 border-x border-primary/10 relative overflow-hidden">
                 <div className="absolute top-0 inset-x-0 h-1 bg-[#258C54]" />
-                <span className="bg-white p-2 rounded-xl hidden md:flex shadow-sm"><Logo className="w-6 h-6" /></span>
-                <BrandName />
+                <Logo className="h-6 w-auto" />
               </div>
             </div>
           
