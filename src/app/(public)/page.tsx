@@ -40,7 +40,7 @@ export default async function Home() {
       <VerifiedDoctorsSection doctors={featuredDoctors} />
 
       {/* ── TRUST & INTEGRITY ── */}
-      <div className="bg-accent/30 py-12 md:py-16 border-y border-accent/20">
+      <div className="bg-accent/30 border-y border-accent/20">
         <TrustSection />
       </div>
 
@@ -52,7 +52,7 @@ export default async function Home() {
       {/* ── HOW IT WORKS ── */}
       <HowItWorksSection />
       
-      <div className="container mx-auto px-4 max-w-5xl py-12 md:py-16">
+      <div className="container mx-auto px-4 max-w-5xl py-8 md:py-12 mb-8">
         <HelpEcosystem />
       </div>
 

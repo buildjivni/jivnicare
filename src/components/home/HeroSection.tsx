@@ -30,7 +30,7 @@ export function HeroSection() {
   if (isLoggedIn && (user?.role === "DOCTOR" || user?.role === "ADMIN")) return null;
 
   return (
-    <section className="relative w-full max-w-full pt-8 md:pt-20 pb-12 md:pb-32 overflow-hidden bg-white box-border" aria-label="Find Doctors">
+    <section className="relative w-full max-w-full pt-8 md:pt-20 pb-8 md:pb-16 overflow-hidden bg-white box-border" aria-label="Find Doctors">
       {/* Calm Medical Accents */}
       <div className="absolute top-0 inset-x-0 h-[500px] bg-gradient-to-b from-primary/5 via-primary/2 to-transparent -z-10" />
       <div className="absolute top-[10%] right-[-5%] w-64 h-64 bg-secondary/5 rounded-full blur-3xl -z-10" />
