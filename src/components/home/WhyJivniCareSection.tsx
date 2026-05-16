@@ -27,7 +27,7 @@ export function WhyJivniCareSection() {
               </span>
             </h2>
             <p className="text-base md:text-lg text-slate-600 leading-relaxed font-medium">
-              Say goodbye to long clinic queues. <strong className="text-slate-900">JivniCare</strong> connects you with the best and most trusted doctors in your city, completely hassle-free.
+              Skip the waiting room. We connect you with top-rated, verified doctors in your city so you can get care quickly and safely.
             </p>
           </motion.div>
         </div>
@@ -73,8 +73,8 @@ export function WhyJivniCareSection() {
               {
                 icon: <Zap className="w-6 h-6 text-primary" />,
                 bg: "bg-blue-50/80",
-                title: "Confirmed Appointments",
-                desc: "Your slot is booked instantly without any confusion or waiting. 100% confirmed bookings.",
+                title: "Guaranteed Bookings",
+                desc: "Your slot is booked instantly without any confusion. 100% confirmed appointments.",
               },
               {
                 icon: <ShieldCheck className="w-6 h-6 text-[#258C54]" />,

@@ -19,7 +19,7 @@ export function ComparisonSection() {
             The <strong className="text-primary">JivniCare</strong> Advantage
           </h2>
           <p className="text-lg text-slate-600 leading-relaxed">
-            See the difference between standing in clinic queues and smart booking with <strong className="text-slate-900">JivniCare</strong>.
+            See how booking with <strong className="text-slate-900">JivniCare</strong> saves you time and stress.
           </p>
         </motion.div>
 

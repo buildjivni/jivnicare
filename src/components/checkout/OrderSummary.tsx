@@ -82,7 +82,7 @@ export function OrderSummary({ doctor, type }: OrderSummaryProps) {
       </Card>
       <div className="flex items-center gap-3 p-4 rounded-2xl bg-emerald-50 border border-emerald-100 text-emerald-700 text-sm">
         <Lock className="w-5 h-5 shrink-0" />
-        <p>Your booking is secure. <strong className="font-bold">JivniCare</strong> will instantly reserve your place in the clinic's live queue.</p>
+        <p>Your booking is 100% secure. <strong className="font-bold">JivniCare</strong> will instantly confirm your appointment at the clinic.</p>
       </div>
     </div>
   );

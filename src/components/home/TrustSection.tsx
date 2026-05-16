@@ -37,9 +37,9 @@ export function TrustSection() {
             
             <div className="space-y-4">
               {[
-                "Every doctor undergoes a strict verification of their degrees and medical background.",
+                "We personally verify the medical degrees and experience of every doctor.",
                 "Your personal information and medical records are 100% private and secure.",
-                "Facing an issue? Our local support team is always ready to help you."
+                "Need help? Our friendly support team is always here for you."
               ].map((item, i) => (
                 <div key={i} className="flex items-start gap-3">
                   <CheckCircle2 className="w-6 h-6 text-emerald-400 shrink-0 mt-0.5" />
