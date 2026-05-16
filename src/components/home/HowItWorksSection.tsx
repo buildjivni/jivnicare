@@ -35,7 +35,7 @@ export function HowItWorksSection() {
           <h2 className="text-4xl md:text-7xl font-black tracking-tight text-slate-900 mb-8">
             Healthcare made <span className="text-primary">Simple.</span>
           </h2>
-          <p className="text-xl md:text-2xl text-slate-500 font-bold leading-relaxed">
+          <p className="text-xl md:text-2xl text-slate-700 font-bold leading-relaxed">
             Three easy steps to get the medical care you deserve.
           </p>
         </div>
@@ -57,7 +57,7 @@ export function HowItWorksSection() {
                 {step.icon}
               </div>
               <h3 className="text-3xl font-black text-slate-900 mb-6">{step.title}</h3>
-              <p className="text-lg text-slate-500 font-bold leading-relaxed px-6">{step.desc}</p>
+              <p className="text-lg text-slate-600 font-bold leading-relaxed px-6">{step.desc}</p>
               
               {i < 2 && (
                 <div className="hidden md:block absolute top-12 left-[75%] w-full h-[2px] bg-gradient-to-r from-slate-100 via-slate-200 to-transparent -z-10" />

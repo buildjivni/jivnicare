@@ -43,10 +43,10 @@ export function SpecialtiesSection({ specialties }: SpecialtiesSectionProps) {
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50/80 text-primary text-xs font-bold uppercase tracking-widest mb-4">
               <Stethoscope className="w-4 h-4" /> Medical Departments
             </div>
-            <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-slate-900 mb-4 leading-tight">
+            <h2 className="text-3xl md:text-5xl font-black tracking-tight text-slate-900 mb-4 leading-tight">
               Which Specialist Do You <br className="hidden md:block" />Need to See?
             </h2>
-            <p className="text-base md:text-lg text-slate-600 font-medium">
+            <p className="text-lg md:text-xl text-slate-700 font-bold leading-relaxed">
               We have top specialists for every health concern. Select a department based on your needs and book an appointment instantly.
             </p>
           </div>
