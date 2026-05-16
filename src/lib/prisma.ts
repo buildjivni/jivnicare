@@ -12,9 +12,11 @@ const prismaClientSingleton = () => {
   }
 
   // Append connection pooling params if not already present
+  // serverSelectionTimeoutMS=5000 → fail fast on cold start instead of hanging 10s
+  // connectTimeoutMS=8000 → slightly generous for Atlas free tier wake-up
   const urlWithPooling = databaseUrl.includes('maxPoolSize')
     ? databaseUrl
-    : `${databaseUrl}${databaseUrl.includes('?') ? '&' : '?'}maxPoolSize=10&connectTimeoutMS=10000&serverSelectionTimeoutMS=10000`;
+    : `${databaseUrl}${databaseUrl.includes('?') ? '&' : '?'}maxPoolSize=10&connectTimeoutMS=8000&serverSelectionTimeoutMS=5000`;
 
   return new PrismaClient({
     log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
