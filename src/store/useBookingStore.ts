@@ -18,6 +18,7 @@ export const useBookingStore = create<BookingState>()(
         name: "",
         email: "",
         phone: "",
+        location: "",
       },
       generatedToken: null,
 
@@ -38,7 +39,7 @@ export const useBookingStore = create<BookingState>()(
 
       setDoctor: (doctor: Doctor) => set({ selectedDoctor: doctor }),
 
-      setPatientDetails: (details: Partial<{ name: string; email: string; phone: string }>) =>
+      setPatientDetails: (details: Partial<{ name: string; email: string; phone: string; location: string }>) =>
         set((state) => ({
           patientDetails: { ...state.patientDetails, ...details },
         })),
@@ -50,7 +51,7 @@ export const useBookingStore = create<BookingState>()(
           selectedDoctor: null,
           selectedService: null,
           step: "service",
-          patientDetails: { name: "", email: "", phone: "" },
+          patientDetails: { name: "", email: "", phone: "", location: "" },
           generatedToken: null,
         }),
     }),

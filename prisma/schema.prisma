@@ -68,11 +68,12 @@ model Media {
 
 model User {
   id         String   @id @default(uuid()) @map("_id")
-  firebaseUid String? @unique
+  firebaseUid String?
   phone      String   @unique
   email      String?
   name       String?
   password   String?
+  location   String?
   role       Role     @default(PATIENT)
   isVerified Boolean  @default(false)
   createdAt  DateTime @default(now())
@@ -139,7 +140,7 @@ model Doctor {
   // ── Future-Safe Identity Architecture (Doctor Discovery v2) ──
   // QR-ready short code: 6-char alphanumeric (no ambiguous chars)
   // Used for: /d/{shortCode} deep links, clinic QR codes, reception displays
-  shortCode          String?     @unique
+  shortCode          String?
 
   // Clinic visual identity
   clinicImage        String?     // CDN URL for clinic/hospital photo
@@ -372,6 +373,7 @@ model QueueToken {
   estimatedTime   DateTime?   // Dynamic estimate
   tokenIssuedAt   DateTime    @default(now()) // Determines strict FCFS priority
   isEmergency     Boolean     @default(false)
+  patientLocation String?     // Patient's city or village name
   
   @@unique([queueId, tokenNumber])
   @@index([queueId, status])

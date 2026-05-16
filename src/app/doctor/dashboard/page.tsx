@@ -42,7 +42,6 @@ function DoctorDashboardContent() {
       const res = await fetch("/api/doctor/queue");
       if (res.status === 401) {
         useAuthStore.getState().logout();
-        router.push("/login?expired=true");
         return;
       }
       const data = await res.json();
@@ -61,6 +60,7 @@ function DoctorDashboardContent() {
             visitType: t.source === "ONLINE" ? "Online" : "Walk-in",
             waitTime: waitTime,
             priority: t.isEmergency ? "Emergency" : "Standard",
+            location: t.patientLocation || "N/A",
             status: t.status === "WAITING" ? "Waiting" : t.status === "COMPLETED" ? "Served" : t.status === "IN_CONSULTATION" ? "In-Person" : t.status,
             appointmentTime: new Date(t.tokenIssuedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
           };
@@ -99,7 +99,6 @@ function DoctorDashboardContent() {
       });
       if (res.status === 401) {
         useAuthStore.getState().logout();
-        router.push("/login?expired=true");
         return;
       }
       const data = await res.json();

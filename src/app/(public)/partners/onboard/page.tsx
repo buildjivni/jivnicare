@@ -9,16 +9,24 @@ import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
 import { useAuthStore, getRoleRedirect } from "@/store/useAuthStore";
 import { Logo } from "@/components/brand/Logo";
+import { PublicGuard } from "@/components/shared";
 
-// Firebase Imports
-import { auth } from "@/lib/firebase/config";
-import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from "firebase/auth";
+// Firebase types (loaded dynamically at runtime to prevent chunk contamination)
+import type { ConfirmationResult, RecaptchaVerifier as RecaptchaVerifierType } from "firebase/auth";
 
 const TOTAL_STEPS = 5; // Step 5 is Success
 const STORAGE_KEY_FORM = "jc_onboard_data_v1";
 const STORAGE_KEY_STEP = "jc_onboard_step_v1";
 
 export default function DoctorOnboardingFlow() {
+  return (
+    <PublicGuard>
+      <OnboardingContent />
+    </PublicGuard>
+  );
+}
+
+function OnboardingContent() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const { isAuthenticated, user, login, updateUser } = useAuthStore();
@@ -30,9 +38,9 @@ export default function DoctorOnboardingFlow() {
   const [isAuthLoading, setIsAuthLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   
-  // Firebase Specific
+  // Firebase Specific (using type-only imports above)
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
-  const recaptchaVerifierRef = useRef<RecaptchaVerifier | null>(null);
+  const recaptchaVerifierRef = useRef<RecaptchaVerifierType | null>(null);
 
   // ── FORM DATA ────────────────────────────────────────────────────────
   const [formData, setFormData] = useState({
@@ -46,10 +54,12 @@ export default function DoctorOnboardingFlow() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Initialize reCAPTCHA
-  const setupRecaptcha = () => {
+  // Initialize reCAPTCHA with dynamic imports to avoid chunk contamination
+  const setupRecaptcha = async () => {
     if (recaptchaVerifierRef.current) return;
     try {
+      const { auth } = await import("@/lib/firebase/config");
+      const { RecaptchaVerifier } = await import("firebase/auth");
       recaptchaVerifierRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', {
         'size': 'invisible',
       });
@@ -99,7 +109,7 @@ export default function DoctorOnboardingFlow() {
     setIsAuthLoading(true);
     setAuthError(null);
 
-    setupRecaptcha();
+    await setupRecaptcha();
     const appVerifier = recaptchaVerifierRef.current;
 
     if (!appVerifier) {
@@ -109,6 +119,8 @@ export default function DoctorOnboardingFlow() {
     }
 
     try {
+      const { auth } = await import("@/lib/firebase/config");
+      const { signInWithPhoneNumber } = await import("firebase/auth");
       const formattedPhone = `+91${authPhone}`;
       const confirmation = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
       setConfirmationResult(confirmation);

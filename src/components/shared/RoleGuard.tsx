@@ -11,7 +11,7 @@ interface RoleGuardProps {
 }
 
 export function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
-  const { isAuthenticated, user, _hasHydrated } = useAuthStore();
+  const { isAuthenticated, user, isLoading, _hasHydrated } = useAuthStore();
   const [mounted, setMounted] = useState(false);
   
   const router = useRouter();
@@ -24,16 +24,17 @@ export function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
   }, [_hasHydrated]);
 
   useEffect(() => {
-    if (mounted) {
+    // ONLY redirect if we are mounted, NOT loading, and have hydrated
+    if (mounted && !isLoading && _hasHydrated) {
       if (!isAuthenticated || !user) {
         router.replace(`/login?redirect=${encodeURIComponent(pathname)}`);
       } else if (!allowedRoles.includes(user.role)) {
         router.replace("/");
       }
     }
-  }, [mounted, isAuthenticated, user, pathname, router, allowedRoles]);
+  }, [mounted, isLoading, _hasHydrated, isAuthenticated, user, pathname, router, allowedRoles]);
 
-  if (!mounted || !isAuthenticated || !user || !allowedRoles.includes(user.role)) {
+  if (!mounted || isLoading || !isAuthenticated || !user || !allowedRoles.includes(user.role)) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-slate-50">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />

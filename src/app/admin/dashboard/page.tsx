@@ -42,12 +42,16 @@ function AdminDashboardContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState<{type: 'error'|'success', text: string} | null>(null);
 
+  const _hasHydrated = useAuthStore(state => state._hasHydrated);
+
   // Auth Guard
   useEffect(() => {
-    if (!isAuthenticated || user?.role !== "ADMIN") {
-      router.replace("/login");
+    if (_hasHydrated) {
+      if (!isAuthenticated || user?.role !== "ADMIN") {
+        router.replace("/login");
+      }
     }
-  }, [isAuthenticated, user, router]);
+  }, [_hasHydrated, isAuthenticated, user, router]);
 
   useEffect(() => {
     const fetchDoctors = async () => {

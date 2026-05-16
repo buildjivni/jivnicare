@@ -8,55 +8,68 @@ export const dynamic = "force-dynamic";
 /**
  * JivniCare Auth Bridge
  * POST /api/auth/session
- * Exhanges a Firebase ID Token for a secure Session Cookie.
+ * Exchanges a Firebase ID Token for a secure Session Cookie.
+ * Body: { idToken: string, name?: string }
  */
 
 export async function POST(request: NextRequest) {
   try {
-    const { idToken } = await request.json();
+    const body = await request.json();
+    const { idToken, name: bodyName } = body;
 
     if (!idToken) {
       return NextResponse.json({ error: "Missing ID Token" }, { status: 400 });
     }
 
-    // 1. Verify the ID Token
+    // 1. Verify the ID Token with Firebase Admin
     const decodedToken = await getAdminAuth().verifyIdToken(idToken);
-    const { uid, phone_number, email, name } = decodedToken;
+    const { uid, phone_number, email } = decodedToken;
 
-    // 2. Sync with Prisma Database
+    // Normalize the phone number — Firebase sends "+919430067927", DB stores "9430067927"
+    const normalizedPhone = phone_number
+      ? phone_number.replace(/^\+91/, "")
+      : null;
+
+    // 2. Sync with Prisma Database — find by firebaseUid first, then fallbacks
+    const orConditions: any[] = [{ firebaseUid: uid }];
+    if (normalizedPhone) orConditions.push({ phone: normalizedPhone });
+    if (phone_number) orConditions.push({ phone: phone_number }); // also try with +91 prefix
+    if (email) orConditions.push({ email });
+
     let user = await prisma.user.findFirst({
-      where: {
-        OR: [
-          { firebaseUid: uid },
-          { phone: phone_number || "undefined" },
-          { email: email || "undefined" },
-        ],
-      },
-      include: { doctor: true }
+      where: { OR: orConditions },
+      include: { doctor: true },
     });
 
     if (!user) {
-      // Create new user if not found
+      // New user — create with name from the login form (bodyName) or Firebase profile
+      const resolvedName = bodyName?.trim() || decodedToken.name || null;
       user = await prisma.user.create({
         data: {
           firebaseUid: uid,
-          phone: phone_number || "",
+          phone: normalizedPhone || phone_number || "",
           email: email || null,
-          name: name || null,
-          role: Role.PATIENT, // Default role
+          name: resolvedName,
+          role: Role.PATIENT,
         },
-        include: { doctor: true }
+        include: { doctor: true },
       });
-    } else if (!user.firebaseUid) {
-      // Link Firebase Identity to existing legacy user
-      user = await prisma.user.update({
-        where: { id: user.id },
-        data: { firebaseUid: uid },
-        include: { doctor: true }
-      });
+    } else {
+      // Existing user — link Firebase UID if not set yet, and update name if empty
+      const updateData: any = {};
+      if (!user.firebaseUid) updateData.firebaseUid = uid;
+      if (!user.name && bodyName?.trim()) updateData.name = bodyName.trim();
+
+      if (Object.keys(updateData).length > 0) {
+        user = await prisma.user.update({
+          where: { id: user.id },
+          data: updateData,
+          include: { doctor: true },
+        });
+      }
     }
 
-    // 3. Set Custom Claims (Optimizes future server-side checks)
+    // 3. Set Custom Claims for role-based access
     const customClaims = {
       role: user.role,
       userId: user.id,
@@ -64,12 +77,14 @@ export async function POST(request: NextRequest) {
     };
     await getAdminAuth().setCustomUserClaims(uid, customClaims);
 
-    // 4. Create Session Cookie (expires in 14 days)
+    // 4. Create Session Cookie (14 days)
     const expiresIn = 60 * 60 * 24 * 14 * 1000;
-    const sessionCookie = await getAdminAuth().createSessionCookie(idToken, { expiresIn });
+    const sessionCookie = await getAdminAuth().createSessionCookie(idToken, {
+      expiresIn,
+    });
 
-    // 5. Build Response with Secure Cookie
-    const response = NextResponse.json({ 
+    // 5. Return user data + set secure cookie
+    const response = NextResponse.json({
       status: "success",
       user: {
         id: user.id,
@@ -77,7 +92,7 @@ export async function POST(request: NextRequest) {
         role: user.role,
         phone: user.phone,
         doctorId: user.doctor?.id,
-      }
+      },
     });
 
     response.cookies.set("auth-token", sessionCookie, {
@@ -89,9 +104,11 @@ export async function POST(request: NextRequest) {
     });
 
     return response;
-
   } catch (error: any) {
-    console.error("Session Creation Error:", error);
-    return NextResponse.json({ error: error.message || "Failed to create session" }, { status: 500 });
+    console.error("Session Creation Error:", error.code, error.message);
+    return NextResponse.json(
+      { error: error.message || "Failed to create session" },
+      { status: 500 }
+    );
   }
 }

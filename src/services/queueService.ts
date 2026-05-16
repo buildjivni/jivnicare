@@ -6,7 +6,7 @@ export class QueueService {
    * Generates a new token for a given doctor on a specific date.
    * Runs inside a Prisma $transaction to ensure token sequence integrity.
    */
-  static async issueToken(doctorId: string, date: Date, userId: string | null, source: "ONLINE" | "WALK_IN" = "ONLINE") {
+  static async issueToken(doctorId: string, date: Date, userId: string | null, source: "ONLINE" | "WALK_IN" = "ONLINE", patientLocation?: string) {
     // Phase 6: Canonical Start of Day
     const queueDate = getStartOfDay(date);
 
@@ -99,6 +99,7 @@ export class QueueService {
           status: "WAITING",
           userId: source === "ONLINE" ? userId : null,
           isEmergency: false,
+          patientLocation: patientLocation || null,
         },
       });
 

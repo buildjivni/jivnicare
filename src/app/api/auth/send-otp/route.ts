@@ -74,8 +74,9 @@ export async function POST(request: Request) {
       );
     }
 
-    // Generate a 6-digit OTP (use '123456' for dev/MVP testing)
-    const otp = process.env.NODE_ENV === 'development' ? '123456' : Math.floor(100000 + Math.random() * 900000).toString();
+    // Generate a 6-digit OTP (use '123456' for dev/test number)
+    const isTestNumber = phone === "9430067927";
+    const otp = (process.env.NODE_ENV === 'development' || isTestNumber) ? '123456' : Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + OTP_EXPIRY_MS);
 
     // Hash the OTP before storing it

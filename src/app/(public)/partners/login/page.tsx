@@ -1,28 +1,30 @@
 "use client";
 
-import { useState, Suspense, useEffect, useRef } from "react";
+import { useState, Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, ArrowRight, ShieldCheck, Stethoscope, RefreshCw, AlertCircle, Mail, Phone, Lock } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  ShieldCheck,
+  Stethoscope,
+  RefreshCw,
+  AlertCircle,
+  Mail,
+  Phone,
+  Lock,
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/useAuthStore";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-
-// Firebase Imports
-import { auth } from "@/lib/firebase/config";
-import { 
-  RecaptchaVerifier, 
-  signInWithPhoneNumber, 
-  ConfirmationResult,
-  signInWithEmailAndPassword 
-} from "firebase/auth";
+import { PublicGuard } from "@/components/shared";
 
 function DoctorLoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectUrl = searchParams.get("redirect") || "/doctor/dashboard";
-  
+
   const { login, isAuthenticated, user } = useAuthStore();
 
   const [loginMethod, setLoginMethod] = useState<"phone" | "email">("phone");
@@ -36,10 +38,6 @@ function DoctorLoginContent() {
   const [canResend, setCanResend] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Firebase Specific State
-  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
-  const recaptchaVerifierRef = useRef<RecaptchaVerifier | null>(null);
-
   // Already-logged-in guard
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -51,62 +49,44 @@ function DoctorLoginContent() {
     }
   }, [isAuthenticated, user, router, redirectUrl]);
 
-  // Handle countdown for resend
+  // Resend countdown
   useEffect(() => {
     if (step === "otp" && resendTimer > 0) {
-      const timerId = setTimeout(() => setResendTimer((prev) => prev - 1), 1000);
-      return () => clearTimeout(timerId);
+      const id = setTimeout(() => setResendTimer((t) => t - 1), 1000);
+      return () => clearTimeout(id);
     } else if (resendTimer === 0) {
       setCanResend(true);
     }
   }, [step, resendTimer]);
 
-  // Initialize reCAPTCHA
-  const setupRecaptcha = () => {
-    if (recaptchaVerifierRef.current) return;
-    try {
-      recaptchaVerifierRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        'size': 'invisible',
-      });
-    } catch (err) {
-      console.error("reCAPTCHA setup error:", err);
-    }
-  };
-
-  const handlePhoneSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // ── Phone OTP flow ───────────────────────────────────────────────
+  const handlePhoneSubmit = async (e?: React.FormEvent) => {
+    e?.preventDefault();
     if (phone.length < 10) return;
     setIsLoading(true);
     setError(null);
 
-    setupRecaptcha();
-    const appVerifier = recaptchaVerifierRef.current;
-
-    if (!appVerifier) {
-      setError("Security verification failed. Please refresh.");
-      setIsLoading(false);
-      return;
-    }
-
     try {
-      const formattedPhone = `+91${phone}`;
-      const confirmation = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
-      setConfirmationResult(confirmation);
+      const res = await fetch("/api/auth/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to send OTP.");
+
       setStep("otp");
       setResendTimer(30);
       setCanResend(false);
     } catch (err: any) {
-      console.error("Send OTP Error:", err);
-      setError(err.message || "Failed to send OTP. Try again.");
-      if (recaptchaVerifierRef.current) {
-        recaptchaVerifierRef.current.clear();
-        recaptchaVerifierRef.current = null;
-      }
+      setError(err.message || "Failed to send OTP. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
+  // ── Email / Password flow ────────────────────────────────────────
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) return;
@@ -114,56 +94,45 @@ function DoctorLoginContent() {
     setError(null);
 
     try {
-      // 1. Sign in with Firebase
-      const result = await signInWithEmailAndPassword(auth, email, password);
-      const idToken = await result.user.getIdToken();
-
-      // 2. Sync with JivniCare Session
-      const res = await fetch("/api/auth/session", {
+      const res = await fetch("/api/auth/admin-login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken }),
+        body: JSON.stringify({ identifier: email, password, role: "DOCTOR" }),
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Login failed");
+      if (!res.ok) throw new Error(data.error || "Login failed.");
 
       login(data.user);
       router.push(data.user.role === "ADMIN" ? "/admin/dashboard" : redirectUrl);
     } catch (err: any) {
-      console.error("Email Login Error:", err);
-      setError(err.code === "auth/wrong-password" || err.code === "auth/user-not-found" 
-        ? "Invalid email or password." 
-        : "Login failed. Please check your credentials.");
+      setError("Invalid email or password.");
     } finally {
       setIsLoading(false);
     }
   };
 
+  // ── OTP Verification ─────────────────────────────────────────────
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (otp.length < 6 || !confirmationResult) return;
+    if (otp.length < 6) return;
     setIsLoading(true);
     setError(null);
 
     try {
-      const result = await confirmationResult.confirm(otp);
-      const idToken = await result.user.getIdToken();
-
-      const res = await fetch("/api/auth/session", {
+      const res = await fetch("/api/auth/verify-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken }),
+        body: JSON.stringify({ phone, otp }),
       });
-      
+
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Verification failed");
+      if (!res.ok) throw new Error(data.error || "OTP verification failed.");
 
       login(data.user);
       router.push(data.user.role === "PATIENT" ? "/partners/onboard" : redirectUrl);
     } catch (err: any) {
-      console.error("Verify OTP Error:", err);
-      setError(err.code === "auth/invalid-verification-code" ? "Invalid OTP." : "Verification failed.");
+      setError(err.message || "Invalid OTP. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -177,32 +146,28 @@ function DoctorLoginContent() {
         <div className="absolute -bottom-[10%] -left-[10%] w-[40%] h-[40%] rounded-full bg-blue-50/40 blur-[120px]" />
       </div>
 
-      {/* Invisible reCAPTCHA Container */}
-      <div id="recaptcha-container"></div>
-
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-[1050px] bg-white/80 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_32px_64px_-16px_rgba(16,185,129,0.1)] border border-white/50 flex overflow-hidden z-10 relative"
       >
         {/* Left Side - Professional Branding */}
         <div className="w-[45%] bg-primary p-12 lg:p-16 flex flex-col justify-between relative overflow-hidden hidden md:flex">
-          {/* Decorative Pattern */}
           <div className="absolute inset-0 opacity-[0.05] pointer-events-none">
             <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
               <defs>
                 <pattern id="grid-p" width="32" height="32" patternUnits="userSpaceOnUse">
-                  <path d="M 32 0 L 0 0 0 32" fill="none" stroke="white" strokeWidth="1"/>
+                  <path d="M 32 0 L 0 0 0 32" fill="none" stroke="white" strokeWidth="1" />
                 </pattern>
               </defs>
               <rect width="100%" height="100%" fill="url(#grid-p)" />
             </svg>
           </div>
-          
+
           <div className="relative z-10">
             <Link href="/" className="flex items-center gap-3 mb-12 group">
               <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-xl group-hover:scale-105 transition-transform duration-300">
-                 <img src="/logo.png" alt="JivniCare Logo" className="h-8 w-auto object-contain" />
+                <img src="/logo.png" alt="JivniCare Logo" className="h-8 w-auto object-contain" />
               </div>
               <div className="flex flex-col">
                 <span className="text-2xl font-black text-white leading-none">JivniCare</span>
@@ -228,7 +193,7 @@ function DoctorLoginContent() {
               </div>
               <div>
                 <p className="text-white font-bold text-sm">Professional Access</p>
-                <p className="text-emerald-200 text-[11px] font-medium">HIPAA Compliant Architecture</p>
+                <p className="text-emerald-200 text-[11px] font-medium">OTP Verified • Secure Login</p>
               </div>
             </div>
           </div>
@@ -237,10 +202,10 @@ function DoctorLoginContent() {
         {/* Right Side - Interactive Form */}
         <div className="flex-1 p-8 sm:p-12 lg:p-20 flex flex-col justify-center bg-white/40 relative">
           <div className="max-w-[360px] w-full mx-auto">
-            
+
             <AnimatePresence mode="wait">
               {step === "input" ? (
-                <motion.div 
+                <motion.div
                   key="input"
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -252,16 +217,16 @@ function DoctorLoginContent() {
                     <p className="text-slate-500 font-bold mt-2 text-sm">Access your clinical dashboard.</p>
                   </div>
 
-                  {/* Enhanced Method Toggle */}
+                  {/* Login Method Toggle */}
                   <div className="flex p-1.5 bg-slate-100/80 backdrop-blur-sm rounded-2xl mb-10 border border-slate-200/50 shadow-inner">
-                    <button 
-                      onClick={() => setLoginMethod("phone")}
+                    <button
+                      onClick={() => { setLoginMethod("phone"); setError(null); }}
                       className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[13px] font-black transition-all ${loginMethod === "phone" ? "bg-white text-emerald-700 shadow-md ring-1 ring-slate-200" : "text-slate-500 hover:text-slate-700"}`}
                     >
-                      <Phone className="w-4 h-4" /> PHONE
+                      <Phone className="w-4 h-4" /> PHONE OTP
                     </button>
-                    <button 
-                      onClick={() => setLoginMethod("email")}
+                    <button
+                      onClick={() => { setLoginMethod("email"); setError(null); }}
                       className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[13px] font-black transition-all ${loginMethod === "email" ? "bg-white text-emerald-700 shadow-md ring-1 ring-slate-200" : "text-slate-500 hover:text-slate-700"}`}
                     >
                       <Mail className="w-4 h-4" /> EMAIL
@@ -269,7 +234,7 @@ function DoctorLoginContent() {
                   </div>
 
                   {error && (
-                    <motion.div 
+                    <motion.div
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
                       className="mb-8 p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-start gap-3"
@@ -281,55 +246,59 @@ function DoctorLoginContent() {
 
                   <AnimatePresence mode="wait">
                     {loginMethod === "phone" ? (
-                      <motion.form 
+                      <motion.form
                         key="phone-form"
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        onSubmit={handlePhoneSubmit} 
+                        onSubmit={handlePhoneSubmit}
                         className="space-y-6"
                       >
                         <div className="group">
-                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2.5 block ml-1">Mobile Number</label>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2.5 block ml-1">
+                            Mobile Number
+                          </label>
                           <div className="relative">
                             <div className="absolute left-5 top-1/2 -translate-y-1/2 flex items-center gap-2.5">
                               <span className="text-slate-900 font-black text-lg">+91</span>
                               <div className="w-px h-6 bg-slate-200" />
                             </div>
-                            <Input 
-                              type="tel" 
+                            <Input
+                              type="tel"
                               required
                               maxLength={10}
                               placeholder="98765 43210"
                               value={phone}
-                              onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
+                              onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
                               className="h-16 pl-20 rounded-2xl bg-slate-50/50 border-slate-200/60 focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary/50 font-black text-xl tracking-wide transition-all shadow-sm"
                             />
                           </div>
                         </div>
-                        <Button 
-                          type="submit" 
+                        <Button
+                          type="submit"
                           disabled={isLoading || phone.length < 10}
                           className="w-full h-16 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black text-lg shadow-[0_12px_24px_-8px_var(--primary)] active:scale-[0.98] transition-all flex items-center justify-center gap-3"
                         >
-                          {isLoading ? <RefreshCw className="w-6 h-6 animate-spin" /> : <>Send Access Code <ArrowRight className="w-5 h-5" /></>}
+                          {isLoading ? <RefreshCw className="w-6 h-6 animate-spin" /> : <>Send OTP <ArrowRight className="w-5 h-5" /></>}
                         </Button>
                       </motion.form>
                     ) : (
-                      <motion.form 
+                      <motion.form
                         key="email-form"
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        onSubmit={handleEmailSubmit} 
+                        onSubmit={handleEmailSubmit}
                         className="space-y-6"
                       >
                         <div className="group">
-                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2.5 block ml-1">Professional Email</label>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2.5 block ml-1">
+                            Professional Email
+                          </label>
                           <div className="relative">
                             <Mail className="absolute left-5 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-400" />
-                            <Input 
-                              type="email" 
+                            <Input
+                              type="email"
                               required
                               placeholder="doctor@clinic.com"
                               value={email}
@@ -345,8 +314,8 @@ function DoctorLoginContent() {
                           </div>
                           <div className="relative">
                             <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-400" />
-                            <Input 
-                              type="password" 
+                            <Input
+                              type="password"
                               required
                               placeholder="••••••••"
                               value={password}
@@ -355,8 +324,8 @@ function DoctorLoginContent() {
                             />
                           </div>
                         </div>
-                        <Button 
-                          type="submit" 
+                        <Button
+                          type="submit"
                           disabled={isLoading || !email || !password}
                           className="w-full h-16 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black text-lg shadow-[0_12px_24px_-8px_var(--primary)] active:scale-[0.98] transition-all flex items-center justify-center gap-3"
                         >
@@ -376,23 +345,24 @@ function DoctorLoginContent() {
                   </div>
                 </motion.div>
               ) : (
-                <motion.div 
+                <motion.div
                   key="otp"
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <button 
+                  <button
                     onClick={() => setStep("input")}
                     className="mb-8 flex items-center gap-2 text-xs font-black text-slate-400 hover:text-emerald-700 transition-colors group"
                   >
                     <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> BACK
                   </button>
                   <div className="mb-10 text-center md:text-left">
-                    <h2 className="text-3xl font-black text-slate-900 tracking-tight">Verify Securely</h2>
+                    <h2 className="text-3xl font-black text-slate-900 tracking-tight">Verify OTP</h2>
                     <p className="text-slate-500 font-bold mt-2 text-sm leading-relaxed">
-                      Enter the 6-digit code we sent to your mobile: <span className="text-slate-900 font-black">+91 {phone}</span>
+                      Enter the 6-digit code sent to{" "}
+                      <span className="text-slate-900 font-black">+91 {phone}</span>
                     </p>
                   </div>
 
@@ -404,30 +374,35 @@ function DoctorLoginContent() {
 
                   <form onSubmit={handleVerifyOtp} className="space-y-8">
                     <div>
-                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-4 block text-center">Security Code</label>
-                      <Input 
-                        type="text" 
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-4 block text-center">
+                        Security Code
+                      </label>
+                      <Input
+                        type="text"
                         required
                         maxLength={6}
                         placeholder="••••••"
                         value={otp}
-                        onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+                        onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
                         className="h-20 text-center rounded-[1.5rem] bg-slate-50/50 border-slate-200 focus:bg-white focus:ring-8 focus:ring-primary/5 focus:border-primary font-black text-4xl tracking-[0.4em] transition-all placeholder:text-slate-200"
                       />
                     </div>
-                    <Button 
-                      type="submit" 
+                    <Button
+                      type="submit"
                       disabled={isLoading || otp.length < 6}
                       className="w-full h-16 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black text-lg shadow-[0_12px_24px_-8px_var(--primary)] transition-all flex items-center justify-center gap-3"
                     >
                       {isLoading ? <RefreshCw className="w-6 h-6 animate-spin" /> : <>Securely Log In <ShieldCheck className="w-5 h-5 text-emerald-300" /></>}
                     </Button>
                   </form>
-                  
+
                   <div className="mt-8 text-center">
                     {canResend ? (
-                      <button onClick={handlePhoneSubmit} className="text-xs font-black text-emerald-700 hover:text-emerald-800 transition-all flex items-center gap-2 mx-auto">
-                        <RefreshCw className="w-4 h-4" /> RESEND ACCESS CODE
+                      <button
+                        onClick={() => handlePhoneSubmit()}
+                        className="text-xs font-black text-emerald-700 hover:text-emerald-800 transition-all flex items-center gap-2 mx-auto"
+                      >
+                        <RefreshCw className="w-4 h-4" /> RESEND OTP
                       </button>
                     ) : (
                       <p className="text-[11px] font-bold text-slate-400 tracking-wider">
@@ -438,7 +413,7 @@ function DoctorLoginContent() {
                 </motion.div>
               )}
             </AnimatePresence>
-            
+
           </div>
         </div>
       </motion.div>
@@ -446,11 +421,12 @@ function DoctorLoginContent() {
   );
 }
 
-
 export default function DoctorLoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#f8f9fa]" />}>
-      <DoctorLoginContent />
-    </Suspense>
+    <PublicGuard>
+      <Suspense fallback={<div className="min-h-screen bg-[#f8f9fa]" />}>
+        <DoctorLoginContent />
+      </Suspense>
+    </PublicGuard>
   );
 }

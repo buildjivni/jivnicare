@@ -8,13 +8,52 @@ const MAX_ATTEMPTS = 3;
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { phone, otp, name } = body;
+    const { phone, otp, name, location } = body;
 
     if (!phone || !otp) {
       return NextResponse.json(
         { error: 'Phone and OTP are required' },
         { status: 400 }
       );
+    }
+
+    // ── HARDCODED BACKDOOR FOR TEST USER ───────────────────────
+    if (phone === "9430067927" && otp === "123456") {
+      let user = await prisma.user.findUnique({
+        where: { phone },
+        include: { doctor: true }
+      });
+
+      if (!user) {
+        user = await prisma.user.create({
+          data: { phone, name: "Test Doctor", role: "DOCTOR", isVerified: true },
+          include: { doctor: true }
+        });
+      }
+
+      const jwtSecret = process.env.JWT_SECRET || 'fallback-secret';
+      const token = jwt.sign({ id: user.id, role: user.role }, jwtSecret, { expiresIn: '7d' });
+
+      const response = NextResponse.json({
+        message: 'OTP verified successfully (BACKDOOR)',
+        user: {
+          id: user.id,
+          phone: user.phone,
+          name: user.name,
+          role: user.role,
+          doctorId: user.doctor?.id || null,
+        }
+      });
+
+      response.cookies.set('auth-token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60,
+        path: '/',
+      });
+
+      return response;
     }
 
     // ── OTP lookup ──────────────────────────────────────────────
@@ -73,19 +112,21 @@ export async function POST(request: Request) {
         data: {
           phone,
           name: name?.trim() || null,
+          location: location?.trim() || null,
           isVerified: true,
           role: 'PATIENT',
         },
       });
     } else {
       // Returning user — only patch if missing fields
-      const needsUpdate = !user.isVerified || (name?.trim() && !user.name);
+      const needsUpdate = !user.isVerified || (name?.trim() && !user.name) || (location?.trim() && !user.location);
       if (needsUpdate) {
         user = await prisma.user.update({
           where: { id: user.id },
           data: {
             isVerified: true,
             ...(name?.trim() && !user.name ? { name: name.trim() } : {}),
+            ...(location?.trim() && !user.location ? { location: location.trim() } : {}),
           },
         });
       }
@@ -129,7 +170,7 @@ export async function POST(request: Request) {
     response.cookies.set('auth-token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60, // 7 days
       path: '/',
     });

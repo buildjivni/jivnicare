@@ -19,14 +19,14 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { doctorId, date } = body;
+    const { doctorId, date, location } = body;
 
     if (!doctorId || !date) {
       return NextResponse.json({ error: "Missing doctorId or date" }, { status: 400 });
     }
 
     // Call service layer
-    const newQueueToken = await QueueService.issueToken(doctorId, date, payload.id, "ONLINE");
+    const newQueueToken = await QueueService.issueToken(doctorId, date, payload.id, "ONLINE", location);
 
     return NextResponse.json({ success: true, token: newQueueToken });
   } catch (error: any) {

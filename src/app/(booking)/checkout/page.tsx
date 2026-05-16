@@ -70,9 +70,11 @@ export default function CheckoutPage() {
     setMounted(true);
   }, []);
 
+  const _hasHydrated = useAuthStore(state => state._hasHydrated);
+
   // After hydration: run auth + booking guards
   useEffect(() => {
-    if (!mounted) return;
+    if (!mounted || !_hasHydrated) return;
     const state = useBookingStore.getState();
     if (!isAuthenticated) {
       router.replace("/login?redirect=/checkout");
@@ -81,7 +83,7 @@ export default function CheckoutPage() {
     } else if (state.generatedToken) {
       router.replace("/confirmation");
     }
-  }, [mounted, router, isAuthenticated]);
+  }, [mounted, router, isAuthenticated, _hasHydrated]);
 
   if (!mounted || !doctor) return <CheckoutSkeleton />;
 
