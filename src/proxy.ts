@@ -7,7 +7,7 @@ import { verifyFirebaseSession } from '@/lib/auth/edge-verify';
  * Purpose: Centralized route protection and role-aware navigation guards.
  */
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // ── Public routes that should NEVER be auth-guarded ─────────────
