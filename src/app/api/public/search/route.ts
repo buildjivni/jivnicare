@@ -153,10 +153,18 @@ export async function GET(request: Request) {
       }
       
       // 2. Experience
-      if (sort === 'experience') return parseInt(b.experience as string) - parseInt(a.experience as string);
+      if (sort === 'experience') {
+        const expA = Number(a.experience) || 0;
+        const expB = Number(b.experience) || 0;
+        return expB - expA;
+      }
       
       // 3. Fee (Low to High)
-      if (sort === 'fee_low') return parseInt((a.fee as string).replace(/\D/g, '')) - parseInt((b.fee as string).replace(/\D/g, ''));
+      if (sort === 'fee_low') {
+        const feeA = Number(String(a.fee).replace(/\D/g, '')) || 0;
+        const feeB = Number(String(b.fee).replace(/\D/g, '')) || 0;
+        return feeA - feeB;
+      }
       
       // 4. Wait Time (Only for active queues)
       if (sort === 'wait_time') {

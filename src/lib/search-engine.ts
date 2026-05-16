@@ -9,7 +9,8 @@ import type { Doctor } from "@/types";
 
 // ── 1. TEXT NORMALIZATION ────────────────────────────────────────────────────
 
-export function normalize(text: string): string {
+export function normalize(text: string | null | undefined): string {
+  if (!text) return "";
   return text
     .toLowerCase()
     .trim()
