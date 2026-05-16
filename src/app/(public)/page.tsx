@@ -4,8 +4,7 @@ import {
   TrustSection, 
   CtaBannerSection, 
   SpecialtiesSection, 
-  VerifiedDoctorsSection,
-  TrustedBySection,
+  VerifiedDoctorsSection
 } from "@/components/home";
 import { HelpEcosystem } from "@/components/trust/HelpEcosystem";
 import prisma from "@/lib/prisma";
@@ -39,11 +38,6 @@ export default async function Home() {
       
       {/* ── AVAILABLE DOCTORS (Now Primary Discovery) ── */}
       <VerifiedDoctorsSection doctors={featuredDoctors} />
-
-      {/* ── TRUSTED HOSPITALS ── */}
-      <div className="border-y border-slate-100 bg-white">
-        <TrustedBySection />
-      </div>
 
       {/* ── TRUST & INTEGRITY ── */}
       <div className="bg-accent/30 py-16 md:py-24 border-y border-accent/20">
