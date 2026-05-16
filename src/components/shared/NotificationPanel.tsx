@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Bell, BellDot, BadgeCheck, ShieldAlert, AlertTriangle, Info, X, CheckCheck } from "lucide-react";
+import { Bell, BellDot, ShieldCheck, ShieldAlert, AlertTriangle, Info, X, CheckCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Notification {
@@ -14,11 +14,11 @@ interface Notification {
 }
 
 const TYPE_ICONS: Record<string, React.ReactNode> = {
-  VERIFICATION_APPROVED: <BadgeCheck className="w-4 h-4 text-emerald-500" />,
+  VERIFICATION_APPROVED: <ShieldCheck className="w-4 h-4 text-emerald-500" />,
   VERIFICATION_REJECTED: <ShieldAlert className="w-4 h-4 text-red-500" />,
   VERIFICATION_SUSPENDED: <AlertTriangle className="w-4 h-4 text-amber-500" />,
   MODERATION_PENDING: <AlertTriangle className="w-4 h-4 text-amber-500" />,
-  PROFILE_UPDATED: <BadgeCheck className="w-4 h-4 text-primary" />,
+  PROFILE_UPDATED: <ShieldCheck className="w-4 h-4 text-primary" />,
   PLATFORM_ALERT: <Info className="w-4 h-4 text-slate-500" />,
   ADMIN_ALERT: <AlertTriangle className="w-4 h-4 text-red-500" />,
   ENGAGEMENT_ALERT: <Info className="w-4 h-4 text-primary" />,
@@ -45,7 +45,7 @@ async function apiFetch(path: string, token: string, opts?: RequestInit) {
   return res.json();
 }
 
-export function NotificationBell({ token }: { token?: string | null }) {
+export function NotificationPanel({ token }: { token?: string | null }) {
   const [open, setOpen] = useState(false);
   const [unread, setUnread] = useState(0);
   const [notifications, setNotifications] = useState<Notification[]>([]);

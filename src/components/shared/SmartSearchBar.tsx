@@ -254,8 +254,8 @@ export function SmartSearchBar({
           onKeyDown={handleKey}
           placeholder={activePlaceholder}
           className={cn(
-            "flex-1 w-full min-w-0 bg-transparent outline-none text-slate-900 placeholder:text-slate-400 placeholder:transition-all",
-            compact ? "text-sm" : "text-base md:text-[15px] font-medium"
+            "flex-1 w-full min-w-0 h-full bg-transparent outline-none text-slate-900 placeholder:text-slate-400 placeholder:transition-all px-1",
+            compact ? "text-[13px] md:text-sm" : "text-base md:text-[15px] font-medium"
           )}
           autoComplete="off"
           spellCheck={false}
@@ -271,11 +271,11 @@ export function SmartSearchBar({
         {query && (
           <button
             onClick={() => { setQuery(""); setSuggestions([]); setHighlightIdx(-1); inputRef.current?.focus(); }}
-            className="p-1.5 mr-1 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors shrink-0"
+            className="w-7 h-7 flex items-center justify-center mr-1 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors shrink-0"
             aria-label="Clear search"
             tabIndex={-1}
           >
-            <X className="w-4 h-4" />
+            <X className="w-3.5 h-3.5" />
           </button>
         )}
 
@@ -283,18 +283,18 @@ export function SmartSearchBar({
         <button
           onClick={() => doSearch(query)}
           className={cn(
-            "shrink-0 mr-2 font-bold text-white rounded-[14px] transition-all duration-150 active:scale-95",
+            "shrink-0 mr-1.5 font-bold text-white rounded-[10px] md:rounded-[12px] transition-all duration-150 active:scale-95 flex items-center justify-center",
             compact
-              ? "px-4 py-2 text-xs"
-              : "px-5 md:px-7 py-2.5 text-sm flex items-center gap-2",
+              ? "w-8 h-8 md:w-9 md:h-9"
+              : "px-5 md:px-7 py-2.5 text-sm gap-2",
             isEmergency
-              ? "bg-red-500 hover:bg-red-600 shadow-md shadow-red-200"
-              : "bg-primary hover:bg-primary/90 shadow-md shadow-primary/25"
+              ? "bg-red-500 hover:bg-red-600 shadow-sm"
+              : "bg-primary hover:bg-primary/90 shadow-sm"
           )}
           aria-label="Search"
         >
           {compact
-            ? <Search className="w-4 h-4" />
+            ? <Search className="w-3.5 h-3.5 md:w-4 md:h-4" />
             : <><Search className="w-4 h-4" /><span className="hidden sm:inline">Search</span></>
           }
         </button>

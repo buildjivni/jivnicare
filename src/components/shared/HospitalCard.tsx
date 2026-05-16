@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, BadgeCheck, Zap, MapPin, Star, Phone, Stethoscope } from "lucide-react";
+import { Building2, ShieldCheck, Zap, MapPin, Star, Phone, Stethoscope } from "lucide-react";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -42,7 +42,7 @@ export function HospitalCard({ hospital }: HospitalCardProps) {
               <div className="flex items-center gap-1.5 mb-1 flex-wrap">
                 {hospital.verified && (
                   <div className="flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full">
-                    <BadgeCheck className="w-3 h-3" /> Verified
+                    <ShieldCheck className="w-3 h-3" /> Verified
                   </div>
                 )}
                 {hospital.emergency && (

@@ -26,7 +26,7 @@ export function mapPrismaDoctorToUI(doc: any): UIDoctor {
     videoFee: `₹${doc.consultationFee || 300}`,
     image: doc.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(doc.name)}&background=5298D2&color=fff`,
     clinicImage: doc.clinicImage,
-    bgImage: "https://images.unsplash.com/photo-1551076805-e1869033e53b?q=80&w=1200",
+    bgImage: "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?q=80&w=1200",
     available: "Available Today",
     availabilityStatus: isQueueActive ? `Available in ${waitMinutes} mins` : "OPD Open",
     isQueueActive,

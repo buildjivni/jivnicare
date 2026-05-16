@@ -253,21 +253,31 @@ function PatientLoginContent() {
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.3, ease: "easeOut" }}
                 >
-                  <div className="mb-10 text-center md:text-left">
-                    <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mb-6 mx-auto md:mx-0 shadow-sm border border-blue-100/50">
-                      <UserIcon className="w-7 h-7 text-primary" />
+                  <div className="mb-10 text-center relative flex flex-col items-center">
+                    <div className="w-full flex justify-between items-center mb-6">
+                      <Link 
+                        href="/"
+                        className="flex items-center justify-center p-2 rounded-full bg-slate-50 text-slate-500 hover:text-primary hover:bg-slate-100 transition-all group"
+                      >
+                        <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+                      </Link>
                     </div>
-                    <h2 className="text-3xl font-black text-slate-900 tracking-tight">Welcome</h2>
-                    <p className="text-slate-500 font-bold mt-2 text-sm">Enter your mobile number to log in or sign up safely.</p>
+
+                    <img src="/logo.png" alt="JivniCare" className="h-16 w-auto object-contain mb-6" />
+                    <h2 className="text-4xl font-black text-slate-900 tracking-tight">Welcome</h2>
+                    <p className="text-slate-500 font-bold mt-3 text-base">Enter your mobile number to log in or sign up safely.</p>
                   </div>
 
                   {error && (
                     <motion.div 
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      className="mb-8 p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-start gap-3"
+                      className="mb-8 p-5 bg-rose-50 border border-rose-100 rounded-3xl flex items-start gap-3 shadow-sm"
                     >
-                      <p className="text-xs font-bold text-rose-800 leading-relaxed">{error}</p>
+                      <div className="w-5 h-5 rounded-full bg-rose-500 flex items-center justify-center shrink-0 mt-0.5">
+                        <span className="text-[10px] font-black text-white">!</span>
+                      </div>
+                      <p className="text-[13px] font-black text-rose-800 leading-relaxed">{error}</p>
                     </motion.div>
                   )}
 
@@ -315,15 +325,19 @@ function PatientLoginContent() {
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <button 
-                    onClick={() => setStep("phone")}
-                    className="mb-8 flex items-center gap-2 text-xs font-black text-slate-400 hover:text-primary transition-colors group"
-                  >
-                    <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> CHANGE NUMBER
-                  </button>
-                  <div className="mb-10 text-center md:text-left">
+                  <div className="mb-10 text-center relative flex flex-col items-center">
+                    <div className="w-full flex justify-between items-center mb-6">
+                      <button 
+                        onClick={() => setStep("phone")}
+                        className="flex items-center justify-center p-2 rounded-full bg-slate-50 text-slate-500 hover:text-primary hover:bg-slate-100 transition-all group"
+                      >
+                        <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+                      </button>
+                    </div>
+
+                    <img src="/logo.png" alt="JivniCare" className="h-16 w-auto object-contain mb-6" />
                     <h2 className="text-3xl font-black text-slate-900 tracking-tight">Create Identity</h2>
-                    <p className="text-slate-500 font-bold mt-2 text-sm">We couldn&apos;t find an account for +91 {phone}.</p>
+                    <p className="text-slate-500 font-bold mt-2 text-base italic">We couldn&apos;t find an account for <span className="text-primary">+91 {phone}</span></p>
                   </div>
 
                   <form onSubmit={handleNameSubmit} className="space-y-6">
@@ -334,7 +348,7 @@ function PatientLoginContent() {
                         <Input 
                           type="text" 
                           required
-                          placeholder="Dr. Rajesh Kumar"
+                          placeholder="Your Name"
                           value={name}
                           onChange={(e) => setName(e.target.value)}
                           className="h-16 pl-14 rounded-2xl bg-slate-50/50 border-slate-200/60 focus:bg-white focus:ring-4 focus:ring-primary/5 focus:border-primary font-black text-lg transition-all"
@@ -362,16 +376,20 @@ function PatientLoginContent() {
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <button 
-                    onClick={() => setStep(confirmationResult ? "phone" : "name")}
-                    className="mb-8 flex items-center gap-2 text-xs font-black text-slate-400 hover:text-primary transition-colors group"
-                  >
-                    <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> BACK
-                  </button>
-                  <div className="mb-10 text-center md:text-left">
-                    <h2 className="text-3xl font-black text-slate-900 tracking-tight">Verify Securely</h2>
-                    <p className="text-slate-500 font-bold mt-2 text-sm leading-relaxed">
-                      Enter the 6-digit code we sent to your mobile: <span className="text-slate-900 font-black">+91 {phone}</span>
+                  <div className="mb-10 text-center relative flex flex-col items-center">
+                    <div className="w-full flex justify-between items-center mb-6">
+                      <button 
+                        onClick={() => setStep(confirmationResult ? "phone" : "name")}
+                        className="flex items-center justify-center p-2 rounded-full bg-slate-50 text-slate-500 hover:text-primary hover:bg-slate-100 transition-all group"
+                      >
+                        <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+                      </button>
+                    </div>
+
+                    <img src="/logo.png" alt="JivniCare" className="h-16 w-auto object-contain mb-6" />
+                    <h2 className="text-4xl font-black text-slate-900 tracking-tight">Verify</h2>
+                    <p className="text-slate-500 font-bold mt-2 text-base leading-relaxed">
+                      Enter code sent to <span className="text-slate-900 font-black">+91 {phone}</span>
                     </p>
                   </div>
 

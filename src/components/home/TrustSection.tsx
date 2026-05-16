@@ -29,7 +29,7 @@ export function TrustSection() {
               <span className="text-primary">Built on Trust.</span>
             </h2>
             <p className="text-base md:text-lg text-slate-500 leading-relaxed mb-10 max-w-lg font-medium">
-              We understand that healthcare is personal. JivniCare ensures every doctor is verified and every appointment is handled with professional care.
+              We understand that healthcare is personal. <span className="text-primary font-black">Jivni</span><span className="text-secondary font-black">Care</span> ensures every doctor is verified and every appointment is handled with professional care.
             </p>
             
             <div className="space-y-6">
@@ -90,7 +90,7 @@ export function TrustSection() {
                   <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm relative group hover:shadow-md transition-all">
                     <div className="absolute top-6 right-6 text-slate-100 group-hover:text-primary/10 transition-colors"><Quote className="w-10 h-10" /></div>
                     <p className="text-slate-700 text-base font-bold leading-relaxed italic mb-6 relative z-10">
-                      "Highly professional doctors. The JivniCare verification badge gives me trust that my health is in safe hands."
+                      "Highly professional doctors. The <span className="text-primary font-black">Jivni</span><span className="text-secondary font-black">Care</span> verification badge gives me trust that my health is in safe hands."
                     </p>
                     <div className="flex items-center gap-3">
                        <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-sm font-black text-white">SP</div>
