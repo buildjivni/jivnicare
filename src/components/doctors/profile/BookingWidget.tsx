@@ -5,6 +5,7 @@ import { Stethoscope, Video, Users, Clock, Activity, Shield, CheckCircle2, Zap }
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import type { Doctor } from "@/types";
+import { trackEvent } from "@/lib/analytics";
 
 interface BookingWidgetProps {
   doctor: Doctor;
@@ -172,7 +173,10 @@ export function BookingWidget({
           {/* ── Book CTA — Desktop ── */}
           <div className="hidden md:block">
             <Button
-              onClick={onBook}
+              onClick={() => {
+                trackEvent("booking_initiated", { doctorId: doctor.id, service: selectedService, fee });
+                onBook();
+              }}
               disabled={!isAvailableToday || isNavigating}
               className={[
                 "w-full h-12 rounded-[14px] text-[14px] font-bold",
