@@ -12,7 +12,7 @@ export function PublicGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (_hasHydrated) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+       
       setMounted(true);
     }
   }, [_hasHydrated]);

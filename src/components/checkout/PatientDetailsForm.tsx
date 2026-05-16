@@ -31,7 +31,7 @@ export function PatientDetailsForm() {
         setPatientDetails(prefill);
       }
     }
-  }, [authUser]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [authUser]);  
 
   const focusProps = (name: string) => ({
     onFocus: () => setFocused(name),

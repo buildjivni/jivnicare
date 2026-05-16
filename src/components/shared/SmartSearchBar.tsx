@@ -90,7 +90,7 @@ export function SmartSearchBar({
     if (focused) return;
     const t = setInterval(() => setPhIdx(i => (i + 1) % PLACEHOLDERS.length), 2800);
     return () => clearInterval(t);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [focused]);
 
   // Load trending + recents on mount
@@ -105,13 +105,13 @@ export function SmartSearchBar({
   // Sync with URL
   useEffect(() => {
     const q = searchParams?.get("q") || searchParams?.get("query") || "";
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+     
     if (q) setQuery(q);
   }, [searchParams]);
 
   // Generate suggestions
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+     
     setSuggestions([]);
     if (!focused || debouncedQuery.length < 1) return;
     setIsLoading(true);

@@ -19,7 +19,7 @@ export default function ConfirmationPage() {
   const resetBooking = useBookingStore(state => state.resetBooking);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+     
     setMounted(true);
     
     // Hydrate from localStorage if store is empty (e.g. after hard refresh)
