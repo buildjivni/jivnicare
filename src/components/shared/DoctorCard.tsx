@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
-  Star, MapPin, Clock, BadgeCheck,
+  Star, MapPin, Clock, ShieldCheck,
   ChevronRight, Users, Zap, Activity, Shield,
   Globe, Video, GraduationCap
 } from "lucide-react";
@@ -180,7 +180,7 @@ export function DoctorCard({ doctor, className }: DoctorCardProps) {
             <h3 className="text-[17px] font-black text-slate-900 leading-tight group-hover:text-[#205E98] transition-colors">
               Dr. {doctor.name}
             </h3>
-            <BadgeCheck className="w-4 h-4 text-[#205E98]" />
+            <ShieldCheck className="w-4 h-4 text-[#205E98]" />
           </div>
           <div className="flex items-center gap-1.5 text-[13px] font-bold text-[#205E98]">
             <span>{doctor.specialty}</span>
@@ -249,17 +249,20 @@ export function DoctorCard({ doctor, className }: DoctorCardProps) {
               </span>
             </div>
 
-            <div className="flex-1 max-w-[150px] relative z-40">
+            <div className="flex-1 max-w-[160px] relative z-40">
               <button
                 className={cn(
-                  "w-full h-12 rounded-xl bg-primary text-primary-foreground font-bold text-sm",
-                  "flex items-center justify-center gap-1.5 shadow-sm",
-                  "hover:bg-primary/90 hover:shadow-md active:scale-[0.98]",
-                  "transition-all duration-200"
+                  "w-full h-12 rounded-xl bg-primary text-white font-black text-sm",
+                  "flex items-center justify-center gap-1.5 shadow-[0_4px_14px_0_rgba(82,152,210,0.39)]",
+                  "hover:bg-[#4382B5] hover:shadow-[0_6px_20px_rgba(82,152,210,0.23)] active:scale-[0.98]",
+                  "transition-all duration-300 ring-4 ring-primary/10 overflow-hidden relative group"
                 )}
               >
-                Book Visit
-                <ChevronRight className="w-4 h-4" />
+                <span className="absolute inset-0 w-full h-full -mt-1 rounded-lg opacity-30 bg-gradient-to-b from-transparent via-transparent to-black pointer-events-none" />
+                <span className="relative flex items-center justify-center gap-1.5 z-10">
+                  Book Appointment
+                  <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </span>
               </button>
             </div>
           </div>

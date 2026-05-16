@@ -28,6 +28,7 @@ const nextConfig: NextConfig = {
         pathname: '/patterns/**',
       },
     ],
+    dangerouslyAllowSVG: true,
   },
 
   // ── TypeScript ─────────────────────────────────────────────────────────────
@@ -57,16 +58,16 @@ const nextConfig: NextConfig = {
           },
         ],
       },
-      {
-        // Long-lived cache for immutable static assets
-        source: "/_next/static/(.*)",
-        headers: [
-          {
-            key: "Cache-Control",
-            value: "public, max-age=31536000, immutable",
-          },
-        ],
-      },
+      // {
+      //   // Long-lived cache for immutable static assets
+      //   source: "/_next/static/(.*)",
+      //   headers: [
+      //     {
+      //       key: "Cache-Control",
+      //       value: "public, max-age=31536000, immutable",
+      //     },
+      //   ],
+      // },
     ];
   },
 

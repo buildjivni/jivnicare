@@ -4,7 +4,7 @@ import {
   TrustSection, 
   CtaBannerSection, 
   SpecialtiesSection, 
-  AvailableDoctorsSection,
+  VerifiedDoctorsSection,
   TrustedBySection,
 } from "@/components/home";
 import { HelpEcosystem } from "@/components/trust/HelpEcosystem";
@@ -37,23 +37,27 @@ export default async function Home() {
     <main className="flex flex-col min-h-screen w-full max-w-full overflow-x-hidden box-border bg-white">
       <HeroSection />
       
+      {/* ── AVAILABLE DOCTORS (Now Primary Discovery) ── */}
+      <VerifiedDoctorsSection doctors={featuredDoctors} />
+
       {/* ── TRUSTED HOSPITALS ── */}
       <div className="border-y border-slate-100 bg-white">
         <TrustedBySection />
       </div>
 
-      <div className="bg-slate-50/30">
-        <SpecialtiesSection specialties={specialties} />
-      </div>
-
-      <HowItWorksSection />
-      
-      <AvailableDoctorsSection doctors={featuredDoctors} />
-      
+      {/* ── TRUST & INTEGRITY ── */}
       <div className="bg-accent/30 py-16 md:py-24 border-y border-accent/20">
         <TrustSection />
       </div>
 
+      {/* ── SPECIALTIES (Secondary Discovery) ── */}
+      <div className="bg-slate-50/30">
+        <SpecialtiesSection specialties={specialties} />
+      </div>
+
+      {/* ── HOW IT WORKS ── */}
+      <HowItWorksSection />
+      
       <div className="container mx-auto px-4 max-w-5xl py-16 md:py-24">
         <HelpEcosystem />
       </div>

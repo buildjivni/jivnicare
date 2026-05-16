@@ -20,11 +20,9 @@ export function WhyJivniCareSection() {
             <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/5 text-primary text-xs font-bold uppercase tracking-widest mb-6">
               <Shield className="w-4 h-4" /> Trusted Healthcare
             </span>
-            <h2 className="text-3xl md:text-5xl font-black tracking-tight text-slate-900 mb-6 leading-tight">
+            <h2 className="text-3xl md:text-6xl font-black tracking-tight text-slate-900 mb-8 leading-[1.05]">
               Why Choose <br className="hidden md:block" />
-              <span className="inline-block relative text-primary">
-                JivniCare
-              </span>
+              <span className="text-primary">Jivni</span><span className="text-secondary">Care</span>?
             </h2>
             <p className="text-base md:text-lg text-slate-600 leading-relaxed font-medium">
               Skip the waiting room. We connect you with top-rated, verified doctors in your city so you can get care quickly and safely.
@@ -80,7 +78,7 @@ export function WhyJivniCareSection() {
                 icon: <ShieldCheck className="w-6 h-6 text-[#258C54]" />,
                 bg: "bg-emerald-50/80",
                 title: "100% Verified Doctors",
-                desc: <>We strictly verify the credentials of every doctor on <strong>JivniCare</strong>. Your safety and health are our top priorities.</>,
+                desc: <>We strictly verify the credentials of every doctor on <span className="text-primary font-black">Jivni</span><span className="text-secondary font-black">Care</span>. Your safety and health are our top priorities.</>,
               },
               {
                 icon: <Clock className="w-6 h-6 text-amber-500" />,

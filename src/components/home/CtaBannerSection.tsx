@@ -44,7 +44,7 @@ export function CtaBannerSection() {
           Ready to See a Doctor<br className="hidden md:block" /> Today?
         </h2>
         <p className="text-lg md:text-xl text-slate-600 mb-3 max-w-2xl mx-auto leading-relaxed">
-          Join <strong className="text-slate-900">15,000+ patients</strong> who trust JivniCare. Book in under 60 seconds — free, fast, and fully secure.
+          Join <strong className="text-slate-900">15,000+ patients</strong> who trust <span className="text-primary font-black">Jivni</span><span className="text-secondary font-black">Care</span>. Book in under 60 seconds — free, fast, and fully secure.
         </p>
         <p className="text-sm text-emerald-700 font-bold mb-10 flex items-center justify-center gap-2">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse inline-block" />

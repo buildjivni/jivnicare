@@ -3,7 +3,7 @@
 import { useState } from "react";
 import {
   ShieldCheck, Star, Award, MapPin,
-  GraduationCap, BadgeCheck, Clock, Users, Activity,
+  GraduationCap, Clock, Users, Activity,
   CalendarCheck, Stethoscope, Share2, CheckCircle2, Zap
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -182,7 +182,7 @@ export function DoctorProfileView({ doctor }: DoctorProfileViewProps) {
                 {doctor.name}
               </h1>
               <span title={badge} className="shrink-0 mt-1.5 flex items-center">
-                <BadgeCheck className="w-5 h-5 text-[#205E98]" />
+                <ShieldCheck className="w-5 h-5 text-[#205E98]" />
               </span>
             </div>
 
@@ -215,9 +215,11 @@ export function DoctorProfileView({ doctor }: DoctorProfileViewProps) {
             </div>
           </div>
 
-          <div className="inline-flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-bold px-3 py-1 rounded-full mb-4">
-            <ShieldCheck className="w-3 h-3 shrink-0" />
-            {badge} · Verified by JivniCare
+          <div className="inline-flex items-center gap-2 bg-white border border-slate-100 shadow-sm text-[11px] font-black px-4 py-2 rounded-xl mb-6">
+            <img src="/logo.png" alt="" className="w-4 h-4 object-contain shrink-0" />
+            <span className="uppercase tracking-widest text-slate-400">
+               {badge} · <span className="text-primary">Jivni</span><span className="text-secondary">Care</span> Verified
+            </span>
           </div>
 
           <div className="grid grid-cols-4 gap-2 mt-1">
@@ -373,7 +375,7 @@ export function DoctorProfileView({ doctor }: DoctorProfileViewProps) {
         <CardContent className="p-4 md:p-5 space-y-4">
           <div>
             <h2 className="text-[13px] font-black text-slate-900 flex items-center gap-1.5 mb-2.5 uppercase tracking-wide">
-              <BadgeCheck className="w-4 h-4 text-[#205E98]" />
+              <ShieldCheck className="w-4 h-4 text-[#205E98]" />
               About the Doctor
             </h2>
             <p className="text-[13.5px] text-slate-600 leading-[1.7] font-medium">

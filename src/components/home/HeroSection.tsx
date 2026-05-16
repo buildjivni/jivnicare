@@ -53,8 +53,8 @@ export function HeroSection() {
             transition={{ delay: 0.1 }}
             className="text-4xl sm:text-5xl lg:text-7xl font-black tracking-tight text-slate-900 mb-6 w-full break-words leading-[1.05]"
           >
-            Find trusted doctors <br className="hidden sm:block" /> 
-            <span className="text-primary">near you, instantly.</span>
+            Book Doctor <br className="hidden sm:block" /> 
+            <span className="text-primary">Appointments.</span>
           </motion.h1>
           
           <motion.p 

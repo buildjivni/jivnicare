@@ -29,13 +29,13 @@ export function HowItWorksSection() {
   ];
 
   return (
-    <section id="how-it-works" className="py-20 md:py-32 bg-white relative overflow-hidden">
+    <section id="how-it-works" className="py-24 md:py-40 bg-white relative overflow-hidden">
       <div className="container mx-auto px-4 max-w-6xl relative z-10">
-        <div className="text-center max-w-3xl mx-auto mb-16 md:mb-24">
-          <h2 className="text-4xl md:text-6xl font-black tracking-tight text-slate-900 mb-6">
+        <div className="text-center max-w-3xl mx-auto mb-20 md:mb-28">
+          <h2 className="text-4xl md:text-7xl font-black tracking-tight text-slate-900 mb-8">
             Healthcare made <span className="text-primary">Simple.</span>
           </h2>
-          <p className="text-lg md:text-xl text-slate-500 font-medium leading-relaxed">
+          <p className="text-xl md:text-2xl text-slate-500 font-bold leading-relaxed">
             Three easy steps to get the medical care you deserve.
           </p>
         </div>
@@ -45,7 +45,7 @@ export function HowItWorksSection() {
           initial="hidden"
           whileInView="show"
           viewport={{ once: true }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12"
+          className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-20"
         >
           {STEPS.map((step, i) => (
             <motion.div 
@@ -53,14 +53,14 @@ export function HowItWorksSection() {
               variants={fadeUp}
               className="relative group flex flex-col items-center text-center"
             >
-              <div className={`w-20 h-20 rounded-[2rem] ${step.color} flex items-center justify-center mb-8 shadow-sm group-hover:scale-110 group-hover:-rotate-3 transition-all duration-500`}>
+              <div className={`w-24 h-24 rounded-[2.5rem] ${step.color} flex items-center justify-center mb-10 shadow-soft group-hover:scale-110 group-hover:-rotate-3 transition-all duration-500 ring-8 ring-white group-hover:shadow-premium`}>
                 {step.icon}
               </div>
-              <h3 className="text-2xl font-black text-slate-900 mb-4">{step.title}</h3>
-              <p className="text-slate-500 font-medium leading-relaxed px-4">{step.desc}</p>
+              <h3 className="text-3xl font-black text-slate-900 mb-6">{step.title}</h3>
+              <p className="text-lg text-slate-500 font-bold leading-relaxed px-6">{step.desc}</p>
               
               {i < 2 && (
-                <div className="hidden md:block absolute top-10 left-[70%] w-full h-[2px] bg-gradient-to-r from-slate-100 via-slate-200 to-transparent -z-10" />
+                <div className="hidden md:block absolute top-12 left-[75%] w-full h-[2px] bg-gradient-to-r from-slate-100 via-slate-200 to-transparent -z-10" />
               )}
             </motion.div>
           ))}
@@ -70,12 +70,12 @@ export function HowItWorksSection() {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="mt-20 md:mt-32 text-center"
+          className="mt-24 md:mt-40 text-center"
         >
           <Link href="/doctors">
-            <Button size="lg" className="h-14 px-10 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black text-lg shadow-floating hover:shadow-premium transition-all active:scale-95 group">
+            <Button size="lg" className="h-16 px-12 rounded-2xl bg-secondary hover:bg-secondary/90 text-white font-black text-xl shadow-floating hover:shadow-premium transition-all active:scale-95 group">
               Start Searching Now
-              <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+              <ArrowRight className="w-6 h-6 ml-3 group-hover:translate-x-2 transition-transform" />
             </Button>
           </Link>
         </motion.div>

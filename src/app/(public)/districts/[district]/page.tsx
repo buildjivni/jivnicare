@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { MapPin, Stethoscope, Building2, Zap, ChevronRight, Star, ArrowRight, BadgeCheck } from "lucide-react";
+import { MapPin, Stethoscope, Building2, Zap, ChevronRight, Star, ArrowRight, ShieldCheck } from "lucide-react";
 import { BIHAR_DISTRICTS, generateDistrictMetadata, capitalizeDistrict, HEALTHCARE_SPECIALTIES } from "@/lib/seo/metadata";
 import { districtHealthcareSchema, breadcrumbSchema, faqSchema } from "@/lib/seo/jsonld";
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -174,7 +174,7 @@ export default async function DistrictPage({ params }: PageProps) {
       <section className="container mx-auto max-w-5xl px-4 py-6">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-            <BadgeCheck className="w-5 h-5 text-emerald-500" />
+            <ShieldCheck className="w-5 h-5 text-emerald-500" />
             Top Verified Doctors
           </h2>
           <Link

@@ -10,7 +10,7 @@ import { Logo } from "@/components/brand/Logo";
 import { MobileNav } from "./MobileNav";
 import { UserProfileDropdown } from "./UserProfileDropdown";
 import { useAuthStore } from "@/store/useAuthStore";
-import { NotificationBell } from "./NotificationBell";
+import { NotificationPanel } from "./NotificationPanel";
 import { SmartSearchBar } from "./SmartSearchBar";
 import { cn } from "@/lib/utils";
 import { ShieldCheck } from "lucide-react";
@@ -73,27 +73,36 @@ export function Header() {
       >
         <div className="container mx-auto px-4 md:px-6 h-full flex items-center justify-between gap-3 max-w-7xl w-full box-border">
 
-          {/* ── MOBILE LEFT: Hamburger ── */}
-          <div className="flex lg:hidden items-center shrink-0">
-            <Button
-              aria-label="Toggle navigation menu"
-              variant="ghost"
-              size="icon"
-              className="rounded-xl w-11 h-11 text-slate-600 bg-slate-50 hover:bg-slate-100 border border-slate-100 transition-all duration-300 active:scale-95"
-              onClick={() => setMobileOpen((v) => !v)}
-            >
-              {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </Button>
-          </div>
+          {/* ── LEFT SIDE: Hamburger & Logo ── */}
+          <div className="flex items-center gap-2 md:gap-4 flex-1 lg:flex-none justify-start">
+            {/* Mobile Hamburger */}
+            <div className="flex lg:hidden items-center shrink-0">
+              <Button
+                aria-label="Toggle navigation menu"
+                variant="ghost"
+                size="icon"
+                className="rounded-xl w-11 h-11 text-slate-600 bg-slate-50 hover:bg-slate-100 border border-slate-100 transition-all duration-300 active:scale-95"
+                onClick={() => setMobileOpen((v) => !v)}
+              >
+                {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </Button>
+            </div>
 
-          {/* ── LOGO (Center on Mobile, Left on Desktop) ── */}
-          <div className={cn(
-            "flex items-center justify-center lg:justify-start shrink-0 transition-all",
-            isDoctorsPage && pathname !== "/" ? "hidden lg:flex" : "flex-1 lg:flex-none"
-          )}>
-            <Link href="/" className="flex items-center gap-2 group shrink min-w-0">
-              <Logo className="h-9 md:h-11 w-auto shrink-0 transition-transform duration-300 group-hover:scale-[1.02]" />
-            </Link>
+            {/* Logo */}
+            <div className={cn(
+              "flex items-center shrink-0 transition-all",
+              isDoctorsPage && pathname !== "/" ? "hidden lg:flex" : "flex"
+            )}>
+              <Link href="/" className="flex items-center gap-2.5 md:gap-3 group shrink min-w-0">
+                <Logo className="h-12 md:h-14 w-auto shrink-0 transition-transform duration-300 group-hover:scale-[1.02]" />
+                <div className="flex flex-col -space-y-1 pt-0.5">
+                   <span className="text-[22px] md:text-3xl font-black tracking-tight leading-none">
+                      <span className="text-primary">Jivni</span><span className="text-secondary">Care</span>
+                   </span>
+                   <span className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] pl-0.5 mt-0.5">Bihar</span>
+                </div>
+              </Link>
+            </div>
           </div>
 
           {/* ── DESKTOP NAV ───────────────────── */}
@@ -132,7 +141,7 @@ export function Header() {
           <div className="flex items-center justify-end gap-2 lg:gap-4 shrink-0">
             {isLoggedIn ? (
               <>
-                <div className="hidden lg:block"><NotificationBell token={token} /></div>
+                <div className="hidden lg:block"><NotificationPanel token={token} /></div>
                 <div className="relative" ref={profileRef}>
                   <button 
                     aria-label="User profile options"
