@@ -129,7 +129,7 @@ export function Header() {
           )}
 
           {/* ── ACTIONS (Desktop & Mobile Right) ───────────────── */}
-          <div className="flex items-center justify-end gap-2 lg:gap-3 shrink-0">
+          <div className="flex items-center justify-end gap-2 lg:gap-4 shrink-0">
             {isLoggedIn ? (
               <>
                 <div className="hidden lg:block"><NotificationBell token={token} /></div>
@@ -137,7 +137,7 @@ export function Header() {
                   <button 
                     aria-label="User profile options"
                     onClick={() => setProfileOpen(!profileOpen)}
-                    className="flex items-center justify-center w-11 h-11 rounded-full bg-primary/5 border border-primary/10 text-primary hover:bg-primary/10 hover:shadow-sm transition-all duration-300 active:scale-[0.98]"
+                    className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/5 border border-primary/10 text-primary hover:bg-primary/10 transition-all active:scale-[0.98]"
                   >
                     <User className="w-5 h-5" />
                   </button>
@@ -146,18 +146,11 @@ export function Header() {
               </>
             ) : (
               <div className="flex items-center gap-2">
-                <Link href="/partners" className="hidden xl:flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-primary transition-colors px-3">
-                  <ShieldCheck className="w-4 h-4 text-emerald-500" />
-                  Join as Doctor
-                </Link>
-                <div className="hidden xl:block w-px h-6 bg-border mx-1" />
                 <Link href="/login">
-                  {/* Desktop Login */}
-                  <Button variant="ghost" className="hidden lg:flex font-semibold text-muted-foreground hover:text-foreground">
+                  <Button variant="ghost" className="hidden lg:flex font-bold text-slate-600 hover:text-primary transition-colors">
                     Sign In
                   </Button>
-                  {/* Mobile Sign In CTA */}
-                  <Button size="sm" className="flex lg:hidden shadow-sm">
+                  <Button size="sm" className="flex lg:hidden bg-primary text-white font-bold rounded-xl shadow-md">
                     Sign In
                   </Button>
                 </Link>
@@ -165,7 +158,7 @@ export function Header() {
             )}
 
             <Link href="/doctors" className="hidden lg:block">
-              <Button aria-label="Book appointment" className="shadow-sm">
+              <Button className="bg-secondary hover:bg-secondary/90 text-white font-bold rounded-xl shadow-md">
                 Book Appointment
               </Button>
             </Link>

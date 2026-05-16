@@ -203,8 +203,8 @@ export function SmartSearchBar({
 
   return (
     <div ref={panelRef} className={cn(
-      "relative w-full transition-all duration-200", 
-      focused && "max-md:fixed max-md:inset-0 max-md:z-[200] max-md:bg-slate-50 max-md:p-4 max-md:flex max-md:flex-col",
+      "relative w-full max-w-full transition-all duration-200 box-border", 
+      focused && "max-md:fixed max-md:inset-0 max-md:z-[200] max-md:bg-white max-md:p-4 max-md:flex max-md:flex-col",
       !focused && className
     )}>
 
@@ -225,12 +225,12 @@ export function SmartSearchBar({
       <div
         className={cn(
           "relative flex items-center border-2 transition-all duration-200 shrink-0",
-          compact && !focused ? "h-11 rounded-2xl" : "h-[54px] md:h-[68px] rounded-2xl",
+          compact && !focused ? "h-11 rounded-2xl" : "h-[56px] md:h-[64px] rounded-2xl",
           focused
             ? isEmergency
-              ? "border-destructive shadow-[0_0_0_4px_rgba(239,68,68,0.12)] bg-card"
-              : "border-primary ring-4 ring-primary/10 bg-card"
-            : "border-border bg-card shadow-soft hover:border-slate-300 hover:shadow-premium",
+              ? "border-destructive shadow-[0_0_0_4px_rgba(239,68,68,0.12)] bg-white"
+              : "border-primary ring-4 ring-primary/10 bg-white"
+            : "border-slate-100 bg-white shadow-soft hover:border-slate-200 hover:shadow-premium",
         )}
       >
         {/* Left icon */}

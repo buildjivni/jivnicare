@@ -5,7 +5,7 @@ import {
   CtaBannerSection, 
   SpecialtiesSection, 
   AvailableDoctorsSection,
-  PartnerCtaSection,
+  TrustedBySection,
 } from "@/components/home";
 import { HelpEcosystem } from "@/components/trust/HelpEcosystem";
 import prisma from "@/lib/prisma";
@@ -34,20 +34,30 @@ export default async function Home() {
     : undefined;
 
   return (
-    <main className="flex flex-col min-h-screen w-full max-w-full overflow-x-hidden box-border">
+    <main className="flex flex-col min-h-screen w-full max-w-full overflow-x-hidden box-border bg-white">
       <HeroSection />
-      <TrustSection />
-      <div className="bg-slate-50/50">
+      
+      {/* ── TRUSTED HOSPITALS ── */}
+      <div className="border-y border-slate-100 bg-white">
+        <TrustedBySection />
+      </div>
+
+      <div className="bg-slate-50/30">
         <SpecialtiesSection specialties={specialties} />
       </div>
-      <AvailableDoctorsSection doctors={featuredDoctors} />
+
       <HowItWorksSection />
       
+      <AvailableDoctorsSection doctors={featuredDoctors} />
+      
+      <div className="bg-accent/30 py-16 md:py-24 border-y border-accent/20">
+        <TrustSection />
+      </div>
+
       <div className="container mx-auto px-4 max-w-5xl py-16 md:py-24">
         <HelpEcosystem />
       </div>
 
-      <PartnerCtaSection />
       <CtaBannerSection />
     </main>
   );

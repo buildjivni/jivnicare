@@ -25,12 +25,11 @@ const FOOTER_SECTIONS = [
     ],
   },
   {
-    title: "For Partners",
+    title: "Doctors & Clinics",
     links: [
-      { label: "Join as a Doctor", href: "/partners", accent: true },
+      { label: "Join JivniCare Network", href: "/partners", accent: true },
       { label: "Clinic Partnership", href: "/partners" },
-      { label: "Provider Portal", href: "/login?role=DOCTOR" },
-      { label: "Onboarding Guide", href: "/partners/onboard" },
+      { label: "Provider Dashboard", href: "/login?role=DOCTOR" },
       { label: "Partner Support", href: "mailto:partners@jivnicare.com" },
     ],
   },
@@ -47,9 +46,9 @@ const FOOTER_SECTIONS = [
 
 export function Footer() {
   return (
-    <footer className="bg-slate-950 text-slate-300 pt-16 md:pt-24 pb-12 border-t border-slate-900 relative overflow-hidden">
+    <footer className="bg-white text-slate-600 pt-16 md:pt-24 pb-12 border-t border-slate-100 relative overflow-hidden">
       {/* Background ambient glow */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-32 bg-primary/10 blur-[120px] pointer-events-none rounded-full" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-32 bg-primary/5 blur-[120px] pointer-events-none rounded-full" />
 
       <div className="container mx-auto px-4 md:px-6 max-w-7xl relative z-10">
 
@@ -109,7 +108,7 @@ export function Footer() {
           {/* Navigation Columns */}
           {FOOTER_SECTIONS.map((section) => (
             <div key={section.title} className="lg:col-span-2">
-              <h4 className="text-white font-bold mb-6 text-sm uppercase tracking-wider">{section.title}</h4>
+              <h4 className="text-slate-900 font-bold mb-6 text-sm uppercase tracking-wider">{section.title}</h4>
               <ul className="space-y-3">
                 {section.links.map((link) => {
                   const isExternal = link.href.startsWith("mailto:") || link.href.startsWith("http");
@@ -137,10 +136,10 @@ export function Footer() {
         </div>
 
         {/* Mid: Top Specialties + Contact */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-14 pt-10 border-t border-slate-900">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-14 pt-10 border-t border-slate-100">
           {/* Top Specialties */}
           <div>
-            <h4 className="text-white font-bold mb-6 text-sm uppercase tracking-wider flex items-center gap-2">
+            <h4 className="text-slate-900 font-bold mb-6 text-sm uppercase tracking-wider flex items-center gap-2">
               Top Specialties
             </h4>
             <ul className="grid grid-cols-2 gap-y-3 gap-x-4">
@@ -158,8 +157,8 @@ export function Footer() {
           </div>
 
           {/* Contact Card */}
-          <div className="bg-slate-900/60 p-6 rounded-2xl border border-slate-800 space-y-4">
-            <h4 className="text-white font-bold text-sm uppercase tracking-wider">Get in Touch</h4>
+          <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 space-y-4">
+            <h4 className="text-slate-900 font-bold text-sm uppercase tracking-wider">Get in Touch</h4>
             <ul className="space-y-3">
               <li className="flex items-start gap-3">
                 <MapPin className="w-4 h-4 text-primary shrink-0 mt-0.5" />
@@ -182,7 +181,7 @@ export function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-8 border-t border-slate-900 flex flex-col md:flex-row items-center justify-between gap-6 text-xs text-slate-500 text-center md:text-left">
+        <div className="pt-8 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-6 text-xs text-slate-400 text-center md:text-left">
           <div className="flex flex-col md:flex-row items-center gap-3">
             <p>© {new Date().getFullYear()} JivniCare Technologies Pvt. Ltd. All rights reserved.</p>
             <p className="hidden md:block text-slate-700">•</p>
