@@ -249,20 +249,19 @@ export function DoctorCard({ doctor, className }: DoctorCardProps) {
               </span>
             </div>
 
-            <div className="flex-1 max-w-[160px] relative z-40">
+            <div className="flex-1 max-w-[170px] relative z-40">
               <button
                 className={cn(
-                  "w-full h-12 rounded-xl bg-primary text-white font-black text-sm",
-                  "flex items-center justify-center gap-1.5 shadow-[0_4px_14px_0_rgba(82,152,210,0.39)]",
-                  "hover:bg-[#4382B5] hover:shadow-[0_6px_20px_rgba(82,152,210,0.23)] active:scale-[0.98]",
-                  "transition-all duration-300 ring-4 ring-primary/10 overflow-hidden relative group"
+                  "w-full h-[44px] rounded-[14px] bg-gradient-to-b from-primary to-[#4382b5] text-white font-bold text-[13px] tracking-wide",
+                  "flex items-center justify-center gap-1.5",
+                  "shadow-[0_4px_12px_rgba(82,152,210,0.25),inset_0_1px_1px_rgba(255,255,255,0.3)]",
+                  "border border-[#3c76a6]/80",
+                  "hover:brightness-105 hover:shadow-[0_6px_16px_rgba(82,152,210,0.35),inset_0_1px_1px_rgba(255,255,255,0.4)]",
+                  "active:scale-[0.98] transition-all duration-200 group"
                 )}
               >
-                <span className="absolute inset-0 w-full h-full -mt-1 rounded-lg opacity-30 bg-gradient-to-b from-transparent via-transparent to-black pointer-events-none" />
-                <span className="relative flex items-center justify-center gap-1.5 z-10">
-                  Book Appointment
-                  <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </span>
+                <span>Book Appointment</span>
+                <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform opacity-80" />
               </button>
             </div>
           </div>

@@ -46,6 +46,7 @@ interface SmartSearchBarProps {
   compact?: boolean;
   className?: string;
   innerClassName?: string;
+  disableFocusStyles?: boolean;
   onSearch?: (q: string) => void;
 }
 
@@ -56,6 +57,7 @@ export function SmartSearchBar({
   compact = false,
   className,
   innerClassName,
+  disableFocusStyles = false,
   onSearch,
 }: SmartSearchBarProps) {
   const router = useRouter();
@@ -226,14 +228,15 @@ export function SmartSearchBar({
       {/* ── INPUT CONTAINER ──────────────────────────────────────────────── */}
       <div
         className={cn(
-          "relative flex items-center border-2 transition-all duration-200 shrink-0",
+          "relative flex items-center transition-all duration-200 shrink-0",
           compact && !focused ? "h-11 rounded-2xl" : "h-[56px] md:h-[64px] rounded-2xl",
-          focused
+          disableFocusStyles ? "" : "border-2",
+          focused && !disableFocusStyles
             ? isEmergency
               ? "border-destructive shadow-[0_0_0_4px_rgba(239,68,68,0.12)] bg-white"
               : "border-primary ring-4 ring-primary/10 bg-white"
-            : "border-slate-100 bg-white shadow-soft hover:border-slate-200 hover:shadow-premium",
-          !focused && innerClassName
+            : !disableFocusStyles && "border-slate-100 bg-white shadow-soft hover:border-slate-200 hover:shadow-premium",
+          innerClassName
         )}
       >
         {/* Left icon */}
@@ -257,7 +260,7 @@ export function SmartSearchBar({
           onKeyDown={handleKey}
           placeholder={activePlaceholder}
           className={cn(
-            "flex-1 w-full min-w-0 h-full bg-transparent border-none outline-none focus:outline-none focus:ring-0 shadow-none text-slate-900 placeholder:text-slate-400 placeholder:transition-all px-1",
+            "flex-1 w-full min-w-0 h-full bg-transparent border-none outline-none focus:outline-none focus:ring-0 !outline-none focus:!outline-none focus-visible:!outline-none ring-0 focus:ring-0 focus-visible:ring-0 !shadow-none shadow-none text-slate-900 placeholder:text-slate-400 placeholder:transition-all px-1",
             compact ? "text-[13px] md:text-sm" : "text-base md:text-[15px] font-medium"
           )}
           autoComplete="off"

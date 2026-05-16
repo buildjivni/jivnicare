@@ -71,15 +71,26 @@ export function HeroSection() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="w-full max-w-3xl bg-white p-2 md:p-3 rounded-[2.5rem] shadow-floating border border-slate-100 flex flex-col md:flex-row gap-2 mb-10"
+            className="w-full max-w-4xl bg-white p-2 md:p-3 rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.08)] border border-slate-200 flex flex-col md:flex-row items-center gap-0 mb-10 relative z-20"
           >
-            <LocationSelector className="w-full md:w-auto md:min-w-[180px] shrink-0" />
-            <div className="flex-1 w-full min-w-0">
+            <LocationSelector 
+              className="w-full md:w-auto md:min-w-[220px] shrink-0" 
+              buttonClassName="border-transparent shadow-none hover:shadow-none hover:border-transparent bg-transparent hover:bg-slate-50/50"
+            />
+            
+            {/* Desktop Divider */}
+            <div className="hidden md:block w-px h-12 bg-slate-200 mx-2 shrink-0" />
+            
+            {/* Mobile Divider */}
+            <div className="md:hidden w-full h-px bg-slate-100 my-2" />
+
+            <div className="flex-1 w-full min-w-0 relative">
               <SmartSearchBar
                 district="Patna"
                 placeholder="Search doctors, symptoms..."
                 className="w-full"
-                innerClassName="border-transparent shadow-none hover:shadow-none hover:border-transparent bg-slate-50 md:h-[60px]"
+                innerClassName="border-transparent shadow-none hover:shadow-none hover:border-transparent bg-transparent md:h-[60px]"
+                disableFocusStyles={true}
               />
             </div>
           </motion.div>

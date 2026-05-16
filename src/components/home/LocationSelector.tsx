@@ -14,7 +14,7 @@ const CITIES = [
   "Purnia",
 ];
 
-export function LocationSelector({ className }: { className?: string }) {
+export function LocationSelector({ className, buttonClassName }: { className?: string, buttonClassName?: string }) {
   const [location, setLocation] = useState("Patna");
   const [isLocating, setIsLocating] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -76,7 +76,10 @@ export function LocationSelector({ className }: { className?: string }) {
       <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Current Location</span>
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-between w-full md:w-auto min-w-[200px] h-12 md:h-14 bg-white hover:bg-slate-50 border border-slate-200 hover:border-primary/30 rounded-2xl px-4 transition-all duration-200 active:scale-[0.98] shadow-sm shadow-slate-100/50"
+        className={cn(
+          "flex items-center justify-between w-full md:w-auto min-w-[200px] h-12 md:h-14 bg-white hover:bg-slate-50 border border-slate-200 hover:border-primary/30 rounded-2xl px-4 transition-all duration-200 active:scale-[0.98] shadow-sm shadow-slate-100/50",
+          buttonClassName
+        )}
         aria-label="Select location"
       >
         <div className="flex items-center gap-3 overflow-hidden">
