@@ -91,9 +91,9 @@ export function DoctorCard({ doctor, className }: DoctorCardProps) {
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -4 }}
       className={cn(
-        "relative group flex flex-col bg-white rounded-[24px] overflow-hidden",
-        "border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]",
-        "hover:shadow-[0_20px_40px_-12px_rgba(32,94,152,0.12)] hover:border-blue-100",
+        "relative group flex flex-col bg-card rounded-2xl overflow-hidden",
+        "border border-border shadow-soft",
+        "hover:shadow-premium hover:border-primary/30",
         "transition-all duration-300 ease-out h-full",
         className
       )}
@@ -116,7 +116,7 @@ export function DoctorCard({ doctor, className }: DoctorCardProps) {
         
         {/* Availability Status Chip */}
         <div className={cn(
-          "absolute top-3 right-3 z-10 flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-bold backdrop-blur-md transition-colors",
+          "absolute top-3 right-3 z-10 flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-bold uppercase tracking-wider backdrop-blur-md transition-colors",
           avail.pill
         )}>
           <span className={cn(
@@ -141,7 +141,7 @@ export function DoctorCard({ doctor, className }: DoctorCardProps) {
         {/* Avatar Overlap Row */}
         <div className="flex items-end justify-between -mt-8 mb-3 relative z-10">
           <div className="relative">
-            <div className="w-16 h-16 rounded-2xl border-[3px] border-white shadow-xl bg-white overflow-hidden ring-1 ring-slate-100">
+            <div className="w-16 h-16 rounded-2xl border-[3px] border-card shadow-premium bg-card overflow-hidden ring-1 ring-border">
               {doctor.image ? (
                 <Image
                   src={doctor.image}
@@ -249,12 +249,12 @@ export function DoctorCard({ doctor, className }: DoctorCardProps) {
               </span>
             </div>
 
-            <div className="flex-1 max-w-[140px] relative z-40">
+            <div className="flex-1 max-w-[150px] relative z-40">
               <button
                 className={cn(
-                  "w-full h-11 rounded-xl bg-[#205E98] text-white font-bold text-[13px]",
-                  "flex items-center justify-center gap-1.5 shadow-lg shadow-blue-900/10",
-                  "hover:bg-[#1a4f82] hover:shadow-blue-900/20 active:scale-[0.96]",
+                  "w-full h-12 rounded-xl bg-primary text-primary-foreground font-bold text-sm",
+                  "flex items-center justify-center gap-1.5 shadow-sm",
+                  "hover:bg-primary/90 hover:shadow-md active:scale-[0.98]",
                   "transition-all duration-200"
                 )}
               >

@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Search, X, TrendingUp, Zap, ChevronRight, MapPin, Clock,
-  Stethoscope, User, Sparkles, Mic,
+  Stethoscope, User, Sparkles, Mic, Activity, Thermometer, HeartPulse, Baby, Brain, Siren
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { generateLocalSuggestions, getTopSearches } from "@/lib/search-engine";
@@ -14,8 +14,8 @@ import type { LocalSuggestion } from "@/lib/search-engine";
 interface TrendingItem { query: string; count: number }
 
 const TYPE_META = {
-  specialty: { icon: <Stethoscope className="w-4 h-4" />, color: "text-primary bg-primary/8", label: "Specialty" },
-  symptom:   { icon: <span>🩺</span>,                     color: "text-amber-600 bg-amber-50",    label: "Symptom"  },
+  specialty: { icon: <Stethoscope className="w-4 h-4" />, color: "text-primary bg-primary/10", label: "Specialty" },
+  symptom:   { icon: <Activity className="w-4 h-4" />,    color: "text-amber-600 bg-amber-50",    label: "Symptom"  },
   doctor:    { icon: <User className="w-4 h-4" />,        color: "text-emerald-600 bg-emerald-50",label: "Doctor"   },
   location:  { icon: <MapPin className="w-4 h-4" />,      color: "text-slate-500 bg-slate-100",   label: "Location" },
 };
@@ -31,14 +31,12 @@ function useDebounce<T>(value: T, delay: number): T {
 
 // ── Quick Hints ───────────────────────────────────────────────────────────────
 const QUICK_HINTS = [
-  { label: "Bukhar / Fever",    q: "bukhar",    emoji: "🌡️" },
-  { label: "Heart Doctor",      q: "heart",     emoji: "❤️" },
-  { label: "Bachcha Doctor",    q: "bachcha",   emoji: "👶" },
-  { label: "Pet Dard / Stomach", q: "pet dard", emoji: "🫃" },
-  { label: "Sir Dard / Neuro",  q: "sir dard",  emoji: "🧠" },
-  { label: "Saans / Chest",     q: "saans",     emoji: "🫁" },
-  { label: "Daant / Dental",    q: "daant",     emoji: "🦷" },
-  { label: "Emergency",         q: "emergency", emoji: "🚨" },
+  { label: "General Physician", q: "fever",       icon: <Thermometer className="w-3.5 h-3.5" /> },
+  { label: "Cardiologist",      q: "heart",       icon: <HeartPulse className="w-3.5 h-3.5" /> },
+  { label: "Pediatrician",      q: "child",       icon: <Baby className="w-3.5 h-3.5" /> },
+  { label: "Neurologist",       q: "neuro",       icon: <Brain className="w-3.5 h-3.5" /> },
+  { label: "Dentist",           q: "dentist",     icon: <Stethoscope className="w-3.5 h-3.5" /> },
+  { label: "Emergency",         q: "emergency",   icon: <Siren className="w-3.5 h-3.5 text-destructive" /> },
 ];
 
 // ── Props ─────────────────────────────────────────────────────────────────────
@@ -79,11 +77,10 @@ export function SmartSearchBar({
 
   // Placeholder cycling
   const PLACEHOLDERS = [
-    "Search: bukhar, fever, dil dard…",
-    "Try: cardiologist, bachcha doctor…",
-    "Search hospital: paras, ruban…",
-    "Type Dr. Rakesh or skin specialist…",
-    "Search symptom: pet dard, sir dard…",
+    "Search General Physicians, Cardiologists...",
+    "Search symptoms like fever, headache...",
+    "Find Top Verified Clinics & Hospitals...",
+    "Search by doctor name (e.g. Dr. Sharma)...",
   ];
   const [phIdx, setPhIdx] = useState(0);
   useEffect(() => {
@@ -228,12 +225,12 @@ export function SmartSearchBar({
       <div
         className={cn(
           "relative flex items-center border-2 transition-all duration-200 shrink-0",
-          compact && !focused ? "h-11 rounded-2xl" : "h-[54px] md:h-[68px] rounded-[20px]",
+          compact && !focused ? "h-11 rounded-2xl" : "h-[54px] md:h-[68px] rounded-2xl",
           focused
             ? isEmergency
-              ? "border-red-400 shadow-[0_0_0_4px_rgba(239,68,68,0.12)] bg-white"
-              : "border-primary shadow-[0_0_0_4px_rgba(32,94,152,0.10)] bg-white"
-            : "border-slate-200 bg-white shadow-md hover:border-slate-300 hover:shadow-lg",
+              ? "border-destructive shadow-[0_0_0_4px_rgba(239,68,68,0.12)] bg-card"
+              : "border-primary ring-4 ring-primary/10 bg-card"
+            : "border-border bg-card shadow-soft hover:border-slate-300 hover:shadow-premium",
         )}
       >
         {/* Left icon */}
@@ -389,9 +386,9 @@ export function SmartSearchBar({
                   <button
                     key={h.q}
                     onClick={() => doSearch(h.q)}
-                    className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-50 hover:bg-primary/8 border border-slate-200 hover:border-primary/30 rounded-xl text-[10px] md:text-xs font-bold text-slate-600 hover:text-primary transition-all"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 hover:bg-primary/10 border border-border hover:border-primary/30 rounded-xl text-[11px] md:text-xs font-semibold text-muted-foreground hover:text-primary transition-all active:scale-95"
                   >
-                    <span>{h.emoji}</span>
+                    <span className="text-muted-foreground">{h.icon}</span>
                     {h.label}
                   </button>
                 ))}
@@ -460,9 +457,9 @@ export function SmartSearchBar({
                   <button
                     key={h.q}
                     onClick={() => doSearch(h.q)}
-                    className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-50 hover:bg-primary/8 border border-slate-100 hover:border-primary/20 rounded-2xl text-xs font-semibold text-slate-600 hover:text-primary transition-all"
+                    className="flex items-center gap-1.5 px-3.5 py-2 bg-muted/50 hover:bg-primary/10 border border-border hover:border-primary/30 rounded-2xl text-xs font-semibold text-muted-foreground hover:text-primary transition-all active:scale-95"
                   >
-                    <span>{h.emoji}</span>
+                    <span className="text-muted-foreground">{h.icon}</span>
                     {h.label}
                   </button>
                 ))}
