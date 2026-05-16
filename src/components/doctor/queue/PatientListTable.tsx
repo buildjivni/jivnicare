@@ -12,6 +12,7 @@ export interface PatientListItem {
   status: "Waiting" | "Served" | "Delayed" | "In-Person";
   appointmentTime: string;
   initials: string;
+  location?: string;
 }
 
 interface PatientListTableProps {
@@ -59,6 +60,7 @@ export function PatientListTable({ patients }: PatientListTableProps) {
               <th className="pb-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Patient Name</th>
               <th className="pb-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-center">Token</th>
               <th className="pb-4 text-xs font-bold text-slate-400 uppercase tracking-wider hidden md:table-cell">Appt. Time</th>
+              <th className="pb-4 text-xs font-bold text-slate-400 uppercase tracking-wider hidden lg:table-cell">Location</th>
               <th className="pb-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Status</th>
               <th className="pb-4 text-xs font-bold text-slate-400 uppercase tracking-wider hidden sm:table-cell">Type</th>
               <th className="pb-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-right">Action</th>
@@ -82,6 +84,11 @@ export function PatientListTable({ patients }: PatientListTableProps) {
                 </td>
                 <td className="py-4 hidden md:table-cell">
                   <span className="text-sm font-bold text-slate-600">{patient.appointmentTime}</span>
+                </td>
+                <td className="py-4 hidden lg:table-cell">
+                  <span className="text-sm font-bold text-slate-600 truncate max-w-[100px] block" title={patient.location || "N/A"}>
+                    {patient.location || "N/A"}
+                  </span>
                 </td>
                 <td className="py-4">
                   {getStatusBadge(patient.status)}
@@ -126,7 +133,12 @@ export function PatientListTable({ patients }: PatientListTableProps) {
                   <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-700">{patient.initials}</div>
                   <div>
                     <p className="font-bold text-slate-900">{patient.name}</p>
-                    <p className="text-xs text-slate-500">{patient.visitType} • {patient.appointmentTime}</p>
+                    <p className="text-xs text-slate-500 font-medium">{patient.visitType} • {patient.appointmentTime}</p>
+                    {patient.location && (
+                      <p className="text-[10px] font-bold text-primary flex items-center gap-1 mt-0.5">
+                        <Filter className="w-2.5 h-2.5 rotate-90" /> {patient.location}
+                      </p>
+                    )}
                   </div>
                </div>
                <div className="text-right">

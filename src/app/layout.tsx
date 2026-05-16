@@ -84,7 +84,7 @@ export const viewport: Viewport = {
   themeColor: SITE_CONFIG.themeColor,
 };
 
-import { FirebaseAuthProvider } from "@/components/providers/FirebaseAuthProvider";
+import { AuthProvider } from "@/components/providers/AuthProvider";
 import { MonitoringProvider } from "@/components/providers/MonitoringProvider";
 
 export default function RootLayout({
@@ -110,11 +110,11 @@ export default function RootLayout({
       >
         <MonitoringProvider />
         <GoogleAnalytics ga_id={process.env.NEXT_PUBLIC_GA_ID || ""} />
-        <FirebaseAuthProvider>
+        <AuthProvider>
           <div className="flex-1 flex flex-col">
             {children}
           </div>
-        </FirebaseAuthProvider>
+        </AuthProvider>
       </body>
     </html>
   );

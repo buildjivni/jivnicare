@@ -1,39 +1,28 @@
-import { jwtVerify, createRemoteJWKSet } from "jose";
+import { jwtVerify } from "jose";
 
 /**
  * JivniCare — Edge Auth Verification
- * Purpose: Verify Firebase Session Cookies on the Edge Runtime.
+ * Purpose: Securely verify the custom JivniCare auth-token on the Edge Runtime.
  */
 
-const PROJECT_ID = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-const ISSUER = `https://session.firebase.google.com/${PROJECT_ID}`;
-
-// JWKS for Firebase Session Cookies is NOT directly exposed as a .json file.
-// Firebase session cookies are standard JWTs signed with RS256.
-// However, signature verification on the edge requires the public keys.
-// For now, we will perform a "soft" verification (Expiration + Claims) 
-// and assume the API handles the "hard" verification, 
-// OR we use the public certificates endpoint.
-
-export async function verifyFirebaseSession(token: string) {
-  if (!token || !PROJECT_ID) return null;
+export async function verifyToken(token: string) {
+  const JWT_SECRET = process.env.JWT_SECRET;
+  if (!token || !JWT_SECRET) return null;
 
   try {
-    // 1. Decode without verification to check expiration and issuer quickly
-    // (This is safe for UI-level routing as long as critical actions are verified on the server)
-    const payload = JSON.parse(Buffer.from(token.split(".")[1], "base64").toString());
-
-    if (payload.iss !== ISSUER) return null;
-    if (payload.aud !== PROJECT_ID) return null;
+    const secret = new TextEncoder().encode(JWT_SECRET);
+    const { payload } = await jwtVerify(token, secret);
     
-    const now = Math.floor(Date.now() / 1000);
-    if (payload.exp && payload.exp < now) return null;
-
-    // Return the payload for role-based routing
-    return payload;
-
+    // Normalize payload (Jose returns claims directly)
+    return {
+      userId: payload.id as string,
+      role: payload.role as string,
+      doctorId: payload.doctorId as string | undefined,
+      phone: payload.phone as string | undefined,
+      ...payload
+    };
   } catch (error) {
-    console.error("Edge Auth Decode Error:", error);
+    console.error("Edge Auth Verification Error:", error instanceof Error ? error.message : error);
     return null;
   }
 }

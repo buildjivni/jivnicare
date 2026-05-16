@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { User, Mail, Phone, ShieldCheck } from "lucide-react";
+import { User, Mail, Phone, ShieldCheck, MapPin } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { useBookingStore } from "@/store/useBookingStore";
@@ -20,12 +20,15 @@ export function PatientDetailsForm() {
   // Pre-fill from auth store on mount
   useEffect(() => {
     if (authUser) {
-      const prefill: Partial<{ name: string; phone: string; email: string }> = {};
+      const prefill: Partial<{ name: string; phone: string; email: string; location: string }> = {};
       if (!patientDetails.phone && authUser.phone) {
         prefill.phone = authUser.phone;
       }
       if (!patientDetails.name && authUser.name && authUser.name !== "Patient User") {
         prefill.name = authUser.name;
+      }
+      if (!patientDetails.location && (authUser as any).location) {
+        prefill.location = (authUser as any).location;
       }
       if (Object.keys(prefill).length > 0) {
         setPatientDetails(prefill);
@@ -69,6 +72,13 @@ export function PatientDetailsForm() {
           newErrors.email = "Enter a valid email address";
         } else {
           delete newErrors.email;
+        }
+        break;
+      case "location":
+        if (!patientDetails.location.trim()) {
+          newErrors.location = "City/Village name is required";
+        } else {
+          delete newErrors.location;
         }
         break;
     }
@@ -165,6 +175,31 @@ export function PatientDetailsForm() {
               </div>
               {errors.email && <p className="text-xs text-red-500 mt-1.5 font-medium">{errors.email}</p>}
             </div>
+          </div>
+
+          <div className={`transition-all duration-300 ${focused === "location" ? "ring-2 ring-primary/10 rounded-2xl" : ""}`}>
+            <label className="text-sm font-semibold text-slate-700 mb-2 block">
+              City / Village / Location <span className="text-red-400">*</span>
+            </label>
+            <div className="relative">
+              <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+              <Input 
+                placeholder="e.g. Patna, Kankarbagh, or your Village name" 
+                className={`${FIELD_CLASS} ${errors.location ? "border-red-300 bg-red-50/30" : ""}`}
+                value={patientDetails.location}
+                onChange={(e) => setPatientDetails({ location: e.target.value })}
+                onFocus={(e) => {
+                  setFocused("location");
+                  setTimeout(() => e.target.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300);
+                }}
+                onBlur={() => {
+                  setFocused(null);
+                  validateField("location");
+                }}
+              />
+            </div>
+            {errors.location && <p className="text-xs text-red-500 mt-1.5 font-medium">{errors.location}</p>}
+            <p className="text-[10px] text-slate-400 mt-2 ml-1 italic font-medium">This helps the doctor identify your area.</p>
           </div>
         </CardContent>
       </Card>

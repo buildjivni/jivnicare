@@ -27,7 +27,6 @@ export interface AuthUser {
   doctorId?: string | null;
 }
 
-import { auth } from "@/lib/firebase/config";
 
 interface AuthState {
   user: AuthUser | null;
@@ -64,15 +63,10 @@ export const useAuthStore = create<AuthState>()(
       },
 
       logout: () => {
-        // 1. Sign out from Firebase Client
-        if (auth) {
-          auth.signOut().catch(console.error);
-        }
-
-        // 2. Clear store state immediately (synchronous)
+        // 1. Clear store state immediately (synchronous)
         set({ user: null, token: null, isAuthenticated: false });
 
-        // 3. Fire-and-forget server-side cleanup
+        // 2. Fire-and-forget server-side cookie cleanup
         fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
       },
 

@@ -58,16 +58,16 @@ const nextConfig: NextConfig = {
           },
         ],
       },
-      // {
-      //   // Long-lived cache for immutable static assets
-      //   source: "/_next/static/(.*)",
-      //   headers: [
-      //     {
-      //       key: "Cache-Control",
-      //       value: "public, max-age=31536000, immutable",
-      //     },
-      //   ],
-      // },
+      {
+        // Force revalidation of dev chunks to prevent stale Turbopack module factories
+        source: "/_next/dev/(.*)",
+        headers: [
+          { key: "Cache-Control", value: "no-cache, no-store, must-revalidate" },
+          { key: "Pragma", value: "no-cache" },
+        ],
+      },
+      // NOTE: Do NOT set Cache-Control for /_next/static in dev — it breaks Turbopack HMR.
+      // In production (Vercel/CDN), these are handled automatically with content-hashing.
     ];
   },
 

@@ -6,6 +6,7 @@ import { ArrowRight, ShieldCheck, Activity } from "lucide-react";
 import { PatientDetailsForm } from "./PatientDetailsForm";
 
 import { useBookingStore } from "@/store/useBookingStore";
+import { useAuthStore } from "@/store/useAuthStore";
 import { Button } from "@/components/ui/button";
 
 export function PaymentForm() {
@@ -31,6 +32,11 @@ export function PaymentForm() {
       document.querySelector('[placeholder="+91 98765 43210"]')?.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
+    
+    if (!patientDetails.location.trim()) {
+      document.querySelector('[placeholder="e.g. Patna, Kankarbagh, or your Village name"]')?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
 
     setIsProcessing(true);
     
@@ -43,6 +49,7 @@ export function PaymentForm() {
         body: JSON.stringify({
           doctorId: selectedDoctor?.id,
           date: today,
+          location: patientDetails.location,
         }),
       });
 
@@ -51,6 +58,7 @@ export function PaymentForm() {
       if (!response.ok) {
         // Handle specific API errors gracefully
         if (response.status === 401) {
+          useAuthStore.getState().logout();
           router.push(`/login?redirect=/checkout&error=session_expired`);
           return;
         }
@@ -72,6 +80,7 @@ export function PaymentForm() {
         location: selectedDoctor?.location,
         patientName: patientDetails.name,
         patientPhone: patientDetails.phone,
+        patientLocation: patientDetails.location,
       };
       
       setGeneratedToken(token);

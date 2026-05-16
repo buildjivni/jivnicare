@@ -7,12 +7,20 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import { PublicGuard } from "@/components/shared";
 
-// Firebase Imports
-import { auth } from "@/lib/firebase/config";
-import { sendPasswordResetEmail } from "firebase/auth";
+// Firebase types (loaded dynamically at runtime)
+// No static imports of auth/config here to avoid chunk contamination
 
 export default function ForgotPasswordPage() {
+  return (
+    <PublicGuard>
+      <ForgotPasswordContent />
+    </PublicGuard>
+  );
+}
+
+function ForgotPasswordContent() {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -25,6 +33,8 @@ export default function ForgotPasswordPage() {
     setError(null);
 
     try {
+      const { auth } = await import("@/lib/firebase/config");
+      const { sendPasswordResetEmail } = await import("firebase/auth");
       await sendPasswordResetEmail(auth, email);
       setIsSuccess(true);
     } catch (err: any) {

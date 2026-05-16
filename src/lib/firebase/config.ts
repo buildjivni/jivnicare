@@ -1,9 +1,13 @@
-import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
+import { getAuth, Auth } from "firebase/auth";
 
 /**
  * JivniCare — Firebase Client SDK Configuration
  * Use environment variables for project-specific settings.
+ *
+ * NOTE: Firebase is only used for legacy partner email/password auth and
+ * doctor onboarding reCAPTCHA flow.
+ * Primary patient/doctor auth uses OTP → JWT (HttpOnly cookie).
  */
 
 const firebaseConfig = {
@@ -18,10 +22,10 @@ const firebaseConfig = {
 
 // Initialize Firebase for Next.js (Safe for SSR and Hot Reloading)
 // We only initialize if apiKey is present to prevent 'auth/invalid-api-key' errors during Vercel builds.
-const app = getApps().length > 0 
-  ? getApp() 
-  : (firebaseConfig.apiKey ? initializeApp(firebaseConfig) : null as any);
+const app: FirebaseApp = getApps().length > 0
+  ? getApp()
+  : (firebaseConfig.apiKey ? initializeApp(firebaseConfig) : null as unknown as FirebaseApp);
 
-const auth = app ? getAuth(app) : null as any;
+const auth: Auth = app ? getAuth(app) : null as unknown as Auth;
 
 export { app, auth };

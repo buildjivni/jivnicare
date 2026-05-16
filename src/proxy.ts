@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { verifyFirebaseSession } from '@/lib/auth/edge-verify';
+import { verifyToken } from '@/lib/auth/edge-verify';
 
 /**
  * JivniCare — Edge Middleware
@@ -60,7 +60,7 @@ export async function proxy(request: NextRequest) {
       return unauthorizedResponse();
     }
 
-    const payload = await verifyFirebaseSession(token);
+    const payload = await verifyToken(token);
     
     if (!payload) {
       return unauthorizedResponse();
@@ -90,7 +90,7 @@ export async function proxy(request: NextRequest) {
     }
 
     const requestHeaders = new Headers(request.headers);
-    requestHeaders.set('x-user-id', payload.userId as string || payload.uid);
+    requestHeaders.set('x-user-id', payload.userId);
     requestHeaders.set('x-user-role', payload.role as string);
     if (payload.doctorId) {
       requestHeaders.set('x-doctor-id', payload.doctorId as string);
