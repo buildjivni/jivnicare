@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { BookingWidget } from "./BookingWidget";
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,19 @@ export function BookingWidgetClient({ doctor, isMobileCTA = false, isClosedToday
       router.push("/checkout");
     }
   };
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("autoBook") === "true") {
+        // Strip parameter from history immediately
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, newUrl);
+        // Direct execution
+        handleBook();
+      }
+    }
+  }, [isAuthenticated]);
 
   if (isMobileCTA) {
     return (

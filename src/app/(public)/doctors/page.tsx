@@ -194,6 +194,48 @@ function DoctorListingContent() {
                 </div>
               </div>
 
+              {/* ── Emergency Quick-Filter Pill ── */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  onClick={() => {
+                    const isActive = searchParams.get("isEmergency") === "true";
+                    updateParams({ isEmergency: isActive ? null : "true" });
+                  }}
+                  className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full border text-[12px] font-bold transition-all ${
+                    searchParams.get("isEmergency") === "true"
+                      ? "bg-red-500 text-white border-red-500 shadow-sm"
+                      : "bg-white text-red-600 border-red-200 hover:bg-red-50"
+                  }`}
+                >
+                  🚨 Emergency Only
+                </button>
+                <button
+                  onClick={() => updateParams({ availability: availability === "today" ? null : "today" })}
+                  className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full border text-[12px] font-bold transition-all ${
+                    availability === "today"
+                      ? "bg-emerald-500 text-white border-emerald-500 shadow-sm"
+                      : "bg-white text-emerald-700 border-emerald-200 hover:bg-emerald-50"
+                  }`}
+                >
+                  ✅ Available Today
+                </button>
+              </div>
+
+              {/* Emergency active banner */}
+              {searchParams.get("isEmergency") === "true" && (
+                <motion.div
+                  initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
+                  className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-2xl px-4 py-3"
+                >
+                  <span className="text-lg">🚨</span>
+                  <div>
+                    <p className="text-sm font-black text-red-800">Showing Emergency-Capable Doctors</p>
+                    <p className="text-xs text-red-600 font-medium mt-0.5">These doctors have emergency slots available or accept urgent walk-ins.</p>
+                  </div>
+                </motion.div>
+              )}
+
+
               {/* Filter Chips */}
               <AnimatePresence>
                 {activeChips.length > 0 && (

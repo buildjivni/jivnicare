@@ -10,10 +10,13 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import type { Doctor } from "@/types";
 import Image from "next/image";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface DoctorProfileViewProps {
   doctor: Doctor;
+  relatedDoctors?: Doctor[];
 }
 
 // ── Format 24h → 12h ───────────────────────────────────────────
@@ -43,9 +46,11 @@ const DAYS = [
   { id: "sunday",    label: "Sun" },
 ];
 
-export function DoctorProfileView({ doctor }: DoctorProfileViewProps) {
+export function DoctorProfileView({ doctor, relatedDoctors }: DoctorProfileViewProps) {
   const [showToast, setShowToast] = useState(false);
-  const availableToday = doctor.available?.toLowerCase().includes("today");
+  const availableToday = doctor.available?.toLowerCase() === "available today";
+  const isClosedToday = doctor.available?.toLowerCase().includes("closed");
+  const isBookingPaused = doctor.availabilityStatus?.toLowerCase().includes("paused");
   const badge = doctor.verifiedBadgeLabel ?? "Verified Doctor";
   const consultCount = fmtCount(doctor.totalConsultations ?? 0);
   const reviewCount = doctor.reviewCount ?? doctor.reviews ?? 0;
@@ -215,12 +220,33 @@ export function DoctorProfileView({ doctor }: DoctorProfileViewProps) {
             </div>
           </div>
 
-          <div className="inline-flex items-center gap-2 bg-white border border-slate-100 shadow-sm text-[11px] font-black px-4 py-2 rounded-xl mb-6">
+          <div className="inline-flex items-center gap-2 bg-white border border-slate-100 shadow-sm text-[11px] font-black px-4 py-2 rounded-xl mb-4">
             <img src="/logo.png" alt="" className="w-4 h-4 object-contain shrink-0" />
             <span className="uppercase tracking-widest text-slate-400">
                {badge} · <span className="text-primary">Jivni</span><span className="text-secondary">Care</span> Verified
             </span>
           </div>
+
+          {/* ── Operational Status Banner ── */}
+          {(isClosedToday || isBookingPaused) && (
+            <div className={`mb-4 rounded-[14px] px-4 py-3 flex items-start gap-3 border ${
+              isClosedToday
+                ? "bg-red-50 border-red-200"
+                : "bg-amber-50 border-amber-200"
+            }`}>
+              <span className="text-base leading-none mt-0.5">{isClosedToday ? "🔴" : "⏸️"}</span>
+              <div>
+                <p className={`text-[12.5px] font-black ${isClosedToday ? "text-red-800" : "text-amber-800"}`}>
+                  {isClosedToday ? "Clinic Closed Today" : "Online Booking Paused"}
+                </p>
+                <p className={`text-[11.5px] font-medium mt-0.5 leading-snug ${isClosedToday ? "text-red-700/80" : "text-amber-700/80"}`}>
+                  {isClosedToday
+                    ? "This clinic is not accepting appointments today. Please check back tomorrow."
+                    : "Online booking is temporarily paused by the doctor. Walk-in visits may still be available — please call the clinic."}
+                </p>
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-4 gap-2 mt-1">
             <div className="flex flex-col items-center text-center p-2.5 bg-amber-50/60 border border-amber-100/60 rounded-[14px]">
@@ -432,6 +458,104 @@ export function DoctorProfileView({ doctor }: DoctorProfileViewProps) {
           </div>
         </CardContent>
       </Card>
+
+      {/* ── Related Doctors Discovery ── */}
+      {relatedDoctors && relatedDoctors.length > 0 && (
+        <div className="pt-6">
+          <div className="flex items-center justify-between mb-4 px-1">
+            <div>
+              <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">
+                Similar Specialists Nearby
+              </h3>
+              <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                Verified alternative doctors for your health concern.
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex overflow-x-auto gap-4 pb-4 md:pb-0 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-3 md:gap-4">
+            {relatedDoctors.map((relDoc) => {
+              const relAvailable = relDoc.available?.toLowerCase() === "today" || relDoc.available?.toLowerCase().includes("available today");
+              return (
+                <div
+                  key={relDoc.id}
+                  className="shrink-0 snap-start w-[85%] sm:w-[320px] md:w-auto bg-white rounded-[22px] border border-slate-100 p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between"
+                >
+                  <div>
+                    {/* Header: Photo + Info */}
+                    <div className="flex items-start gap-3">
+                      <div className="relative w-12 h-12 rounded-xl border border-slate-100 bg-slate-50 overflow-hidden shrink-0">
+                        {relDoc.image ? (
+                          <Image
+                            src={relDoc.image}
+                            alt={relDoc.name}
+                            width={48}
+                            height={48}
+                            className="object-cover w-full h-full"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-[#205E98]/10 text-[#205E98] font-bold text-lg">
+                            {relDoc.name.charAt(0)}
+                          </div>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h4 className="font-black text-sm text-slate-900 leading-snug line-clamp-1 hover:text-[#205E98] transition-colors">
+                          <Link href={`/doctors/${relDoc.slug}`}>
+                            Dr. {relDoc.name}
+                          </Link>
+                        </h4>
+                        <p className="text-[11px] font-bold text-[#205E98] mt-0.5">{relDoc.specialty}</p>
+                        <p className="text-[10px] text-slate-500 font-medium mt-0.5">{relDoc.experience} Years Experience</p>
+                      </div>
+                    </div>
+
+                    {/* Clinic details */}
+                    <div className="mt-3.5 space-y-1.5 border-t border-slate-50 pt-3">
+                      <p className="text-[11.5px] font-bold text-slate-700 line-clamp-1">
+                        🏢 {relDoc.clinic}
+                      </p>
+                      <p className="text-[10.5px] text-slate-500 font-medium flex items-center gap-1">
+                        📍 {relDoc.location}
+                      </p>
+                    </div>
+
+                    {/* Status & Fee */}
+                    <div className="mt-3.5 flex items-center justify-between bg-slate-50/50 p-2.5 rounded-xl border border-slate-100">
+                      <div>
+                        <p className="text-[8.5px] text-slate-400 font-bold uppercase tracking-wider">Fee</p>
+                        <p className="text-[13px] font-black text-slate-900 mt-0.5">{relDoc.fee}</p>
+                      </div>
+                      <div className="text-right">
+                        <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          relAvailable 
+                            ? "bg-emerald-50 text-emerald-700 border border-emerald-100" 
+                            : "bg-slate-100 text-slate-600"
+                        }`}>
+                          <span className={`w-1 h-1 rounded-full ${relAvailable ? "bg-emerald-500 animate-pulse" : "bg-slate-400"}`} />
+                          {relAvailable ? "Open Today" : "Check Schedule"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="mt-4 flex items-center gap-2">
+                    <Link href={`/doctors/${relDoc.slug}`} className="w-full">
+                      <Button
+                        variant="outline"
+                        className="w-full h-9 rounded-xl text-[11.5px] font-bold border-slate-200 text-slate-700 hover:bg-[#205E98]/5 hover:text-[#205E98] hover:border-[#205E98]/30 transition-all"
+                      >
+                        View Profile
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

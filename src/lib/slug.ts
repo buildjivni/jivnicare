@@ -142,3 +142,17 @@ export function slugToDisplayName(slug: string): string {
     .map(w => w.charAt(0).toUpperCase() + w.slice(1))
     .join(' ');
 }
+// ── 8. SEQUENTIAL DOCTOR CODE SYSTEM ──────────────────────────
+
+/**
+ * Atomically generate a unique sequential doctor code like JC64001.
+ * Uses the SystemCounter model inside the provided transaction client.
+ */
+export async function generateSequentialDoctorCode(tx: any): Promise<string> {
+  const counter = await tx.systemCounter.upsert({
+    where: { id: "doctor_code" },
+    update: { count: { increment: 1 } },
+    create: { id: "doctor_code", count: 64001 }
+  });
+  return `JC${counter.count}`;
+}

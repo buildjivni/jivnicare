@@ -57,7 +57,7 @@ export async function POST(request: Request) {
 
         // Use Service for sequential token issuing and capacity checks.
         // Pass `tx` to ensure mathematical safety and rollback WalkInEntry if queue is full.
-        const newQueueToken = await QueueService.issueToken(doctor.id, today, null, "WALK_IN", location || undefined, tx);
+        const newQueueToken = await QueueService.issueToken(doctor.id, today, null, "WALK_IN", location || undefined, false, tx);
         
         // Link the walk-in entry to the token (Service issues generic WALK_IN tokens)
         const updatedToken = await tx.queueToken.update({

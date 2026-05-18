@@ -2,7 +2,31 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
-import { generateDoctorSlug, generateAlternateSlug, generateShortCode } from '@/lib/slug';
+import { VerificationStatus } from '@prisma/client';
+
+import { generateDoctorSlug, generateAlternateSlug, generateShortCode, generateSequentialDoctorCode } from '@/lib/slug';
+import { doctorOnboardSchema, formatZodError } from '@/lib/validations';
+import { z } from 'zod';
+
+const draftSchema = z.object({
+  fullName: z.string().min(2, "Name must be at least 2 characters").max(100).regex(/^[a-zA-Z\s\.]+$/, "Letters, spaces, and periods only").optional(),
+  gender: z.enum(["Male", "Female", "Other", ""]).optional(),
+  specialization: z.string().max(100).optional(),
+  qualifications: z.string().max(200).optional(),
+  experience: z.number().int().min(0).max(80).optional(),
+  languages: z.string().max(200).optional(),
+  fee: z.number().int().min(0).max(100000).optional(),
+  bio: z.string().max(1000).optional().nullable(),
+  practiceType: z.enum(["clinic", "hospital"]).optional(),
+  practiceName: z.string().max(150).optional(),
+  practiceAddress: z.string().max(300).optional().nullable(),
+  city: z.string().max(100).optional(),
+  locality: z.string().max(100).optional(),
+  contactNumber: z.string().regex(/^\d{10}$/, "10-digit number only").optional().nullable().or(z.literal("")),
+  profilePhotoUrl: z.string().url("Valid URL required").optional().nullable().or(z.literal("")),
+  medicalRegistrationUrl: z.string().min(2).optional().nullable().or(z.literal("")),
+  clinicPhotoUrl: z.string().url("Valid URL required").optional().nullable().or(z.literal("")),
+});
 
 export async function POST(request: Request) {
   try {
@@ -34,128 +58,193 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'User account not found.' }, { status: 404 });
     }
 
-    if (existingUser.role === 'DOCTOR') {
-      return NextResponse.json({ error: 'You are already registered as a Doctor.' }, { status: 409 });
-    }
-
-    // 2. Parse Payload
+    // 2. Parse and Validate Payload strictly
     const body = await request.json();
-    const { 
-      fullName, gender, specialization, qualifications, experience, languages, fee, bio,
-      practiceType, practiceName, practiceAddress, city, locality, contactNumber, workingDays, timings,
-      profilePhotoUrl, medicalRegistrationUrl, clinicPhotoUrl
-    } = body;
+    const isDraft = body.isDraft === true;
 
-    if (!specialization || !city || !practiceName) {
-      return NextResponse.json({ error: 'Missing required professional fields' }, { status: 400 });
+    // Safely preprocess numeric fields to prevent string-to-number type mismatch,
+    // while keeping strict validation (invalid strings convert to NaN and get rejected)
+    if (body.experience !== undefined && body.experience !== null && body.experience !== "") {
+      body.experience = parseInt(body.experience, 10);
+    } else if (body.experience === "") {
+      body.experience = undefined;
+    }
+    if (body.fee !== undefined && body.fee !== null && body.fee !== "") {
+      body.fee = parseInt(body.fee, 10);
+    } else if (body.fee === "") {
+      body.fee = undefined;
     }
 
-    // Ensure Specialty exists
-    const specialtySlug = specialization.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    const specialtyRecord = await prisma.specialty.upsert({
-      where: { name: specialization },
-      update: {},
-      create: { name: specialization, slug: specialtySlug }
+    let validatedData: any;
+    if (isDraft) {
+      const validation = draftSchema.safeParse(body);
+      if (!validation.success) {
+        return NextResponse.json(
+          { error: 'Invalid draft payload: ' + formatZodError(validation.error) },
+          { status: 400 }
+        );
+      }
+      validatedData = validation.data;
+    } else {
+      const validation = doctorOnboardSchema.safeParse(body);
+      if (!validation.success) {
+        return NextResponse.json(
+          { error: 'Invalid onboarding payload: ' + formatZodError(validation.error) },
+          { status: 400 }
+        );
+      }
+      validatedData = validation.data;
+    }
+
+    // 3. Find if a Doctor profile already exists to prevent duplicate profiles
+    const existingDoctor = await prisma.doctor.findUnique({
+      where: { userId }
     });
 
-    // 3. Create Doctor Record & Upgrade User in a Transaction
+    if (existingDoctor && existingDoctor.verificationStatus === 'VERIFIED') {
+      return NextResponse.json({ error: 'You are already registered and verified as a Doctor.' }, { status: 409 });
+    }
+
+    // Process specialty if specialization is provided
+    let specialtyRecordId: string | undefined;
+    if (validatedData.specialization) {
+      const specialtySlug = validatedData.specialization.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      const specialtyRecord = await prisma.specialty.upsert({
+        where: { name: validatedData.specialization },
+        update: {},
+        create: { name: validatedData.specialization, slug: specialtySlug }
+      });
+      specialtyRecordId = specialtyRecord.id;
+    }
+
+    // 4. Create or Update Doctor Record & Upgrade User in a transaction
     const result = await prisma.$transaction(async (tx) => {
       // Upgrade User Role and update Name if provided
       const user = await tx.user.update({
         where: { id: userId },
         data: {
           role: 'DOCTOR',
-          ...(fullName ? { name: fullName } : {})
+          ...(validatedData.fullName ? { name: validatedData.fullName } : {})
         }
       });
 
-      const safeName = fullName || existingUser.name || "doctor";
-      
-      // ── Deterministic + collision-safe slug generation ─────
-      let doctorSlug = generateDoctorSlug(safeName, city);
-      // Collision recovery: up to 3 retries with alternate suffixes
-      for (let attempt = 0; attempt < 3; attempt++) {
-        const exists = await tx.doctor.findUnique({ where: { slug: doctorSlug } });
-        if (!exists) break;
-        doctorSlug = generateAlternateSlug(doctorSlug);
+      const safeName = validatedData.fullName || existingUser.name || "doctor";
+      const targetCity = validatedData.city || "default";
+
+      // Deterministic + collision-safe slug generation
+      let doctorSlug = existingDoctor?.slug;
+      if (!doctorSlug) {
+        doctorSlug = generateDoctorSlug(safeName, targetCity);
+        for (let attempt = 0; attempt < 3; attempt++) {
+          const exists = await tx.doctor.findUnique({ where: { slug: doctorSlug } });
+          if (!exists) break;
+          doctorSlug = generateAlternateSlug(doctorSlug);
+        }
       }
 
-      // ── QR-ready short code generation ────────────────────
-      let shortCode = generateShortCode();
-      // Short code collision recovery
-      for (let attempt = 0; attempt < 5; attempt++) {
-        const exists = await tx.doctor.findFirst({ where: { shortCode } });
-        if (!exists) break;
+      // QR-ready short code generation
+      let shortCode = existingDoctor?.shortCode;
+      if (!shortCode) {
         shortCode = generateShortCode();
+        for (let attempt = 0; attempt < 5; attempt++) {
+          const exists = await tx.doctor.findFirst({ where: { shortCode } });
+          if (!exists) break;
+          shortCode = generateShortCode();
+        }
       }
 
-      // ── Derive badge label from experience ─────────────────
-      const expYears = parseInt(experience) || 0;
+      // Derive badge label from experience
+      const expYears = validatedData.experience || 0;
       const verifiedBadgeLabel = expYears >= 15
         ? 'Experienced Partner'
         : expYears >= 5
         ? 'Verified Doctor'
         : 'Clinic Verified';
 
-      const doctor = await tx.doctor.create({
-        data: {
-          userId: user.id,
-          name: safeName,
-          slug: doctorSlug,
-          shortCode,
-          bio: bio || null,
-          experience: parseInt(experience) || 0,
-          fee: parseInt(fee) || 0,
-          district: city,
-          hospitalName: practiceName,
-          gender: gender || null,
-          languages: languages ? languages.split(',').map((l: string) => l.trim()).filter(Boolean) : [],
-          education: qualifications,
-          qualifications: qualifications,
-          specialtyIds: [specialtyRecord.id],
-          verificationStatus: 'VERIFIED',
-          profileImage: profilePhotoUrl || null,
-          clinicImage: clinicPhotoUrl || null,
-          medicalRegistrationNumber: medicalRegistrationUrl || null,
-          verifiedBadgeLabel,
-        }
-      });
+      // Atomic Doctor Code generation when finalizing (not draft) and doesn't exist yet
+      let doctorCode = existingDoctor?.doctorCode;
+      if (!isDraft && !doctorCode) {
+        doctorCode = await generateSequentialDoctorCode(tx);
+      }
 
-      // Initialize Weekly Schedule based on timings (simple initialization)
-      await tx.weeklySchedule.create({
-        data: {
-          doctorId: doctor.id,
-          monday: { isOpen: true, start: "09:00", end: "17:00", maxPatients: 20 },
-          tuesday: { isOpen: true, start: "09:00", end: "17:00", maxPatients: 20 },
-          wednesday: { isOpen: true, start: "09:00", end: "17:00", maxPatients: 20 },
-          thursday: { isOpen: true, start: "09:00", end: "17:00", maxPatients: 20 },
-          friday: { isOpen: true, start: "09:00", end: "17:00", maxPatients: 20 },
-          saturday: { isOpen: true, start: "09:00", end: "17:00", maxPatients: 20 },
-          sunday: { isOpen: false, start: "00:00", end: "00:00", maxPatients: 0 }
-        }
-      });
+      const verificationStatus = isDraft
+        ? VerificationStatus.DRAFT
+        : VerificationStatus.PENDING_VERIFICATION;
 
-      // Initialize Clinic Operations
-      await tx.clinicOperations.create({
-        data: {
-          doctorId: doctor.id,
-          isClosedToday: false,
-          pauseOnlineBooking: false,
-          walkInLimit: 15,
-          onlineLimit: 30
-        }
-      });
+      let doctor;
+      const doctorDataPayload = {
+        name: safeName,
+        slug: doctorSlug!,
+        shortCode: shortCode!,
+        doctorCode: doctorCode || null,
+        bio: validatedData.bio || null,
+        experience: validatedData.experience || 0,
+        fee: validatedData.fee || 0,
+        district: validatedData.city || "",
+        hospitalName: validatedData.practiceName || "",
+        gender: validatedData.gender || null,
+        languages: validatedData.languages ? validatedData.languages.split(',').map((l: string) => l.trim()).filter(Boolean) : [],
+        education: validatedData.qualifications || null,
+        qualifications: validatedData.qualifications || null,
+        specialtyIds: specialtyRecordId ? [specialtyRecordId] : [],
+        verificationStatus,
+        profileImage: validatedData.profilePhotoUrl || null,
+        clinicImage: validatedData.clinicPhotoUrl || null,
+        medicalRegistrationNumber: validatedData.medicalRegistrationUrl || null,
+        verifiedBadgeLabel,
+      };
+
+      if (existingDoctor) {
+        // Update existing record to avoid duplication
+        doctor = await tx.doctor.update({
+          where: { id: existingDoctor.id },
+          data: doctorDataPayload
+        });
+      } else {
+        // Create new record
+        doctor = await tx.doctor.create({
+          data: {
+            userId: user.id,
+            ...doctorDataPayload
+          }
+        });
+
+        // Initialize Weekly Schedule based on timings (simple initialization)
+        await tx.weeklySchedule.create({
+          data: {
+            doctorId: doctor.id,
+            monday: { isOpen: true, start: "09:00", end: "17:00", maxPatients: 20 },
+            tuesday: { isOpen: true, start: "09:00", end: "17:00", maxPatients: 20 },
+            wednesday: { isOpen: true, start: "09:00", end: "17:00", maxPatients: 20 },
+            thursday: { isOpen: true, start: "09:00", end: "17:00", maxPatients: 20 },
+            friday: { isOpen: true, start: "09:00", end: "17:00", maxPatients: 20 },
+            saturday: { isOpen: true, start: "09:00", end: "17:00", maxPatients: 20 },
+            sunday: { isOpen: false, start: "00:00", end: "00:00", maxPatients: 0 }
+          }
+        });
+
+        // Initialize Clinic Operations
+        await tx.clinicOperations.create({
+          data: {
+            doctorId: doctor.id,
+            isClosedToday: false,
+            pauseOnlineBooking: false,
+            walkInLimit: 15,
+            onlineLimit: 30
+          }
+        });
+      }
 
       return { user, doctor };
     });
 
-    // Generate NEW JWT Auth Token with DOCTOR role
+    // Generate NEW JWT Auth Token with upgraded DOCTOR role
     const payload = { id: result.user.id, role: result.user.role };
     const newToken = jwt.sign(payload, jwtSecret, { expiresIn: '7d' });
 
     const response = NextResponse.json({
       success: true,
-      message: 'Doctor profile created successfully.',
+      message: isDraft ? 'Doctor profile draft saved.' : 'Doctor profile submitted for verification.',
       token: newToken,
       user: {
         id: result.user.id,
@@ -163,6 +252,11 @@ export async function POST(request: Request) {
         name: result.user.name,
         role: result.user.role,
         doctorId: result.doctor.id
+      },
+      doctor: {
+        id: result.doctor.id,
+        doctorCode: result.doctor.doctorCode,
+        verificationStatus: result.doctor.verificationStatus
       }
     });
 

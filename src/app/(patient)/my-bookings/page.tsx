@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { 
   Calendar, Clock, MapPin, ChevronRight, 
   Search, ShieldCheck, MessageSquare, ExternalLink,
-  Activity, Users
+  Activity, Users, RefreshCw
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,6 +19,7 @@ export default function MyBookingsPage() {
     tokenNumber: number;
     status: string;
     doctorId: string;
+    doctorSlug: string;
     doctorName: string;
     clinic: string;
     location: string;
@@ -27,6 +28,7 @@ export default function MyBookingsPage() {
   }
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [countdown, setCountdown] = useState(60);
 
   const fetchBookings = useCallback(async () => {
     try {
@@ -34,7 +36,6 @@ export default function MyBookingsPage() {
       const data = await res.json();
       
       if (res.ok && data.bookings) {
-        // Map backend tokens to UI format
         interface ApiToken {
           id: string;
           tokenNumber: number;
@@ -45,6 +46,7 @@ export default function MyBookingsPage() {
             currentActiveToken: number;
             doctor: {
               user: { name: string };
+              slug?: string;
               clinic?: string;
               district?: string;
             };
@@ -61,6 +63,7 @@ export default function MyBookingsPage() {
             tokenNumber: t.tokenNumber,
             status: t.status,
             doctorId: t.queue.doctorId,
+            doctorSlug: t.queue.doctor.slug || t.queue.doctorId,
             doctorName: t.queue.doctor.user.name,
             clinic: t.queue.doctor.clinic || "JivniCare Clinic",
             location: t.queue.doctor.district || "Local",
@@ -76,19 +79,31 @@ export default function MyBookingsPage() {
       console.error("Failed to load bookings", e);
     } finally {
       setIsLoading(false);
+      setCountdown(60);
     }
   }, []);
 
   useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
+    let pollTimeout: NodeJS.Timeout;
+    let countdownInterval: NodeJS.Timeout;
+
     const poll = async () => {
       if (document.visibilityState === 'visible') {
         await fetchBookings();
       }
-      timeoutId = setTimeout(poll, 60000); // 60s
+      pollTimeout = setTimeout(poll, 60000);
     };
     poll();
-    return () => clearTimeout(timeoutId);
+
+    // Countdown ticker
+    countdownInterval = setInterval(() => {
+      setCountdown(c => (c <= 1 ? 60 : c - 1));
+    }, 1000);
+
+    return () => {
+      clearTimeout(pollTimeout);
+      clearInterval(countdownInterval);
+    };
   }, [fetchBookings]);
 
   const handleShareWhatsApp = (booking: Booking) => {
@@ -100,13 +115,23 @@ export default function MyBookingsPage() {
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   };
 
+
   return (
     <main className="min-h-screen bg-slate-50 pb-20">
       {/* Header */}
       <div className="bg-white border-b border-slate-100 px-4 py-8">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">My Bookings</h1>
-          <p className="text-slate-500 font-medium mt-1">Manage your active tokens and history.</p>
+        <div className="max-w-4xl mx-auto flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-black text-slate-900 tracking-tight">My Bookings</h1>
+            <p className="text-slate-500 font-medium mt-1">Manage your active tokens and history.</p>
+          </div>
+          <button
+            onClick={fetchBookings}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-[11px] font-bold text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-all shrink-0 mt-1"
+          >
+            <RefreshCw className="w-3 h-3" />
+            {countdown}s
+          </button>
         </div>
       </div>
 
@@ -204,7 +229,7 @@ export default function MyBookingsPage() {
                               <Button 
                                 variant="outline" 
                                 size="sm"
-                                onClick={() => router.push(`/doctors/${booking.doctorId}`)}
+                                onClick={() => router.push(`/doctors/${booking.doctorSlug}`)}
                                 className="rounded-xl border-slate-200 text-slate-600 hover:bg-slate-50 font-bold gap-1.5 h-12 md:h-10 sm:ml-auto w-full sm:w-auto"
                               >
                                   View Clinic <ExternalLink className="w-4 h-4 md:w-3.5 md:h-3.5" />
@@ -227,7 +252,7 @@ export default function MyBookingsPage() {
                 <p className="text-slate-500 font-medium max-w-md mx-auto leading-relaxed mb-8">
                   You don't have any active queue tokens. Need to see a doctor today?
                 </p>
-                <Button onClick={() => window.location.href = "/doctors"} className="h-14 px-8 rounded-2xl bg-primary hover:bg-primary/90 font-bold shadow-lg shadow-primary/20 transition-all text-white">
+                <Button onClick={() => router.push("/doctors")} className="h-14 px-8 rounded-2xl bg-primary hover:bg-primary/90 font-bold shadow-lg shadow-primary/20 transition-all text-white">
                   Find Verified Doctors <ChevronRight className="w-5 h-5 ml-1" />
                 </Button>
               </div>
@@ -254,7 +279,7 @@ export default function MyBookingsPage() {
                       </div>
                       <Button
                         variant="outline"
-                        onClick={() => router.push(`/doctors/${booking.doctorId}`)}
+                        onClick={() => router.push(`/doctors/${booking.doctorSlug}?autoBook=true`)}
                         className="mt-5 w-full h-10 rounded-xl border-primary/20 text-primary font-bold hover:bg-primary/5 hover:border-primary/40"
                       >
                         Book Again

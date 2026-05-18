@@ -38,10 +38,14 @@ export function VerifiedDoctorsSection({ doctors }: VerifiedDoctorsSectionProps)
         <motion.div
           variants={staggerContainer} initial="hidden"
           whileInView="show" viewport={{ once: true, amount: 0.1 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+          className="flex overflow-x-auto gap-6 pb-6 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-8 md:pb-0"
         >
           {doctors.map((doctor) => (
-            <motion.div key={doctor.id} variants={itemVariants}>
+            <motion.div 
+              key={doctor.id} 
+              variants={itemVariants}
+              className="shrink-0 snap-start w-[85%] sm:w-[350px] md:w-auto"
+            >
               <DoctorCard doctor={doctor} />
             </motion.div>
           ))}

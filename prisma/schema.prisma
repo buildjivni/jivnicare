@@ -4,7 +4,7 @@
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
-  provider = "prisma-client-js"
+  provider   = "prisma-client-js"
   engineType = "library"
 }
 
@@ -26,8 +26,11 @@ enum MediaType {
 }
 
 enum VerificationStatus {
+  DRAFT
   PENDING
+  PENDING_VERIFICATION
   VERIFIED
+  UPDATE_PENDING
   REJECTED
   SUSPENDED
 }
@@ -45,11 +48,24 @@ enum ReportStatus {
   DISMISSED
 }
 
+enum LeadStatus {
+  NEW
+  CONTACTED
+  CONVERTED
+  DEAD
+}
+
+enum UpdateStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model ModerationLog {
   id         String     @id @default(uuid()) @map("_id")
   adminId    String
   admin      User       @relation(fields: [adminId], references: [id])
-  action     String     
+  action     String
   targetType TargetType
   targetId   String
   reason     String?
@@ -57,160 +73,208 @@ model ModerationLog {
 }
 
 model Media {
-  id         String    @id @default(uuid()) @map("_id")
-  url        String
-  publicId   String    @unique
-  type       MediaType
-  userId     String
-  user       User      @relation(fields: [userId], references: [id])
-  createdAt  DateTime  @default(now())
+  id        String    @id @default(uuid()) @map("_id")
+  url       String
+  publicId  String    @unique
+  type      MediaType
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  createdAt DateTime  @default(now())
 }
 
 model User {
-  id         String   @id @default(uuid()) @map("_id")
+  id          String   @id @default(uuid()) @map("_id")
   firebaseUid String?
-  phone      String   @unique
-  email      String?
-  name       String?
-  password   String?
-  location   String?
-  role       Role     @default(PATIENT)
-  isVerified Boolean  @default(false)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  
-  doctor         Doctor?
-  media          Media[]
-  moderationLogs ModerationLog[]
-  notifications  Notification[]
-  savedDoctors   SavedDoctor[]
+  phone       String   @unique
+  email       String?
+  name        String?
+  password    String?
+  location    String?
+  role        Role     @default(PATIENT)
+  isVerified  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  leadId String?      @unique
+  lead   LeadCapture? @relation(fields: [leadId], references: [id])
+
+  doctor                 Doctor?
+  patientProfile         PatientProfile?
+  media                  Media[]
+  moderationLogs         ModerationLog[]
+  notifications          Notification[]
+  savedDoctors           SavedDoctor[]
   notificationPreference NotificationPreference?
-  queueTokens    QueueToken[]
-  reportsSubmitted Report[]
+  queueTokens            QueueToken[]
+  reportsSubmitted       Report[]
+}
+
+model LeadCapture {
+  id                String     @id @default(uuid()) @map("_id")
+  phone             String     @unique
+  name              String?
+  city              String?
+  roleInterest      Role?
+  specialty         String?
+  clinicName        String?
+  source            String?
+  lastStepCompleted String?
+  status            LeadStatus @default(NEW)
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  user User?
+}
+
+model PatientProfile {
+  id               String    @id @default(uuid()) @map("_id")
+  userId           String    @unique
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName         String?
+  dateOfBirth      DateTime?
+  gender           String?
+  bloodGroup       String?
+  emergencyContact String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+model ProfileUpdateLog {
+  id        String       @id @default(uuid()) @map("_id")
+  doctorId  String
+  doctor    Doctor       @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  field     String
+  oldValue  String?
+  newValue  String
+  status    UpdateStatus @default(PENDING)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@index([doctorId, status])
 }
 
 model Doctor {
-  id                 String      @id @default(uuid()) @map("_id")
-  userId             String      @unique
-  user               User        @relation(fields: [userId], references: [id])
+  id                 String             @id @default(uuid()) @map("_id")
+  userId             String             @unique
+  user               User               @relation(fields: [userId], references: [id])
   name               String
-  slug               String      @unique
+  slug               String             @unique
+  doctorCode         String?            @unique
   bio                String?
-  experience         Int         @default(0)
-  fee                Int         @default(0)
+  experience         Int                @default(0)
+  fee                Int                @default(0)
   district           String
   hospitalName       String
-  verificationStatus VerificationStatus @default(PENDING)
-  emergencyAvailable Boolean     @default(false)
+  verificationStatus VerificationStatus @default(DRAFT)
+  emergencyAvailable Boolean            @default(false)
   profileImage       String?
   gender             String?
-  languages          String[]    @default([])
-  rating             Float       @default(0)
-  
+  languages          String[]           @default([])
+  rating             Float              @default(0)
+
   specialtyIds String[]
-  specialties Specialty[] @relation(fields: [specialtyIds], references: [id])
-  keywordIds String[]
-  keywords Keyword[] @relation(fields: [keywordIds], references: [id])
-  savedBy            SavedDoctor[]
-  dailyQueues        DailyQueue[]
-  
+  specialties  Specialty[]   @relation(fields: [specialtyIds], references: [id])
+  keywordIds   String[]
+  keywords     Keyword[]     @relation(fields: [keywordIds], references: [id])
+  savedBy      SavedDoctor[]
+  dailyQueues  DailyQueue[]
+
   // ── Phase 16: Doctor Control System ────────────────────────
   availableDays               String[] @default([]) // e.g., ["MONDAY", "TUESDAY"]
-  availableTimeSlots          Json?    // e.g., [{start: "10:00", end: "13:00"}]
+  availableTimeSlots          Json? // e.g., [{start: "10:00", end: "13:00"}]
   maxAppointmentsPerDay       Int      @default(0) // 0 means no limit
   isAcceptingAppointments     Boolean  @default(true)
   profileCompletionPercentage Int      @default(0)
 
   // ── Real-World Clinic Operations Extension ─────────────────
-  medicalRegistrationNumber   String?
-  consultationFee             Int      @default(0)
-  followUpFee                 Int      @default(0)
-  averageConsultationTime     Int      @default(15) // minutes
-  treatmentFocus              String[] @default([])
-  commonSymptomsTreated       String[] @default([])
-  certifications              String[] @default([])
-  education                   String?
-  qualifications              String?  // Structured: "MBBS, MD Medicine"
-  onlineConsultationAvailable Boolean  @default(false)
-  emergencyConsultationAvailable Boolean @default(false)
+  medicalRegistrationNumber      String?
+  consultationFee                Int      @default(0)
+  followUpFee                    Int      @default(0)
+  averageConsultationTime        Int      @default(15) // minutes
+  treatmentFocus                 String[] @default([])
+  commonSymptomsTreated          String[] @default([])
+  certifications                 String[] @default([])
+  education                      String?
+  qualifications                 String? // Structured: "MBBS, MD Medicine"
+  onlineConsultationAvailable    Boolean  @default(false)
+  emergencyConsultationAvailable Boolean  @default(false)
 
-  weeklySchedule              WeeklySchedule?
-  clinicOperations            ClinicOperations?
+  weeklySchedule   WeeklySchedule?
+  clinicOperations ClinicOperations?
+  updateLogs       ProfileUpdateLog[]
 
   // ── Future-Safe Identity Architecture (Doctor Discovery v2) ──
   // QR-ready short code: 6-char alphanumeric (no ambiguous chars)
   // Used for: /d/{shortCode} deep links, clinic QR codes, reception displays
-  shortCode          String?
+  shortCode String?
 
   // Clinic visual identity
-  clinicImage        String?     // CDN URL for clinic/hospital photo
+  clinicImage String? // CDN URL for clinic/hospital photo
 
   // Social proof metrics (additive — updated via admin/analytics)
-  reviewCount        Int         @default(0)
-  totalConsultations Int         @default(0)
+  reviewCount        Int @default(0)
+  totalConsultations Int @default(0)
 
   // Trust tier label — set deterministically during onboarding based on experience
   // Examples: "Verified Doctor" | "Experienced Partner" | "Clinic Verified"
   verifiedBadgeLabel String?
 
-  createdAt          DateTime    @default(now())
-  updatedAt          DateTime    @updatedAt
-  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // ── Performance Indexes ──────────────────────────────────────
   // Existing individual indexes preserved for backward compatibility
   @@index([district])
   @@index([verificationStatus])
-
   // Composite: primary discovery query (district + verified filter)
   @@index([district, verificationStatus])
-
   // Top-rated discovery queries
   @@index([rating, verificationStatus])
 }
 
 model Specialty {
-  id        String     @id @default(uuid()) @map("_id")
-  name      String     @unique
-  slug      String     @unique
-  doctorIds String[]
-  doctors Doctor[] @relation(fields: [doctorIds], references: [id])
+  id          String     @id @default(uuid()) @map("_id")
+  name        String     @unique
+  slug        String     @unique
+  doctorIds   String[]
+  doctors     Doctor[]   @relation(fields: [doctorIds], references: [id])
   hospitalIds String[]
-  hospitals Hospital[] @relation(fields: [hospitalIds], references: [id])
+  hospitals   Hospital[] @relation(fields: [hospitalIds], references: [id])
 }
 
 model Keyword {
-  id        String     @id @default(uuid()) @map("_id")
-  term      String     @unique
-  doctorIds String[]
-  doctors Doctor[] @relation(fields: [doctorIds], references: [id])
+  id          String     @id @default(uuid()) @map("_id")
+  term        String     @unique
+  doctorIds   String[]
+  doctors     Doctor[]   @relation(fields: [doctorIds], references: [id])
   hospitalIds String[]
-  hospitals Hospital[] @relation(fields: [hospitalIds], references: [id])
+  hospitals   Hospital[] @relation(fields: [hospitalIds], references: [id])
 }
 
 model Hospital {
-  id                 String      @id @default(uuid()) @map("_id")
+  id                 String             @id @default(uuid()) @map("_id")
   name               String
-  slug               String      @unique
+  slug               String             @unique
   description        String?
   district           String
   address            String
   phone              String
-  hospitalType       String      @default("General")
+  hospitalType       String             @default("General")
   verificationStatus VerificationStatus @default(PENDING)
-  emergencyAvailable Boolean     @default(false)
-  ambulanceAvailable Boolean     @default(false)
+  emergencyAvailable Boolean            @default(false)
+  ambulanceAvailable Boolean            @default(false)
   website            String?
-  rating             Float       @default(0)
-  images             String[]    @default([])
-  
+  rating             Float              @default(0)
+  images             String[]           @default([])
+
   specialtyIds String[]
-  specialties Specialty[] @relation(fields: [specialtyIds], references: [id])
-  keywordIds String[]
-  keywords Keyword[] @relation(fields: [keywordIds], references: [id])
-  
-  createdAt          DateTime    @default(now())
-  updatedAt          DateTime    @updatedAt
-  
+  specialties  Specialty[] @relation(fields: [specialtyIds], references: [id])
+  keywordIds   String[]
+  keywords     Keyword[]   @relation(fields: [keywordIds], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([district])
   @@index([verificationStatus])
   @@index([emergencyAvailable])
@@ -231,9 +295,9 @@ model SearchAnalytics {
 
 model ProfileAnalytics {
   id         String     @id @default(uuid()) @map("_id")
-  targetType TargetType 
+  targetType TargetType
   targetId   String
-  action     String     
+  action     String
   createdAt  DateTime   @default(now())
 
   @@index([targetType, targetId])
@@ -246,7 +310,7 @@ model Report {
   reporterId  String
   reporter    User         @relation(fields: [reporterId], references: [id])
   targetType  TargetType
-  targetId    String       // ID of Doctor, Hospital, or User
+  targetId    String // ID of Doctor, Hospital, or User
   reason      String
   description String?
   status      ReportStatus @default(PENDING)
@@ -279,7 +343,7 @@ model Notification {
   title     String
   message   String
   isRead    Boolean          @default(false)
-  metadata  Json?            // Extra context (doctorId, action, etc.)
+  metadata  Json? // Extra context (doctorId, action, etc.)
   createdAt DateTime         @default(now())
   readAt    DateTime?
 
@@ -305,14 +369,14 @@ model SavedDoctor {
 // ── Phase 13: Notification Preferences ───────────────────────
 
 model NotificationPreference {
-  id          String  @id @default(uuid()) @map("_id")
-  userId      String  @unique
-  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  smsEnabled  Boolean @default(false)
-  emailEnabled Boolean @default(true)
-  pushEnabled Boolean @default(false)
-  whatsappEnabled Boolean @default(false)
-  updatedAt   DateTime @updatedAt
+  id              String   @id @default(uuid()) @map("_id")
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  smsEnabled      Boolean  @default(false)
+  emailEnabled    Boolean  @default(true)
+  pushEnabled     Boolean  @default(false)
+  whatsappEnabled Boolean  @default(false)
+  updatedAt       DateTime @updatedAt
 }
 
 // ── Phase 27: Unified Patient Queue System ───────────────────
@@ -339,55 +403,55 @@ enum TokenStatus {
 }
 
 model DailyQueue {
-  id              String      @id @default(uuid()) @map("_id")
-  doctorId        String
-  doctor          Doctor      @relation(fields: [doctorId], references: [id], onDelete: Cascade)
-  date            DateTime    @db.Date // The specific operating day
-  status          QueueStatus @default(NOT_STARTED)
-  maxCapacity     Int         // Maximum patients for today
-  currentActiveToken Int      @default(0) // The token number currently inside the cabin
-  issuedTokensCount Int       @default(0) // Atomic counter for sequential token issuance
-  
-  tokens          QueueToken[]
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  id                 String      @id @default(uuid()) @map("_id")
+  doctorId           String
+  doctor             Doctor      @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  date               DateTime    @db.Date // The specific operating day
+  status             QueueStatus @default(NOT_STARTED)
+  maxCapacity        Int // Maximum patients for today
+  currentActiveToken Int         @default(0) // The token number currently inside the cabin
+  issuedTokensCount  Int         @default(0) // Atomic counter for sequential token issuance
+
+  tokens    QueueToken[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
 
   @@unique([doctorId, date])
 }
 
 model QueueToken {
-  id              String      @id @default(uuid()) @map("_id")
-  queueId         String
-  queue           DailyQueue  @relation(fields: [queueId], references: [id], onDelete: Cascade)
-  
-  tokenNumber     Int         // Strict Sequence: 1, 2, 3...
-  source          TokenSource // ONLINE or WALK_IN
-  status          TokenStatus @default(WAITING)
-  
+  id      String     @id @default(uuid()) @map("_id")
+  queueId String
+  queue   DailyQueue @relation(fields: [queueId], references: [id], onDelete: Cascade)
+
+  tokenNumber Int // Strict Sequence: 1, 2, 3...
+  source      TokenSource // ONLINE or WALK_IN
+  status      TokenStatus @default(WAITING)
+
   // Patient Reference
-  userId          String?     
-  user            User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
-  walkInEntryId   String?     
-  walkInEntry     WalkInEntry? @relation(fields: [walkInEntryId], references: [id], onDelete: SetNull)
-  
-  estimatedTime   DateTime?   // Dynamic estimate
-  tokenIssuedAt   DateTime    @default(now()) // Determines strict FCFS priority
-  isEmergency     Boolean     @default(false)
-  patientLocation String?     // Patient's city or village name
-  
+  userId        String?
+  user          User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  walkInEntryId String?
+  walkInEntry   WalkInEntry? @relation(fields: [walkInEntryId], references: [id], onDelete: SetNull)
+
+  estimatedTime   DateTime? // Dynamic estimate
+  tokenIssuedAt   DateTime  @default(now()) // Determines strict FCFS priority
+  isEmergency     Boolean   @default(false)
+  patientLocation String? // Patient's city or village name
+
   @@unique([queueId, tokenNumber])
   @@index([queueId, status])
   @@index([tokenIssuedAt])
 }
 
 model WalkInEntry {
-  id              String      @id @default(uuid()) @map("_id")
-  patientName     String
-  phoneNumber     String?
-  symptoms        String?
-  createdAt       DateTime    @default(now())
-  
-  token           QueueToken[]
+  id          String   @id @default(uuid()) @map("_id")
+  patientName String
+  phoneNumber String?
+  symptoms    String?
+  createdAt   DateTime @default(now())
+
+  token QueueToken[]
 }
 
 // ── Phase 26: Security & OTP Persistence ─────────────────────
@@ -414,26 +478,32 @@ model RateLimit {
 // ── Clinic Schedule & Operations Engine ──────────────────────
 
 model WeeklySchedule {
-  id         String   @id @default(uuid()) @map("_id")
-  doctorId   String   @unique
-  doctor     Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
-  monday     Json     // { isOpen: true, start: "09:00", end: "14:00", maxPatients: 30 }
-  tuesday    Json
-  wednesday  Json
-  thursday   Json
-  friday     Json
-  saturday   Json
-  sunday     Json
-  updatedAt  DateTime @updatedAt
+  id        String   @id @default(uuid()) @map("_id")
+  doctorId  String   @unique
+  doctor    Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  monday    Json // { isOpen: true, start: "09:00", end: "14:00", maxPatients: 30 }
+  tuesday   Json
+  wednesday Json
+  thursday  Json
+  friday    Json
+  saturday  Json
+  sunday    Json
+  updatedAt DateTime @updatedAt
 }
 
 model ClinicOperations {
-  id               String   @id @default(uuid()) @map("_id")
-  doctorId         String   @unique
-  doctor           Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
-  isClosedToday    Boolean  @default(false)
+  id                 String  @id @default(uuid()) @map("_id")
+  doctorId           String  @unique
+  doctor             Doctor  @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  isClosedToday      Boolean @default(false)
   pauseOnlineBooking Boolean @default(false)
-  walkInLimit      Int      @default(10)
-  onlineLimit      Int      @default(20)
-  emergencySlots   Int      @default(2)
+  walkInLimit        Int     @default(10)
+  onlineLimit        Int     @default(20)
+  emergencySlots     Int     @default(2)
 }
+
+model SystemCounter {
+  id    String @id @map("_id")
+  count Int    @default(64000)
+}
+

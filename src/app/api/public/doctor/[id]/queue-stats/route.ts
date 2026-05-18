@@ -62,19 +62,29 @@ export async function GET(
 
     const currentActiveToken = queue?.currentActiveToken || 0;
     const totalInQueue = queue?._count.tokens || 0;
-    const avgTime = doctor.averageConsultationTime || 15;
-    const estimatedWait = totalInQueue * avgTime;
+    
+    // Import dynamically so it's isolated
+    const { calculateDynamicStatus } = require('@/lib/queue-operations');
+    
+    const dynamicData = calculateDynamicStatus({ 
+      doctor, 
+      todayQueue: queue 
+    });
 
     const currentDayName = today.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-    const daySchedule: any = (doctor.weeklySchedule as any)?.[currentDayName] || { isOpen: true }; // Fallback to open if no schedule
+    const daySchedule: any = (doctor.weeklySchedule as any)?.[currentDayName] || { isOpen: true };
 
     const queueData = {
-      currentToken: currentActiveToken,
+      currentToken: dynamicData.activeTokenNumber || 0,
       totalInQueue,
-      estimatedWait,
-      avgTime,
-      status: queue?.status || "NOT_STARTED",
+      estimatedWait: dynamicData.estimatedWaitMinutes || 0,
+      avgTime: doctor.averageConsultationTime || 15,
+      status: dynamicData.status,
+      message: dynamicData.message,
+      isBookableOnline: dynamicData.isBookableOnline,
       isClosedToday: doctor.clinicOperations?.isClosedToday || !daySchedule.isOpen,
+      pauseOnlineBooking: doctor.clinicOperations?.pauseOnlineBooking || false,
+      emergencySlots: doctor.clinicOperations?.emergencySlots || 0,
       timings: daySchedule.isOpen ? `${daySchedule.start} - ${daySchedule.end}` : "Closed Today",
     };
 

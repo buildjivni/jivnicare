@@ -1,6 +1,7 @@
 "use client";
 
-import { Header, Footer, RoleGuard } from "@/components/shared";
+import { Header, Footer } from "@/components/shared";
+import { RoleGuard } from "@/components/shared/RoleGuard";
 
 export default function PatientLayout({
   children,

@@ -12,6 +12,7 @@ export class QueueService {
     userId: string | null, 
     source: "ONLINE" | "WALK_IN" = "ONLINE", 
     patientLocation?: string,
+    isEmergency: boolean = false,
     prismaTx?: any
   ) {
     // Phase 6: Canonical Start of Day
@@ -19,12 +20,22 @@ export class QueueService {
 
     // The core logic that must run atomically
     const coreLogic = async (tx: any) => {
+      // 0. Ensure Doctor exists and is VERIFIED
+      const doctor = await tx.doctor.findUnique({ where: { id: doctorId } });
+      if (!doctor || doctor.verificationStatus !== "VERIFIED") {
+        throw new Error("DOCTOR_NOT_VERIFIED");
+      }
+
       // 1. Check Clinic Operations & Schedule
       const clinicOps = await tx.clinicOperations.findUnique({ where: { doctorId } });
       const schedule = await tx.weeklySchedule.findUnique({ where: { doctorId } });
 
       if (clinicOps?.isClosedToday) {
         throw new Error("CLINIC_CLOSED_TODAY");
+      }
+
+      if (source === "ONLINE" && clinicOps?.pauseOnlineBooking && !isEmergency) {
+        throw new Error("QUEUE_PAUSED");
       }
 
       // Check Weekly Schedule for the given day
@@ -39,7 +50,7 @@ export class QueueService {
           }
 
           // Strict Timing Enforcement for ONLINE bookings
-          if (source === "ONLINE") {
+          if (source === "ONLINE" && !isEmergency) {
             const now = new Date();
             const currentHour = now.getHours();
             const currentMin = now.getMinutes();
@@ -61,8 +72,8 @@ export class QueueService {
       });
 
       if (!dailyQueue) {
-        // Unified Capacity: Use walkInLimit as the single source of truth for total capacity
-        const maxCapacity = clinicOps ? clinicOps.walkInLimit : 40;
+        // Unified Capacity: Combine walkIn and online limit
+        const maxCapacity = clinicOps ? (clinicOps.onlineLimit + clinicOps.walkInLimit) : 40;
 
         dailyQueue = await tx.dailyQueue.create({
           data: { 
@@ -85,28 +96,45 @@ export class QueueService {
       }
 
       // 4. Atomic Capacity & Token Sequencing (Unified Pool)
-      // Perform an atomic increment and retrieve the NEW value in a single operation.
-      // This prevents the Read-After-Write TOCTOU race condition where two concurrent
-      // requests might read the exact same snapshot value and generate duplicate tokens.
-      const updatedQueue = await tx.dailyQueue.update({
-        where: { id: dailyQueue.id },
-        data: { issuedTokensCount: { increment: 1 } }
-      });
+      let tokenNumber = 0;
+      let actualEmergency = isEmergency;
 
-      if (updatedQueue.issuedTokensCount > updatedQueue.maxCapacity) {
-        // Automatically rolls back the transaction and the increment if capacity is exceeded
-        throw new Error("QUEUE_FULL");
+      if (isEmergency) {
+        // Check emergency capacity
+        const emergencyCount = await tx.queueToken.count({
+          where: { queueId: dailyQueue.id, isEmergency: true }
+        });
+        
+        if (emergencyCount >= (clinicOps?.emergencySlots || 2)) {
+           throw new Error("EMERGENCY_FULL");
+        }
+        
+        // Emergency tokens get a special number like 9991, 9992 to bypass regular sequence visually,
+        // or we just mark them. Let's use negative numbers or offset for now, 
+        // actually just mark `isEmergency=true` and keep tokenNumber = 0 or max + 1.
+        // Let's just use the counter but it doesn't increment the regular issuedTokensCount.
+        tokenNumber = 9000 + emergencyCount + 1; // E.g., 9001
+      } else {
+        const updatedQueue = await tx.dailyQueue.update({
+          where: { id: dailyQueue.id },
+          data: { issuedTokensCount: { increment: 1 } }
+        });
+
+        if (updatedQueue.issuedTokensCount > updatedQueue.maxCapacity) {
+          throw new Error("QUEUE_FULL");
+        }
+        tokenNumber = updatedQueue.issuedTokensCount;
       }
 
       // 5. Atomic Token Creation
       const newQueueToken = await tx.queueToken.create({
         data: {
           queueId: dailyQueue.id,
-          tokenNumber: updatedQueue.issuedTokensCount,
+          tokenNumber,
           source,
           status: "WAITING",
           userId: source === "ONLINE" ? userId : null,
-          isEmergency: false,
+          isEmergency: actualEmergency,
           patientLocation: patientLocation || null,
         },
       });

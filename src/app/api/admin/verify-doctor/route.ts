@@ -1,85 +1,122 @@
-import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-import { verifyToken } from "@/lib/jwt";
-import { cookies } from "next/headers";
+import { NextResponse } from 'next/server';
+import prisma from '@/lib/prisma';
+import jwt from 'jsonwebtoken';
+import { cookies } from 'next/headers';
+import { verifyDoctorSchema, formatZodError } from '@/lib/validations';
+import { generateSequentialDoctorCode } from '@/lib/slug';
 
-export async function POST(req: Request) {
+export async function POST(request: Request) {
   try {
+    // 1. Authenticate Admin
     const cookieStore = await cookies();
-    const token = cookieStore.get("auth-token")?.value;
+    const token = cookieStore.get('auth-token')?.value;
 
     if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const decoded: any = verifyToken(token);
-    if (!decoded || decoded.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden: Admin access only" }, { status: 403 });
+    const jwtSecret = process.env.JWT_SECRET || 'fallback-secret';
+    let decoded: any;
+    try {
+      decoded = jwt.verify(token, jwtSecret);
+    } catch (err) {
+      return NextResponse.json({ error: 'Invalid or expired session' }, { status: 401 });
     }
 
-    const { doctorId, status, adminNotes } = await req.json();
-
-    if (!doctorId || !status) {
-      return NextResponse.json({ error: "Doctor ID and Status are required" }, { status: 400 });
+    if (decoded.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Access denied. Admins only.' }, { status: 403 });
     }
 
-    // Update the doctor verification status
-    const updatedDoctor = await prisma.doctor.update({
-      where: { id: doctorId },
-      data: {
-        verificationStatus: status, // VERIFIED, REJECTED, SUSPENDED
-      },
-    });
+    // 2. Parse Payload
+    const body = await request.json();
+    
+    // Strict Payload Validation
+    const validation = verifyDoctorSchema.safeParse(body);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: 'Invalid payload: ' + formatZodError(validation.error) },
+        { status: 400 }
+      );
+    }
 
-    // Also log this moderation action
-    await prisma.moderationLog.create({
-      data: {
-        adminId: decoded.id,
-        action: `UPDATED_STATUS_TO_${status}`,
-        targetType: "DOCTOR",
-        targetId: doctorId,
-        reason: adminNotes || "Status updated via Admin Panel",
+    const { doctorId, status, adminNotes } = validation.data;
+
+    const doctor = await prisma.doctor.findUnique({ where: { id: doctorId } });
+    if (!doctor) {
+      return NextResponse.json({ error: 'Doctor not found.' }, { status: 404 });
+    }
+
+    // 4. Update Doctor Status atomically
+    const result = await prisma.$transaction(async (tx) => {
+      // Allocate code atomically on verification if missing
+      let doctorCode = doctor.doctorCode;
+      if (status === 'VERIFIED' && !doctorCode) {
+        doctorCode = await generateSequentialDoctorCode(tx);
       }
-    });
 
-    // Notify the doctor via SMS
-    const doctorUser = await prisma.user.findUnique({
-      where: { id: updatedDoctor.userId }
-    });
+      const updatedDoctor = await tx.doctor.update({
+        where: { id: doctorId },
+        data: {
+          verificationStatus: status as any,
+          doctorCode,
+        }
+      });
 
-    if (doctorUser && doctorUser.phone) {
-      const { sendSMS } = await import("@/lib/sms");
-      let message = "";
+      // Send the appropriate notification depending on the new status
+      let notificationType: any = "ADMIN_ALERT";
+      let title = "Verification Update";
+      let message = "Your clinical verification request has been updated.";
+
       if (status === "VERIFIED") {
-        message = `Dear Dr. ${updatedDoctor.name}, your profile on JivniCare has been VERIFIED. You can now login and manage appointments.`;
+        notificationType = "VERIFICATION_APPROVED";
+        title = "Account Verified Successfully";
+        message = "Congratulations! Your professional doctor profile has been successfully verified by our clinical audit team.";
       } else if (status === "REJECTED") {
-        message = `Dear Dr. ${updatedDoctor.name}, your profile on JivniCare was REJECTED. Reason: ${adminNotes || "Please contact support."}`;
+        notificationType = "VERIFICATION_REJECTED";
+        title = "Profile Verification Declined";
+        message = `Your registration request has been declined. Reason: ${adminNotes || "Information could not be verified."}`;
+      } else if (status === "SUSPENDED") {
+        notificationType = "VERIFICATION_SUSPENDED";
+        title = "Account Temporarily Suspended";
+        message = `Your professional doctor account has been suspended. Reason: ${adminNotes || "Under administrative review."}`;
       }
-      
-      if (message) {
-        // We use a custom message here, so we'll need to adapt the sms.ts to allow generic messages 
-        // OR just send the OTP template if the sms service is strictly OTP. 
-        // For MVP, we will call it and it will log. If fast2sms allows generic text without a specific DLT template, it might fail in prod.
-        // It's safer to implement an in-app notification first.
-        await prisma.notification.create({
+
+      await tx.notification.create({
+        data: {
+          userId: doctor.userId,
+          type: notificationType,
+          title,
+          message,
+          metadata: { doctorId, status, adminNotes }
+        }
+      });
+
+      // Write immutable audit log entry
+      const adminUser = await tx.user.findFirst({ where: { role: 'ADMIN' } });
+      if (adminUser) {
+        await tx.moderationLog.create({
           data: {
-            userId: doctorUser.id,
-            type: status === "VERIFIED" ? "VERIFICATION_APPROVED" : "VERIFICATION_REJECTED",
-            title: `Profile ${status}`,
-            message: message,
+            adminId: adminUser.id,
+            action: `VERIFICATION_${status}`,
+            targetType: 'DOCTOR',
+            targetId: doctorId,
+            reason: adminNotes || null,
           }
         });
-        
-        // Optionally attempt SMS if configured
-        try {
-           // await sendSMS(doctorUser.phone, `STATUS: ${status}`); // If Fast2SMS template is strict, this might fail. We rely on the Notification table.
-        } catch(e) {}
       }
-    }
 
-    return NextResponse.json({ success: true, doctor: updatedDoctor });
-  } catch (error) {
-    console.error("POST Admin Verify Error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+      return { status, doctorCode };
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: `Doctor successfully updated to ${status}.`,
+      doctor: { id: doctorId, status: result.status, doctorCode: result.doctorCode },
+      auditLogged: true,
+    });
+
+  } catch (error: any) {
+    console.error('Admin Doctor Verification Error:', error);
+    return NextResponse.json({ error: 'Internal server error.' }, { status: 500 });
   }
 }

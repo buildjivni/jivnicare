@@ -30,10 +30,17 @@ export async function POST(request: Request) {
       );
     }
 
-    const { doctorId, date, location } = validation.data;
+    const { doctorId, date, location, isEmergency } = validation.data;
 
     // Call service layer
-    const newQueueToken = await QueueService.issueToken(doctorId, new Date(date), payload.id, "ONLINE", location);
+    const newQueueToken = await QueueService.issueToken(
+      doctorId, 
+      new Date(date), 
+      payload.id, 
+      "ONLINE", 
+      location,
+      isEmergency
+    );
 
     return NextResponse.json({ success: true, token: newQueueToken });
   } catch (error: any) {
@@ -41,12 +48,15 @@ export async function POST(request: Request) {
     
     // Phase 2: Explicit Error Messages for Patients
     const errorMessages: Record<string, string> = {
+      "DOCTOR_NOT_VERIFIED": "This doctor is not currently verified to accept online bookings.",
       "ALREADY_BOOKED": "You already have a token for this date.",
       "QUEUE_FULL": "Queue is full for this date.",
       "CLINIC_CLOSED_TODAY": "Clinic is closed today. Please try another day.",
       "CLINIC_CLOSED_ON_THIS_DAY": "Doctor does not consult on this day.",
       "BOOKING_NOT_STARTED": "Bookings for today haven't started yet.",
-      "BOOKING_FINISHED": "Bookings for today are now closed."
+      "BOOKING_FINISHED": "Bookings for today are now closed.",
+      "QUEUE_PAUSED": "The doctor has temporarily paused new online bookings.",
+      "EMERGENCY_FULL": "Emergency capacity is currently full. Please visit the clinic directly."
     };
 
     const message = errorMessages[error.message] || "Failed to book appointment";

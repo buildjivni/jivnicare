@@ -27,8 +27,12 @@ export function mapPrismaDoctorToUI(doc: any): UIDoctor {
     image: doc.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(doc.name)}&background=5298D2&color=fff`,
     clinicImage: doc.clinicImage,
     bgImage: "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?q=80&w=1200",
-    available: "Available Today",
-    availabilityStatus: isQueueActive ? `Available in ${waitMinutes} mins` : "OPD Open",
+    available: doc.clinicOperations?.isClosedToday ? "Closed Today" : "Available Today",
+    availabilityStatus: doc.clinicOperations?.isClosedToday 
+      ? "OPD Closed" 
+      : doc.clinicOperations?.pauseOnlineBooking 
+        ? "Online Booking Paused" 
+        : isQueueActive ? `Available in ${waitMinutes} mins` : "OPD Open",
     isQueueActive,
     queueWaitMinutes: waitMinutes,
     verifiedBadgeLabel: doc.verifiedBadgeLabel || (doc.experience >= 10 ? "Experienced Partner" : "Verified Doctor"),

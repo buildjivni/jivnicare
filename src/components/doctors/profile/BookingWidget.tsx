@@ -29,6 +29,8 @@ export function BookingWidget({
     avgTime: 15,
     status: "NOT_STARTED",
     isClosedToday: false,
+    pauseOnlineBooking: false,
+    emergencySlots: 0,
     timings: "",
   });
   const [isLoading, setIsLoading] = useState(true);
@@ -54,7 +56,11 @@ export function BookingWidget({
     return () => clearTimeout(timeoutId);
   }, [doctor.id]);
 
-  const isAvailableToday = !queue.isClosedToday;
+  const isClosedToday = queue.isClosedToday;
+  const isPaused = queue.pauseOnlineBooking;
+  const hasEmergencySlots = queue.emergencySlots > 0;
+  const isAvailableToday = !isClosedToday;
+  const canBook = isAvailableToday && !isPaused;
   const fee = selectedService === "video" ? doctor.videoFee : doctor.fee;
   const queueActive = queue.status === "ACTIVE" || queue.status === "NOT_STARTED";
 
@@ -102,19 +108,47 @@ export function BookingWidget({
           </div>
         </div>
 
-        {/* ── 2. Live Queue Status ── */}
+        {/* ── 2. Operational Status Banner ── */}
+        {(isClosedToday || isPaused) && (
+          <div className={`mx-4 mt-3 rounded-[14px] px-4 py-3 flex items-start gap-3 border ${
+            isClosedToday
+              ? "bg-red-50 border-red-100"
+              : "bg-amber-50 border-amber-100"
+          }`}>
+            <span className="text-lg leading-none mt-0.5">{isClosedToday ? "🔴" : "⏸️"}</span>
+            <div>
+              <p className={`text-[12px] font-black ${isClosedToday ? "text-red-800" : "text-amber-800"}`}>
+                {isClosedToday ? "Clinic Closed Today" : "Online Booking Paused"}
+              </p>
+              <p className={`text-[11px] font-medium mt-0.5 ${isClosedToday ? "text-red-700/80" : "text-amber-700/80"}`}>
+                {isClosedToday
+                  ? "This clinic is not accepting patients today."
+                  : "Walk-in visits may still be available. Please call the clinic directly."}
+              </p>
+              {!isClosedToday && hasEmergencySlots && (
+                <p className="text-[11px] font-bold text-emerald-700 mt-1.5 flex items-center gap-1">
+                  🚨 Emergency slots available — walk-in accepted
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── 3. Live Queue Status ── */}
         <div className="p-4 space-y-3">
 
           {/* Queue header */}
           <div className="flex items-center gap-2">
-            <Activity className={`w-3.5 h-3.5 shrink-0 ${isAvailableToday && queueActive ? "text-emerald-500" : "text-slate-400"}`} />
+            <Activity className={`w-3.5 h-3.5 shrink-0 ${canBook && queueActive ? "text-emerald-500" : "text-slate-400"}`} />
             <span className="text-[12px] font-bold text-slate-700">Live Queue Status</span>
             <div className={`ml-auto text-[9.5px] font-bold px-2 py-0.5 rounded-full border ${
-              isAvailableToday
-                ? "text-emerald-700 bg-emerald-50 border-emerald-200"
-                : "text-red-600 bg-red-50 border-red-100"
+              isClosedToday
+                ? "text-red-600 bg-red-50 border-red-100"
+                : isPaused
+                ? "text-amber-700 bg-amber-50 border-amber-200"
+                : "text-emerald-700 bg-emerald-50 border-emerald-200"
             }`}>
-              {isAvailableToday ? (queue.timings || "Open Today") : "Closed"}
+              {isClosedToday ? "Closed" : isPaused ? "Paused" : (queue.timings || "Open Today")}
             </div>
           </div>
 
@@ -177,19 +211,24 @@ export function BookingWidget({
                 trackEvent("booking_initiated", { doctorId: doctor.id, service: selectedService, fee });
                 onBook();
               }}
-              disabled={!isAvailableToday || isNavigating}
+              disabled={!canBook || isNavigating}
               className={[
                 "w-full h-12 rounded-[14px] text-[14px] font-bold",
-                "bg-[#205E98] hover:bg-[#1a4f82] text-white",
-                "shadow-[0_4px_16px_rgba(32,94,152,0.28)] hover:shadow-[0_6px_20px_rgba(32,94,152,0.36)]",
+                canBook
+                  ? "bg-[#205E98] hover:bg-[#1a4f82] text-white shadow-[0_4px_16px_rgba(32,94,152,0.28)] hover:shadow-[0_6px_20px_rgba(32,94,152,0.36)]"
+                  : isPaused && !isClosedToday
+                  ? "bg-amber-500 hover:bg-amber-600 text-white"
+                  : "bg-slate-200 text-slate-500",
                 "active:scale-[0.98] transition-all duration-200",
-                "disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none flex items-center justify-center gap-2",
+                "disabled:opacity-60 disabled:cursor-not-allowed disabled:shadow-none flex items-center justify-center gap-2",
               ].join(" ")}
             >
               {isNavigating
                 ? "Redirecting..."
-                : !isAvailableToday
-                ? "Closed Today"
+                : isClosedToday
+                ? "🔴 Closed Today"
+                : isPaused
+                ? "⏸ Booking Paused — Walk-in Only"
                 : (
                   <>
                     <Shield className="w-4 h-4 text-white/90" />

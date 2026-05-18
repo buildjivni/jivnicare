@@ -1,7 +1,7 @@
 "use client";
 
 
-import { RoleGuard } from "@/components/shared";
+import { RoleGuard } from "@/components/shared/RoleGuard";
 
 export default function DoctorLayout({
   children,
