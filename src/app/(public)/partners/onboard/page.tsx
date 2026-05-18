@@ -1,18 +1,15 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, CheckCircle2, Building2, Hospital, ShieldCheck, Camera, Upload, RefreshCw, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
-import { useAuthStore, getRoleRedirect } from "@/store/useAuthStore";
+import { useAuthStore } from "@/store/useAuthStore";
 import { Logo } from "@/components/brand/Logo";
 import { PublicGuard } from "@/components/shared";
-
-// Firebase types (loaded dynamically at runtime to prevent chunk contamination)
-import type { ConfirmationResult, RecaptchaVerifier as RecaptchaVerifierType } from "firebase/auth";
 
 const TOTAL_STEPS = 5; // Step 5 is Success
 const STORAGE_KEY_FORM = "jc_onboard_data_v1";
@@ -37,10 +34,6 @@ function OnboardingContent() {
   const [authStep, setAuthStep] = useState<"phone" | "otp">("phone");
   const [isAuthLoading, setIsAuthLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
-  
-  // Firebase Specific (using type-only imports above)
-  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
-  const recaptchaVerifierRef = useRef<RecaptchaVerifierType | null>(null);
 
   // ── FORM DATA ────────────────────────────────────────────────────────
   const [formData, setFormData] = useState({
@@ -53,20 +46,6 @@ function OnboardingContent() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Initialize reCAPTCHA with dynamic imports to avoid chunk contamination
-  const setupRecaptcha = async () => {
-    if (recaptchaVerifierRef.current) return;
-    try {
-      const { auth } = await import("@/lib/firebase/config");
-      const { RecaptchaVerifier } = await import("firebase/auth");
-      recaptchaVerifierRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        'size': 'invisible',
-      });
-    } catch (err) {
-      console.error("reCAPTCHA setup error:", err);
-    }
-  };
 
   // 1. Initialize from storage or user state
   useEffect(() => {
@@ -109,29 +88,20 @@ function OnboardingContent() {
     setIsAuthLoading(true);
     setAuthError(null);
 
-    await setupRecaptcha();
-    const appVerifier = recaptchaVerifierRef.current;
-
-    if (!appVerifier) {
-      setAuthError("Security verification failed. Please refresh.");
-      setIsAuthLoading(false);
-      return;
-    }
-
     try {
-      const { auth } = await import("@/lib/firebase/config");
-      const { signInWithPhoneNumber } = await import("firebase/auth");
-      const formattedPhone = `+91${authPhone}`;
-      const confirmation = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
-      setConfirmationResult(confirmation);
+      const res = await fetch("/api/auth/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: authPhone }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to send OTP.");
+
       setAuthStep("otp");
     } catch (error: any) {
       console.error("Send OTP Error:", error);
       setAuthError(error.message || "Failed to send OTP.");
-      if (recaptchaVerifierRef.current) {
-        recaptchaVerifierRef.current.clear();
-        recaptchaVerifierRef.current = null;
-      }
     } finally {
       setIsAuthLoading(false);
     }
@@ -139,20 +109,15 @@ function OnboardingContent() {
 
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (authOtp.length < 6 || !confirmationResult) return;
+    if (authOtp.length < 6) return;
     setIsAuthLoading(true);
     setAuthError(null);
 
     try {
-      // 1. Verify with Firebase
-      const result = await confirmationResult.confirm(authOtp);
-      const idToken = await result.user.getIdToken();
-
-      // 2. Sync with JivniCare Session
-      const res = await fetch("/api/auth/session", {
+      const res = await fetch("/api/auth/verify-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken, name: formData.fullName || "Doctor" }),
+        body: JSON.stringify({ phone: authPhone, otp: authOtp, name: formData.fullName || "Doctor" }),
       });
       
       const data = await res.json();
@@ -169,11 +134,12 @@ function OnboardingContent() {
       }
     } catch (error: any) {
       console.error("Verify OTP Error:", error);
-      setAuthError(error.code === "auth/invalid-verification-code" ? "Invalid OTP." : "Verification failed.");
+      setAuthError(error.message || "Verification failed.");
     } finally {
       setIsAuthLoading(false);
     }
   };
+
 
   const validateStep = (currentStep: number) => {
     const newErrors: Record<string, string> = {};
@@ -260,8 +226,6 @@ function OnboardingContent() {
         <div className="absolute -top-[10%] -right-[10%] w-[40%] h-[40%] rounded-full bg-emerald-50/50 blur-[120px]" />
         <div className="absolute top-[20%] -left-[10%] w-[30%] h-[30%] rounded-full bg-blue-50/40 blur-[120px]" />
       </div>
-
-      <div id="recaptcha-container"></div>
       
       {/* Header */}
       <nav className="h-20 bg-white/80 backdrop-blur-md border-b border-slate-100 px-6 sm:px-12 flex items-center justify-between sticky top-0 z-50">
