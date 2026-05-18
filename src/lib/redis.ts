@@ -7,7 +7,6 @@ const createRedisClient = () => {
   const token = process.env.UPSTASH_REDIS_REST_TOKEN;
 
   if (!url || !token) {
-    console.warn("⚠️ UPSTASH_REDIS variables are missing. Using in-memory fallback for development only!");
     // Basic mock for local dev
     const store = new Map<string, any>();
     return {
