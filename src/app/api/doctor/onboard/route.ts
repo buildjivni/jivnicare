@@ -113,7 +113,7 @@ export async function POST(request: Request) {
           education: qualifications,
           qualifications: qualifications,
           specialtyIds: [specialtyRecord.id],
-          verificationStatus: 'PENDING',
+          verificationStatus: 'VERIFIED',
           profileImage: profilePhotoUrl || null,
           clinicImage: clinicPhotoUrl || null,
           medicalRegistrationNumber: medicalRegistrationUrl || null,
