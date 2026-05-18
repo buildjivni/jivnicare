@@ -2,10 +2,13 @@ import { Bell, Settings, UserPlus } from "lucide-react";
 
 interface QueueOperationsMenuProps {
   onAddOffline: () => void;
+  onPauseToggle: () => void;
+  onEmergencyHalt: () => void;
+  isPaused?: boolean;
   compounderNote?: string;
 }
 
-export function QueueOperationsMenu({ onAddOffline, compounderNote }: QueueOperationsMenuProps) {
+export function QueueOperationsMenu({ onAddOffline, onPauseToggle, onEmergencyHalt, isPaused, compounderNote }: QueueOperationsMenuProps) {
   return (
     <div className="flex flex-col h-full gap-4">
       <div className="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm flex-1">
@@ -36,20 +39,20 @@ export function QueueOperationsMenu({ onAddOffline, compounderNote }: QueueOpera
 
           <button 
             onClick={() => {
-              if(window.confirm("Pause digital queue for 15 minutes? Patients will be notified of the delay.")) {
-                // Future API integration
+              if(window.confirm(isPaused ? "Resume digital queue?" : "Pause digital queue for 15 minutes? Patients will be notified of the delay.")) {
+                onPauseToggle();
               }
             }}
-            className="flex flex-col items-start p-4 rounded-2xl border border-amber-200 bg-amber-50 hover:bg-amber-100 transition-all text-left group w-full"
+            className={`flex flex-col items-start p-4 rounded-2xl border transition-all text-left group w-full ${isPaused ? 'border-emerald-200 bg-emerald-50 hover:bg-emerald-100' : 'border-amber-200 bg-amber-50 hover:bg-amber-100'}`}
           >
-            <span className="font-bold text-amber-900 text-sm mb-1 block">Take a Break (15m)</span>
-            <span className="text-[10px] text-amber-700 font-medium leading-tight">Temporarily pause queue advancement.</span>
+            <span className={`font-bold text-sm mb-1 block ${isPaused ? 'text-emerald-900' : 'text-amber-900'}`}>{isPaused ? 'Resume Queue' : 'Take a Break (15m)'}</span>
+            <span className={`text-[10px] font-medium leading-tight ${isPaused ? 'text-emerald-700' : 'text-amber-700'}`}>{isPaused ? 'Start accepting tokens again.' : 'Temporarily pause queue advancement.'}</span>
           </button>
 
           <button 
             onClick={() => {
               if(window.confirm("EMERGENCY: Are you sure you want to halt all OPD operations today? All waiting patients will be notified.")) {
-                // Future API integration
+                onEmergencyHalt();
               }
             }}
             className="flex flex-col items-start p-4 rounded-2xl border border-red-200 bg-red-50 hover:bg-red-100 transition-all text-left group w-full"

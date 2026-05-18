@@ -21,36 +21,73 @@ interface DoctorCardProps {
 function getAvailabilityConfig(doctor: Doctor) {
   const status = doctor.availabilityStatus || doctor.available || "";
   const lower = status.toLowerCase();
-  
-  if (lower.includes("instant") || lower.includes("12 mins") || lower.includes("opd open") || doctor.isQueueActive) {
-    return { 
-      label: "Accepting Walk-ins",
-      pill: "text-emerald-700 bg-emerald-50 border-emerald-100", 
-      dot: "bg-emerald-500",
-      pulse: true
+
+  // Closed Today — highest priority
+  if (lower.includes("opd closed") || lower.includes("closed today") || doctor.available?.toLowerCase().includes("closed")) {
+    return {
+      label: "Closed Today",
+      pill: "text-red-700 bg-red-50 border-red-200",
+      dot: "bg-red-500",
+      pulse: false,
+      isClosed: true,
+      isPaused: false,
     };
   }
-  if (lower.includes("today") || lower.includes("slot")) {
-    return { 
-      label: "Next Available Today",
-      pill: "text-[#205E98] bg-blue-50 border-blue-100", 
-      dot: "bg-[#205E98]",
-      pulse: false
-    };
-  }
-  if (lower.includes("tomorrow")) {
-    return { 
-      label: "Available Tomorrow",
-      pill: "text-amber-700 bg-amber-50 border-amber-100", 
+
+  // Online Booking Paused
+  if (lower.includes("booking paused") || lower.includes("paused")) {
+    return {
+      label: "Walk-in Only",
+      pill: "text-amber-700 bg-amber-50 border-amber-200",
       dot: "bg-amber-500",
-      pulse: false
+      pulse: false,
+      isClosed: false,
+      isPaused: true,
     };
   }
-  return { 
+
+  // Live queue / accepting walk-ins
+  if (lower.includes("instant") || lower.includes("mins") || lower.includes("opd open") || doctor.isQueueActive) {
+    return {
+      label: "Accepting Walk-ins",
+      pill: "text-emerald-700 bg-emerald-50 border-emerald-100",
+      dot: "bg-emerald-500",
+      pulse: true,
+      isClosed: false,
+      isPaused: false,
+    };
+  }
+
+  // Available today
+  if (lower.includes("today") || lower.includes("slot")) {
+    return {
+      label: "Next Available Today",
+      pill: "text-[#205E98] bg-blue-50 border-blue-100",
+      dot: "bg-[#205E98]",
+      pulse: false,
+      isClosed: false,
+      isPaused: false,
+    };
+  }
+
+  if (lower.includes("tomorrow")) {
+    return {
+      label: "Available Tomorrow",
+      pill: "text-amber-700 bg-amber-50 border-amber-100",
+      dot: "bg-amber-500",
+      pulse: false,
+      isClosed: false,
+      isPaused: false,
+    };
+  }
+
+  return {
     label: "Check Schedule",
-    pill: "text-slate-600 bg-slate-50 border-slate-200", 
+    pill: "text-slate-600 bg-slate-50 border-slate-200",
     dot: "bg-slate-400",
-    pulse: false
+    pulse: false,
+    isClosed: false,
+    isPaused: false,
   };
 }
 
@@ -266,19 +303,39 @@ export function DoctorCard({ doctor, className }: DoctorCardProps) {
             <div className="flex-1 max-w-[170px] relative z-40">
               <button
                 className={cn(
-                  "w-full h-[40px] rounded-[12px] bg-gradient-to-b from-primary to-[#4382b5] text-white font-bold text-[13px] tracking-wide",
+                  "w-full h-[40px] rounded-[12px] font-bold text-[13px] tracking-wide",
                   "flex items-center justify-center gap-1.5",
-                  "shadow-[0_4px_12px_rgba(82,152,210,0.25),inset_0_1px_1px_rgba(255,255,255,0.3)]",
-                  "border border-[#3c76a6]/80",
-                  "hover:brightness-105 hover:shadow-[0_6px_16px_rgba(82,152,210,0.35),inset_0_1px_1px_rgba(255,255,255,0.4)]",
-                  "active:scale-[0.98] transition-all duration-200 group"
+                  "active:scale-[0.98] transition-all duration-200 group",
+                  avail.isClosed
+                    ? "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed"
+                    : avail.isPaused
+                    ? "bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100"
+                    : cn(
+                        "bg-gradient-to-b from-primary to-[#4382b5] text-white",
+                        "shadow-[0_4px_12px_rgba(82,152,210,0.25),inset_0_1px_1px_rgba(255,255,255,0.3)]",
+                        "border border-[#3c76a6]/80",
+                        "hover:brightness-105 hover:shadow-[0_6px_16px_rgba(82,152,210,0.35),inset_0_1px_1px_rgba(255,255,255,0.4)]"
+                      )
                 )}
               >
-                <span>Book Clinic Visit</span>
-                <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform opacity-80" />
+                <span>
+                  {avail.isClosed ? "Closed Today" : avail.isPaused ? "Walk-in Only" : "Book Clinic Visit"}
+                </span>
+                {!avail.isClosed && (
+                  <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform opacity-80" />
+                )}
               </button>
-              <p className="text-center mt-1.5 text-[9.5px] font-bold text-emerald-600 flex items-center justify-center gap-0.5">
-                <ShieldCheck className="w-3 h-3" /> Confirmed Booking
+              <p className={cn(
+                "text-center mt-1.5 text-[9.5px] font-bold flex items-center justify-center gap-0.5",
+                avail.isClosed ? "text-slate-400" : avail.isPaused ? "text-amber-600" : "text-emerald-600"
+              )}>
+                {avail.isClosed ? (
+                  "Not accepting today"
+                ) : avail.isPaused ? (
+                  "Call clinic for walk-in"
+                ) : (
+                  <><ShieldCheck className="w-3 h-3" /> Confirmed Booking</>
+                )}
               </p>
             </div>
           </div>
@@ -287,3 +344,4 @@ export function DoctorCard({ doctor, className }: DoctorCardProps) {
     </motion.div>
   );
 }
+

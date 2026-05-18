@@ -4,7 +4,7 @@ import { Suspense, useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { 
   LayoutDashboard, Users, UserCircle, Settings, Star, 
-  LogOut, Wallet, CalendarX, Link as LinkIcon, AlertCircle, ShieldCheck,
+  LogOut, Wallet, CalendarX, Link as LinkIcon, AlertCircle, ShieldCheck, CheckCircle2,
   X, Menu, TrendingUp, RefreshCw, MapPin, Clock
 } from "lucide-react";
 import { QueueStatCards } from "@/components/doctor/queue/QueueStatCards";
@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/useAuthStore";
 import { WeeklyScheduleEditor } from "@/components/doctor/settings/WeeklyScheduleEditor";
 import { ClinicOperationsForm } from "@/components/doctor/settings/ClinicOperationsForm";
+import { cn } from "@/lib/utils";
 
 // ── BRAND COLORS (From Logo) ──────────────────────────────────────
 const BrandColors = {
@@ -112,11 +113,12 @@ function DoctorDashboardContent() {
   
   const [leaveMode, setLeaveMode] = useState(false);
   const [profileData, setProfileData] = useState({ name: "", bio: "", regNumber: "", specialty: "" });
-  const [settingsData, setSettingsData] = useState({ fee: "0", maxCapacity: "40", averageConsultationTime: "15" });
+  const [settingsData, setSettingsData] = useState({ fee: "0", maxCapacity: "40", averageConsultationTime: "15", pauseOnlineBooking: false, emergencySlots: "0" });
   const [weeklySchedule, setWeeklySchedule] = useState<any>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isTogglingLeave, setIsTogglingLeave] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<{ success: boolean; message: string } | null>(null);
 
   const fetchProfile = async () => {
     try {
@@ -132,7 +134,9 @@ function DoctorDashboardContent() {
         setSettingsData({
           fee: data.doctor.fee?.toString() || "0",
           maxCapacity: data.doctor.clinicOperations?.walkInLimit?.toString() || "40",
-          averageConsultationTime: data.doctor.averageConsultationTime?.toString() || "15"
+          averageConsultationTime: data.doctor.averageConsultationTime?.toString() || "15",
+          pauseOnlineBooking: data.doctor.clinicOperations?.pauseOnlineBooking || false,
+          emergencySlots: data.doctor.clinicOperations?.emergencySlots?.toString() || "0"
         });
         if (data.doctor.weeklySchedule) setWeeklySchedule(data.doctor.weeklySchedule);
         if (data.doctor.clinicOperations) setLeaveMode(data.doctor.clinicOperations.isClosedToday);
@@ -147,17 +151,34 @@ function DoctorDashboardContent() {
 
   const handleUpdateSettings = async (updates: any) => {
     setIsSaving(true);
+    setSaveStatus(null);
     try {
       const res = await fetch("/api/doctor/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updates)
       });
+      const data = await res.json();
       if (res.ok) {
-        // Success feedback
+        setSaveStatus({
+          success: true,
+          message: (updates.name !== undefined || updates.regNumber !== undefined)
+            ? "Changes saved! Sensitive updates (Name, Registration) are queued for Admin approval."
+            : "Profile changes saved successfully!"
+        });
+        await fetchProfile();
+      } else {
+        setSaveStatus({
+          success: false,
+          message: data.error || "Failed to update profile settings."
+        });
       }
     } catch (err) {
       console.error("Update failed", err);
+      setSaveStatus({
+        success: false,
+        message: "A network error occurred. Please try again."
+      });
     } finally {
       setIsSaving(false);
     }
@@ -366,23 +387,36 @@ function DoctorDashboardContent() {
         <QueueStatCards totalAppointments={queueStats.total} patientsServed={queueStats.completed} avgWaitTime={queueStats.avgWaitTime} currentQueue={queueStats.waiting} />
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
           <NowCallingController currentPatient={currentPatient} onNext={() => handleNextPatient(false)} onSkip={() => handleNextPatient(true)} />
-          <QueueOperationsMenu onAddOffline={async () => {
-            const name = window.prompt("Enter Patient Name:", "Walk-in Patient");
-            if (!name) return;
-            const location = window.prompt("Enter City/Village (Optional):", "");
-            
-            const res = await fetch("/api/doctor/queue/walk-in", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ 
-                patientName: name, 
-                phoneNumber: "", 
-                symptoms: "",
-                location: location || undefined
-              })
-            });
-            if (res.ok) await fetchQueue();
-          }} />
+          <QueueOperationsMenu 
+            isPaused={settingsData.pauseOnlineBooking}
+            onPauseToggle={async () => {
+              const newState = !settingsData.pauseOnlineBooking;
+              await handleUpdateSettings({ pauseOnlineBooking: newState });
+              setSettingsData(prev => ({ ...prev, pauseOnlineBooking: newState }));
+            }}
+            onEmergencyHalt={async () => {
+              await handleUpdateSettings({ isClosedToday: true });
+              setSettingsData(prev => ({ ...prev, isClosedToday: true }));
+              alert("OPD has been halted for today. All digital queues are closed.");
+            }}
+            onAddOffline={async () => {
+              const name = window.prompt("Enter Patient Name:", "Walk-in Patient");
+              if (!name) return;
+              const location = window.prompt("Enter City/Village (Optional):", "");
+              
+              const res = await fetch("/api/doctor/queue/walk-in", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                  patientName: name, 
+                  phoneNumber: "", 
+                  symptoms: "",
+                  location: location || undefined
+                })
+              });
+              if (res.ok) await fetchQueue();
+            }} 
+          />
         </div>
         <PatientListTable patients={patients} />
       </div>
@@ -390,8 +424,29 @@ function DoctorDashboardContent() {
   };
 
   const renderProfile = () => (
-    <div className="max-w-3xl fade-in">
+    <div className="max-w-3xl fade-in pb-20">
       <h1 className="text-3xl font-black text-slate-900 mb-8">My Profile</h1>
+      
+      {saveStatus && (
+        <div className={cn(
+          "mb-6 p-4 rounded-2xl border text-sm font-semibold flex items-center gap-3",
+          saveStatus.success 
+            ? "bg-emerald-50 border-emerald-200 text-emerald-800" 
+            : "bg-red-50 border-red-200 text-red-800"
+        )}>
+          {saveStatus.success ? <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" /> : <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />}
+          <span>{saveStatus.message}</span>
+        </div>
+      )}
+
+      <div className="bg-blue-50/50 border border-blue-100 rounded-2xl p-4 mb-8 flex items-start gap-3">
+        <ShieldCheck className="w-5 h-5 text-[#005da7] shrink-0 mt-0.5" />
+        <div>
+          <h4 className="text-sm font-bold text-blue-900 mb-1">Verified Healthcare Identity</h4>
+          <p className="text-xs text-blue-800/80 font-medium">To maintain patient trust and platform integrity, updates to core identity fields (Full Name and Registration Number) are intercepted for Admin moderation before going live.</p>
+        </div>
+      </div>
+
       <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-sm">
         <div className="flex items-center gap-6 mb-8 pb-8 border-b border-slate-100">
           <div className="w-24 h-24 rounded-full flex items-center justify-center border-4 border-white shadow-lg text-2xl font-black text-white bg-primary">
@@ -406,24 +461,44 @@ function DoctorDashboardContent() {
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Full Name</label>
-              <Input value={profileData.name} onChange={e => setProfileData({...profileData, name: e.target.value})} className="h-12 rounded-xl bg-slate-50" />
+              <label className="text-xs font-bold text-slate-500 uppercase mb-2 block flex items-center gap-1">
+                Full Name <span className="text-[10px] text-amber-600 font-bold bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100/60 lowercase">(requires moderation)</span>
+              </label>
+              <Input 
+                value={profileData.name} 
+                onChange={e => setProfileData({...profileData, name: e.target.value})}
+                className="h-12 rounded-xl bg-slate-50 text-slate-900 border-slate-200 focus:bg-white" 
+              />
             </div>
             <div>
-              <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Specialty</label>
-              <Input value={profileData.specialty} onChange={e => setProfileData({...profileData, specialty: e.target.value})} className="h-12 rounded-xl bg-slate-50" />
+              <label className="text-xs font-bold text-slate-500 uppercase mb-2 block flex items-center gap-1">
+                Primary Specialty <AlertCircle className="w-3 h-3 text-slate-400" />
+              </label>
+              <Input disabled value={profileData.specialty} className="h-12 rounded-xl bg-slate-100 text-slate-500 cursor-not-allowed border-slate-200" />
             </div>
           </div>
           <div>
-            <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Medical Registration Number</label>
-            <Input placeholder="e.g. MCI-12345" value={profileData.regNumber} onChange={e => setProfileData({...profileData, regNumber: e.target.value})} className="h-12 rounded-xl bg-slate-50" />
+            <label className="text-xs font-bold text-slate-500 uppercase mb-2 block flex items-center gap-1">
+              Medical Registration Number <span className="text-[10px] text-amber-600 font-bold bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100/60 lowercase">(requires moderation)</span>
+            </label>
+            <Input 
+              placeholder="e.g. MCI-12345" 
+              value={profileData.regNumber} 
+              onChange={e => setProfileData({...profileData, regNumber: e.target.value})}
+              className="h-12 rounded-xl bg-slate-50 text-slate-900 border-slate-200 focus:bg-white" 
+            />
           </div>
           <div>
             <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Short Biography</label>
-            <textarea value={profileData.bio} onChange={e => setProfileData({...profileData, bio: e.target.value})} className="w-full h-24 px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary/20" />
+            <textarea value={profileData.bio} onChange={e => setProfileData({...profileData, bio: e.target.value})} className="w-full h-24 px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all hover:bg-white" />
+            <p className="text-[10px] text-slate-400 font-medium mt-1">This is visible on your public profile. Safe to edit instantly.</p>
           </div>
-          <Button onClick={() => handleUpdateSettings(profileData)} disabled={isSaving} className="h-14 px-8 rounded-xl bg-primary text-white font-bold w-full md:w-auto mt-4 shadow-lg hover:brightness-110">
-            {isSaving ? "Saving..." : "Save Changes"}
+          <Button 
+            onClick={() => handleUpdateSettings({ name: profileData.name, regNumber: profileData.regNumber, bio: profileData.bio })} 
+            disabled={isSaving} 
+            className="h-14 px-8 rounded-xl bg-primary text-white font-bold w-full md:w-auto mt-4 shadow-lg hover:brightness-110"
+          >
+            {isSaving ? "Saving..." : "Save & Update Profile"}
           </Button>
         </div>
       </div>
@@ -441,7 +516,14 @@ function DoctorDashboardContent() {
           <ClinicOperationsForm 
             initialData={settingsData} 
             isSaving={isSaving} 
-            onSave={async (newData) => { await handleUpdateSettings(newData); setSettingsData(newData); }} 
+            onSave={async (newData) => { 
+              await handleUpdateSettings(newData); 
+              setSettingsData({
+                ...newData,
+                pauseOnlineBooking: newData.pauseOnlineBooking ?? false,
+                emergencySlots: newData.emergencySlots ?? "0"
+              }); 
+            }} 
           />
         </section>
         <section className="bg-white rounded-[2rem] border border-slate-200 p-8 shadow-sm">

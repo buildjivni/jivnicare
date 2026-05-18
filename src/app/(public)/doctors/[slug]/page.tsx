@@ -97,9 +97,45 @@ export default async function DoctorProfilePage({ params }: PageProps) {
 
   if (!doc) notFound();
 
+  // Fetch up to 3 related verified doctors under the same specialty
+  const relatedPrismaDoctors = await prisma.doctor.findMany({
+    where: {
+      verificationStatus: "VERIFIED",
+      id: { not: doc.id },
+      specialties: {
+        some: {
+          id: { in: doc.specialtyIds }
+        }
+      }
+    },
+    take: 3,
+    include: {
+      specialties: true,
+      keywords: true,
+      weeklySchedule: true,
+      clinicOperations: true,
+      dailyQueues: {
+        where: {
+          date: {
+            gte: new Date(new Date().setHours(0, 0, 0, 0)),
+            lt:  new Date(new Date().setHours(23, 59, 59, 999)),
+          }
+        },
+        select: {
+          status: true,
+          issuedTokensCount: true,
+          currentActiveToken: true,
+          maxCapacity: true,
+        },
+        take: 1,
+      }
+    }
+  });
+
+  const relatedDoctors = relatedPrismaDoctors.map(mapPrismaDoctorToUI);
   const doctor = mapPrismaDoctorToUI(doc);
   const district = doctor.location.split(",").pop()?.trim() ?? "Bihar";
-  const availableToday = doctor.available?.toLowerCase().includes("today");
+  const availableToday = doctor.available?.toLowerCase().includes("available today");
 
   return (
     <div className="bg-[#f7f9fc] min-h-screen pb-28 md:pb-8">
@@ -156,7 +192,7 @@ export default async function DoctorProfilePage({ params }: PageProps) {
 
           {/* Left: Profile content */}
           <div className="flex-1 min-w-0">
-            <DoctorProfileView doctor={doctor} />
+            <DoctorProfileView doctor={doctor} relatedDoctors={relatedDoctors} />
 
             {/* Mobile booking widget (inline, above fixed CTA) */}
             <div className="block lg:hidden mt-4" id="mobile-booking-widget">

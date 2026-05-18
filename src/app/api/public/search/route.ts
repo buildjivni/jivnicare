@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { searchDoctors } from '@/lib/search-engine';
+import { getInferredSpecialties } from '@/lib/search-dictionary';
 import type { Doctor } from '@/types';
 
 export async function GET(request: Request) {
@@ -13,6 +14,15 @@ export async function GET(request: Request) {
     if (specialties.length === 0) {
       const specParam = searchParams.get('specialty');
       if (specParam) specialties = specParam.split(',');
+    }
+
+    // Phase 3: Search Intelligence Dictionary
+    // Infer specialties from symptoms (e.g. "heart" -> "Cardiologist")
+    if (query) {
+      const inferred = getInferredSpecialties(query);
+      if (inferred.length > 0) {
+        specialties = [...specialties, ...inferred];
+      }
     }
 
     // Build Prisma Where Clause
@@ -37,6 +47,18 @@ export async function GET(request: Request) {
         { district: { contains: query, mode: 'insensitive' } },
         { keywords: { some: { term: { contains: query, mode: 'insensitive' } } } }
       ];
+      
+      // Phase 3: Lead/Search Tracking (Fire and forget)
+      // We don't await this so it doesn't block the API response
+      const districtParam = searchParams.get('district') || 'Patna';
+      prisma.searchAnalytics.create({
+        data: {
+          query,
+          normalizedQuery: query.toLowerCase(),
+          district: districtParam,
+          resultsCount: 0 // Will update later or just track the query for now
+        }
+      }).catch(e => console.warn("Search Analytics Tracking Failed:", e));
     }
     
     // ── Additional Filters ──────────────────────────────────────────────
@@ -45,6 +67,7 @@ export async function GET(request: Request) {
     const maxFee = parseInt(searchParams.get('maxFee') || '10000', 10);
     const availability = searchParams.get('availability'); // 'any', 'today'
     const sort = searchParams.get('sort') || 'recommended';
+    const isEmergency = searchParams.get('isEmergency') === 'true';
 
     if (minExperience > 0) {
       whereClause.experience = { gte: minExperience };
@@ -52,6 +75,14 @@ export async function GET(request: Request) {
     
     if (maxFee < 10000) {
       whereClause.fee = { lte: maxFee };
+    }
+
+    if (isEmergency) {
+      whereClause.clinicOperations = {
+        is: {
+          emergencySlots: { gt: 0 }
+        }
+      };
     }
 
     // ── Fetch verified doctors from DB ───────────────────────────────────
@@ -133,6 +164,7 @@ export async function GET(request: Request) {
         isQueueActive,
         queueWaitMinutes,
         patientsWaiting: waitingPatients,
+        hasEmergencySupport: (doc.clinicOperations?.emergencySlots ?? 0) > 0,
         tags: [...doc.specialties.map(s => s.name), ...doc.keywords.map(k => k.term)],
         about: doc.bio || "",
       } as any;

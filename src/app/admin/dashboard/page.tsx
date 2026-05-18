@@ -3,10 +3,11 @@
 import { useState, Suspense, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { 
-  LayoutDashboard, UserCog, Users, Activity, Settings, 
+  LayoutDashboard, UserCog, Users, Activity,
   Search, Bell, CheckCircle2, XCircle, AlertTriangle, 
-  FileText, Mail, Phone, MapPin, Eye, LogOut, TrendingUp,
-  ActivitySquare, Star, Clock, Calendar, Ban, RefreshCcw, Menu, X
+  FileText, Mail, Phone, MapPin, LogOut, TrendingUp,
+  ActivitySquare, Star, Clock, Calendar, Ban, RefreshCcw, Menu, X,
+  Clipboard, ShieldAlert, Zap, Building2, ChevronDown, ChevronUp
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,7 @@ interface DoctorEntry {
   id: string;
   name: string;
   specialization: string;
+  specialties: { name: string; slug: string }[];
   experience: string;
   status: DoctorStatus;
   email: string;
@@ -26,6 +28,17 @@ interface DoctorEntry {
   patients: string;
   clinicName: string;
   timings: string;
+  // Enriched verification fields
+  qualifications: string;
+  medicalRegistrationNumber: string;
+  emergencyAvailable: boolean;
+  emergencyConsultationAvailable: boolean;
+  emergencySlots: number;
+  pauseOnlineBooking: boolean;
+  district: string;
+  bio: string;
+  moderationHistory: { action: string; reason: string | null; createdAt: string; adminName: string }[];
+  updateLogs?: { id: string; field: string; oldValue: string | null; newValue: string; status: string; createdAt: string }[];
 }
 
 const MOCK_CLINICS_QUEUE: any[] = [];
@@ -82,18 +95,32 @@ function AdminDashboardContent() {
             return {
               id: d.id,
               name: d.user?.name || "Dr. Unnamed",
-              specialization: d.specialtyIds?.length ? d.specialtyIds[0] : "General",
+              specialization: d.specialties?.length ? d.specialties[0].name : (d.specialtyIds?.length ? d.specialtyIds[0] : "General"),
+              specialties: d.specialties || [],
               experience: d.experience ? `${d.experience} Years` : "N/A",
               status: d.verificationStatus,
               email: d.user?.email || "N/A",
               phone: d.user?.phone || "N/A",
               address: d.clinicOperations?.address || "N/A",
-              patients: "0", // Could be mapped from dailyQueue total tokens in future
-              clinicName: d.clinicOperations?.clinicName || "N/A",
-              timings
+              patients: "0",
+              clinicName: d.clinicOperations?.clinicName || d.hospitalName || "N/A",
+              timings,
+              // Enriched fields
+              qualifications: d.qualifications || "",
+              medicalRegistrationNumber: d.medicalRegistrationNumber || "",
+              emergencyAvailable: d.emergencyAvailable || false,
+              emergencyConsultationAvailable: d.emergencyConsultationAvailable || false,
+              emergencySlots: d.clinicOperations?.emergencySlots || 0,
+              pauseOnlineBooking: d.clinicOperations?.pauseOnlineBooking || false,
+              district: d.district || "",
+              bio: d.bio || "",
+              moderationHistory: d.moderationHistory || [],
+              updateLogs: d.updateLogs || [],
             };
           });
           setDoctors(formatted);
+          // Populate trust doctors — those with emergency claims
+          setTrustDoctors(formatted.filter(doc => doc.emergencyAvailable || doc.emergencySlots > 0));
         }
       } catch (err) { console.error("Failed to fetch doctors", err); }
     };
@@ -138,9 +165,17 @@ function AdminDashboardContent() {
       } catch (e) { console.error("Bookings fetch failed", e); }
     };
 
+    const fetchLeads = async () => {
+      try {
+        const res = await fetch("/api/admin/leads");
+        const data = await res.json();
+        if (data.success) setLeads(data.analytics);
+      } catch (e) { console.error("Leads fetch failed", e); }
+    };
+
     const init = async () => {
       setIsLoading(true);
-      await Promise.all([fetchDoctors(), fetchStats(), fetchHealth(), fetchPatients(), fetchBookings()]);
+      await Promise.all([fetchDoctors(), fetchStats(), fetchHealth(), fetchPatients(), fetchBookings(), fetchLeads()]);
       setIsLoading(false);
     };
 
@@ -160,6 +195,9 @@ function AdminDashboardContent() {
   const [queueHealth, setQueueHealth] = useState<any[]>([]);
   const [patients, setPatients] = useState<any[]>([]);
   const [bookings, setBookings] = useState<any[]>([]);
+  const [leads, setLeads] = useState<any>(null);
+  const [trustDoctors, setTrustDoctors] = useState<DoctorEntry[]>([]);
+  const [expandedModerationId, setExpandedModerationId] = useState<string | null>(null);
   const [patientSearch, setPatientSearch] = useState("");
   const [modReason, setModReason] = useState("");
   const [isModModalOpen, setIsModModalOpen] = useState(false);
@@ -201,6 +239,50 @@ function AdminDashboardContent() {
     }
   };
 
+  const handleProfileUpdate = async (logId: string, action: "APPROVE" | "REJECT") => {
+    try {
+      const res = await fetch("/api/admin/approve-profile-update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ logId, action })
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        const updatedLog = selectedDoctor?.updateLogs?.find(l => l.id === logId);
+        
+        setDoctors(prev => prev.map(doc => {
+          if (doc.id === selectedDoctorId) {
+            const newFields: any = {};
+            if (action === "APPROVE" && updatedLog) {
+              const fieldMap: Record<string, string> = {
+                name: "name",
+                medicalRegistrationNumber: "medicalRegistrationNumber",
+                hospitalName: "clinicName",
+                district: "district"
+              };
+              const targetField = fieldMap[updatedLog.field] || updatedLog.field;
+              newFields[targetField] = updatedLog.newValue;
+            }
+            return {
+              ...doc,
+              ...newFields,
+              updateLogs: doc.updateLogs?.filter(l => l.id !== logId)
+            };
+          }
+          return doc;
+        }));
+        
+        setToastMessage({ type: 'success', text: `Proposed update successfully ${action.toLowerCase()}d.` });
+      } else {
+        setToastMessage({ type: 'error', text: data.error || "Failed to resolve update" });
+      }
+    } catch (err) {
+      console.error(err);
+      setToastMessage({ type: 'error', text: "Network error" });
+    }
+  };
+
   const getStatusBadge = (status: DoctorStatus) => {
     switch(status) {
       case "PENDING": return <span className="bg-amber-100/80 border border-amber-200 text-amber-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide shadow-sm">Pending</span>;
@@ -219,6 +301,8 @@ function AdminDashboardContent() {
       { id: "patient-management", label: "Patient Records", icon: Users },
       { id: "booking-monitoring", label: "Booking Monitoring", icon: Calendar },
       { id: "queue-monitor", label: "Live Queue Monitor", icon: Activity },
+      { id: "lead-management", label: "Lead Management", icon: Clipboard },
+      { id: "trust-safety", label: "Trust & Safety", icon: ShieldAlert },
     ];
 
     return (
@@ -377,12 +461,12 @@ function AdminDashboardContent() {
           </div>
         </div>
         <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
-            <Activity className="w-8 h-8" />
+          <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center text-red-500">
+            <Zap className="w-8 h-8" />
           </div>
           <div>
-            <p className="text-sm font-bold text-slate-500">Verified Doctors</p>
-            <h4 className="text-2xl font-black text-slate-900">{platformStats?.doctors.verified || 0}</h4>
+            <p className="text-sm font-bold text-slate-500">Emergency-Enabled Clinics</p>
+            <h4 className="text-2xl font-black text-slate-900">{platformStats?.emergency?.enabledClinics || 0}</h4>
           </div>
         </div>
         <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex items-center gap-4">
@@ -464,75 +548,225 @@ function AdminDashboardContent() {
                        <p className="font-bold">No doctors found in this category.</p>
                      </div>
                   )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+                 </div>
+               </div>
+             </div>
+           </div>
+         </div>
 
         {/* RIGHT PANEL: DETAILS */}
         {selectedDoctor && (
-          <div className="w-full md:w-[450px] bg-white md:border-l border-slate-200 shrink-0 flex flex-col h-full shadow-[-20px_0_40px_rgba(0,0,0,0.04)] z-10 fade-in">
+          <div className="w-full md:w-[480px] bg-white md:border-l border-slate-200 shrink-0 flex flex-col h-full shadow-[-20px_0_40px_rgba(0,0,0,0.04)] z-10 fade-in">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-white sticky top-0 z-20">
-              <h2 className="font-black text-slate-900 flex items-center gap-2"><UserCog className="w-5 h-5 text-[#5298D2]"/> Profile Review</h2>
+              <h2 className="font-black text-slate-900 flex items-center gap-2"><UserCog className="w-5 h-5 text-[#5298D2]"/> Verification Review</h2>
               <button onClick={() => setSelectedDoctorId(null)} className="p-2 bg-slate-50 rounded-full text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors"><XCircle className="w-5 h-5"/></button>
             </div>
             
-            <div className="p-8 flex-1 overflow-y-auto">
-              <div className="flex flex-col items-center text-center mb-8 bg-slate-50 p-6 rounded-3xl border border-slate-100 relative">
+            <div className="p-6 flex-1 overflow-y-auto space-y-6">
+              {/* ── Identity Hero ── */}
+              <div className="flex flex-col items-center text-center bg-slate-50 p-6 rounded-3xl border border-slate-100 relative">
                 {selectedDoctor.status === "SUSPENDED" && (
                   <div className="absolute top-4 left-4 bg-red-100 text-red-700 text-xs font-black px-3 py-1 rounded-full uppercase tracking-widest flex items-center gap-1">
                     <Ban className="w-3 h-3"/> Suspended
                   </div>
                 )}
-                <div className={`w-28 h-28 rounded-full border-4 shadow-xl mb-4 relative flex items-center justify-center text-4xl font-black text-white ${selectedDoctor.status === 'SUSPENDED' ? 'bg-slate-400 border-slate-200' : 'bg-gradient-to-br from-[#5298D2] to-[#1E3A8A] border-white'}`}>
+                <div className={`w-24 h-24 rounded-full border-4 shadow-xl mb-4 flex items-center justify-center text-3xl font-black text-white ${selectedDoctor.status === 'SUSPENDED' ? 'bg-slate-400 border-slate-200' : 'bg-gradient-to-br from-[#5298D2] to-[#1E3A8A] border-white'}`}>
                   {selectedDoctor.name.split(' ')[1]?.charAt(0) || 'D'}
                   {selectedDoctor.status === "PENDING" && <div className="absolute -bottom-2 -right-2 bg-amber-500 border-4 border-white text-white w-8 h-8 rounded-full flex items-center justify-center font-black shadow-sm">!</div>}
                 </div>
-                <h2 className="text-3xl font-black text-slate-900">{selectedDoctor.name}</h2>
+                <h2 className="text-2xl font-black text-slate-900">{selectedDoctor.name}</h2>
                 <p className="text-sm font-black text-[#489C66] uppercase tracking-widest mt-1 bg-green-50 px-3 py-1 rounded-full inline-block">{selectedDoctor.specialization}</p>
+                {selectedDoctor.district && <p className="text-xs text-slate-400 font-bold mt-1 flex items-center gap-1"><MapPin className="w-3 h-3"/>{selectedDoctor.district}</p>}
+                <div className="mt-3">{getStatusBadge(selectedDoctor.status)}</div>
               </div>
 
-              <div className="space-y-8">
-                <div>
-                  <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 border-b border-slate-100 pb-2 flex items-center gap-2"><Clock className="w-4 h-4"/> Professional Details</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+              {/* ── Verification Checklist ── */}
+              {selectedDoctor.status === "PENDING" && (
+                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+                  <p className="text-[11px] font-black text-amber-700 uppercase tracking-widest mb-3 flex items-center gap-2"><AlertTriangle className="w-4 h-4"/> Verification Checklist</p>
+                  {[
+                    { label: "Identity confirmed", done: !!selectedDoctor.name },
+                    { label: "Qualification documented", done: !!selectedDoctor.qualifications },
+                    { label: "License/Reg. number present", done: !!selectedDoctor.medicalRegistrationNumber },
+                    { label: "Clinic information set", done: !!selectedDoctor.clinicName && selectedDoctor.clinicName !== "N/A" },
+                    { label: "Emergency claim reviewed", done: !selectedDoctor.emergencyAvailable || selectedDoctor.emergencySlots > 0 },
+                  ].map(({ label, done }) => (
+                    <div key={label} className="flex items-center gap-2 py-1.5 border-b border-amber-100 last:border-0">
+                      <span className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 ${done ? "bg-emerald-500" : "bg-amber-200"}`}>
+                        {done ? <CheckCircle2 className="w-3 h-3 text-white"/> : <span className="w-1.5 h-1.5 rounded-full bg-amber-400"/>}
+                      </span>
+                      <span className={`text-xs font-bold ${done ? "text-slate-700" : "text-amber-700"}`}>{label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* ── Proposed Profile Modifications ── */}
+              {selectedDoctor.updateLogs && selectedDoctor.updateLogs.length > 0 && (
+                <div className="bg-sky-50 border border-sky-200 rounded-2xl p-4 space-y-3">
+                  <p className="text-[11px] font-black text-sky-800 uppercase tracking-widest flex items-center gap-2">
+                    <UserCog className="w-4 h-4 text-sky-600"/> Proposed Profile Modifications
+                  </p>
+                  <p className="text-xs text-sky-700 font-medium">
+                    This doctor has submitted updates to sensitive profile credentials. Review and authorize these modifications.
+                  </p>
+                  <div className="space-y-3 mt-2">
+                    {selectedDoctor.updateLogs.map((log) => {
+                      const displayField = log.field === "name" 
+                        ? "Doctor Name" 
+                        : log.field === "medicalRegistrationNumber" 
+                        ? "Registration Number" 
+                        : log.field;
+
+                      return (
+                        <div key={log.id} className="bg-white border border-sky-100 rounded-xl p-3 shadow-sm space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs font-black text-slate-900 uppercase tracking-wide bg-slate-100 px-2 py-0.5 rounded">
+                              {displayField}
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-bold">
+                              {new Date(log.createdAt).toLocaleDateString("en-IN")}
+                            </span>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
+                              <p className="text-[9px] font-bold text-slate-400 uppercase">Current Value</p>
+                              <p className="font-bold text-slate-600 truncate">{log.oldValue || <span className="italic font-medium text-slate-400">Empty</span>}</p>
+                            </div>
+                            <div className="bg-emerald-50/50 p-2 rounded-lg border border-emerald-100">
+                              <p className="text-[9px] font-bold text-emerald-600 uppercase">Proposed Value</p>
+                              <p className="font-black text-slate-900 truncate">{log.newValue}</p>
+                            </div>
+                          </div>
+
+                          <div className="flex gap-2 pt-1.5 border-t border-slate-100">
+                            <Button 
+                              onClick={() => handleProfileUpdate(log.id, "APPROVE")} 
+                              size="sm"
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-8 flex-1 text-xs"
+                            >
+                              Approve
+                            </Button>
+                            <Button 
+                              onClick={() => handleProfileUpdate(log.id, "REJECT")} 
+                              size="sm" 
+                              variant="outline"
+                              className="border-red-200 text-red-600 hover:bg-red-50 font-bold h-8 flex-1 text-xs"
+                            >
+                              Reject
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* ── Qualifications & License ── */}
+              <div>
+                <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-100 pb-2 flex items-center gap-2"><Star className="w-4 h-4"/> Medical Credentials</h4>
+                <div className="space-y-2.5">
+                  <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Qualifications</p>
+                    <p className="font-bold text-slate-900 text-sm">{selectedDoctor.qualifications || <span className="text-slate-400 font-medium italic">Not provided</span>}</p>
+                  </div>
+                  <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Medical Registration No.</p>
+                    <p className="font-bold text-slate-900 text-sm font-mono">{selectedDoctor.medicalRegistrationNumber || <span className="text-slate-400 font-medium italic">Not provided</span>}</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Experience</p>
                       <p className="font-black text-slate-900">{selectedDoctor.experience}</p>
                     </div>
-                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Total Patients</p>
-                      <p className="font-black text-slate-900">{selectedDoctor.patients}</p>
-                    </div>
-                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 col-span-2">
+                    <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">OPD Timings</p>
-                      <p className="font-black text-slate-900 text-lg">{selectedDoctor.timings}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 border-b border-slate-100 pb-2 flex items-center gap-2"><Phone className="w-4 h-4"/> Contact Information</h4>
-                  <div className="space-y-3 bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
-                    <p className="flex items-center gap-3 text-sm font-bold text-slate-700"><Mail className="w-4 h-4 text-slate-400"/> {selectedDoctor.email}</p>
-                    <p className="flex items-center gap-3 text-sm font-bold text-slate-700"><Phone className="w-4 h-4 text-slate-400"/> {selectedDoctor.phone}</p>
-                    <div className="flex items-start gap-3 text-sm font-bold text-slate-700 pt-3 border-t border-slate-100 mt-3">
-                      <MapPin className="w-4 h-4 text-slate-400 shrink-0 mt-0.5"/> 
-                      <div>
-                        <p className="text-slate-900">{selectedDoctor.clinicName}</p>
-                        <p className="text-slate-500 font-medium">{selectedDoctor.address}</p>
-                      </div>
+                      <p className="font-bold text-slate-900 text-sm">{selectedDoctor.timings}</p>
                     </div>
                   </div>
                 </div>
               </div>
+
+              {/* ── Specialties ── */}
+              {selectedDoctor.specialties?.length > 0 && (
+                <div>
+                  <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-100 pb-2 flex items-center gap-2"><ActivitySquare className="w-4 h-4"/> Specialties</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedDoctor.specialties.map((s) => (
+                      <span key={s.slug} className="bg-blue-50 text-blue-700 border border-blue-100 px-3 py-1 rounded-full text-xs font-bold">{s.name}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ── Emergency Capability ── */}
+              <div>
+                <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-100 pb-2 flex items-center gap-2"><Zap className="w-4 h-4 text-red-500"/> Emergency Capability</h4>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { label: "Emergency Available", value: selectedDoctor.emergencyAvailable, type: "bool" },
+                    { label: "Emergency Consult", value: selectedDoctor.emergencyConsultationAvailable, type: "bool" },
+                    { label: "Emergency Slots", value: selectedDoctor.emergencySlots, type: "num" },
+                    { label: "Booking Paused", value: selectedDoctor.pauseOnlineBooking, type: "bool" },
+                  ].map(({ label, value, type }) => (
+                    <div key={label} className={`p-3.5 rounded-2xl border text-center ${type === "bool" && value ? "bg-red-50 border-red-100" : "bg-slate-50 border-slate-100"}`}>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">{label}</p>
+                      {type === "bool" ? (
+                        <span className={`text-xs font-black px-2 py-0.5 rounded-full ${value ? "bg-red-100 text-red-700" : "bg-slate-200 text-slate-500"}`}>
+                          {value ? "Yes" : "No"}
+                        </span>
+                      ) : (
+                        <p className="font-black text-slate-900">{String(value)}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* ── Contact Info ── */}
+              <div>
+                <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-100 pb-2 flex items-center gap-2"><Phone className="w-4 h-4"/> Contact & Clinic</h4>
+                <div className="space-y-2.5 bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+                  <p className="flex items-center gap-3 text-sm font-bold text-slate-700"><Mail className="w-4 h-4 text-slate-400"/>{selectedDoctor.email}</p>
+                  <p className="flex items-center gap-3 text-sm font-bold text-slate-700"><Phone className="w-4 h-4 text-slate-400"/>{selectedDoctor.phone}</p>
+                  <div className="flex items-start gap-3 text-sm font-bold text-slate-700 pt-2.5 border-t border-slate-100 mt-2.5">
+                    <Building2 className="w-4 h-4 text-slate-400 shrink-0 mt-0.5"/>
+                    <div>
+                      <p className="text-slate-900">{selectedDoctor.clinicName}</p>
+                      <p className="text-slate-500 font-medium text-xs mt-0.5">{selectedDoctor.address}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* ── Moderation History ── */}
+              {selectedDoctor.moderationHistory?.length > 0 && (
+                <div>
+                  <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-100 pb-2 flex items-center gap-2"><Clipboard className="w-4 h-4"/> Moderation History</h4>
+                  <div className="space-y-2">
+                    {selectedDoctor.moderationHistory.map((log, i) => (
+                      <div key={i} className="bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3">
+                        <div className="flex items-center justify-between">
+                          <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${log.action.includes("VERIFIED") ? "bg-emerald-100 text-emerald-700" : log.action.includes("REJECTED") ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"}`}>
+                            {log.action.replace("VERIFICATION_", "")}
+                          </span>
+                          <span className="text-[10px] text-slate-400 font-bold">{new Date(log.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</span>
+                        </div>
+                        {log.reason && <p className="text-xs text-slate-600 font-medium mt-2 italic">"{log.reason}"</p>}
+                        <p className="text-[10px] text-slate-400 mt-1">by {log.adminName}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
-            <div className="p-6 border-t border-slate-200 bg-slate-50 sticky bottom-0 z-20">
+            <div className="p-6 border-t border-slate-200 bg-slate-50 sticky bottom-0 z-20 space-y-3">
               {selectedDoctor.status === "PENDING" ? (
                 <div className="grid grid-cols-2 gap-3">
-                  <Button onClick={() => handleStatusUpdate(selectedDoctor.id, "VERIFIED")} className="h-14 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black shadow-lg shadow-emerald-600/20 text-lg"><CheckCircle2 className="w-5 h-5 mr-2"/> Approve</Button>
+                  <Button onClick={() => handleStatusUpdate(selectedDoctor.id, "VERIFIED")} className="h-14 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black shadow-lg shadow-emerald-600/20 text-base"><CheckCircle2 className="w-5 h-5 mr-2"/> Approve</Button>
                   <Button onClick={() => handleStatusUpdate(selectedDoctor.id, "REJECTED")} variant="outline" className="h-14 rounded-xl border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 font-bold bg-white"><XCircle className="w-5 h-5 mr-2"/> Reject</Button>
                 </div>
               ) : selectedDoctor.status === "VERIFIED" ? (
@@ -554,7 +788,6 @@ function AdminDashboardContent() {
       </div>
     );
   };
-
   const renderPatientManagement = () => (
     <div className="p-8 max-w-7xl mx-auto fade-in">
       <div className="mb-8">
@@ -747,10 +980,227 @@ function AdminDashboardContent() {
     </div>
   );
 
+  // ── 6. Lead Management ──────────────────────────────────────────────────────
+  const renderLeadManagement = () => (
+    <div className="p-8 max-w-7xl mx-auto fade-in">
+      <div className="mb-8">
+        <h1 className="text-3xl font-black text-slate-900">Lead Management</h1>
+        <p className="text-slate-500 mt-1">Track incomplete registrations, demand signals, and outreach opportunities.</p>
+      </div>
+
+      {/* Summary cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        {[
+          { label: "Total Leads", value: leads?.total || 0, color: "bg-blue-50 border-blue-100", textColor: "text-[#205E98]" },
+          { label: "Doctor Leads", value: leads?.doctorLeads || 0, color: "bg-emerald-50 border-emerald-100", textColor: "text-emerald-700" },
+          { label: "Patient Leads", value: leads?.patientLeads || 0, color: "bg-purple-50 border-purple-100", textColor: "text-purple-700" },
+          { label: "New (7 days)", value: platformStats?.leads?.newLast7Days || 0, color: "bg-amber-50 border-amber-100", textColor: "text-amber-700" },
+        ].map(({ label, value, color, textColor }) => (
+          <div key={label} className={`${color} border rounded-2xl p-5 flex flex-col gap-2`}>
+            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">{label}</p>
+            <p className={`text-4xl font-black ${textColor}`}>{value}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Top Specialty Demand */}
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6">
+          <h3 className="text-base font-black text-slate-900 mb-5 flex items-center gap-2">
+            <ActivitySquare className="w-5 h-5 text-primary" /> Top Specialty Demand
+          </h3>
+          {leads?.topSpecialties?.length > 0 ? (
+            <div className="space-y-3">
+              {leads.topSpecialties.map((s: any) => (
+                <div key={s.name} className="flex items-center justify-between">
+                  <span className="text-sm font-bold text-slate-700">{s.name}</span>
+                  <div className="flex items-center gap-3">
+                    <div className="w-24 h-2 bg-slate-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-primary rounded-full"
+                        style={{ width: `${Math.min(100, (s.count / (leads.topSpecialties[0]?.count || 1)) * 100)}%` }}
+                      />
+                    </div>
+                    <span className="text-xs font-black text-slate-500 w-5 text-right">{s.count}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-slate-400 font-medium text-sm text-center py-8">No specialty demand data yet</p>
+          )}
+        </div>
+
+        {/* Top City Demand */}
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6">
+          <h3 className="text-base font-black text-slate-900 mb-5 flex items-center gap-2">
+            <MapPin className="w-5 h-5 text-emerald-600" /> Top City Demand
+          </h3>
+          {leads?.topCities?.length > 0 ? (
+            <div className="space-y-3">
+              {leads.topCities.map((c: any) => (
+                <div key={c.city} className="flex items-center justify-between">
+                  <span className="text-sm font-bold text-slate-700 capitalize">{c.city}</span>
+                  <div className="flex items-center gap-3">
+                    <div className="w-24 h-2 bg-slate-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-emerald-500 rounded-full"
+                        style={{ width: `${Math.min(100, (c.count / (leads.topCities[0]?.count || 1)) * 100)}%` }}
+                      />
+                    </div>
+                    <span className="text-xs font-black text-slate-500 w-5 text-right">{c.count}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-slate-400 font-medium text-sm text-center py-8">No city demand data yet</p>
+          )}
+        </div>
+
+        {/* Drop-off by Step */}
+        {leads?.dropoffByStep?.length > 0 && (
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 md:col-span-2">
+            <h3 className="text-base font-black text-slate-900 mb-5 flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-amber-500" /> Registration Drop-off by Step
+            </h3>
+            <div className="flex flex-wrap gap-3">
+              {leads.dropoffByStep.map((s: any) => (
+                <div key={s.step} className="bg-amber-50 border border-amber-100 rounded-2xl px-4 py-3 flex items-center gap-3">
+                  <span className="text-xs font-black text-amber-800 uppercase tracking-wide">{s.step}</span>
+                  <span className="bg-amber-500 text-white text-xs font-black px-2 py-0.5 rounded-full">{s.count}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  // ── 7. Trust & Safety ───────────────────────────────────────────────────────
+  const renderTrustSafety = () => (
+    <div className="p-8 max-w-7xl mx-auto fade-in">
+      <div className="mb-8">
+        <h1 className="text-3xl font-black text-slate-900 flex items-center gap-3">
+          <ShieldAlert className="w-8 h-8 text-red-500" /> Trust & Safety
+        </h1>
+        <p className="text-slate-500 mt-1">Review emergency capability claims, suspended accounts, and moderation integrity.</p>
+      </div>
+
+      {/* Emergency claiming doctors */}
+      <div className="mb-8">
+        <h2 className="text-xl font-black text-slate-900 mb-4 flex items-center gap-2">
+          <Zap className="w-5 h-5 text-red-500" /> Emergency Capability Claims
+          <span className="bg-red-100 text-red-700 text-xs font-black px-2.5 py-1 rounded-full ml-1">{trustDoctors.length}</span>
+        </h2>
+        {trustDoctors.length > 0 ? (
+          <div className="space-y-3">
+            {trustDoctors.map((doc) => (
+              <div key={doc.id} className="bg-white border border-slate-200 rounded-2xl p-5 flex items-center justify-between hover:border-red-200 transition-colors shadow-sm">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-red-50 border border-red-100 flex items-center justify-center font-black text-red-600">
+                    {doc.name.split(" ")[1]?.charAt(0) || "D"}
+                  </div>
+                  <div>
+                    <p className="font-black text-slate-900">{doc.name}</p>
+                    <p className="text-xs font-bold text-slate-500">{doc.specialization} · {doc.district}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      {doc.emergencyAvailable && <span className="text-[10px] font-black bg-red-100 text-red-700 px-2 py-0.5 rounded-full">Emergency Available</span>}
+                      {doc.emergencySlots > 0 && <span className="text-[10px] font-black bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">{doc.emergencySlots} Emergency Slots</span>}
+                      {getStatusBadge(doc.status)}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  {doc.status === "VERIFIED" && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleStatusUpdate(doc.id, "SUSPENDED")}
+                      className="rounded-xl border-red-200 text-red-600 hover:bg-red-50 font-bold text-xs h-9"
+                    >
+                      <Ban className="w-3.5 h-3.5 mr-1" /> Suspend
+                    </Button>
+                  )}
+                  {doc.status === "SUSPENDED" && (
+                    <Button
+                      size="sm"
+                      onClick={() => handleStatusUpdate(doc.id, "VERIFIED")}
+                      className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9"
+                    >
+                      <RefreshCcw className="w-3.5 h-3.5 mr-1" /> Reinstate
+                    </Button>
+                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => { setSelectedDoctorId(doc.id); router.push("?tab=doctor-management"); }}
+                    className="rounded-xl border-slate-200 text-slate-600 hover:bg-slate-50 font-bold text-xs h-9"
+                  >
+                    Review
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-6 text-center">
+            <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
+            <p className="font-black text-emerald-800">No emergency capability claims to review</p>
+            <p className="text-sm text-emerald-600 font-medium mt-1">All active doctors have standard profiles.</p>
+          </div>
+        )}
+      </div>
+
+      {/* Suspended accounts */}
+      <div>
+        <h2 className="text-xl font-black text-slate-900 mb-4 flex items-center gap-2">
+          <Ban className="w-5 h-5 text-slate-600" /> Suspended Accounts
+          <span className="bg-slate-200 text-slate-700 text-xs font-black px-2.5 py-1 rounded-full ml-1">
+            {doctors.filter(d => d.status === "SUSPENDED").length}
+          </span>
+        </h2>
+        {doctors.filter(d => d.status === "SUSPENDED").length > 0 ? (
+          <div className="space-y-3">
+            {doctors.filter(d => d.status === "SUSPENDED").map((doc) => (
+              <div key={doc.id} className="bg-white border border-slate-200 rounded-2xl p-5 flex items-center justify-between shadow-sm">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center font-black text-slate-500">
+                    {doc.name.split(" ")[1]?.charAt(0) || "D"}
+                  </div>
+                  <div>
+                    <p className="font-black text-slate-900">{doc.name}</p>
+                    <p className="text-xs font-bold text-slate-500">{doc.specialization} · {doc.clinicName}</p>
+                    {doc.moderationHistory?.[0]?.reason && (
+                      <p className="text-xs text-red-600 font-medium mt-1 italic">"{doc.moderationHistory[0].reason}"</p>
+                    )}
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => handleStatusUpdate(doc.id, "VERIFIED")}
+                  className="rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs h-9 shrink-0"
+                >
+                  <RefreshCcw className="w-3.5 h-3.5 mr-1" /> Reinstate
+                </Button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 text-center">
+            <p className="font-bold text-slate-500">No suspended accounts</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-[#f8f9fa] flex font-sans overflow-hidden">
       {/* Mobile toast banner */}
       {toastMessage && (
+
         <div className={`md:hidden fixed top-4 left-4 right-4 z-[100] flex items-center justify-between gap-2 px-4 py-3 rounded-2xl shadow-lg border text-sm font-bold ${toastMessage.type === 'error' ? 'bg-red-50 text-red-600 border-red-200' : 'bg-emerald-50 text-emerald-600 border-emerald-200'} animate-in fade-in slide-in-from-top-4`}>
           <div className="flex items-center gap-2">
             {toastMessage.type === 'error' ? <AlertTriangle className="w-4 h-4"/> : <CheckCircle2 className="w-4 h-4"/>}
@@ -770,6 +1220,8 @@ function AdminDashboardContent() {
           {activeTab === "patient-management" && renderPatientManagement()}
           {activeTab === "booking-monitoring" && renderBookingMonitoring()}
           {activeTab === "queue-monitor" && renderQueueMonitor()}
+          {activeTab === "lead-management" && renderLeadManagement()}
+          {activeTab === "trust-safety" && renderTrustSafety()}
         </div>
 
         {/* ── Moderation Modal ────────────────────────────────────── */}
@@ -813,7 +1265,7 @@ function AdminDashboardContent() {
   );
 }
 
-import { RoleGuard } from "@/components/shared";
+import { RoleGuard } from "@/components/shared/RoleGuard";
 
 export default function AdminDashboard() {
   return (

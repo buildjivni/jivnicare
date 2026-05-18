@@ -8,6 +8,8 @@ const protectedPaths = [
   { prefix: '/admin', roles: ['ADMIN'] },
   // For patient dashboard, assuming it's at /patient or /booking 
   { prefix: '/booking', roles: ['PATIENT', 'DOCTOR', 'ADMIN'] }, 
+  { prefix: '/my-bookings', roles: ['PATIENT', 'DOCTOR', 'ADMIN'] },
+  { prefix: '/checkout', roles: ['PATIENT', 'DOCTOR', 'ADMIN'] },
 ];
 
 export async function middleware(request: NextRequest) {

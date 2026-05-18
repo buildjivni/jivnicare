@@ -30,9 +30,13 @@ export function FeaturedArticlesSection() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="flex overflow-x-auto gap-6 pb-6 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-3 md:gap-8 md:pb-0">
           {posts.map((post) => (
-            <Link key={post.id} href={`/blog/${post.slug}`} className="group block h-full">
+            <Link 
+              key={post.id} 
+              href={`/blog/${post.slug}`} 
+              className="shrink-0 snap-start w-[85%] sm:w-[350px] md:w-auto group block h-full"
+            >
               <div className="bg-slate-50/50 rounded-3xl overflow-hidden border border-slate-200/60 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full hover:-translate-y-1.5">
                 <div className="w-full h-48 relative overflow-hidden bg-slate-100">
                   <img 

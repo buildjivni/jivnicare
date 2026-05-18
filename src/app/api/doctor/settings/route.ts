@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { verifyToken } from "@/lib/jwt";
 import { cookies } from "next/headers";
+import { doctorSettingsSchema, formatZodError } from "@/lib/validations";
+import { VerificationStatus } from "@prisma/client";
 
 export async function PUT(request: Request) {
   try {
@@ -18,10 +20,31 @@ export async function PUT(request: Request) {
     }
 
     const body = await request.json();
-    const { 
-      bio, fee, name, regNumber, isClosedToday, timings,
-      weeklySchedule, averageConsultationTime, maxCapacity 
-    } = body;
+
+    // 1. Preprocess numeric fields safely to support form-data conversion
+    if (body.fee !== undefined && body.fee !== null && body.fee !== "") {
+      body.fee = parseInt(body.fee, 10);
+    }
+    if (body.averageConsultationTime !== undefined && body.averageConsultationTime !== null && body.averageConsultationTime !== "") {
+      body.averageConsultationTime = parseInt(body.averageConsultationTime, 10);
+    }
+    if (body.maxCapacity !== undefined && body.maxCapacity !== null && body.maxCapacity !== "") {
+      body.maxCapacity = parseInt(body.maxCapacity, 10);
+    }
+    if (body.emergencySlots !== undefined && body.emergencySlots !== null && body.emergencySlots !== "") {
+      body.emergencySlots = parseInt(body.emergencySlots, 10);
+    }
+
+    // 2. Validate using strict Settings Schema
+    const validation = doctorSettingsSchema.safeParse(body);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: "Invalid settings data: " + formatZodError(validation.error) },
+        { status: 400 }
+      );
+    }
+
+    const validatedData = validation.data;
 
     const doctor = await prisma.doctor.findUnique({
       where: { userId: payload.id }
@@ -31,32 +54,119 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "Doctor profile not found" }, { status: 404 });
     }
 
-    const updatedData: any = {};
-    if (bio !== undefined) updatedData.bio = bio;
-    if (fee !== undefined) updatedData.fee = parseInt(fee) || 0;
-    if (name !== undefined) updatedData.name = name;
-    if (regNumber !== undefined) updatedData.medicalRegistrationNumber = regNumber;
-    if (averageConsultationTime !== undefined) updatedData.averageConsultationTime = parseInt(averageConsultationTime) || 15;
+    // ── Category A: Immutable / Protected Fields ────────────────
+    if (body.doctorCode !== undefined && body.doctorCode !== doctor.doctorCode) {
+      return NextResponse.json({ error: "Doctor identification code is immutable and cannot be changed." }, { status: 400 });
+    }
 
-    // Run transaction to ensure atomicity across models
+    // ── Category D: Append-only Additions (Qualifications & Specialties) ──
+    if (body.qualifications !== undefined) {
+      const oldQuals = doctor.qualifications || "";
+      const newQuals = body.qualifications || "";
+      // Enforce that new qualifications list must contain the old qualifications to be additive
+      if (oldQuals.trim() && !newQuals.toLowerCase().includes(oldQuals.toLowerCase().trim())) {
+        return NextResponse.json({ 
+          error: `Qualifications are append-only. You cannot remove previously verified credentials: "${oldQuals}".` 
+        }, { status: 400 });
+      }
+    }
+
+    if (body.specialtyIds !== undefined && Array.isArray(body.specialtyIds)) {
+      const oldSpecialtyIds = doctor.specialtyIds || [];
+      const newSpecialtyIds = body.specialtyIds;
+      // Enforce that all previous specialties must remain present
+      const specialtiesRemoved = oldSpecialtyIds.some(id => !newSpecialtyIds.includes(id));
+      if (specialtiesRemoved) {
+        return NextResponse.json({ 
+          error: "Specializations are append-only. You cannot remove registered primary specializations." 
+        }, { status: 400 });
+      }
+    }
+
+    // ── Category B: Instantly Editable Fields ────────────────────
+    const instantData: any = {};
+    if (validatedData.bio !== undefined) instantData.bio = validatedData.bio;
+    if (validatedData.fee !== undefined) instantData.fee = validatedData.fee;
+    if (validatedData.averageConsultationTime !== undefined) instantData.averageConsultationTime = validatedData.averageConsultationTime;
+    if (validatedData.emergencyAvailable !== undefined) instantData.emergencyAvailable = validatedData.emergencyAvailable;
+    if (validatedData.onlineConsultationAvailable !== undefined) instantData.onlineConsultationAvailable = validatedData.onlineConsultationAvailable;
+    if (validatedData.emergencyConsultationAvailable !== undefined) instantData.emergencyConsultationAvailable = validatedData.emergencyConsultationAvailable;
+
+    // Apply qualifications & specialties instantly if they are verified to be purely additive
+    if (body.qualifications !== undefined) {
+      instantData.qualifications = body.qualifications;
+      instantData.education = body.qualifications; // sync fields
+    }
+    if (body.specialtyIds !== undefined) instantData.specialtyIds = body.specialtyIds;
+
+    // ── Category C: Admin-Reviewed Fields ────────────────────────
+    const sensitiveLogs: any[] = [];
+    let hasSensitiveChanges = false;
+
+    const checkSensitiveField = (fieldName: string, currentValue: any, newValue: any) => {
+      if (newValue !== undefined && newValue !== currentValue) {
+        sensitiveLogs.push({
+          doctorId: doctor.id,
+          field: fieldName,
+          oldValue: currentValue ? String(currentValue) : null,
+          newValue: String(newValue),
+          status: 'PENDING'
+        });
+        hasSensitiveChanges = true;
+      }
+    };
+
+    // Only queue updates if the doctor is currently VERIFIED or UPDATE_PENDING.
+    // If they are DRAFT or PENDING_VERIFICATION, they can update directly.
+    const requiresReview = doctor.verificationStatus === 'VERIFIED' || doctor.verificationStatus === 'UPDATE_PENDING';
+
+    if (requiresReview) {
+      checkSensitiveField('name', doctor.name, validatedData.name);
+      checkSensitiveField('medicalRegistrationNumber', doctor.medicalRegistrationNumber, validatedData.regNumber);
+      checkSensitiveField('hospitalName', doctor.hospitalName, body.hospitalName);
+      checkSensitiveField('district', doctor.district, body.district);
+    } else {
+      // Not verified yet: update instantly
+      if (validatedData.name !== undefined) instantData.name = validatedData.name;
+      if (validatedData.regNumber !== undefined) instantData.medicalRegistrationNumber = validatedData.regNumber;
+      if (body.hospitalName !== undefined) instantData.hospitalName = body.hospitalName;
+      if (body.district !== undefined) instantData.district = body.district;
+    }
+
+    // 3. Atomically save changes
     const result = await prisma.$transaction(async (tx) => {
       let updatedDoctor = doctor;
-      
-      if (Object.keys(updatedData).length > 0) {
+
+      // Update instant/allowed changes directly
+      if (Object.keys(instantData).length > 0 || (requiresReview && hasSensitiveChanges)) {
         updatedDoctor = await tx.doctor.update({
           where: { id: doctor.id },
-          data: updatedData
+          data: {
+            ...instantData,
+            // If there are sensitive updates and they are verified, transition status to UPDATE_PENDING
+            ...(requiresReview && hasSensitiveChanges ? { verificationStatus: VerificationStatus.UPDATE_PENDING } : {})
+          }
         });
       }
 
-      // 1. Update Clinic Operations
+      // Record logs for admin review
+      if (sensitiveLogs.length > 0) {
+        await tx.profileUpdateLog.createMany({
+          data: sensitiveLogs
+        });
+      }
+
+      // Update Clinic Operations (Instantly Editable)
       let updatedClinicOps = null;
-      if (isClosedToday !== undefined || maxCapacity !== undefined) {
+      if (body.isClosedToday !== undefined || body.maxCapacity !== undefined || body.pauseOnlineBooking !== undefined || body.emergencySlots !== undefined) {
         const opsUpdate: any = {};
-        if (isClosedToday !== undefined) opsUpdate.isClosedToday = isClosedToday;
-        if (maxCapacity !== undefined) {
-          opsUpdate.walkInLimit = parseInt(maxCapacity) || 40;
-          opsUpdate.onlineLimit = parseInt(maxCapacity) || 40; // Sync for safety
+        if (body.isClosedToday !== undefined) opsUpdate.isClosedToday = body.isClosedToday;
+        if (body.pauseOnlineBooking !== undefined) opsUpdate.pauseOnlineBooking = body.pauseOnlineBooking;
+        if (body.emergencySlots !== undefined) opsUpdate.emergencySlots = body.emergencySlots;
+        
+        if (body.maxCapacity !== undefined) {
+          opsUpdate.walkInLimit = body.maxCapacity;
+          opsUpdate.onlineLimit = body.maxCapacity;
         }
 
         updatedClinicOps = await tx.clinicOperations.upsert({
@@ -66,36 +176,41 @@ export async function PUT(request: Request) {
         });
       }
 
-      // 2. Update Weekly Schedule (JSON blobs for each day)
+      // Update Weekly Schedule (Instantly Editable)
       let updatedSchedule = null;
-      if (weeklySchedule) {
+      if (body.weeklySchedule) {
         updatedSchedule = await tx.weeklySchedule.upsert({
           where: { doctorId: doctor.id },
           update: {
-            monday: weeklySchedule.monday,
-            tuesday: weeklySchedule.tuesday,
-            wednesday: weeklySchedule.wednesday,
-            thursday: weeklySchedule.thursday,
-            friday: weeklySchedule.friday,
-            saturday: weeklySchedule.saturday,
-            sunday: weeklySchedule.sunday,
+            monday: body.weeklySchedule.monday,
+            tuesday: body.weeklySchedule.tuesday,
+            wednesday: body.weeklySchedule.wednesday,
+            thursday: body.weeklySchedule.thursday,
+            friday: body.weeklySchedule.friday,
+            saturday: body.weeklySchedule.saturday,
+            sunday: body.weeklySchedule.sunday,
           },
           create: {
             doctorId: doctor.id,
-            monday: weeklySchedule.monday || { isOpen: true, start: "09:00", end: "17:00" },
-            tuesday: weeklySchedule.tuesday || { isOpen: true, start: "09:00", end: "17:00" },
-            wednesday: weeklySchedule.wednesday || { isOpen: true, start: "09:00", end: "17:00" },
-            thursday: weeklySchedule.thursday || { isOpen: true, start: "09:00", end: "17:00" },
-            friday: weeklySchedule.friday || { isOpen: true, start: "09:00", end: "17:00" },
-            saturday: weeklySchedule.saturday || { isOpen: false, start: "09:00", end: "17:00" },
-            sunday: weeklySchedule.sunday || { isOpen: false, start: "09:00", end: "17:00" },
+            monday: body.weeklySchedule.monday || { isOpen: true, start: "09:00", end: "17:00" },
+            tuesday: body.weeklySchedule.tuesday || { isOpen: true, start: "09:00", end: "17:00" },
+            wednesday: body.weeklySchedule.wednesday || { isOpen: true, start: "09:00", end: "17:00" },
+            thursday: body.weeklySchedule.thursday || { isOpen: true, start: "09:00", end: "17:00" },
+            friday: body.weeklySchedule.friday || { isOpen: true, start: "09:00", end: "17:00" },
+            saturday: body.weeklySchedule.saturday || { isOpen: false, start: "09:00", end: "17:00" },
+            sunday: body.weeklySchedule.sunday || { isOpen: false, start: "09:00", end: "17:00" },
           }
         });
       }
+
       return { doctor: updatedDoctor, clinicOps: updatedClinicOps, schedule: updatedSchedule };
     });
 
-    return NextResponse.json({ success: true, message: "Settings updated successfully", data: result });
+    const msg = requiresReview && hasSensitiveChanges
+      ? "Settings saved. Sensitive changes (Name, Registration Number, Clinic Name, District) require admin approval before they appear publicly."
+      : "Settings updated successfully.";
+
+    return NextResponse.json({ success: true, message: msg, data: result });
   } catch (error: any) {
     console.error("Update doctor settings error:", error);
     return NextResponse.json({ error: "Failed to update settings" }, { status: 500 });

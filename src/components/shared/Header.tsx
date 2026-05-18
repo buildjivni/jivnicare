@@ -3,7 +3,22 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Menu, X, CalendarDays, Stethoscope, BookOpen, User, Newspaper } from "lucide-react";
+import { 
+  Menu, 
+  X, 
+  CalendarDays, 
+  Stethoscope, 
+  User, 
+  Newspaper, 
+  Activity, 
+  ShieldCheck, 
+  ShieldAlert, 
+  LayoutDashboard, 
+  Clipboard, 
+  AlertTriangle,
+  Settings,
+  Clock
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import { Logo } from "@/components/brand/Logo";
@@ -13,13 +28,6 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { NotificationPanel } from "./NotificationPanel";
 import { SmartSearchBar } from "./SmartSearchBar";
 import { cn } from "@/lib/utils";
-import { ShieldCheck } from "lucide-react";
-
-const NAV_LINKS = [
-  { label: "Find Doctors", href: "/doctors", icon: <Stethoscope className="w-4 h-4" /> },
-  { label: "Articles", href: "/blog", icon: <Newspaper className="w-4 h-4" /> },
-  { label: "My Bookings", href: "/my-bookings", icon: <CalendarDays className="w-4 h-4" /> },
-];
 
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
@@ -28,12 +36,11 @@ export function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const profileRef = useRef<HTMLDivElement>(null);
-  const { isAuthenticated, logout, token } = useAuthStore();
+  const { isAuthenticated, logout, token, user } = useAuthStore();
   const [mounted, setMounted] = useState(false);
   
   useEffect(() => setMounted(true), []);
   
-  // Hardened auth check for hydration safety
   const isLoggedIn = mounted ? isAuthenticated : false;
   const isDoctorsPage = pathname.startsWith("/doctors");
 
@@ -61,14 +68,60 @@ export function Header() {
     router.push("/");
   };
 
+  // Dynamic navigation links based on user role and auth state
+  const getNavLinks = () => {
+    if (!isLoggedIn || !user) {
+      // Clean blank nav state for logged out, matching the reference image perfectly
+      return [];
+    }
+
+    switch (user.role) {
+      case "DOCTOR":
+        return [
+          { label: "Dashboard", href: "/doctor/dashboard?tab=overview", icon: <LayoutDashboard className="w-4 h-4" /> },
+          { label: "Live Queue", href: "/doctor/dashboard?tab=queue", icon: <Activity className="w-4 h-4" /> },
+          { label: "OPD Profile", href: "/doctor/dashboard?tab=profile", icon: <Clock className="w-4 h-4" /> },
+          { label: "Settings", href: "/doctor/dashboard?tab=settings", icon: <Settings className="w-4 h-4" /> },
+        ];
+      case "ADMIN":
+        return [
+          { label: "Dashboard", href: "/admin/dashboard?tab=dashboard", icon: <LayoutDashboard className="w-4 h-4" /> },
+          { label: "Verification Queue", href: "/admin/dashboard?tab=doctor-management", icon: <ShieldCheck className="w-4 h-4" /> },
+          { label: "Moderation", href: "/admin/dashboard?tab=trust-safety", icon: <ShieldAlert className="w-4 h-4" /> },
+          { label: "Leads", href: "/admin/dashboard?tab=lead-management", icon: <Clipboard className="w-4 h-4" /> },
+        ];
+      case "PATIENT":
+      default:
+        return [
+          { label: "Find Doctors", href: "/doctors", icon: <Stethoscope className="w-4.5 h-4.5" /> },
+          { label: "My Appointments", href: "/my-bookings", icon: <CalendarDays className="w-4.5 h-4.5" /> },
+          { label: "Queue Tracking", href: "/my-bookings", icon: <Activity className="w-4.5 h-4.5" /> },
+          { label: "Emergency", href: "/doctors?emergency=true", icon: <AlertTriangle className="w-4.5 h-4.5" />, highlight: true },
+        ];
+    }
+  };
+
+  const navLinks = getNavLinks();
+
+  // Mobile menu links mapping (always contains Find Doctors and Articles when logged out)
+  const getMobileNavLinks = () => {
+    if (!isLoggedIn) {
+      return [
+        { label: "Find Doctors", href: "/doctors", icon: <Stethoscope className="w-4.5 h-4.5" /> },
+        { label: "Articles", href: "/blog", icon: <Newspaper className="w-4.5 h-4.5" /> },
+      ];
+    }
+    return navLinks;
+  };
+
+  const mobileNavLinks = getMobileNavLinks();
+
   return (
     <>
       <header
         className={cn(
-          "sticky top-0 z-[100] w-full transition-all duration-300",
-          scrolled
-            ? "bg-white/90 backdrop-blur-xl border-b border-border shadow-soft h-16 md:h-16"
-            : "bg-white/0 backdrop-blur-none border-b border-transparent h-16 md:h-20"
+          "sticky top-0 z-[100] w-full transition-all duration-300 bg-white border-b border-slate-100",
+          scrolled ? "shadow-sm h-16" : "h-20"
         )}
       >
         <div className="container mx-auto px-4 md:px-6 h-full flex items-center justify-between gap-3 max-w-7xl w-full box-border">
@@ -81,74 +134,101 @@ export function Header() {
                 aria-label="Toggle navigation menu"
                 variant="ghost"
                 size="icon"
-                className="rounded-xl w-11 h-11 text-slate-600 bg-slate-50 hover:bg-slate-100 border border-slate-100 transition-all duration-300 active:scale-95"
+                className="rounded-xl w-11 h-11 text-slate-600 bg-slate-50 hover:bg-slate-100 border border-slate-100 transition-all duration-300 active:scale-95 animate-fade-in"
                 onClick={() => setMobileOpen((v) => !v)}
               >
                 {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </Button>
             </div>
 
-            {/* Logo */}
+            {/* Logo and Brand Title */}
             <div className={cn(
               "flex items-center shrink-0 transition-all",
               isDoctorsPage && pathname !== "/" ? "hidden lg:flex" : "flex"
             )}>
-              <Link href="/" className="flex items-center gap-2.5 md:gap-3 group shrink min-w-0">
-                <Logo className="h-12 md:h-14 w-auto shrink-0 transition-transform duration-300 group-hover:scale-[1.02]" />
-                <div className="flex flex-col -space-y-1 pt-0.5">
-                   <span className="text-[22px] md:text-3xl font-black tracking-tight leading-none">
-                      <span className="text-primary">Jivni</span><span className="text-secondary">Care</span>
+              <Link href="/" className="flex items-center gap-2.5 md:gap-3.5 group shrink min-w-0">
+                <Logo className="h-11 md:h-14 w-auto shrink-0 transition-transform duration-300 group-hover:scale-[1.01]" />
+                <div className="flex flex-col -space-y-0.5 md:-space-y-1 pt-0.5">
+                   <span className="text-[20px] md:text-2xl font-bold tracking-tight leading-none text-slate-800">
+                      <span className="text-[#5298D2]">Jivni</span><span className="text-[#489C66]">Care</span>
                    </span>
-                   <span className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] pl-0.5 mt-0.5">Bihar</span>
+                   <span className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-[0.25em] pl-0.5 mt-0.5">Bihar</span>
                 </div>
               </Link>
             </div>
           </div>
 
           {/* ── DESKTOP NAV ───────────────────── */}
-          <nav className="hidden lg:flex items-center gap-1 bg-muted/30 p-1 rounded-2xl border border-border/50">
-            {NAV_LINKS.filter(link => {
-               // Strict filter: Only show "My Bookings" if logged in
-               if (link.label === "My Bookings") return isLoggedIn;
-               return true;
-            }).map((link) => {
-              const isActive = pathname === link.href || (pathname.startsWith('/doctors') && link.href === '/doctors');
-              return (
-                <Link
-                  key={link.label}
-                  href={link.href}
-                  className={cn(
-                    "px-4 py-2 text-sm font-semibold rounded-xl transition-all duration-200 active:scale-[0.98]",
-                    isActive 
-                      ? "text-primary bg-card shadow-sm ring-1 ring-border" 
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/80"
-                  )}
-                >
-                  {link.label}
-                </Link>
-              );
-            })}
-          </nav>
+          {navLinks.length > 0 && (
+            <nav className="hidden lg:flex items-center gap-2 bg-slate-50/60 p-1 rounded-full border border-slate-100/80">
+              {navLinks.map((link) => {
+                const isActive = pathname === link.href || (pathname.startsWith('/doctors') && link.href === '/doctors');
+                return (
+                  <Link
+                    key={link.label}
+                    href={link.href}
+                    className={cn(
+                      "px-5 py-2.5 text-[13px] font-bold rounded-full transition-all duration-200 active:scale-[0.98] flex items-center gap-1.5",
+                      link.highlight
+                        ? "text-rose-600 bg-rose-50 hover:bg-rose-100/80 border border-rose-100 animate-pulse shadow-sm"
+                        : isActive 
+                        ? "text-[#5298D2] bg-white shadow-sm ring-1 ring-slate-100" 
+                        : "text-slate-500 hover:text-slate-800 hover:bg-slate-100/50"
+                    )}
+                  >
+                    <span className={cn("shrink-0", link.highlight ? "text-rose-500 animate-pulse" : isActive ? "text-[#5298D2]" : "text-slate-400")}>
+                      {link.icon}
+                    </span>
+                    {link.label}
+                  </Link>
+                );
+              })}
+            </nav>
+          )}
 
           {/* ── SEARCH (Contextual) ── */}
           {isDoctorsPage && pathname !== "/" && (
             <div className="flex flex-1 max-w-md mx-2 md:mx-4 lg:mx-8 min-w-0">
-              <SmartSearchBar compact district="Patna" className="w-full shadow-sm" />
+              <SmartSearchBar compact district="Patna" className="w-full shadow-sm animate-fade-in" />
             </div>
           )}
 
           {/* ── ACTIONS (Desktop & Mobile Right) ───────────────── */}
           <div className="flex items-center justify-end gap-2 lg:gap-4 shrink-0">
+            {isLoggedIn && user?.role === "DOCTOR" && (
+              <div className="hidden sm:flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="h-10 text-xs bg-red-50 hover:bg-red-100 border-red-200 text-red-700 font-bold rounded-xl flex items-center gap-1.5 active:scale-95 shadow-sm"
+                  onClick={() => alert("OPD emergency state locked. Displaying alert banner to waiting patients.")}
+                >
+                  <AlertTriangle className="w-3.5 h-3.5 animate-pulse text-red-600" />
+                  OPD Emergency Mode
+                </Button>
+              </div>
+            )}
+
             {isLoggedIn ? (
               <>
-                <div className="hidden lg:block"><NotificationPanel token={token} /></div>
+                {user?.role === "PATIENT" && (
+                  <div className="hidden lg:block"><NotificationPanel token={token} /></div>
+                )}
                 <div className="relative" ref={profileRef}>
                   <button 
                     aria-label="User profile options"
                     onClick={() => setProfileOpen(!profileOpen)}
-                    className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/5 border border-primary/10 text-primary hover:bg-primary/10 transition-all active:scale-[0.98]"
+                    className="flex items-center gap-2 px-3.5 py-2 rounded-full border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all active:scale-[0.97] outline-none select-none bg-white shadow-sm shrink-0 min-h-[44px]"
                   >
-                    <User className="w-5 h-5" />
+                    <div className="w-7.5 h-7.5 rounded-full bg-[#5298D2]/10 text-[#5298D2] font-black text-sm flex items-center justify-center border border-[#5298D2]/20">
+                      {user?.name ? user.name[0].toUpperCase() : "U"}
+                    </div>
+                    <span className="text-sm font-bold text-slate-700 hidden sm:block truncate max-w-[120px]">
+                      {user?.name || "Patient"}
+                    </span>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
                   </button>
                   <UserProfileDropdown isOpen={profileOpen} onLogout={handleLogout} />
                 </div>
@@ -156,21 +236,28 @@ export function Header() {
             ) : (
               <div className="flex items-center gap-2">
                 <Link href="/login">
-                  <Button variant="ghost" className="hidden lg:flex font-bold text-slate-600 hover:text-primary transition-colors">
+                  <button className="bg-[#5298D2] hover:bg-[#4383be] text-white font-bold text-sm md:text-base px-6 py-2.5 md:px-8 md:py-3.5 rounded-full transition-all duration-200 active:scale-[0.97] shadow-sm select-none shrink-0 outline-none">
                     Sign In
-                  </Button>
-                  <Button size="sm" className="flex lg:hidden bg-primary text-white font-bold rounded-xl shadow-md">
-                    Sign In
-                  </Button>
+                  </button>
                 </Link>
               </div>
             )}
 
-            <Link href="/doctors" className="hidden lg:block">
-              <Button className="bg-secondary hover:bg-secondary/90 text-white font-bold rounded-xl shadow-md">
-                Book Appointment
-              </Button>
-            </Link>
+            {isLoggedIn && user?.role === "DOCTOR" && (
+              <Link href="/doctor/dashboard?tab=queue" className="hidden lg:block">
+                <Button className="bg-primary hover:bg-primary/90 text-white font-bold rounded-full shadow-md h-11 px-5 active:scale-95 flex items-center gap-1.5">
+                  <Activity className="w-4 h-4" /> OPD Queue
+                </Button>
+              </Link>
+            )}
+            
+            {isLoggedIn && user?.role === "ADMIN" && (
+              <Link href="/admin/dashboard?tab=trust-safety" className="hidden lg:block">
+                <Button className="bg-slate-700 hover:bg-slate-800 text-white font-bold rounded-full shadow-md h-11 px-5 active:scale-95 flex items-center gap-1.5">
+                  <ShieldAlert className="w-4 h-4" /> Moderation Log
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </header>
@@ -180,9 +267,11 @@ export function Header() {
         setIsOpen={setMobileOpen}
         isLoggedIn={isLoggedIn}
         pathname={pathname}
-        navLinks={NAV_LINKS}
+        navLinks={mobileNavLinks}
         onLogout={handleLogout}
       />
     </>
   );
 }
+
+
