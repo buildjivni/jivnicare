@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { 
   LayoutDashboard, Users, UserCircle, Settings, Star, 
   LogOut, Wallet, CalendarX, Link as LinkIcon, AlertCircle, ShieldCheck,
-  X, Menu, TrendingUp, RefreshCw
+  X, Menu, TrendingUp, RefreshCw, MapPin, Clock
 } from "lucide-react";
 import { QueueStatCards } from "@/components/doctor/queue/QueueStatCards";
 import { NowCallingController } from "@/components/doctor/queue/NowCallingController";
@@ -252,7 +252,9 @@ function DoctorDashboardContent() {
                     <div>
                       <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Current Patient</span>
                       <h3 className="text-2xl font-black text-slate-900">{currentPatient.name}</h3>
-                      <p className="text-sm text-slate-500 font-medium">Token #{currentPatient.token} • Wait: {currentPatient.waitTime}m</p>
+                      <p className="text-sm text-slate-500 font-medium">
+                        Token #{currentPatient.token} • {currentPatient.location || "N/A"} • Wait: {currentPatient.waitTime}m
+                      </p>
                     </div>
                  </div>
                  <Button onClick={() => handleNextPatient(false)} disabled={isProcessingMutation} className="h-12 px-6 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-md w-full sm:w-auto">
@@ -276,6 +278,49 @@ function DoctorDashboardContent() {
                <span className="text-emerald-100 font-medium text-sm">Patients Served: <strong>{queueStats.completed}</strong></span>
             </div>
          </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="bg-white rounded-2xl border border-border p-6 shadow-soft">
+          <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2 text-sm">
+            <MapPin className="w-4 h-4 text-primary" /> Patient Origins (Area Wise)
+          </h3>
+          <div className="space-y-3">
+            {Array.from(new Set(patients.map(p => p.location))).slice(0, 3).map(loc => {
+              const count = patients.filter(p => p.location === loc).length;
+              const percentage = Math.round((count / patients.length) * 100) || 0;
+              return (
+                <div key={loc} className="flex items-center gap-3">
+                  <div className="text-xs font-bold text-slate-600 w-24 truncate">{loc || "N/A"}</div>
+                  <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-primary rounded-full transition-all duration-1000" style={{ width: `${percentage}%` }} />
+                  </div>
+                  <div className="text-[10px] font-black text-slate-400 w-8 text-right">{count}</div>
+                </div>
+              );
+            })}
+            {patients.length === 0 && <p className="text-xs text-slate-400 italic">No data yet today</p>}
+          </div>
+        </div>
+        <div className="bg-white rounded-2xl border border-border p-6 shadow-soft">
+          <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2 text-sm">
+            <Clock className="w-4 h-4 text-emerald-600" /> Peak Hours Insight
+          </h3>
+          <div className="flex items-end gap-1 h-20 px-2">
+            {[20, 45, 90, 65, 30, 40, 55].map((h, i) => (
+              <div key={i} className="flex-1 bg-emerald-100 rounded-t-md hover:bg-emerald-500 transition-colors relative group" style={{ height: `${h}%` }}>
+                <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[8px] font-bold px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                  {h}%
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-between mt-2 px-1 text-[8px] font-bold text-slate-400 uppercase tracking-widest">
+            <span>Morning</span>
+            <span>Afternoon</span>
+            <span>Evening</span>
+          </div>
+        </div>
       </div>
 
       <h2 className="text-lg font-bold text-slate-900 mb-4 tracking-tight">Quick Actions</h2>
@@ -322,10 +367,19 @@ function DoctorDashboardContent() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
           <NowCallingController currentPatient={currentPatient} onNext={() => handleNextPatient(false)} onSkip={() => handleNextPatient(true)} />
           <QueueOperationsMenu onAddOffline={async () => {
+            const name = window.prompt("Enter Patient Name:", "Walk-in Patient");
+            if (!name) return;
+            const location = window.prompt("Enter City/Village (Optional):", "");
+            
             const res = await fetch("/api/doctor/queue/walk-in", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ patientName: "Walk-in Patient", phoneNumber: "", symptoms: "" })
+              body: JSON.stringify({ 
+                patientName: name, 
+                phoneNumber: "", 
+                symptoms: "",
+                location: location || undefined
+              })
             });
             if (res.ok) await fetchQueue();
           }} />

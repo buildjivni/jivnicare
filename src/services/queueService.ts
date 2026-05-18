@@ -6,11 +6,19 @@ export class QueueService {
    * Generates a new token for a given doctor on a specific date.
    * Runs inside a Prisma $transaction to ensure token sequence integrity.
    */
-  static async issueToken(doctorId: string, date: Date, userId: string | null, source: "ONLINE" | "WALK_IN" = "ONLINE", patientLocation?: string) {
+  static async issueToken(
+    doctorId: string, 
+    date: Date, 
+    userId: string | null, 
+    source: "ONLINE" | "WALK_IN" = "ONLINE", 
+    patientLocation?: string,
+    prismaTx?: any
+  ) {
     // Phase 6: Canonical Start of Day
     const queueDate = getStartOfDay(date);
 
-    return await prisma.$transaction(async (tx) => {
+    // The core logic that must run atomically
+    const coreLogic = async (tx: any) => {
       // 1. Check Clinic Operations & Schedule
       const clinicOps = await tx.clinicOperations.findUnique({ where: { doctorId } });
       const schedule = await tx.weeklySchedule.findUnique({ where: { doctorId } });
@@ -104,6 +112,14 @@ export class QueueService {
       });
 
       return newQueueToken;
-    });
+    };
+
+    // If an outer transaction is provided (e.g. from Walk-In endpoint), use it.
+    // Otherwise, start a new transaction.
+    if (prismaTx) {
+      return await coreLogic(prismaTx);
+    } else {
+      return await prisma.$transaction(coreLogic);
+    }
   }
 }

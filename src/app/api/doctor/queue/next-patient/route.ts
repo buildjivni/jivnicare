@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { verifyToken } from "@/lib/jwt";
 import { cookies } from "next/headers";
 import { getCurrentLogicalDay } from "@/lib/clinic-utils";
+import { nextPatientSchema, formatZodError } from "@/lib/validations";
 
 export async function POST(request: Request) {
   try {
@@ -27,23 +28,30 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { currentTokenId, skipCurrent } = body;
+    
+    // Strict Payload Validation
+    const validation = nextPatientSchema.safeParse(body);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: "Invalid payload: " + formatZodError(validation.error) }, 
+        { status: 400 }
+      );
+    }
 
-    // Atomic transaction for queue progression
+    const { currentTokenId, skipCurrent } = validation.data;
+
+    // Atomic transaction for strict queue progression
     const result = await prisma.$transaction(async (tx) => {
       // 1. Complete or Skip the current patient if ID provided
       if (currentTokenId) {
-        // Strict verification: must be IN_CONSULTATION to be completed/skipped
-        const currentToken = await tx.queueToken.findUnique({
-          where: { id: currentTokenId }
+        // Strict verification: updateMany allows atomic where clauses on non-unique fields
+        await tx.queueToken.updateMany({
+          where: { 
+            id: currentTokenId,
+            status: "IN_CONSULTATION" // Must currently be in consultation
+          },
+          data: { status: skipCurrent ? "SKIPPED" : "COMPLETED" }
         });
-
-        if (currentToken && currentToken.status === "IN_CONSULTATION") {
-          await tx.queueToken.update({
-            where: { id: currentTokenId },
-            data: { status: skipCurrent ? "SKIPPED" : "COMPLETED" }
-          });
-        }
       }
 
       // 2. Find the next WAITING patient in strict sequential order
@@ -65,19 +73,29 @@ export async function POST(request: Request) {
         orderBy: { tokenNumber: "asc" }
       });
 
-      // 3. Mark the next patient as IN_CONSULTATION and update active token
+      // 3. Atomically lock and mark the next patient as IN_CONSULTATION
       if (nextPatient) {
-        const updatedNext = await tx.queueToken.update({
-          where: { id: nextPatient.id },
+        // Use updateMany to ensure we only update if NO OTHER concurrent request already changed it
+        const updateResult = await tx.queueToken.updateMany({
+          where: { 
+            id: nextPatient.id,
+            status: "WAITING" // Crucial concurrency lock
+          },
           data: { status: "IN_CONSULTATION" }
         });
 
-        await tx.dailyQueue.update({
-          where: { id: dailyQueue.id },
-          data: { currentActiveToken: updatedNext.tokenNumber }
-        });
-
-        return { nextPatient: updatedNext };
+        // Only update dailyQueue if we successfully acquired the lock
+        if (updateResult.count > 0) {
+          await tx.dailyQueue.update({
+            where: { id: dailyQueue.id },
+            data: { currentActiveToken: nextPatient.tokenNumber }
+          });
+          
+          return { nextPatient: { ...nextPatient, status: "IN_CONSULTATION" } };
+        } else {
+          // A concurrent request beat us to it, throw an error to retry or abort cleanly
+          throw new Error("CONCURRENCY_CONFLICT_RETRY");
+        }
       }
 
       return { nextPatient: null };
@@ -86,6 +104,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, data: result });
   } catch (error: any) {
     console.error("Next patient operation error:", error);
+    if (error.message === "CONCURRENCY_CONFLICT_RETRY") {
+      return NextResponse.json({ error: "Queue was updated concurrently, please refresh" }, { status: 409 });
+    }
     return NextResponse.json({ error: error.message || "Failed to progress queue" }, { status: 500 });
   }
 }

@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { verifyToken } from "@/lib/jwt";
 import { cookies } from "next/headers";
 import { QueueService } from "@/services/queueService";
+import { bookAppointmentSchema, formatZodError } from "@/lib/validations";
 
 export async function POST(request: Request) {
   try {
@@ -19,14 +20,20 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { doctorId, date, location } = body;
-
-    if (!doctorId || !date) {
-      return NextResponse.json({ error: "Missing doctorId or date" }, { status: 400 });
+    
+    // Strict Payload Validation
+    const validation = bookAppointmentSchema.safeParse(body);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: "Invalid payload: " + formatZodError(validation.error) }, 
+        { status: 400 }
+      );
     }
 
+    const { doctorId, date, location } = validation.data;
+
     // Call service layer
-    const newQueueToken = await QueueService.issueToken(doctorId, date, payload.id, "ONLINE", location);
+    const newQueueToken = await QueueService.issueToken(doctorId, new Date(date), payload.id, "ONLINE", location);
 
     return NextResponse.json({ success: true, token: newQueueToken });
   } catch (error: any) {

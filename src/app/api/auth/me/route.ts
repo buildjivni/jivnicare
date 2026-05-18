@@ -52,6 +52,7 @@ export async function GET() {
         id: true,
         phone: true,
         name: true,
+        location: true,
         role: true,
         isVerified: true,
         // Linked doctor record (null for PATIENT/ADMIN)
@@ -70,6 +71,7 @@ export async function GET() {
         id: user.id,
         phone: user.phone,
         name: user.name,
+        location: user.location,
         role: user.role,
         verified: user.isVerified,
         doctorId: user.doctor?.id ?? null,
