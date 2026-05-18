@@ -229,8 +229,8 @@ export function SmartSearchBar({
       <div
         className={cn(
           "relative flex items-center transition-all duration-200 shrink-0",
-          compact && !focused ? "h-11 rounded-2xl" : "h-[56px] md:h-[64px] rounded-2xl",
-          disableFocusStyles ? "" : "border-2",
+          compact ? "h-11 rounded-[14px]" : "h-[56px] md:h-[64px] rounded-2xl",
+          disableFocusStyles ? "border-transparent" : "border-2",
           focused && !disableFocusStyles
             ? isEmergency
               ? "border-destructive shadow-[0_0_0_4px_rgba(239,68,68,0.12)] bg-white"
@@ -240,7 +240,7 @@ export function SmartSearchBar({
         )}
       >
         {/* Left icon */}
-        <div className={cn("flex items-center justify-center shrink-0", compact ? "w-11" : "w-14")}>
+        <div className={cn("flex items-center justify-center shrink-0 transition-colors duration-200", compact ? "w-11" : "w-14")}>
           {isEmergency
             ? <Zap className={cn("text-red-500 animate-pulse", compact ? "w-4 h-4" : "w-5 h-5")} />
             : focused && !query
@@ -259,9 +259,10 @@ export function SmartSearchBar({
           onFocus={() => setFocused(true)}
           onKeyDown={handleKey}
           placeholder={activePlaceholder}
+          style={{ outline: "none", boxShadow: "none" }}
           className={cn(
-            "flex-1 w-full min-w-0 h-full bg-transparent border-none outline-none focus:outline-none focus:ring-0 !outline-none focus:!outline-none focus-visible:!outline-none ring-0 focus:ring-0 focus-visible:ring-0 !shadow-none shadow-none text-slate-900 placeholder:text-slate-400 placeholder:transition-all px-1",
-            compact ? "text-[13px] md:text-sm" : "text-base md:text-[15px] font-medium"
+            "flex-1 w-full min-w-0 h-full bg-transparent border-none outline-none focus:outline-none focus:ring-0 ring-0 focus:border-none shadow-none !outline-none !shadow-none text-slate-900 placeholder:text-slate-400 transition-colors px-1",
+            compact ? "text-[13px] md:text-sm font-medium" : "text-base md:text-[15px] font-semibold"
           )}
           autoComplete="off"
           spellCheck={false}
