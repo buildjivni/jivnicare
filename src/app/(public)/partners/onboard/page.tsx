@@ -42,11 +42,45 @@ function OnboardingContent() {
     specialization: "", experience: "", qualifications: "",
     practiceType: "clinic", practiceName: "", practiceAddress: "", city: "Patna", state: "Bihar", district: "Patna", pincode: "", locality: "",
     bio: "", languages: "Hindi, English", fee: "",
-    profilePhotoUrl: "", clinicPhotoUrl: "", emergencyAvailable: false
+    profilePhotoUrl: "", clinicPhotoUrl: "", emergencyAvailable: false,
+    latitude: null as number | null, longitude: null as number | null
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [gpsLoading, setGpsLoading] = useState(false);
+  const [gpsStatus, setGpsStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
+  const fetchGPSLocation = () => {
+    if (!navigator.geolocation) { setGpsStatus('error'); return; }
+    setGpsLoading(true); setGpsStatus('idle');
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`,
+            { headers: { 'Accept-Language': 'en' } }
+          );
+          const geo = await res.json();
+          const addr = geo.address || {};
+          setFormData(prev => ({
+            ...prev, latitude, longitude,
+            city: addr.city || addr.town || addr.village || addr.county || prev.city,
+            state: addr.state || prev.state,
+            district: addr.county || addr.state_district || addr.city || prev.district,
+            locality: addr.suburb || addr.neighbourhood || addr.residential || addr.road || prev.locality,
+            pincode: addr.postcode || prev.pincode,
+          }));
+        } catch {
+          setFormData(prev => ({ ...prev, latitude, longitude }));
+        }
+        setGpsStatus('success'); setGpsLoading(false);
+      },
+      () => { setGpsStatus('error'); setGpsLoading(false); },
+      { timeout: 10000, enableHighAccuracy: true }
+    );
+  };
 
   const validateStep1 = () => {
     const newErrors: Record<string, string> = {};
@@ -342,14 +376,37 @@ function OnboardingContent() {
 
                   {/* Section: Clinic Location */}
                   <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-                    <div className="p-6 md:p-8 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
-                        <Building className="w-5 h-5" />
+                    <div className="p-6 md:p-8 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+                          <Building className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-slate-900">Clinic Location</h3>
+                          <p className="text-xs text-slate-500 font-medium">Where patients will visit you.</p>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="font-bold text-slate-900">Clinic Location</h3>
-                        <p className="text-xs text-slate-500 font-medium">Where patients will visit you.</p>
-                      </div>
+                      {/* GPS Button */}
+                      <button
+                        type="button"
+                        onClick={fetchGPSLocation}
+                        disabled={gpsLoading}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
+                          gpsStatus === 'success' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' :
+                          gpsStatus === 'error' ? 'bg-rose-100 text-rose-700 border border-rose-200' :
+                          'bg-sky-100 text-sky-700 border border-sky-200 hover:bg-sky-200'
+                        }`}
+                      >
+                        {gpsLoading ? (
+                          <><RefreshCw className="w-3.5 h-3.5 animate-spin" /> Locating...</>
+                        ) : gpsStatus === 'success' ? (
+                          <><CheckCircle2 className="w-3.5 h-3.5" /> Located!</>
+                        ) : gpsStatus === 'error' ? (
+                          <><AlertCircle className="w-3.5 h-3.5" /> Try Again</>
+                        ) : (
+                          <><MapPin className="w-3.5 h-3.5" /> Use GPS</>
+                        )}
+                      </button>
                     </div>
                     <div className="p-6 md:p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2 md:col-span-2">
