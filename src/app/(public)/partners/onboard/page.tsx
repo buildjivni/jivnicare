@@ -164,70 +164,115 @@ function OnboardingContent() {
   return (
     <div className="min-h-screen bg-white flex flex-col md:flex-row font-sans overflow-x-hidden selection:bg-sky-500/20 selection:text-sky-900">
       
-      {/* LEFT SIDEBAR - STICKY LIGHT BRAND */}
-      <div className="md:w-[420px] lg:w-[480px] bg-gradient-to-br from-sky-50 via-white to-emerald-50 flex flex-col shrink-0 relative overflow-hidden md:sticky md:top-0 md:h-screen shadow-lg border-r border-sky-100 z-20">
+      {/* LEFT SIDEBAR - PREMIUM DARK CLINICAL BRAND */}
+      <div className="md:w-[420px] lg:w-[460px] bg-[#0c111d] flex flex-col shrink-0 relative overflow-hidden md:sticky md:top-0 md:h-screen border-r border-white/5 z-20">
         
-        {/* Subtle background glows */}
+        {/* Subtle background glow mesh */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-          <div className="absolute -top-[15%] -right-[10%] w-[55%] h-[40%] rounded-full bg-sky-400/10 blur-[80px]" />
-          <div className="absolute bottom-[5%] -left-[10%] w-[50%] h-[40%] rounded-full bg-emerald-400/10 blur-[80px]" />
+          <div className="absolute -top-[10%] -left-[10%] w-[70%] h-[50%] rounded-full bg-sky-500/10 blur-[100px] animate-pulse duration-5000" />
+          <div className="absolute bottom-[5%] -right-[10%] w-[60%] h-[40%] rounded-full bg-emerald-500/10 blur-[100px] animate-pulse duration-7000" />
         </div>
 
-        <div className="p-8 md:p-12 flex-1 flex flex-col relative z-10">
+        {/* Technical architecture grid overlay */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff03_1px,transparent_1px),linear-gradient(to_bottom,#ffffff03_1px,transparent_1px)] bg-[size:3rem_3rem] pointer-events-none" />
+
+        <div className="p-8 md:p-10 flex-1 flex flex-col relative z-10">
           {/* Logo */}
-          <Link href="/" className="inline-flex items-center gap-3 mb-14 group">
-            <div className="w-11 h-11 rounded-2xl overflow-hidden shadow-md group-hover:scale-105 transition-transform bg-white border border-sky-100 p-1">
-              <img src="/logo.png" alt="JivniCare" className="w-full h-full object-contain" />
+          <Link href="/" className="inline-flex items-center gap-3 mb-12 group">
+            <div className="w-10 h-10 rounded-xl overflow-hidden shadow-lg group-hover:scale-105 transition-all duration-300 bg-white/10 backdrop-blur-md border border-white/20 p-1 flex items-center justify-center">
+              <img src="/logo.png" alt="JivniCare" className="w-7 h-7 object-contain brightness-0 invert" />
             </div>
-            <span className="text-2xl font-bold tracking-tight text-slate-800 leading-none">
+            <span className="text-xl font-bold tracking-tight text-white leading-none">
               <span className="text-[#5298D2]">Jivni</span><span className="text-[#489C66]">Care</span>
             </span>
           </Link>
 
           {/* Value Prop */}
-          <div className="mb-14">
-            <h1 className="text-3xl md:text-4xl font-black text-slate-800 tracking-tight leading-[1.15] mb-5">
+          <div className="mb-12">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/5 border border-white/10 text-sky-400 rounded-full text-[10px] font-bold uppercase tracking-widest mb-4">
+              <Sparkles className="w-3.5 h-3.5" /> B2B Partner Portal
+            </span>
+            <h1 className="text-3xl md:text-[34px] font-black text-white tracking-tight leading-[1.25] mb-4">
               Modernize your <br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#5298D2] to-[#489C66]">clinical practice.</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-emerald-400 font-extrabold">clinical practice.</span>
             </h1>
-            <p className="text-slate-500 text-base font-medium leading-relaxed">
-              Join Bihar's fastest-growing digital healthcare network. Reduce no-shows, manage queues, and boost revenue.
+            <p className="text-slate-400 text-sm font-medium leading-relaxed">
+              Bihar's fastest-growing digital clinic network. Verify your identity, manage patients seamlessly, and maximize clinic revenue.
             </p>
           </div>
 
           {/* Vertical Stepper */}
           <div className="mt-auto hidden md:block">
-            <div className="space-y-5">
+            <div className="space-y-1">
               {[
-                { num: 1, label: 'Identity & Clinic', icon: null },
-                { num: 2, label: 'Profile Polish', icon: null },
-                { num: 3, label: 'Verification', icon: 'shield' }
-              ].map((s) => (
-                <div key={s.num} className="flex items-center gap-3">
-                  <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm shadow-sm transition-all duration-300 shrink-0 ${
-                    step > s.num ? 'bg-sky-500 text-white' :
-                    step === s.num ? 'bg-sky-500 text-white shadow-sky-300/50 shadow-md' :
-                    'bg-white border-2 border-slate-200 text-slate-400'
-                  }`}>
-                    {step > s.num ? <CheckCircle2 className="w-4 h-4" /> : s.icon === 'shield' ? <ShieldCheck className="w-4 h-4" /> : <span>{s.num}</span>}
+                { num: 1, label: 'Identity & Clinic', desc: 'Basic details & medical registry', icon: UserCircle },
+                { num: 2, label: 'Profile Polish', desc: 'Timing slots, consultation fees & bio', icon: Sparkles },
+                { num: 3, label: 'Verification', desc: 'Registry audit & workspace live', icon: ShieldCheck }
+              ].map((s) => {
+                const Icon = s.icon;
+                const isActive = step === s.num;
+                const isCompleted = step > s.num;
+                return (
+                  <div key={s.num} className="relative flex gap-4 group">
+                    {/* Connector Line between steps */}
+                    {s.num < 3 && (
+                      <div className={`absolute left-[18px] top-9 w-[2px] h-[calc(100%-8px)] transition-all duration-500 ${
+                        isCompleted ? 'bg-gradient-to-b from-sky-500 to-emerald-500' : 'bg-white/15'
+                      }`} />
+                    )}
+                    
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm transition-all duration-300 shrink-0 relative z-10 ${
+                      isCompleted ? 'bg-gradient-to-br from-sky-500 to-emerald-500 text-white shadow-lg shadow-sky-500/20' :
+                      isActive ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/40 ring-4 ring-sky-500/10 scale-105' :
+                      'bg-white/5 border border-white/10 text-slate-500'
+                    }`}>
+                      {isCompleted ? <CheckCircle2 className="w-5 h-5 text-white" /> : <Icon className="w-4 h-4" />}
+                    </div>
+                    
+                    <div className="flex-1 pb-6">
+                      <h5 className={`font-bold text-sm transition-all ${
+                        isActive ? 'text-white text-[15px]' :
+                        isCompleted ? 'text-slate-200' :
+                        'text-slate-500'
+                      }`}>{s.label}</h5>
+                      <p className={`text-[11px] mt-1 transition-all leading-normal ${
+                        isActive ? 'text-slate-350 font-medium' :
+                        isCompleted ? 'text-slate-400' :
+                        'text-slate-600'
+                      }`}>{s.desc}</p>
+                    </div>
                   </div>
-                  <p className={`font-semibold text-sm transition-colors ${
-                    step >= s.num ? 'text-slate-800' : 'text-slate-400'
-                  }`}>{s.label}</p>
-                  {step === s.num && <div className="ml-auto w-2 h-2 rounded-full bg-sky-500 animate-pulse" />}
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
+
+          {/* Security Trust Shield Footer */}
+          <div className="mt-auto pt-6 border-t border-white/5 flex items-center gap-3 bg-white/[0.01] -mx-8 -mb-8 p-6 md:-mx-10 md:-mb-10 md:p-6 shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+            </div>
+            <div className="space-y-0.5">
+              <p className="text-[9px] font-black text-white uppercase tracking-widest leading-none">Registry Compliant</p>
+              <p className="text-[8px] text-slate-500 font-semibold leading-normal">Verified by NMC & Bihar Medical Council. 256-bit SSL secured.</p>
+            </div>
+          </div>
+
         </div>
       </div>
 
       {/* RIGHT CONTENT AREA */}
-      <div className="flex-1 relative flex flex-col bg-slate-50 min-h-screen">
+      <div className="flex-1 relative flex flex-col bg-slate-50/40 min-h-screen overflow-y-auto overflow-x-hidden">
         
+        {/* Soft background light blooms */}
+        <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none -z-10">
+          <div className="absolute top-[10%] right-[10%] w-[450px] h-[450px] rounded-full bg-sky-400/5 blur-[120px]" />
+          <div className="absolute bottom-[10%] left-[5%] w-[400px] h-[400px] rounded-full bg-emerald-400/5 blur-[120px]" />
+        </div>
+
         {/* Top bar for Login */}
         <div className="w-full p-6 flex justify-end absolute top-0 right-0 z-20">
-          <Link href="/partners/login" className="px-5 py-2.5 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-600 hover:text-slate-900 hover:border-slate-300 shadow-sm transition-all flex items-center gap-2">
+          <Link href="/partners/login" className="px-5 py-2.5 bg-white/80 backdrop-blur border border-slate-200 rounded-full text-xs font-bold text-slate-600 hover:text-slate-900 hover:border-slate-300 shadow-sm transition-all flex items-center gap-2">
             Already a partner? <span className="text-sky-600">Sign In</span>
           </Link>
         </div>
