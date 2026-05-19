@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  ArrowRight, CheckCircle2, ShieldCheck, RefreshCw, AlertCircle, Sparkles, Lock, UserCircle, Briefcase, MapPin, Building, Star, Activity, ArrowLeft
+  ArrowRight, CheckCircle2, ShieldCheck, RefreshCw, AlertCircle, Sparkles, Lock, UserCircle, Briefcase, MapPin, Building, Star, Activity, ArrowLeft,
+  Clock, ArrowUpRight, FileText, PhoneCall
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -105,7 +106,7 @@ function OnboardingContent() {
     if (!formData.practiceAddress.trim()) { newErrors.practiceAddress = "Address is required."; isValid = false; }
     if (!formData.locality.trim()) { newErrors.locality = "Locality is required."; isValid = false; }
     if (!formData.city.trim()) { newErrors.city = "City is required."; isValid = false; }
-    if (!formData.pincode.trim() || !/^\\d{6}$/.test(formData.pincode)) { newErrors.pincode = "Valid 6-digit Pincode is required."; isValid = false; }
+    if (!formData.pincode.trim() || !/^\d{6}$/.test(formData.pincode)) { newErrors.pincode = "Valid 6-digit Pincode is required."; isValid = false; }
 
     setErrors(newErrors);
     return isValid;
@@ -510,20 +511,148 @@ function OnboardingContent() {
 
               {/* === STEP 3: SUCCESS === */}
               {step === 3 && (
-                <div className="flex flex-col items-center justify-center text-center py-20 animate-in zoom-in-95 duration-500">
-                  <div className="relative mb-8">
-                    <div className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center shadow-inner relative z-10">
-                      <ShieldCheck className="w-12 h-12 text-emerald-600" />
+                <div className="max-w-2xl mx-auto space-y-8 animate-in zoom-in-95 slide-in-from-bottom-10 duration-500">
+                  
+                  {/* Premium Success Check with Glow */}
+                  <div className="flex flex-col items-center justify-center text-center pt-8 pb-4">
+                    <div className="relative mb-6">
+                      <div className="w-20 h-20 bg-emerald-100 rounded-3xl flex items-center justify-center shadow-md relative z-10 border border-emerald-200">
+                        <ShieldCheck className="w-10 h-10 text-emerald-600 animate-pulse" />
+                      </div>
+                      <div className="absolute inset-0 bg-emerald-200/50 rounded-3xl blur-xl scale-125 -z-10 animate-ping duration-1000" />
                     </div>
-                    <div className="absolute inset-0 bg-emerald-100 rounded-full animate-ping opacity-50" />
+                    <h2 className="text-3xl font-black text-slate-900 tracking-tight mb-3">
+                      Digital Clinic Registered!
+                    </h2>
+                    <p className="text-slate-500 font-semibold text-base max-w-md">
+                      Your partner application was received successfully. We have initiated the medical credentials verification.
+                    </p>
                   </div>
-                  <h2 className="text-4xl font-black text-slate-900 tracking-tight mb-4">Application Submitted</h2>
-                  <p className="text-lg text-slate-500 font-medium max-w-md mx-auto mb-10 leading-relaxed">
-                    Our clinical moderation team is reviewing your profile. You will be notified once verification is complete.
-                  </p>
-                  <Button onClick={() => router.push("/doctor/dashboard")} className="h-14 px-10 rounded-full bg-slate-900 hover:bg-slate-800 text-white font-bold text-lg shadow-xl shadow-slate-900/20 transition-all hover:-translate-y-1">
-                    Enter Dashboard
-                  </Button>
+
+                  {/* Glassmorphic Clinical Welcome Card (Receipt Style) */}
+                  <div className="bg-white rounded-3xl border border-slate-200 shadow-xl shadow-slate-100/50 overflow-hidden relative">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-sky-500/10 to-transparent rounded-bl-full pointer-events-none" />
+                    
+                    {/* Header */}
+                    <div className="p-6 md:p-8 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-sky-100 text-sky-600 flex items-center justify-center shrink-0">
+                        <FileText className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-slate-955">Application Summary</h3>
+                        <p className="text-xs text-slate-500 font-medium">B2B Partner Verification Receipt</p>
+                      </div>
+                      <span className="ml-auto px-3 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-[10px] font-bold tracking-wider uppercase animate-pulse">
+                        ⏳ Verifying
+                      </span>
+                    </div>
+
+                    {/* Details grid */}
+                    <div className="p-6 md:p-8 space-y-4 text-sm font-medium text-slate-600">
+                      <div className="grid grid-cols-3 py-1.5 border-b border-slate-100/70">
+                        <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Doctor Partner</span>
+                        <span className="col-span-2 text-slate-900 font-bold">{formData.fullName || "Dr. Partner"}</span>
+                      </div>
+                      <div className="grid grid-cols-3 py-1.5 border-b border-slate-100/70">
+                        <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Registration</span>
+                        <span className="col-span-2 text-slate-800 font-semibold">{formData.medicalRegistrationNumber || "N/A"} ({formData.medicalCouncil})</span>
+                      </div>
+                      <div className="grid grid-cols-3 py-1.5 border-b border-slate-100/70">
+                        <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Specialty</span>
+                        <span className="col-span-2 text-slate-800 font-semibold">{formData.specialization || "General Physician"}</span>
+                      </div>
+                      <div className="grid grid-cols-3 py-1.5 border-b border-slate-100/70">
+                        <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Practice Name</span>
+                        <span className="col-span-2 text-slate-800 font-semibold">{formData.practiceName || "JivniCare Clinic"}</span>
+                      </div>
+                      <div className="grid grid-cols-3 py-1.5">
+                        <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Location</span>
+                        <span className="col-span-2 text-slate-800 font-semibold">{formData.locality}, {formData.city} (PIN {formData.pincode})</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Verification Workflow Timeline */}
+                  <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 md:p-8 space-y-6">
+                    <h4 className="font-extrabold text-slate-955 text-base tracking-tight flex items-center gap-2">
+                      <Activity className="w-4 h-4 text-sky-500" />
+                      Verification & Activation Steps
+                    </h4>
+
+                    <div className="relative border-l-2 border-slate-100 pl-6 ml-3 space-y-6">
+                      
+                      {/* Step 1 */}
+                      <div className="relative">
+                        <div className="absolute -left-[35px] top-0 w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-md">
+                          <CheckCircle2 className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <h5 className="font-bold text-slate-900 text-sm">Application Received</h5>
+                          <p className="text-xs text-slate-500 mt-1 font-medium">Digital clinic details submitted cleanly to JivniCare registry.</p>
+                        </div>
+                      </div>
+
+                      {/* Step 2 */}
+                      <div className="relative">
+                        <div className="absolute -left-[35px] top-0 w-6 h-6 rounded-full bg-sky-100 border-2 border-sky-500 flex items-center justify-center shadow-md animate-pulse">
+                          <Clock className="w-3.5 h-3.5 text-sky-600" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h5 className="font-bold text-slate-900 text-sm">Council Registry Verification</h5>
+                            <span className="text-[10px] font-black text-sky-600 uppercase bg-sky-50 px-2 py-0.5 rounded border border-sky-200 animate-pulse">Usually &lt; 24 Hours</span>
+                          </div>
+                          <p className="text-xs text-slate-500 mt-1 font-medium">Verification team is validating registration credentials against Bihar Medical Council & NMC registers.</p>
+                        </div>
+                      </div>
+
+                      {/* Step 3 */}
+                      <div className="relative">
+                        <div className="absolute -left-[35px] top-0 w-6 h-6 rounded-full bg-slate-50 border-2 border-slate-200 flex items-center justify-center text-slate-400">
+                          <Lock className="w-3.5 h-3.5" />
+                        </div>
+                        <div>
+                          <h5 className="font-bold text-slate-400 text-sm">Clinic Activation Kit</h5>
+                          <p className="text-xs text-slate-400 mt-1 font-medium">Onboarding confirmation SMS, unique doctor shortcode, and live queue scheduler activation.</p>
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+
+                  {/* Sandbox Notice Banner */}
+                  <div className="bg-gradient-to-r from-sky-50 to-indigo-50 border border-sky-100 rounded-3xl p-6 flex gap-4">
+                    <div className="w-10 h-10 rounded-2xl bg-white text-sky-600 flex items-center justify-center shrink-0 shadow-sm border border-sky-50">
+                      <Sparkles className="w-5 h-5 text-sky-500 animate-pulse" />
+                    </div>
+                    <div className="space-y-1">
+                      <h5 className="font-bold text-slate-900 text-sm">Explore Sandbox & Pre-configure slots</h5>
+                      <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                        While our moderation team audits your credentials, you can enter the dashboard in **Sandbox Mode**. Set up consultation fees, emergency settings, and schedule slots so you are ready to receive live bookings the moment activation completes!
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* CTA Buttons */}
+                  <div className="flex flex-col sm:flex-row gap-4 pt-2">
+                    <Button 
+                      onClick={() => router.push("/doctor/dashboard")} 
+                      className="h-14 px-8 flex-1 rounded-2xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-base shadow-lg shadow-sky-600/20 transition-all hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                    >
+                      Enter Dashboard (Sandbox)
+                      <ArrowRight className="w-5 h-5" />
+                    </Button>
+                    <a 
+                      href="https://wa.me/919999999999?text=JivniCare%20Doctor%20Support%20Request" 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="h-14 px-8 rounded-2xl border border-slate-200 hover:border-slate-350 bg-white hover:bg-slate-50 text-slate-700 font-bold text-base transition-all hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                    >
+                      <PhoneCall className="w-5 h-5 text-slate-400" />
+                      Contact Support Desk
+                    </a>
+                  </div>
+
                 </div>
               )}
 
