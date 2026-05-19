@@ -162,129 +162,97 @@ function OnboardingContent() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col md:flex-row font-sans overflow-x-hidden selection:bg-sky-500/20 selection:text-sky-900">
+    <div className="min-h-screen bg-gradient-to-br from-[#EEF7FC] via-white to-[#F2FAF6] font-sans selection:bg-sky-500/20 selection:text-sky-900 relative pb-24 flex flex-col">
       
-      {/* LEFT SIDEBAR - PREMIUM DARK CLINICAL BRAND */}
-      <div className="md:w-[420px] lg:w-[460px] bg-[#0c111d] flex flex-col shrink-0 relative overflow-hidden md:sticky md:top-0 md:h-screen border-r border-white/5 z-20">
-        
-        {/* Subtle background glow mesh */}
-        <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-          <div className="absolute -top-[10%] -left-[10%] w-[70%] h-[50%] rounded-full bg-sky-500/10 blur-[100px] animate-pulse duration-5000" />
-          <div className="absolute bottom-[5%] -right-[10%] w-[60%] h-[40%] rounded-full bg-emerald-500/10 blur-[100px] animate-pulse duration-7000" />
-        </div>
+      {/* Soft background light blooms */}
+      <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none -z-10">
+        <div className="absolute top-[10%] left-[10%] w-[550px] h-[550px] rounded-full bg-[#5298D2]/5 blur-[130px] opacity-70" />
+        <div className="absolute bottom-[20%] right-[10%] w-[500px] h-[500px] rounded-full bg-[#489C66]/5 blur-[130px] opacity-70" />
+      </div>
 
-        {/* Technical architecture grid overlay */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff03_1px,transparent_1px),linear-gradient(to_bottom,#ffffff03_1px,transparent_1px)] bg-[size:3rem_3rem] pointer-events-none" />
-
-        <div className="p-8 md:p-10 flex-1 flex flex-col relative z-10">
-          {/* Logo */}
-          <Link href="/" className="inline-flex items-center gap-3 mb-12 group">
-            <div className="w-10 h-10 rounded-xl overflow-hidden shadow-lg group-hover:scale-105 transition-all duration-300 bg-white/10 backdrop-blur-md border border-white/20 p-1 flex items-center justify-center">
-              <img src="/logo.png" alt="JivniCare" className="w-7 h-7 object-contain brightness-0 invert" />
+      {/* Top Navigation Bar with Logo */}
+      <header className="w-full bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-50 px-6 py-4 shadow-sm shadow-slate-100/30">
+        <div className="max-w-5xl mx-auto flex items-center justify-between w-full">
+          <Link href="/" className="inline-flex items-center gap-3 group">
+            <div className="w-10 h-10 rounded-xl overflow-hidden shadow-md group-hover:scale-105 transition-transform bg-white border border-sky-100 p-1.5 flex items-center justify-center">
+              <img src="/logo.png" alt="JivniCare" className="w-8 h-8 object-contain" />
             </div>
-            <span className="text-xl font-bold tracking-tight text-white leading-none">
+            <span className="text-xl font-black tracking-tight text-slate-800 leading-none">
               <span className="text-[#5298D2]">Jivni</span><span className="text-[#489C66]">Care</span>
             </span>
           </Link>
+          <Link href="/partners/login" className="px-5 py-2.5 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-655 hover:text-[#5298D2] hover:border-sky-200 shadow-sm transition-all flex items-center gap-2">
+            Already a partner? <span className="text-[#5298D2]">Sign In</span>
+          </Link>
+        </div>
+      </header>
 
-          {/* Value Prop */}
-          <div className="mb-12">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/5 border border-white/10 text-sky-400 rounded-full text-[10px] font-bold uppercase tracking-widest mb-4">
-              <Sparkles className="w-3.5 h-3.5" /> B2B Partner Portal
+      {/* Main Content Area */}
+      <main className="flex-1 w-full max-w-4xl mx-auto px-4 mt-12 relative z-10">
+        
+        {/* Unified Card Container */}
+        <div className="bg-white/95 rounded-[32px] border border-slate-200/80 shadow-2xl shadow-sky-100/30 backdrop-blur-md overflow-hidden relative">
+          
+          {/* Header Title Section */}
+          <div className="flex flex-col items-center pt-10 pb-8 px-6 border-b border-slate-100 bg-slate-50/30">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-sky-50 border border-sky-100 text-[#5298D2] rounded-full text-[10px] font-bold uppercase tracking-widest mb-4">
+              <Sparkles className="w-3.5 h-3.5 text-sky-500 animate-pulse" /> B2B Partner Portal
             </span>
-            <h1 className="text-3xl md:text-[34px] font-black text-white tracking-tight leading-[1.25] mb-4">
-              Modernize your <br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-emerald-400 font-extrabold">clinical practice.</span>
+            <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight text-center">
+              Doctor Registration Portal
             </h1>
-            <p className="text-slate-400 text-sm font-medium leading-relaxed">
-              Bihar's fastest-growing digital clinic network. Verify your identity, manage patients seamlessly, and maximize clinic revenue.
+            <p className="text-slate-500 text-sm font-medium mt-1.5 text-center max-w-lg leading-relaxed">
+              Verify your medical credentials to activate your dynamic clinical queue system. NMC & State Council Compliant.
             </p>
           </div>
 
-          {/* Vertical Stepper */}
-          <div className="mt-auto hidden md:block">
-            <div className="space-y-1">
+          {/* Stepper Timeline Progress */}
+          <div className="bg-slate-50/50 border-b border-slate-100 py-6 px-8 flex justify-center">
+            <div className="flex items-center gap-4 md:gap-8 w-full max-w-xl justify-between">
               {[
-                { num: 1, label: 'Identity & Clinic', desc: 'Basic details & medical registry', icon: UserCircle },
-                { num: 2, label: 'Profile Polish', desc: 'Timing slots, consultation fees & bio', icon: Sparkles },
-                { num: 3, label: 'Verification', desc: 'Registry audit & workspace live', icon: ShieldCheck }
-              ].map((s) => {
+                { num: 1, label: 'Identity & Clinic', desc: 'Basic details', icon: UserCircle },
+                { num: 2, label: 'Profile Polish', desc: 'Schedules & bio', icon: Sparkles },
+                { num: 3, label: 'Verification', desc: 'NMC verification', icon: ShieldCheck }
+              ].map((s, idx) => {
                 const Icon = s.icon;
                 const isActive = step === s.num;
                 const isCompleted = step > s.num;
                 return (
-                  <div key={s.num} className="relative flex gap-4 group">
-                    {/* Connector Line between steps */}
-                    {s.num < 3 && (
-                      <div className={`absolute left-[18px] top-9 w-[2px] h-[calc(100%-8px)] transition-all duration-500 ${
-                        isCompleted ? 'bg-gradient-to-b from-sky-500 to-emerald-500' : 'bg-white/15'
-                      }`} />
-                    )}
-                    
-                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm transition-all duration-300 shrink-0 relative z-10 ${
-                      isCompleted ? 'bg-gradient-to-br from-sky-500 to-emerald-500 text-white shadow-lg shadow-sky-500/20' :
-                      isActive ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/40 ring-4 ring-sky-500/10 scale-105' :
-                      'bg-white/5 border border-white/10 text-slate-500'
+                  <div key={s.num} className="flex items-center gap-3">
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs transition-all duration-300 ${
+                      isCompleted ? 'bg-[#489C66] text-white shadow-md shadow-emerald-600/10' :
+                      isActive ? 'bg-[#5298D2] text-white shadow-md shadow-sky-600/20 ring-4 ring-sky-100 scale-105' :
+                      'bg-slate-100 text-slate-400 border border-slate-200'
                     }`}>
-                      {isCompleted ? <CheckCircle2 className="w-5 h-5 text-white" /> : <Icon className="w-4 h-4" />}
+                      {isCompleted ? <CheckCircle2 className="w-4.5 h-4.5 text-white" /> : <Icon className="w-4.5 h-4.5" />}
                     </div>
-                    
-                    <div className="flex-1 pb-6">
-                      <h5 className={`font-bold text-sm transition-all ${
-                        isActive ? 'text-white text-[15px]' :
-                        isCompleted ? 'text-slate-200' :
-                        'text-slate-500'
-                      }`}>{s.label}</h5>
-                      <p className={`text-[11px] mt-1 transition-all leading-normal ${
-                        isActive ? 'text-slate-350 font-medium' :
-                        isCompleted ? 'text-slate-400' :
-                        'text-slate-600'
+                    <div className="hidden md:block">
+                      <p className={`text-xs font-black leading-none ${
+                        isActive ? 'text-slate-800' : isCompleted ? 'text-slate-500' : 'text-slate-400'
+                      }`}>{s.label}</p>
+                      <p className={`text-[10px] font-semibold mt-0.5 ${
+                        isActive ? 'text-slate-500' : isCompleted ? 'text-slate-400' : 'text-slate-350'
                       }`}>{s.desc}</p>
                     </div>
+                    {idx < 2 && (
+                      <div className={`hidden md:block w-8 h-[2px] rounded ml-2 ${
+                        step > s.num ? 'bg-[#489C66]' : 'bg-slate-200'
+                      }`} />
+                    )}
                   </div>
                 );
               })}
             </div>
           </div>
 
-          {/* Security Trust Shield Footer */}
-          <div className="mt-auto pt-6 border-t border-white/5 flex items-center gap-3 bg-white/[0.01] -mx-8 -mb-8 p-6 md:-mx-10 md:-mb-10 md:p-6 shrink-0">
-            <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            </div>
-            <div className="space-y-0.5">
-              <p className="text-[9px] font-black text-white uppercase tracking-widest leading-none">Registry Compliant</p>
-              <p className="text-[8px] text-slate-500 font-semibold leading-normal">Verified by NMC & Bihar Medical Council. 256-bit SSL secured.</p>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-      {/* RIGHT CONTENT AREA */}
-      <div className="flex-1 relative flex flex-col bg-slate-50/40 min-h-screen overflow-y-auto overflow-x-hidden">
-        
-        {/* Soft background light blooms */}
-        <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none -z-10">
-          <div className="absolute top-[10%] right-[10%] w-[450px] h-[450px] rounded-full bg-sky-400/5 blur-[120px]" />
-          <div className="absolute bottom-[10%] left-[5%] w-[400px] h-[400px] rounded-full bg-emerald-400/5 blur-[120px]" />
-        </div>
-
-        {/* Top bar for Login */}
-        <div className="w-full p-6 flex justify-end absolute top-0 right-0 z-20">
-          <Link href="/partners/login" className="px-5 py-2.5 bg-white/80 backdrop-blur border border-slate-200 rounded-full text-xs font-bold text-slate-600 hover:text-slate-900 hover:border-slate-300 shadow-sm transition-all flex items-center gap-2">
-            Already a partner? <span className="text-sky-600">Sign In</span>
-          </Link>
-        </div>
-
-        {/* Scrollable Form Container */}
-        <div className={`flex-1 w-full max-w-3xl mx-auto px-6 pt-24 ${step < 3 ? 'pb-40' : 'pb-24'} relative z-10`}>
-          <AnimatePresence mode="wait">
-            <motion.div key={step} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3, ease: "easeOut" }}>
-              
-              {/* === STEP 1: IDENTITY & CLINIC === */}
-              {step === 1 && (
-                <div className="space-y-8">
+          {/* Form Content body */}
+          <div className="p-6 md:p-10">
+            <AnimatePresence mode="wait">
+              <motion.div key={step} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3, ease: "easeOut" }}>
+                
+                {/* === STEP 1: IDENTITY & CLINIC === */}
+                {step === 1 && (
+                  <div className="space-y-8">
                   <div className="mb-10">
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-sky-100 text-sky-800 rounded-full text-[10px] font-black uppercase tracking-widest mb-4">
                       <ShieldCheck className="w-3.5 h-3.5" /> Identity & Security
@@ -472,6 +440,23 @@ function OnboardingContent() {
                       </div>
                     </div>
                   </div>
+
+                  {/* Step 1 Save Action */}
+                  <div className="flex items-center justify-end pt-6">
+                    <Button 
+                      type="button" 
+                      onClick={submitStep1} 
+                      disabled={isSubmitting} 
+                      className="h-14 px-8 w-full sm:w-auto rounded-2xl font-bold bg-[#5298D2] hover:bg-[#3d83bd] text-white flex items-center justify-center gap-2 shadow-lg shadow-sky-600/10 transition-all hover:-translate-y-0.5"
+                    >
+                      {isSubmitting ? (
+                        <><RefreshCw className="w-5 h-5 animate-spin" /> Saving...</>
+                      ) : (
+                        <>Save & Continue <ArrowRight className="w-5 h-5" /></>
+                      )}
+                    </Button>
+                  </div>
+
                 </div>
               )}
 
@@ -539,6 +524,30 @@ function OnboardingContent() {
                       </div>
                      </div>
                   </div>
+
+                  {/* Step 2 Back & Submit Actions */}
+                  <div className="flex items-center justify-between pt-6">
+                    <Button 
+                      type="button" 
+                      onClick={() => setStep(1)} 
+                      className="h-14 px-6 rounded-xl font-bold border border-slate-200 bg-white hover:bg-slate-50 text-slate-655 flex items-center gap-2 transition-all hover:-translate-y-0.5"
+                    >
+                      <ArrowLeft className="w-5 h-5" /> Back
+                    </Button>
+                    <Button 
+                      type="button" 
+                      onClick={submitStep2} 
+                      disabled={isSubmitting} 
+                      className="h-14 px-8 w-full sm:w-auto rounded-2xl font-bold bg-[#489C66] hover:bg-[#378151] text-white flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/10 transition-all hover:-translate-y-0.5"
+                    >
+                      {isSubmitting ? (
+                        <><RefreshCw className="w-5 h-5 animate-spin" /> Submitting...</>
+                      ) : (
+                        <>Submit For Verification <CheckCircle2 className="w-5 h-5" /></>
+                      )}
+                    </Button>
+                  </div>
+
                 </div>
               )}
 
@@ -692,36 +701,15 @@ function OnboardingContent() {
             </motion.div>
           </AnimatePresence>
         </div>
-
-        {/* STICKY BOTTOM ACTION BAR */}
-        {step < 3 && (
-          <div className="fixed bottom-0 right-0 left-0 md:left-[420px] lg:left-[480px] bg-white/80 backdrop-blur-2xl border-t border-slate-200/50 p-4 md:p-6 z-50 animate-in slide-in-from-bottom-full">
-            <div className="max-w-3xl mx-auto w-full flex items-center justify-between">
-              <div className="hidden sm:block">
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-                  Step {step} of 2
-                </p>
-                <p className="font-bold text-slate-900">
-                  {step === 1 ? "Identity & Clinic" : "Profile Polish"}
-                </p>
-              </div>
-              <Button 
-                type="button" 
-                onClick={step === 1 ? submitStep1 : submitStep2} 
-                disabled={isSubmitting} 
-                className="h-14 px-8 w-full sm:w-auto rounded-xl font-bold bg-sky-600 hover:bg-sky-700 text-white flex items-center gap-2 shadow-lg shadow-sky-600/20 transition-all hover:-translate-y-0.5"
-              >
-                {isSubmitting ? (
-                  <><RefreshCw className="w-5 h-5 animate-spin" /> {step === 1 ? 'Saving...' : 'Submitting...'}</>
-                ) : (
-                  <>{step === 1 ? 'Save & Continue' : 'Submit For Verification'} {step === 1 ? <ArrowRight className="w-5 h-5" /> : <CheckCircle2 className="w-5 h-5" />}</>
-                )}
-              </Button>
-            </div>
-          </div>
-        )}
-
       </div>
-    </div>
+    </main>
+
+    {/* Elegant clean trust footer outside the main card */}
+    <footer className="mt-8 mb-16 text-center max-w-xl mx-auto flex items-center justify-center gap-2 text-slate-400">
+      <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
+      <span className="text-[11px] font-bold uppercase tracking-wider">Registry Compliant: Verified by NMC & Bihar Medical Council.</span>
+    </footer>
+
+  </div>
   );
 }
