@@ -30,8 +30,12 @@ export async function POST(request: Request) {
     const body = await request.json();
 
     // Type coercion for numbers
-    if (body.experience) body.experience = parseInt(body.experience, 10);
-    if (body.registrationYear) body.registrationYear = parseInt(body.registrationYear, 10);
+    if (body.experience !== undefined && body.experience !== null && body.experience !== "") {
+      body.experience = parseInt(String(body.experience), 10);
+    }
+    if (body.registrationYear !== undefined && body.registrationYear !== null && body.registrationYear !== "") {
+      body.registrationYear = parseInt(String(body.registrationYear), 10);
+    }
 
     const validation = step1OnboardSchema.safeParse(body);
     if (!validation.success) {
