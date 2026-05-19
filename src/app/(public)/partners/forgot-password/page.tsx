@@ -98,14 +98,14 @@ export default function ForgotPasswordPage() {
     <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-4 sm:p-6 relative overflow-hidden">
       {/* Background Aesthetics */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
-        <div className="absolute -top-[10%] -right-[10%] w-[40%] h-[40%] rounded-full bg-emerald-100/40 blur-[120px]" />
+        <div className="absolute -top-[10%] -right-[10%] w-[40%] h-[40%] rounded-full bg-sky-100/40 blur-[120px]" />
         <div className="absolute -bottom-[10%] -left-[10%] w-[40%] h-[40%] rounded-full bg-blue-50/40 blur-[120px]" />
       </div>
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-[1050px] bg-white/80 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_32px_64px_-16px_rgba(16,185,129,0.1)] border border-white/50 flex overflow-hidden z-10 relative"
+        className="w-full max-w-[1050px] bg-white/80 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_32px_64px_-16px_rgba(14,165,233,0.15)] border border-white/50 flex overflow-hidden z-10 relative"
       >
         {/* Left Side - Professional Branding */}
         <div className="w-[45%] bg-primary p-12 lg:p-16 flex flex-col justify-between relative overflow-hidden hidden md:flex">
@@ -126,17 +126,19 @@ export default function ForgotPasswordPage() {
                 <img src="/logo.png" alt="JivniCare Logo" className="h-8 w-auto object-contain" />
               </div>
               <div className="flex flex-col">
-                <span className="text-2xl font-black text-white leading-none">JivniCare</span>
-                <span className="text-[10px] font-bold text-emerald-200 uppercase tracking-widest mt-1">Partner Portal</span>
+                <span className="text-2xl font-bold tracking-tight text-white leading-none">
+                  Jivni<span className="text-[#489C66]">Care</span>
+                </span>
+                <span className="text-[10px] font-bold text-sky-200 uppercase tracking-widest mt-1">Partner Portal</span>
               </div>
             </Link>
 
             <div className="space-y-6">
               <h1 className="text-[40px] font-black text-white leading-[1.1] tracking-tight">
                 Secure Account <br />
-                <span className="text-emerald-300">Recovery.</span>
+                <span className="text-sky-200">Recovery.</span>
               </h1>
-              <p className="text-emerald-100 font-medium text-lg max-w-xs leading-relaxed opacity-90">
+              <p className="text-sky-100 font-medium text-lg max-w-xs leading-relaxed opacity-90">
                 Recover your access details securely in a few simple steps.
               </p>
             </div>
@@ -145,11 +147,11 @@ export default function ForgotPasswordPage() {
           <div className="relative z-10 space-y-4">
             <div className="flex items-center gap-4 bg-white/10 backdrop-blur-md p-5 rounded-3xl border border-white/20 shadow-lg">
               <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shrink-0 shadow-inner">
-                <KeyRound className="w-6 h-6 text-emerald-600" />
+                <KeyRound className="w-6 h-6 text-sky-500" />
               </div>
               <div>
                 <p className="text-white font-bold text-sm">Automated Reset</p>
-                <p className="text-emerald-200 text-[11px] font-medium">OTP Verification • Instantly Reset</p>
+                <p className="text-sky-200 text-[11px] font-medium">OTP Verification • Instantly Reset</p>
               </div>
             </div>
           </div>
@@ -267,7 +269,7 @@ export default function ForgotPasswordPage() {
                           className="h-16 pl-14 rounded-2xl bg-slate-50/50 border-slate-200/60 focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary/50 font-black text-xl tracking-widest transition-all shadow-sm"
                         />
                       </div>
-                      <p className="text-[9px] font-bold text-emerald-600 mt-2 ml-1">
+                      <p className="text-[9px] font-bold text-sky-600 mt-2 ml-1">
                         * Enter 123456 for instant verification in TEST Mode.
                       </p>
                     </div>

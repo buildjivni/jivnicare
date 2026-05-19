@@ -77,7 +77,7 @@ function DoctorLoginContent() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-[1050px] bg-white/80 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_32px_64px_-16px_rgba(16,185,129,0.1)] border border-white/50 flex overflow-hidden z-10 relative"
+        className="w-full max-w-[1050px] bg-white/80 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_32px_64px_-16px_rgba(14,165,233,0.15)] border border-white/50 flex overflow-hidden z-10 relative"
       >
         {/* Left Side - Professional Branding */}
         <div className="w-[45%] bg-primary p-12 lg:p-16 flex flex-col justify-between relative overflow-hidden hidden md:flex">
@@ -98,17 +98,19 @@ function DoctorLoginContent() {
                 <img src="/logo.png" alt="JivniCare Logo" className="h-8 w-auto object-contain" />
               </div>
               <div className="flex flex-col">
-                <span className="text-2xl font-black text-white leading-none">JivniCare</span>
-                <span className="text-[10px] font-bold text-emerald-200 uppercase tracking-widest mt-1">Partner Portal</span>
+                <span className="text-2xl font-bold tracking-tight text-white leading-none">
+                  Jivni<span className="text-[#489C66]">Care</span>
+                </span>
+                <span className="text-[10px] font-bold text-sky-200 uppercase tracking-widest mt-1">Partner Portal</span>
               </div>
             </Link>
 
             <div className="space-y-6">
               <h1 className="text-[40px] font-black text-white leading-[1.1] tracking-tight">
                 A Modern Platform <br />
-                <span className="text-emerald-300">for Trusted Doctors.</span>
+                <span className="text-sky-200">for Trusted Doctors.</span>
               </h1>
-              <p className="text-emerald-100 font-medium text-lg max-w-xs leading-relaxed opacity-90">
+              <p className="text-sky-100 font-medium text-lg max-w-xs leading-relaxed opacity-90">
                 Join 5,000+ medical professionals managing their digital practice with JivniCare.
               </p>
             </div>
@@ -117,11 +119,11 @@ function DoctorLoginContent() {
           <div className="relative z-10 space-y-4">
             <div className="flex items-center gap-4 bg-white/10 backdrop-blur-md p-5 rounded-3xl border border-white/20 shadow-lg">
               <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shrink-0 shadow-inner">
-                <Stethoscope className="w-6 h-6 text-emerald-600" />
+                <Stethoscope className="w-6 h-6 text-sky-500" />
               </div>
               <div>
                 <p className="text-white font-bold text-sm">Professional Access</p>
-                <p className="text-emerald-200 text-[11px] font-medium">Verified Identity • Secure Login</p>
+                <p className="text-sky-200 text-[11px] font-medium">Verified Identity • Secure Login</p>
               </div>
             </div>
           </div>
@@ -179,7 +181,7 @@ function DoctorLoginContent() {
                   <div className="group">
                     <div className="flex justify-between items-center mb-2.5 px-1">
                       <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] block">Password</label>
-                      <Link href="/partners/forgot-password" className="text-[10px] font-black text-emerald-600 hover:text-emerald-700 tracking-wider">FORGOT?</Link>
+                      <Link href="/partners/forgot-password" className="text-[10px] font-black text-sky-600 hover:text-sky-700 tracking-wider">FORGOT?</Link>
                     </div>
                     <div className="relative">
                       <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-400" />
@@ -209,7 +211,7 @@ function DoctorLoginContent() {
                 <div className="mt-12 pt-8 border-t border-slate-100 text-center">
                   <p className="text-[13px] font-bold text-slate-500">
                     New to the network? <br />
-                    <Link href="/partners/onboard" className="text-emerald-700 font-black hover:text-emerald-800 mt-2 inline-flex items-center gap-1.5 group transition-all">
+                    <Link href="/partners/onboard" className="text-sky-600 font-black hover:text-sky-700 mt-2 inline-flex items-center gap-1.5 group transition-all">
                       Request Partnership <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </Link>
                   </p>

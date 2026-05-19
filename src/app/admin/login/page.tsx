@@ -58,7 +58,9 @@ export default function AdminLogin() {
               <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-lg">
                  <img src="/logo.png" alt="JivniCare Logo" className="w-8 h-8 object-contain" />
               </div>
-              <h2 className="text-3xl font-black text-white tracking-tight">JivniCare</h2>
+              <h2 className="text-3xl font-bold tracking-tight text-white leading-none">
+                Jivni<span className="text-[#489C66]">Care</span>
+              </h2>
             </div>
             <h1 className="text-4xl font-black text-white leading-tight mt-10">
               Command <br />Center

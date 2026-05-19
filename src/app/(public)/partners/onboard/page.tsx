@@ -178,14 +178,16 @@ function OnboardingContent() {
             <div className="w-11 h-11 rounded-2xl overflow-hidden shadow-md group-hover:scale-105 transition-transform bg-white border border-sky-100 p-1">
               <img src="/logo.png" alt="JivniCare" className="w-full h-full object-contain" />
             </div>
-            <span className="text-2xl font-black tracking-tight text-slate-800">Jivni<span className="text-emerald-500">Care</span></span>
+            <span className="text-2xl font-bold tracking-tight text-slate-800 leading-none">
+              <span className="text-[#5298D2]">Jivni</span><span className="text-[#489C66]">Care</span>
+            </span>
           </Link>
 
           {/* Value Prop */}
           <div className="mb-14">
             <h1 className="text-3xl md:text-4xl font-black text-slate-800 tracking-tight leading-[1.15] mb-5">
               Modernize your <br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-500 to-emerald-500">clinical practice.</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#5298D2] to-[#489C66]">clinical practice.</span>
             </h1>
             <p className="text-slate-500 text-base font-medium leading-relaxed">
               Join Bihar's fastest-growing digital healthcare network. Reduce no-shows, manage queues, and boost revenue.
@@ -202,7 +204,7 @@ function OnboardingContent() {
               ].map((s) => (
                 <div key={s.num} className="flex items-center gap-3">
                   <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm shadow-sm transition-all duration-300 shrink-0 ${
-                    step > s.num ? 'bg-emerald-500 text-white' :
+                    step > s.num ? 'bg-sky-500 text-white' :
                     step === s.num ? 'bg-sky-500 text-white shadow-sky-300/50 shadow-md' :
                     'bg-white border-2 border-slate-200 text-slate-400'
                   }`}>
@@ -219,13 +221,13 @@ function OnboardingContent() {
           
           {/* Trust Badge */}
           <div className="mt-10 pt-8 border-t border-sky-100 flex items-center gap-3">
-             <div className="flex -space-x-3">
+              <div className="flex -space-x-3">
                 <div className="w-9 h-9 rounded-full border-2 border-white bg-sky-300" />
-                <div className="w-9 h-9 rounded-full border-2 border-white bg-emerald-300" />
+                <div className="w-9 h-9 rounded-full border-2 border-white bg-sky-200" />
                 <div className="w-9 h-9 rounded-full border-2 border-white bg-sky-500 flex items-center justify-center">
                   <span className="text-[9px] font-black text-white">+5k</span>
                 </div>
-             </div>
+              </div>
              <p className="text-xs font-medium text-slate-500 leading-tight">Join thousands of verified<br/>healthcare professionals.</p>
           </div>
         </div>
@@ -237,7 +239,7 @@ function OnboardingContent() {
         {/* Top bar for Login */}
         <div className="w-full p-6 flex justify-end absolute top-0 right-0 z-20">
           <Link href="/partners/login" className="px-5 py-2.5 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-600 hover:text-slate-900 hover:border-slate-300 shadow-sm transition-all flex items-center gap-2">
-            Already a partner? <span className="text-emerald-600">Sign In</span>
+            Already a partner? <span className="text-sky-600">Sign In</span>
           </Link>
         </div>
 
@@ -250,7 +252,7 @@ function OnboardingContent() {
               {step === 1 && (
                 <div className="space-y-8">
                   <div className="mb-10">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-[10px] font-black uppercase tracking-widest mb-4">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-sky-100 text-sky-800 rounded-full text-[10px] font-black uppercase tracking-widest mb-4">
                       <ShieldCheck className="w-3.5 h-3.5" /> Identity & Security
                     </span>
                     <h2 className="text-3xl font-black text-slate-900 tracking-tight">Create your account</h2>
@@ -283,14 +285,14 @@ function OnboardingContent() {
                       </div>
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-700">Gender</label>
-                        <select value={formData.gender} onChange={(e) => setFormData({...formData, gender: e.target.value})} className={`h-12 w-full rounded-xl bg-slate-50 border border-slate-200 px-4 text-sm focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all ${errors.gender ? 'border-rose-500' : ''}`}>
+                        <select value={formData.gender} onChange={(e) => setFormData({...formData, gender: e.target.value})} className={`h-12 w-full rounded-xl bg-slate-50 border border-slate-200 px-4 text-sm focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all ${errors.gender ? 'border-rose-500' : ''}`}>
                           <option value="">Select Gender</option><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option>
                         </select>
                         {errors.gender && <p className="text-[10px] font-bold text-rose-500">{errors.gender}</p>}
                       </div>
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-700">Date of Birth</label>
-                        <Input type="date" value={formData.dateOfBirth} onChange={(e) => setFormData({...formData, dateOfBirth: e.target.value})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all ${errors.dateOfBirth ? 'border-rose-500' : ''}`} />
+                        <Input type="date" value={formData.dateOfBirth} onChange={(e) => setFormData({...formData, dateOfBirth: e.target.value})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.dateOfBirth ? 'border-rose-500' : ''}`} />
                         {errors.dateOfBirth && <p className="text-[10px] font-bold text-rose-500">{errors.dateOfBirth}</p>}
                       </div>
                     </div>
@@ -315,11 +317,11 @@ function OnboardingContent() {
                       </div>
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-700">Email Address</label>
-                        <Input type="email" placeholder="doctor@example.com" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all" />
+                        <Input type="email" placeholder="doctor@example.com" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all" />
                       </div>
                       <div className="space-y-2 md:col-span-2">
                         <label className="text-xs font-bold text-slate-700">Create Secure Password</label>
-                        <Input type="password" placeholder="Min 6 characters" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all ${errors.password ? 'border-rose-500' : ''}`} />
+                        <Input type="password" placeholder="Min 6 characters" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.password ? 'border-rose-500' : ''}`} />
                         {errors.password && <p className="text-[10px] font-bold text-rose-500">{errors.password}</p>}
                       </div>
                     </div>
@@ -344,18 +346,18 @@ function OnboardingContent() {
                       </div>
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-700">Medical Council</label>
-                        <select value={formData.medicalCouncil} onChange={(e) => setFormData({...formData, medicalCouncil: e.target.value})} className="h-12 w-full rounded-xl bg-slate-50 border border-slate-200 px-4 text-sm focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all">
+                        <select value={formData.medicalCouncil} onChange={(e) => setFormData({...formData, medicalCouncil: e.target.value})} className="h-12 w-full rounded-xl bg-slate-50 border border-slate-200 px-4 text-sm focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all">
                           {MEDICAL_COUNCILS.map(c => <option key={c} value={c}>{c}</option>)}
                         </select>
                       </div>
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-700">Registration Year</label>
-                        <Input type="number" placeholder="e.g. 2012" value={formData.registrationYear} onChange={(e) => setFormData({...formData, registrationYear: e.target.value})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all ${errors.registrationYear ? 'border-rose-500' : ''}`} />
+                        <Input type="number" placeholder="e.g. 2012" value={formData.registrationYear} onChange={(e) => setFormData({...formData, registrationYear: e.target.value})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.registrationYear ? 'border-rose-500' : ''}`} />
                         {errors.registrationYear && <p className="text-[10px] font-bold text-rose-500">{errors.registrationYear}</p>}
                       </div>
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-700">Primary Specialty</label>
-                        <select value={formData.specialization} onChange={(e) => setFormData({...formData, specialization: e.target.value})} className={`h-12 w-full rounded-xl bg-slate-50 border border-slate-200 px-4 text-sm focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all ${errors.specialization ? 'border-rose-500' : ''}`}>
+                        <select value={formData.specialization} onChange={(e) => setFormData({...formData, specialization: e.target.value})} className={`h-12 w-full rounded-xl bg-slate-50 border border-slate-200 px-4 text-sm focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all ${errors.specialization ? 'border-rose-500' : ''}`}>
                           <option value="">Select Specialty</option>
                           {STANDARD_SPECIALTIES.map(s => <option key={s} value={s}>{s}</option>)}
                         </select>
@@ -363,12 +365,12 @@ function OnboardingContent() {
                       </div>
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-700">Years of Experience</label>
-                        <Input type="number" placeholder="e.g. 5" value={formData.experience} onChange={(e) => setFormData({...formData, experience: e.target.value})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all ${errors.experience ? 'border-rose-500' : ''}`} />
+                        <Input type="number" placeholder="e.g. 5" value={formData.experience} onChange={(e) => setFormData({...formData, experience: e.target.value})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.experience ? 'border-rose-500' : ''}`} />
                         {errors.experience && <p className="text-[10px] font-bold text-rose-500">{errors.experience}</p>}
                       </div>
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-700">Qualifications</label>
-                        <Input placeholder="MBBS, MD" value={formData.qualifications} onChange={(e) => setFormData({...formData, qualifications: e.target.value})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all ${errors.qualifications ? 'border-rose-500' : ''}`} />
+                        <Input placeholder="MBBS, MD" value={formData.qualifications} onChange={(e) => setFormData({...formData, qualifications: e.target.value})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.qualifications ? 'border-rose-500' : ''}`} />
                         {errors.qualifications && <p className="text-[10px] font-bold text-rose-500">{errors.qualifications}</p>}
                       </div>
                     </div>
@@ -416,7 +418,7 @@ function OnboardingContent() {
                       </div>
                       <div className="space-y-2 md:col-span-2">
                         <label className="text-xs font-bold text-slate-700">Full Address</label>
-                        <Input placeholder="Flat 301, Pushpanjali Complex" value={formData.practiceAddress} onChange={(e) => setFormData({...formData, practiceAddress: e.target.value})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all ${errors.practiceAddress ? 'border-rose-500' : ''}`} />
+                        <Input placeholder="Flat 301, Pushpanjali Complex" value={formData.practiceAddress} onChange={(e) => setFormData({...formData, practiceAddress: e.target.value})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.practiceAddress ? 'border-rose-500' : ''}`} />
                         {errors.practiceAddress && <p className="text-[10px] font-bold text-rose-500">{errors.practiceAddress}</p>}
                       </div>
                       <div className="space-y-2">
@@ -426,7 +428,7 @@ function OnboardingContent() {
                       </div>
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-700">City</label>
-                        <Input placeholder="Patna" value={formData.city} onChange={(e) => setFormData({...formData, city: e.target.value})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all ${errors.city ? 'border-rose-500' : ''}`} />
+                        <Input placeholder="Patna" value={formData.city} onChange={(e) => setFormData({...formData, city: e.target.value})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.city ? 'border-rose-500' : ''}`} />
                         {errors.city && <p className="text-[10px] font-bold text-rose-500">{errors.city}</p>}
                       </div>
                       <div className="space-y-2">
@@ -461,27 +463,27 @@ function OnboardingContent() {
                      <div className="p-6 md:p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-700">OPD Consultation Fee (₹)</label>
-                        <Input type="number" placeholder="500" value={formData.fee} onChange={(e) => setFormData({...formData, fee: e.target.value})} className="h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all" />
+                        <Input type="number" placeholder="500" value={formData.fee} onChange={(e) => setFormData({...formData, fee: e.target.value})} className="h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all" />
                       </div>
 
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-700">Languages Spoken</label>
-                        <Input placeholder="Hindi, English" value={formData.languages} onChange={(e) => setFormData({...formData, languages: e.target.value})} className="h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all" />
+                        <Input placeholder="Hindi, English" value={formData.languages} onChange={(e) => setFormData({...formData, languages: e.target.value})} className="h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all" />
                       </div>
 
                       <div className="space-y-2 md:col-span-2">
                         <label className="text-xs font-bold text-slate-700">Professional Bio</label>
-                        <textarea rows={5} placeholder="I am a dedicated physician with over..." value={formData.bio} onChange={(e) => setFormData({...formData, bio: e.target.value})} className="w-full rounded-xl bg-slate-50 border border-slate-200 p-4 text-sm focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all resize-none" />
+                        <textarea rows={5} placeholder="I am a dedicated physician with over..." value={formData.bio} onChange={(e) => setFormData({...formData, bio: e.target.value})} className="w-full rounded-xl bg-slate-50 border border-slate-200 p-4 text-sm focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all resize-none" />
                       </div>
 
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-700">Profile Photo URL</label>
-                        <Input placeholder="https://image-url..." value={formData.profilePhotoUrl} onChange={(e) => setFormData({...formData, profilePhotoUrl: e.target.value})} className="h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all" />
+                        <Input placeholder="https://image-url..." value={formData.profilePhotoUrl} onChange={(e) => setFormData({...formData, profilePhotoUrl: e.target.value})} className="h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all" />
                       </div>
                       
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-700">Clinic Photo URL</label>
-                        <Input placeholder="https://image-url..." value={formData.clinicPhotoUrl} onChange={(e) => setFormData({...formData, clinicPhotoUrl: e.target.value})} className="h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all" />
+                        <Input placeholder="https://image-url..." value={formData.clinicPhotoUrl} onChange={(e) => setFormData({...formData, clinicPhotoUrl: e.target.value})} className="h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all" />
                       </div>
 
                       <div className="space-y-3 md:col-span-2 pt-4 border-t border-slate-100">
@@ -545,7 +547,7 @@ function OnboardingContent() {
                 type="button" 
                 onClick={step === 1 ? submitStep1 : submitStep2} 
                 disabled={isSubmitting} 
-                className="h-14 px-8 w-full sm:w-auto rounded-xl font-bold bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-2 shadow-lg shadow-emerald-600/20 transition-all hover:-translate-y-0.5"
+                className="h-14 px-8 w-full sm:w-auto rounded-xl font-bold bg-sky-600 hover:bg-sky-700 text-white flex items-center gap-2 shadow-lg shadow-sky-600/20 transition-all hover:-translate-y-0.5"
               >
                 {isSubmitting ? (
                   <><RefreshCw className="w-5 h-5 animate-spin" /> {step === 1 ? 'Saving...' : 'Submitting...'}</>

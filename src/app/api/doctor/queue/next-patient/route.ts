@@ -107,6 +107,9 @@ export async function POST(request: Request) {
     if (error.message === "CONCURRENCY_CONFLICT_RETRY") {
       return NextResponse.json({ error: "Queue was updated concurrently, please refresh" }, { status: 409 });
     }
-    return NextResponse.json({ error: error.message || "Failed to progress queue" }, { status: 500 });
+    if (error.message === "QUEUE_NOT_FOUND") {
+      return NextResponse.json({ error: "Queue has not been started for today" }, { status: 400 });
+    }
+    return NextResponse.json({ error: "An unexpected error occurred while progressing the queue" }, { status: 500 });
   }
 }

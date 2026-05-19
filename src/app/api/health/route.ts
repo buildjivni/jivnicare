@@ -3,21 +3,18 @@ import prisma from '@/lib/prisma';
 
 export async function GET() {
   try {
-    // Test database connection
-    await prisma.$runCommandRaw({ ping: 1 });
+    // Database-agnostic test connection (prevents leaking database brand)
+    await prisma.user.count();
     
     return NextResponse.json({
-      status: 'ok',
-      message: 'Healthcheck passed',
-      database: 'connected',
+      status: 'healthy',
       timestamp: new Date().toISOString()
     });
   } catch (error) {
+    console.error("[HealthCheck] Diagnostics failed:", error);
     return NextResponse.json(
       {
-        status: 'error',
-        message: 'Database connection failed',
-        error: error instanceof Error ? error.message : 'Unknown error',
+        status: 'unhealthy',
         timestamp: new Date().toISOString()
       },
       { status: 503 }
