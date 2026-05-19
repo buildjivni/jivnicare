@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // ── Tech Stack Obfuscation ──────────────────────────────────────────────────
+  poweredByHeader: false,
+
   // ── Image Optimization ──────────────────────────────────────────────────────
   images: {
     formats: ['image/avif', 'image/webp'],

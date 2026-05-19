@@ -4,6 +4,19 @@ import { searchDoctors } from '@/lib/search-engine';
 import { getInferredSpecialties } from '@/lib/search-dictionary';
 import type { Doctor } from '@/types';
 
+// Helper: Haversine Formula for air distance calculation
+function getDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // Radius of the earth in km
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2); 
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+  return R * c; // Distance in km
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -50,7 +63,7 @@ export async function GET(request: Request) {
       
       // Phase 3: Lead/Search Tracking (Fire and forget)
       // We don't await this so it doesn't block the API response
-      const districtParam = searchParams.get('district') || 'Patna';
+      const districtParam = searchParams.get('district') || 'Jamui';
       prisma.searchAnalytics.create({
         data: {
           query,
@@ -62,12 +75,18 @@ export async function GET(request: Request) {
     }
     
     // ── Additional Filters ──────────────────────────────────────────────
-    const district = searchParams.get('district') || 'Patna';
+    const district = searchParams.get('district') || 'Jamui';
     const minExperience = parseInt(searchParams.get('minExperience') || '0', 10);
     const maxFee = parseInt(searchParams.get('maxFee') || '10000', 10);
     const availability = searchParams.get('availability'); // 'any', 'today'
     const sort = searchParams.get('sort') || 'recommended';
     const isEmergency = searchParams.get('isEmergency') === 'true';
+    
+    // Geo Patient Location Data
+    const patientLatParam = searchParams.get('lat');
+    const patientLngParam = searchParams.get('lng');
+    const patientLat = patientLatParam ? parseFloat(patientLatParam) : null;
+    const patientLng = patientLngParam ? parseFloat(patientLngParam) : null;
 
     if (minExperience > 0) {
       whereClause.experience = { gte: minExperience };
@@ -111,12 +130,19 @@ export async function GET(request: Request) {
       }
     });
 
+    // ── Pre-Filter for Emergency Discovery ──────────────────────────────
+    let filteredDbDoctors = dbDoctors;
+    // If we're strictly looking for nearby emergency, ensure they have coords
+    if (isEmergency && patientLat && patientLng) {
+      filteredDbDoctors = filteredDbDoctors.filter(d => d.latitude !== null && d.longitude !== null);
+    }
+
     const daysOfWeek = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
     const todayIndex = new Date().getDay();
     const todayString = daysOfWeek[todayIndex];
 
     // ── Map Prisma Doctor → Frontend Doctor type ─────────────────────────
-    let mappedDoctors: Doctor[] = dbDoctors.map(doc => {
+    let mappedDoctors: Doctor[] = filteredDbDoctors.map(doc => {
       // ... same mapping logic as before ...
       let isAvailableToday = false;
       let nextTime = "N/A";
@@ -141,6 +167,14 @@ export async function GET(request: Request) {
         ? Math.max(0, (todayQueue.issuedTokensCount || 0) - (todayQueue.currentActiveToken || 0))
         : 0;
       const queueWaitMinutes = isQueueActive ? waitingPatients * avgConsultTime : undefined;
+
+      // Distance calculation
+      let distanceKm = undefined;
+      let distanceStr = undefined;
+      if (patientLat && patientLng && doc.latitude && doc.longitude) {
+        distanceKm = getDistanceKm(patientLat, patientLng, doc.latitude, doc.longitude);
+        distanceStr = distanceKm < 1 ? `${Math.round(distanceKm * 1000)} m away` : `${distanceKm.toFixed(1)} km away`;
+      }
 
       return {
         id: doc.id,
@@ -167,6 +201,10 @@ export async function GET(request: Request) {
         hasEmergencySupport: (doc.clinicOperations?.emergencySlots ?? 0) > 0,
         tags: [...doc.specialties.map(s => s.name), ...doc.keywords.map(k => k.term)],
         about: doc.bio || "",
+        distanceKm,
+        distanceStr,
+        latitude: doc.latitude,
+        longitude: doc.longitude
       } as any;
     });
 
@@ -177,7 +215,22 @@ export async function GET(request: Request) {
 
     // ── Discovery Intelligence: Sorting ──────────────────────────────────
     mappedDoctors.sort((a, b) => {
-      // 1. Prioritize active queues in 'recommended'
+      // 1. Distance Priority (If requested or if patient coordinates provided for generic search)
+      if (sort === 'distance' || (patientLat && patientLng && sort === 'recommended')) {
+        const distA = a.distanceKm ?? 99999;
+        const distB = b.distanceKm ?? 99999;
+        
+        // If sorting strictly by distance or if emergency
+        if (sort === 'distance' || isEmergency) {
+          return distA - distB;
+        }
+        
+        // Soft distance sort for recommended (bump very close clinics)
+        if (distA < 5 && distB > 10) return -1;
+        if (distB < 5 && distA > 10) return 1;
+      }
+
+      // 2. Prioritize active queues in 'recommended'
       if (sort === 'recommended') {
         if (a.isQueueActive && !b.isQueueActive) return -1;
         if (!a.isQueueActive && b.isQueueActive) return 1;

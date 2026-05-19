@@ -35,6 +35,15 @@ enum VerificationStatus {
   SUSPENDED
 }
 
+enum ClinicStatus {
+  AVAILABLE
+  LIMITED_SLOTS
+  SHORT_BREAK
+  EMERGENCY_ONLY
+  FULLY_BOOKED_AUTO
+  CLINIC_CLOSED
+}
+
 enum TargetType {
   DOCTOR
   HOSPITAL
@@ -187,7 +196,12 @@ model Doctor {
   profileCompletionPercentage Int      @default(0)
 
   // ── Real-World Clinic Operations Extension ─────────────────
-  medicalRegistrationNumber      String?
+  medicalRegistrationNumber      String?            @unique
+  medicalCouncil                 String?
+  registrationYear               Int?
+  govtIdentityReference          String?
+  dateOfBirth                    DateTime?
+  primarySpecialtyId             String?
   consultationFee                Int      @default(0)
   followUpFee                    Int      @default(0)
   averageConsultationTime        Int      @default(15) // minutes
@@ -198,6 +212,17 @@ model Doctor {
   qualifications                 String? // Structured: "MBBS, MD Medicine"
   onlineConsultationAvailable    Boolean  @default(false)
   emergencyConsultationAvailable Boolean  @default(false)
+
+  // ── Geo-Intelligence & Real Address Architecture ───────────
+  clinicName                     String?
+  fullAddress                    String?
+  landmark                       String?
+  locality                       String?
+  city                           String?
+  state                          String?
+  pincode                        String?
+  latitude                       Float?
+  longitude                      Float?
 
   weeklySchedule   WeeklySchedule?
   clinicOperations ClinicOperations?
@@ -492,14 +517,17 @@ model WeeklySchedule {
 }
 
 model ClinicOperations {
-  id                 String  @id @default(uuid()) @map("_id")
-  doctorId           String  @unique
-  doctor             Doctor  @relation(fields: [doctorId], references: [id], onDelete: Cascade)
-  isClosedToday      Boolean @default(false)
-  pauseOnlineBooking Boolean @default(false)
-  walkInLimit        Int     @default(10)
-  onlineLimit        Int     @default(20)
-  emergencySlots     Int     @default(2)
+  id                 String       @id @default(uuid()) @map("_id")
+  doctorId           String       @unique
+  doctor             Doctor       @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  status             ClinicStatus @default(AVAILABLE)
+  statusExpiresAt    DateTime?
+  statusReason       String?
+  isClosedToday      Boolean      @default(false)
+  pauseOnlineBooking Boolean      @default(false)
+  walkInLimit        Int          @default(10)
+  onlineLimit        Int          @default(20)
+  emergencySlots     Int          @default(2)
 }
 
 model SystemCounter {

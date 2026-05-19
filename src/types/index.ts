@@ -31,7 +31,13 @@ export interface Doctor {
   location: string;         // District / city
   locality?: string;        // Specific area: "Anisabad"
   landmark?: string;        // Nearby landmark
-  distance?: string;        // "1.2 km away"
+  fullAddress?: string;     // Detailed physical address
+  pincode?: string;         // Postal code
+  latitude?: number | null; // Geo-coordinates for map routing
+  longitude?: number | null;
+  distance?: string;        // "1.2 km away" (Legacy)
+  distanceStr?: string;     // Exact real distance from patient
+  distanceKm?: number;      // Numeric distance for sorting
   
   // ── Media ─────────────────────────────────────────────────
   image: string;            // Doctor profile photo URL

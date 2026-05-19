@@ -94,9 +94,7 @@ export function Header() {
       default:
         return [
           { label: "Find Doctors", href: "/doctors", icon: <Stethoscope className="w-4.5 h-4.5" /> },
-          { label: "My Appointments", href: "/my-bookings", icon: <CalendarDays className="w-4.5 h-4.5" /> },
-          { label: "Queue Tracking", href: "/my-bookings", icon: <Activity className="w-4.5 h-4.5" /> },
-          { label: "Emergency", href: "/doctors?emergency=true", icon: <AlertTriangle className="w-4.5 h-4.5" />, highlight: true },
+          { label: "Emergency Care", href: "/doctors?emergency=true", icon: <AlertTriangle className="w-4.5 h-4.5" />, highlight: true },
         ];
     }
   };

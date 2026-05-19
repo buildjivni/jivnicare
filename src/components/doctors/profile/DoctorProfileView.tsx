@@ -308,15 +308,39 @@ export function DoctorProfileView({ doctor, relatedDoctors }: DoctorProfileViewP
               <Stethoscope className="w-8 h-8 text-[#205E98]/30" />
             </div>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 px-4 pb-3">
-            <h2 className="font-black text-white text-[15px] leading-tight drop-shadow-sm line-clamp-1">
+            <h2 className="font-black text-white text-[16px] leading-tight drop-shadow-sm line-clamp-1 mb-1">
               {doctor.clinic}
             </h2>
-            <p className="text-white/80 text-[11px] font-medium flex items-center gap-1 mt-0.5">
-              <MapPin className="w-2.5 h-2.5 shrink-0" />
-              {doctor.location}
-            </p>
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1">
+                <p className="text-white/90 text-[11px] font-medium leading-snug line-clamp-2 drop-shadow-sm">
+                  {doctor.fullAddress 
+                    ? `${doctor.fullAddress}${doctor.landmark ? `, Near ${doctor.landmark}` : ''}${doctor.pincode ? ` - ${doctor.pincode}` : ''}`
+                    : doctor.locality 
+                      ? `${doctor.locality}, ${doctor.location}`
+                      : doctor.location}
+                </p>
+                {doctor.distanceStr && (
+                  <p className="text-emerald-300 font-bold text-[10px] mt-1 drop-shadow-sm flex items-center gap-1">
+                    <MapPin className="w-2.5 h-2.5" />
+                    {doctor.distanceStr}
+                  </p>
+                )}
+              </div>
+              {(doctor.latitude && doctor.longitude) && (
+                <a 
+                  href={`https://maps.google.com/?q=${doctor.latitude},${doctor.longitude}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold shadow-md transition-colors shrink-0"
+                >
+                  <MapPin className="w-3 h-3" />
+                  Directions
+                </a>
+              )}
+            </div>
           </div>
         </div>
 

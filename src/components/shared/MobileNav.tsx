@@ -119,32 +119,7 @@ export function MobileNav({ isOpen, setIsOpen, isLoggedIn, pathname, navLinks, o
                   );
                 })}
 
-              {/* Extra Authenticated Links */}
-              {isLoggedIn && (
-                <>
-                  <div className="h-px bg-slate-100 my-2 mx-2" />
-                  {[
-                    { href: "/records", icon: <HeartPulse className="w-5 h-5" />, label: "Medical Records" },
-                    { href: "/settings", icon: <Settings className="w-5 h-5" />, label: "Settings" },
-                  ].map((item, i) => (
-                    <motion.div
-                      key={item.href}
-                      initial={{ opacity: 0, x: 18 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.2 + i * 0.04, type: "spring", stiffness: 400, damping: 34 }}
-                    >
-                      <Link
-                        href={item.href}
-                        onClick={() => setIsOpen(false)}
-                        className="flex items-center gap-3.5 px-4 py-3.5 text-[15px] font-semibold text-slate-600 hover:text-primary hover:bg-slate-50 rounded-2xl transition-all duration-200 active:scale-[0.97]"
-                      >
-                        <span className="text-slate-400 shrink-0">{item.icon}</span>
-                        {item.label}
-                      </Link>
-                    </motion.div>
-                  ))}
-                </>
-              )}
+
             </nav>
 
             {/* Sticky Bottom CTA */}

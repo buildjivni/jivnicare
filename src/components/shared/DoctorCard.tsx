@@ -268,7 +268,7 @@ export function DoctorCard({ doctor, className }: DoctorCardProps) {
 
         {/* Practice/Hospital Info */}
         <div className="mt-auto space-y-3">
-          <div className="flex items-start gap-2.5 p-3 rounded-2xl bg-slate-50/80 border border-slate-100/50 group-hover:bg-blue-50/30 group-hover:border-blue-100/50 transition-colors">
+          <div className="flex items-start gap-2.5 p-3 rounded-2xl bg-slate-50/80 border border-slate-100/50 group-hover:bg-blue-50/30 group-hover:border-blue-100/50 transition-colors relative z-40">
             <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center border border-slate-100 shrink-0">
               <MapPin className="w-4 h-4 text-[#205E98]" />
             </div>
@@ -276,16 +276,27 @@ export function DoctorCard({ doctor, className }: DoctorCardProps) {
               <p className="text-[13px] font-black text-slate-800 leading-tight line-clamp-1 mb-0.5">
                 {doctor.clinic}
               </p>
-              <div className="flex items-center gap-1.5 text-[11.5px] text-slate-500 font-medium">
+              <div className="flex items-center flex-wrap gap-1.5 text-[11.5px] text-slate-500 font-medium">
                 <span className="line-clamp-1">{doctor.locality || doctor.location}</span>
-                {doctor.distance && (
+                {((doctor as any).distanceStr || doctor.distance) && (
                   <>
-                    <span className="w-1 h-1 rounded-full bg-slate-300" />
-                    <span className="text-[#205E98] font-bold">{doctor.distance}</span>
+                    <span className="w-1 h-1 rounded-full bg-emerald-400" />
+                    <span className="text-emerald-700 font-bold">{(doctor as any).distanceStr || doctor.distance}</span>
                   </>
                 )}
               </div>
             </div>
+            {((doctor as any).latitude && (doctor as any).longitude) && (
+              <a 
+                href={`https://maps.google.com/?q=${(doctor as any).latitude},${(doctor as any).longitude}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ml-auto mt-0.5 flex items-center justify-center p-2 rounded-xl bg-slate-200/50 hover:bg-[#205E98] text-slate-600 hover:text-white transition-colors pointer-events-auto shrink-0 shadow-sm"
+                title="Get Directions"
+              >
+                <MapPin className="w-3.5 h-3.5" />
+              </a>
+            )}
           </div>
 
           {/* Pricing & CTA Block */}
