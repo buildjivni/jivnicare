@@ -47,12 +47,12 @@ export const step1OnboardSchema = z.object({
   email: z.string().email("Valid email is required").optional().nullable().or(z.literal("")),
   password: z.string().min(6, "Password must be at least 6 characters").max(50),
   
-  medicalRegistrationNumber: z.string().min(5, "At least 5 characters").max(30).regex(/^[A-Z0-9\-]+$/, "Uppercase alphanumeric and hyphens only"),
+  medicalRegistrationNumber: z.string().min(5, "At least 5 characters").max(30).regex(/^[a-zA-Z0-9\-\/\.\s]+$/, "Letters, numbers, hyphens, slashes, spaces and periods only"),
   medicalCouncil: z.string().min(2, "Council name is too short").max(150),
   registrationYear: z.number().int("Year must be a whole number").min(1960).max(new Date().getFullYear(), "Cannot be in the future"),
-  specialization: z.string().min(2).max(100).regex(/^[a-zA-Z\s\-]+$/, "Letters, spaces, and hyphens only"),
+  specialization: z.string().min(2).max(100).regex(/^[a-zA-Z\s\-\/]+$/, "Letters, spaces, hyphens and slashes only"),
   experience: z.number().int().min(0).max(65),
-  qualifications: z.string().min(2).max(200).regex(/^[a-zA-Z\s\.,\(\)]+$/, "Letters, spaces, commas, parentheses only"),
+  qualifications: z.string().min(2).max(200).regex(/^[a-zA-Z0-9\s\.,\(\)\-\/\&]+$/, "Letters, numbers, spaces, commas, periods, hyphens, parentheses, slashes and ampersands only"),
   
   practiceName: z.string().min(2, "Practice/Hospital name is too short").max(150),
   practiceAddress: z.string().min(5, "Address is too short").max(300),
@@ -114,6 +114,11 @@ export const approveUpdateSchema = z.object({
 
 // Helper for sending validation errors
 export function formatZodError(error: any) {
-  if (!error || !error.errors) return "Validation Error";
-  return error.errors.map((e: any) => `${e.path.join('.')}: ${e.message}`).join(', ');
+  if (!error) return "Unknown Error";
+  const issues = error.issues || error.errors;
+  if (!issues || issues.length === 0) {
+    if (typeof error.message === 'string') return error.message;
+    return "Validation Error";
+  }
+  return issues.map((e: any) => `${e.path.join('.')}: ${e.message}`).join(', ');
 }
