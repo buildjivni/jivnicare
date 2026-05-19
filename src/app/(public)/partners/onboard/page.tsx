@@ -219,26 +219,6 @@ function OnboardingContent() {
               ))}
             </div>
           </div>
-          
-          {/* Trust Badge */}
-          <div className="mt-10 pt-8 border-t border-sky-100 flex items-center gap-3">
-              <div className="flex -space-x-3">
-                <img 
-                  src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=80&q=80" 
-                  alt="Dr. Priya Verma"
-                  className="w-9 h-9 rounded-full border-2 border-white object-cover shadow-sm"
-                />
-                <img 
-                  src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=80&q=80" 
-                  alt="Dr. Rohan Mehta" 
-                  className="w-9 h-9 rounded-full border-2 border-white object-cover shadow-sm"
-                />
-                <div className="w-9 h-9 rounded-full border-2 border-white bg-sky-500 flex items-center justify-center shadow-sm">
-                  <span className="text-[10px] font-black text-white">+5k</span>
-                </div>
-              </div>
-             <p className="text-xs font-semibold text-slate-500 leading-tight">Join thousands of verified<br/>healthcare professionals.</p>
-          </div>
         </div>
       </div>
 
