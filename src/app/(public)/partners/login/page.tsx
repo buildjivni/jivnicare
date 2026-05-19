@@ -193,7 +193,7 @@ function DoctorLoginContent() {
                       />
                     </div>
                     <p className="text-[10px] text-slate-400 font-medium mt-2 text-center md:text-left">
-                      Password is provided by the Admin upon verification.
+                      Enter the password you created during onboarding.
                     </p>
                   </div>
 

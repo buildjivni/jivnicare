@@ -36,12 +36,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid phone number or password' }, { status: 401 });
     }
 
-    // Check doctor verification status
-    if (user.doctor.verificationStatus !== 'VERIFIED') {
-      let msg = 'Account is not verified yet.';
-      if (user.doctor.verificationStatus === 'SUSPENDED') msg = 'Account has been suspended.';
-      else if (user.doctor.verificationStatus === 'REJECTED') msg = 'Registration was rejected.';
-      return NextResponse.json({ error: msg }, { status: 403 });
+    // Check doctor verification status - allow unverified to log in to see status
+    if (user.doctor.verificationStatus === 'SUSPENDED') {
+      return NextResponse.json({ error: 'Account has been suspended. Please contact support.' }, { status: 403 });
     }
 
     // Sign JWT Token

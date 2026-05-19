@@ -39,12 +39,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { doctorId, status, adminNotes, password } = validation.data;
-
-    // Validate password requirement
-    if (status === 'VERIFIED' && !password) {
-      return NextResponse.json({ error: 'A password is required when verifying a doctor.' }, { status: 400 });
-    }
+    const { doctorId, status, adminNotes } = validation.data;
 
     const doctor = await prisma.doctor.findUnique({ where: { id: doctorId } });
     if (!doctor) {
@@ -66,15 +61,6 @@ export async function POST(request: Request) {
           doctorCode,
         }
       });
-
-      if (status === 'VERIFIED' && password) {
-        const bcrypt = await import('bcryptjs');
-        const hashedPassword = await bcrypt.hash(password, 10);
-        await tx.user.update({
-          where: { id: doctor.userId },
-          data: { password: hashedPassword }
-        });
-      }
 
       // Send the appropriate notification depending on the new status
       let notificationType: any = "ADMIN_ALERT";
