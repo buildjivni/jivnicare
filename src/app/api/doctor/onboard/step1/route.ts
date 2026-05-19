@@ -55,11 +55,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: `Medical Registration Number "${regNumberUpper}" is already registered.` }, { status: 400 });
     }
 
-    // 3. Geocode Address
-    const fullAddrStr = [data.practiceAddress, data.locality, data.city, data.state, data.pincode].filter(Boolean).join(", ");
-    const coords = await geocodeAddress(fullAddrStr);
-    const latitude = coords?.lat || null;
-    const longitude = coords?.lng || null;
+    // 3. Geocode Address - Use GPS coordinates from frontend if available, else server geocode
+    let latitude: number | null = data.latitude || null;
+    let longitude: number | null = data.longitude || null;
+    if (!latitude || !longitude) {
+      const fullAddrStr = [data.practiceAddress, data.locality, data.city, data.state, data.pincode].filter(Boolean).join(", ");
+      const coords = await geocodeAddress(fullAddrStr);
+      latitude = coords?.lat || null;
+      longitude = coords?.lng || null;
+    }
 
     // 4. Hash Password
     const hashedPassword = await bcrypt.hash(data.password, 10);
@@ -72,6 +76,36 @@ export async function POST(request: Request) {
       update: {},
       create: { name: normalizedSpec, slug: specialtySlug }
     });
+
+    // 5b. Auto-generate search keywords from onboarding data
+    // This ensures the doctor is immediately discoverable after registration
+    const rawKeywordTerms = new Set<string>();
+    // From specialty
+    rawKeywordTerms.add(normalizedSpec.toLowerCase());
+    rawKeywordTerms.add(specialtySlug);
+    // From location (for local search like "doctor in Patna", "Boring Road doctor")
+    if (data.city) rawKeywordTerms.add(data.city.toLowerCase());
+    if (data.locality) rawKeywordTerms.add(data.locality.toLowerCase());
+    if (data.district) rawKeywordTerms.add(data.district.toLowerCase());
+    if (data.state) rawKeywordTerms.add(data.state.toLowerCase());
+    // From qualifications (for "MBBS doctor", "MD doctor" searches)
+    const quals = normalizeQualifications(data.qualifications);
+    quals.split(',').forEach(q => q.trim() && rawKeywordTerms.add(q.trim().toLowerCase()));
+    // Doctor name variants
+    const firstName = data.fullName.replace(/^Dr\.?\s*/i, '').split(' ')[0];
+    if (firstName) rawKeywordTerms.add(firstName.toLowerCase());
+
+    // Upsert keyword records and collect their IDs
+    const keywordIds: string[] = [];
+    for (const term of rawKeywordTerms) {
+      if (!term || term.length < 2) continue;
+      const kw = await prisma.keyword.upsert({
+        where: { term },
+        update: {},
+        create: { term }
+      });
+      keywordIds.push(kw.id);
+    }
 
     // 6. Transaction: Create/Update User and Doctor
     const result = await prisma.$transaction(async (tx) => {
@@ -123,6 +157,7 @@ export async function POST(request: Request) {
           education: normalizeQualifications(data.qualifications),
           qualifications: normalizeQualifications(data.qualifications),
           specialtyIds: [specialtyRecord.id],
+          keywordIds: keywordIds,
           verificationStatus: VerificationStatus.DRAFT,
           medicalRegistrationNumber: regNumberUpper,
           medicalCouncil: data.medicalCouncil,

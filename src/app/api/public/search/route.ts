@@ -57,8 +57,16 @@ export async function GET(request: Request) {
       whereClause.OR = [
         { name: { contains: query, mode: 'insensitive' } },
         { hospitalName: { contains: query, mode: 'insensitive' } },
+        { clinicName: { contains: query, mode: 'insensitive' } },
         { district: { contains: query, mode: 'insensitive' } },
-        { keywords: { some: { term: { contains: query, mode: 'insensitive' } } } }
+        { city: { contains: query, mode: 'insensitive' } },
+        { locality: { contains: query, mode: 'insensitive' } },
+        { fullAddress: { contains: query, mode: 'insensitive' } },
+        { qualifications: { contains: query, mode: 'insensitive' } },
+        { education: { contains: query, mode: 'insensitive' } },
+        { bio: { contains: query, mode: 'insensitive' } },
+        { keywords: { some: { term: { contains: query, mode: 'insensitive' } } } },
+        { specialties: { some: { name: { contains: query, mode: 'insensitive' } } } },
       ];
       
       // Phase 3: Lead/Search Tracking (Fire and forget)
