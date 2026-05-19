@@ -64,6 +64,29 @@ function DoctorListingContent() {
   const [searchResult, setSearchResult] = useState<SearchResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
+  
+  // ── Geo-Location State ──────────────────────────────────────────────────────
+  const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
+  const [geoStatus, setGeoStatus] = useState<"pending" | "located" | "denied">("pending");
+
+  // Fetch geolocation once on mount politely
+  useEffect(() => {
+    if (typeof window !== "undefined" && "geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+          setGeoStatus("located");
+        },
+        (err) => {
+          console.warn("Geo error or denied:", err);
+          setGeoStatus("denied");
+        },
+        { timeout: 10000, maximumAge: 60000 }
+      );
+    } else {
+      setGeoStatus("denied");
+    }
+  }, []);
 
   // ── Fetch from API ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -73,7 +96,15 @@ function DoctorListingContent() {
       setIsLoading(true);
       setIsError(false);
       try {
-        const res = await fetch(`/api/public/search?${searchParams.toString()}`);
+        const queryParams = new URLSearchParams(searchParams.toString());
+        if (userLocation) {
+          queryParams.set("lat", userLocation.lat.toString());
+          queryParams.set("lng", userLocation.lng.toString());
+          // Auto-switch sort to distance if not explicitly set and location is known
+          if (!searchParams.get("sort")) queryParams.set("sort", "distance");
+        }
+
+        const res = await fetch(`/api/public/search?${queryParams.toString()}`);
         if (!res.ok) throw new Error("Search failed");
 
         const data: SearchResult = await res.json();
@@ -94,7 +125,7 @@ function DoctorListingContent() {
 
     fetchResults();
     return () => { isMounted = false; };
-  }, [searchParams]);
+  }, [searchParams, userLocation]);
 
   // ── Handlers (Update URL only) ──────────────────────────────────────────────
   const updateParams = (updates: Record<string, string | null>) => {
@@ -187,6 +218,7 @@ function DoctorListingContent() {
                     className="h-10 px-4 rounded-xl bg-white border border-slate-200 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-primary/20 appearance-none pr-10 relative bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2364748b%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1.25em] bg-[right_0.75rem_center] bg-no-repeat"
                   >
                     <option value="recommended">Recommended</option>
+                    <option value="distance">Nearest to Me</option>
                     <option value="wait_time">Lowest Wait Time</option>
                     <option value="experience">Most Experienced</option>
                     <option value="fee_low">Lowest Fee</option>
@@ -225,13 +257,25 @@ function DoctorListingContent() {
               {searchParams.get("isEmergency") === "true" && (
                 <motion.div
                   initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
-                  className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-2xl px-4 py-3"
+                  className="flex flex-col md:flex-row md:items-center gap-3 bg-red-50 border border-red-200 rounded-2xl px-4 py-3"
                 >
-                  <span className="text-lg">🚨</span>
-                  <div>
-                    <p className="text-sm font-black text-red-800">Showing Emergency-Capable Doctors</p>
-                    <p className="text-xs text-red-600 font-medium mt-0.5">These doctors have emergency slots available or accept urgent walk-ins.</p>
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg">🚨</span>
+                    <div>
+                      <p className="text-sm font-black text-red-800">Showing Emergency-Capable Doctors</p>
+                      <p className="text-xs text-red-600 font-medium mt-0.5">These facilities have emergency slots available or accept urgent walk-ins.</p>
+                    </div>
                   </div>
+                  {geoStatus === "denied" && (
+                    <div className="md:ml-auto mt-2 md:mt-0 text-[11px] font-bold text-red-700 bg-red-100/50 px-2 py-1 rounded-md border border-red-200/50">
+                      Location denied: Showing default emergency facilities.
+                    </div>
+                  )}
+                  {geoStatus === "located" && (
+                    <div className="md:ml-auto mt-2 md:mt-0 text-[11px] font-bold text-emerald-700 bg-emerald-100/50 px-2 py-1 rounded-md border border-emerald-200/50">
+                      Showing nearest to you.
+                    </div>
+                  )}
                 </motion.div>
               )}
 

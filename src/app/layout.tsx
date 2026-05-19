@@ -71,6 +71,10 @@ export const metadata: Metadata = {
   alternates: {
     canonical: SITE_CONFIG.baseUrl,
   },
+  icons: {
+    icon: "/icon.png",
+    apple: "/icon.png",
+  },
   verification: {
     // Add your Google Search Console verification token here
     // google: "your-verification-token",

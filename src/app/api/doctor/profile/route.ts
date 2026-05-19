@@ -31,6 +31,25 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Doctor profile not found" }, { status: 404 });
     }
 
+    // Auto-Expiry Operational Status Engine
+    if (
+      doctor.clinicOperations &&
+      doctor.clinicOperations.statusExpiresAt &&
+      new Date(doctor.clinicOperations.statusExpiresAt) < new Date()
+    ) {
+      const updatedOps = await prisma.clinicOperations.update({
+        where: { id: doctor.clinicOperations.id },
+        data: {
+          status: "AVAILABLE",
+          statusExpiresAt: null,
+          statusReason: null,
+          pauseOnlineBooking: false,
+          isClosedToday: false
+        }
+      });
+      doctor.clinicOperations = updatedOps;
+    }
+
     // Phase 6: Dynamic Profile Completeness Calculation
     const fields = [
       { key: 'name', value: doctor.name },

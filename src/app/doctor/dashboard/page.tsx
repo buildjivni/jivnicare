@@ -112,6 +112,10 @@ function DoctorDashboardContent() {
   };
   
   const [leaveMode, setLeaveMode] = useState(false);
+  const [clinicStatus, setClinicStatus] = useState<string>("AVAILABLE");
+  const [statusReason, setStatusReason] = useState<string>("");
+  const [statusExpiresAt, setStatusExpiresAt] = useState<string | null>(null);
+  
   const [profileData, setProfileData] = useState({ name: "", bio: "", regNumber: "", specialty: "" });
   const [settingsData, setSettingsData] = useState({ fee: "0", maxCapacity: "40", averageConsultationTime: "15", pauseOnlineBooking: false, emergencySlots: "0" });
   const [weeklySchedule, setWeeklySchedule] = useState<any>(null);
@@ -119,6 +123,33 @@ function DoctorDashboardContent() {
   const [isSaving, setIsSaving] = useState(false);
   const [isTogglingLeave, setIsTogglingLeave] = useState(false);
   const [saveStatus, setSaveStatus] = useState<{ success: boolean; message: string } | null>(null);
+
+  const handleUpdateStatus = async (status: string, reason?: string, breakDuration?: number) => {
+    setIsSaving(true);
+    try {
+      const res = await fetch("/api/doctor/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status,
+          statusReason: reason || "",
+          breakDuration: breakDuration || undefined
+        })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setClinicStatus(status);
+        if (reason !== undefined) setStatusReason(reason);
+        await fetchProfile();
+      } else {
+        alert(data.error || "Failed to update clinic status.");
+      }
+    } catch (err) {
+      console.error("Failed to update status", err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const fetchProfile = async () => {
     try {
@@ -139,7 +170,12 @@ function DoctorDashboardContent() {
           emergencySlots: data.doctor.clinicOperations?.emergencySlots?.toString() || "0"
         });
         if (data.doctor.weeklySchedule) setWeeklySchedule(data.doctor.weeklySchedule);
-        if (data.doctor.clinicOperations) setLeaveMode(data.doctor.clinicOperations.isClosedToday);
+        if (data.doctor.clinicOperations) {
+          setLeaveMode(data.doctor.clinicOperations.isClosedToday);
+          setClinicStatus(data.doctor.clinicOperations.status || "AVAILABLE");
+          setStatusReason(data.doctor.clinicOperations.statusReason || "");
+          setStatusExpiresAt(data.doctor.clinicOperations.statusExpiresAt || null);
+        }
         if (data.completeness) setProfileCompleteness(data.completeness);
       }
     } catch (err) {
@@ -251,10 +287,55 @@ function DoctorDashboardContent() {
           <h1 className="text-3xl font-black text-slate-900 tracking-tight">Command Center</h1>
           <p className="text-slate-500 mt-1 font-medium">{profileData.name} • Active Operations</p>
         </div>
-        <div className="flex items-center gap-3 bg-card border border-border px-4 py-2 rounded-xl shadow-sm">
-          <span className="text-sm font-bold text-slate-700">Status: <span className={!leaveMode ? 'text-emerald-600' : 'text-red-500'}>{!leaveMode ? "Open" : "Closed"}</span></span>
-          <div onClick={toggleLeaveMode} className={`w-10 h-6 rounded-full relative cursor-pointer transition-colors ${!leaveMode ? 'bg-emerald-500' : 'bg-slate-300'}`}>
-            <div className={`w-4 h-4 bg-white rounded-full absolute top-1 shadow-sm transition-transform ${!leaveMode ? 'right-1' : 'left-1'}`} />
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          {/* Live Sync Badge */}
+          <div className="flex items-center gap-2 bg-emerald-50/60 border border-emerald-100/80 px-3.5 h-11 rounded-xl shrink-0 shadow-sm">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+            </span>
+            <span className="text-[10px] font-black text-emerald-800 uppercase tracking-widest">Live Sync</span>
+          </div>
+
+          {/* Operational Status Dropdown Select */}
+          <div className="relative shrink-0">
+            <select
+              value={clinicStatus}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === "SHORT_BREAK") {
+                  const minsStr = window.prompt("Enter break duration in minutes (e.g. 15, 30, 45, 60):", "30");
+                  const mins = parseInt(minsStr || "30") || 30;
+                  const reason = window.prompt("Enter status description / reason (optional):", "Doctor on short break");
+                  handleUpdateStatus(val, reason || "Short Break", mins);
+                } else if (val === "CLINIC_CLOSED") {
+                  const reason = window.prompt("Enter status description / reason (optional):", "Clinic Closed");
+                  handleUpdateStatus(val, reason || "Clinic Closed Today");
+                } else {
+                  handleUpdateStatus(val);
+                }
+              }}
+              className={cn(
+                "h-11 px-4 pr-10 rounded-xl font-bold text-xs uppercase tracking-wider border cursor-pointer appearance-none transition-all outline-none focus:ring-4 focus:ring-opacity-20 shadow-sm min-w-[170px]",
+                clinicStatus === "AVAILABLE" && "bg-emerald-50 border-emerald-200 text-emerald-700 focus:ring-emerald-500/20 focus:border-emerald-500",
+                clinicStatus === "SHORT_BREAK" && "bg-amber-50 border-amber-200 text-amber-700 focus:ring-amber-500/20 focus:border-amber-500",
+                clinicStatus === "LIMITED_SLOTS" && "bg-orange-50 border-orange-200 text-orange-700 focus:ring-orange-500/20 focus:border-orange-500",
+                clinicStatus === "EMERGENCY_ONLY" && "bg-rose-50 border-rose-200 text-rose-700 focus:ring-rose-500/20 focus:border-rose-500",
+                clinicStatus === "CLINIC_CLOSED" && "bg-slate-100 border-slate-300 text-slate-700 focus:ring-slate-500/20 focus:border-slate-500"
+              )}
+              style={{
+                backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`,
+                backgroundPosition: "right 0.75rem center",
+                backgroundSize: "1.25rem",
+                backgroundRepeat: "no-repeat"
+              }}
+            >
+              <option value="AVAILABLE" className="font-bold text-slate-800 bg-white">🟢 AVAILABLE (LIVE)</option>
+              <option value="SHORT_BREAK" className="font-bold text-slate-800 bg-white">🟡 SHORT BREAK</option>
+              <option value="LIMITED_SLOTS" className="font-bold text-slate-800 bg-white">🟠 LIMITED SLOTS</option>
+              <option value="EMERGENCY_ONLY" className="font-bold text-slate-800 bg-white">🔴 EMERGENCY ONLY</option>
+              <option value="CLINIC_CLOSED" className="font-bold text-slate-800 bg-white">⚫ CLOSED TODAY</option>
+            </select>
           </div>
         </div>
       </div>
@@ -377,10 +458,55 @@ function DoctorDashboardContent() {
             </h1>
             <p className="text-sm text-slate-500 mt-1">Sequential flow: Online & Walk-in integrated.</p>
           </div>
-          <div className="flex items-center gap-3 bg-white border border-slate-200 px-4 py-2 rounded-full shadow-sm">
-            <span className="text-sm font-bold text-slate-700">Clinic Status: <span className={!leaveMode ? 'text-emerald-600' : 'text-red-500'}>{!leaveMode ? "Open" : "Closed"}</span></span>
-            <div onClick={toggleLeaveMode} className={`w-10 h-6 rounded-full relative cursor-pointer transition-colors ${!leaveMode ? 'bg-emerald-500' : 'bg-slate-300'}`}>
-              <div className={`w-4 h-4 bg-white rounded-full absolute top-1 shadow-sm transition-transform ${!leaveMode ? 'right-1' : 'left-1'}`} />
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+            {/* Live Sync Badge */}
+            <div className="flex items-center gap-2 bg-emerald-50/60 border border-emerald-100/80 px-3.5 h-11 rounded-xl shrink-0 shadow-sm">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+              </span>
+              <span className="text-[10px] font-black text-emerald-800 uppercase tracking-widest">Live Sync</span>
+            </div>
+
+            {/* Operational Status Dropdown Select */}
+            <div className="relative shrink-0">
+              <select
+                value={clinicStatus}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === "SHORT_BREAK") {
+                    const minsStr = window.prompt("Enter break duration in minutes (e.g. 15, 30, 45, 60):", "30");
+                    const mins = parseInt(minsStr || "30") || 30;
+                    const reason = window.prompt("Enter status description / reason (optional):", "Doctor on short break");
+                    handleUpdateStatus(val, reason || "Short Break", mins);
+                  } else if (val === "CLINIC_CLOSED") {
+                    const reason = window.prompt("Enter status description / reason (optional):", "Clinic Closed");
+                    handleUpdateStatus(val, reason || "Clinic Closed Today");
+                  } else {
+                    handleUpdateStatus(val);
+                  }
+                }}
+                className={cn(
+                  "h-11 px-4 pr-10 rounded-xl font-bold text-xs uppercase tracking-wider border cursor-pointer appearance-none transition-all outline-none focus:ring-4 focus:ring-opacity-20 shadow-sm min-w-[170px]",
+                  clinicStatus === "AVAILABLE" && "bg-emerald-50 border-emerald-200 text-emerald-700 focus:ring-emerald-500/20 focus:border-emerald-500",
+                  clinicStatus === "SHORT_BREAK" && "bg-amber-50 border-amber-200 text-amber-700 focus:ring-amber-500/20 focus:border-amber-500",
+                  clinicStatus === "LIMITED_SLOTS" && "bg-orange-50 border-orange-200 text-orange-700 focus:ring-orange-500/20 focus:border-orange-500",
+                  clinicStatus === "EMERGENCY_ONLY" && "bg-rose-50 border-rose-200 text-rose-700 focus:ring-rose-500/20 focus:border-rose-500",
+                  clinicStatus === "CLINIC_CLOSED" && "bg-slate-100 border-slate-300 text-slate-700 focus:ring-slate-500/20 focus:border-slate-500"
+                )}
+                style={{
+                  backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`,
+                  backgroundPosition: "right 0.75rem center",
+                  backgroundSize: "1.25rem",
+                  backgroundRepeat: "no-repeat"
+                }}
+              >
+                <option value="AVAILABLE" className="font-bold text-slate-800 bg-white">🟢 AVAILABLE (LIVE)</option>
+                <option value="SHORT_BREAK" className="font-bold text-slate-800 bg-white">🟡 SHORT BREAK</option>
+                <option value="LIMITED_SLOTS" className="font-bold text-slate-800 bg-white">🟠 LIMITED SLOTS</option>
+                <option value="EMERGENCY_ONLY" className="font-bold text-slate-800 bg-white">🔴 EMERGENCY ONLY</option>
+                <option value="CLINIC_CLOSED" className="font-bold text-slate-800 bg-white">⚫ CLOSED TODAY</option>
+              </select>
             </div>
           </div>
         </div>

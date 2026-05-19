@@ -6,7 +6,7 @@
 export const SITE_CONFIG = {
   name: "JivniCare",
   tagline: "Care, On Your Time",
-  baseUrl: process.env.NEXT_PUBLIC_SITE_URL || "https://jivnicare.in",
+  baseUrl: process.env.NEXT_PUBLIC_SITE_URL || "https://www.jinnicare.com",
   description:
     "Book top doctors and hospitals in Bihar instantly. Verified specialists in Patna, Gaya, Darbhanga and across Bihar. Same-day appointments available.",
   locale: "en_IN",

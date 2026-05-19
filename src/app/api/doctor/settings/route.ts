@@ -4,6 +4,7 @@ import { verifyToken } from "@/lib/jwt";
 import { cookies } from "next/headers";
 import { doctorSettingsSchema, formatZodError } from "@/lib/validations";
 import { VerificationStatus } from "@prisma/client";
+import { normalizeQualifications, normalizeLanguages } from "@/lib/normalizers";
 
 export async function PUT(request: Request) {
   try {
@@ -94,8 +95,9 @@ export async function PUT(request: Request) {
 
     // Apply qualifications & specialties instantly if they are verified to be purely additive
     if (body.qualifications !== undefined) {
-      instantData.qualifications = body.qualifications;
-      instantData.education = body.qualifications; // sync fields
+      const normalizedQuals = normalizeQualifications(body.qualifications);
+      instantData.qualifications = normalizedQuals;
+      instantData.education = normalizedQuals; // sync fields
     }
     if (body.specialtyIds !== undefined) instantData.specialtyIds = body.specialtyIds;
 
@@ -158,7 +160,14 @@ export async function PUT(request: Request) {
 
       // Update Clinic Operations (Instantly Editable)
       let updatedClinicOps = null;
-      if (body.isClosedToday !== undefined || body.maxCapacity !== undefined || body.pauseOnlineBooking !== undefined || body.emergencySlots !== undefined) {
+      if (
+        body.isClosedToday !== undefined ||
+        body.maxCapacity !== undefined ||
+        body.pauseOnlineBooking !== undefined ||
+        body.emergencySlots !== undefined ||
+        body.status !== undefined ||
+        body.statusReason !== undefined
+      ) {
         const opsUpdate: any = {};
         if (body.isClosedToday !== undefined) opsUpdate.isClosedToday = body.isClosedToday;
         if (body.pauseOnlineBooking !== undefined) opsUpdate.pauseOnlineBooking = body.pauseOnlineBooking;
@@ -167,6 +176,34 @@ export async function PUT(request: Request) {
         if (body.maxCapacity !== undefined) {
           opsUpdate.walkInLimit = body.maxCapacity;
           opsUpdate.onlineLimit = body.maxCapacity;
+        }
+
+        if (body.status !== undefined) {
+          opsUpdate.status = body.status;
+          
+          // Map ClinicStatus updates to old legacy toggles for safety
+          if (body.status === "CLINIC_CLOSED") {
+            opsUpdate.isClosedToday = true;
+          } else if (body.status === "AVAILABLE") {
+            opsUpdate.isClosedToday = false;
+            opsUpdate.pauseOnlineBooking = false;
+          } else if (body.status === "SHORT_BREAK" || body.status === "EMERGENCY_ONLY") {
+            opsUpdate.pauseOnlineBooking = true;
+          }
+          
+          // Calculate auto-expiry
+          if (body.status === "SHORT_BREAK") {
+            const minutes = body.breakDuration || 30;
+            opsUpdate.statusExpiresAt = new Date(Date.now() + minutes * 60 * 1000);
+          } else if (body.status === "LIMITED_SLOTS") {
+            opsUpdate.statusExpiresAt = new Date(Date.now() + 120 * 60 * 1000); // 2 hours
+          } else {
+            opsUpdate.statusExpiresAt = null;
+          }
+        }
+
+        if (body.statusReason !== undefined) {
+          opsUpdate.statusReason = body.statusReason;
         }
 
         updatedClinicOps = await tx.clinicOperations.upsert({

@@ -33,13 +33,13 @@ export const walkInSchema = z.object({
 
 // 4. Doctor Onboarding Schema
 export const doctorOnboardSchema = z.object({
-  fullName: z.string().min(2, "Name must be at least 2 characters").max(100, "Name is too long").regex(/^[a-zA-Z\s\.]+$/, "Name must contain only letters, spaces, and periods"),
+  fullName: z.string().min(3, "Name must be at least 3 characters").max(60, "Name is too long").regex(/^[a-zA-Z\s\.]+$/, "Letters, spaces, and periods only. Numbers are not allowed."),
   gender: z.enum(["Male", "Female", "Other", ""]),
   specialization: z.string().min(2, "Specialization must be at least 2 characters").max(100).regex(/^[a-zA-Z\s\-]+$/, "Specialization must contain only letters, spaces, and hyphens"),
   qualifications: z.string().min(2, "Qualifications must be at least 2 characters").max(200).regex(/^[a-zA-Z\s\.,\(\)]+$/, "Qualifications must contain only letters, spaces, commas, and parentheses"),
-  experience: z.number().int("Experience must be a whole number").min(0, "Experience cannot be negative").max(80, "Experience cannot exceed 80 years"),
+  experience: z.number().int("Experience must be a whole number").min(0, "Experience cannot be negative").max(65, "Experience cannot exceed 65 years"),
   languages: z.string().min(2, "Languages list is required").max(200),
-  fee: z.number().int("Fee must be a whole number").min(0, "Fee cannot be negative").max(100000, "Fee is too high"),
+  fee: z.number().int("Fee must be a whole number").min(0, "Fee cannot be negative").max(5000, "Fee cannot exceed 5000 rupees"),
   bio: z.string().max(1000, "Bio is too long").optional().nullable(),
   practiceType: z.enum(["clinic", "hospital"]),
   practiceName: z.string().min(2, "Practice/Hospital name is too short").max(150),
@@ -48,17 +48,32 @@ export const doctorOnboardSchema = z.object({
   locality: z.string().min(2, "Locality name is too short").max(100),
   contactNumber: z.string().regex(/^\d{10}$/, "Contact number must be exactly 10 digits").optional().nullable().or(z.literal("")),
   profilePhotoUrl: z.string().url("Profile photo must be a valid URL").optional().nullable().or(z.literal("")),
-  medicalRegistrationUrl: z.string().min(2, "Registration identifier is required").optional().nullable().or(z.literal("")),
+  medicalRegistrationUrl: z.string().min(2, "Registration certificate/identifier is required").optional().nullable().or(z.literal("")),
+  medicalRegistrationNumber: z.string().min(5, "Medical registration number must be at least 5 characters").max(30, "Medical registration number is too long").regex(/^[A-Z0-9\-]+$/, "Must contain only uppercase alphanumeric characters and hyphens"),
+  medicalCouncil: z.string().min(2, "Medical Council name is too short").max(150),
+  registrationYear: z.number().int("Year must be a whole number").min(1960, "Registration year must be 1960 or later").max(new Date().getFullYear(), "Registration year cannot be in the future"),
+  dateOfBirth: z.string().or(z.date()).refine((val) => {
+    const date = new Date(val);
+    const today = new Date();
+    let age = today.getFullYear() - date.getFullYear();
+    const m = today.getMonth() - date.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < date.getDate())) {
+      age--;
+    }
+    return age >= 22;
+  }, "Must be at least 22 years of age to onboard as a medical professional"),
+  primarySpecialtyId: z.string().optional().nullable(),
+  govtIdentityReference: z.string().max(50).optional().nullable(),
   clinicPhotoUrl: z.string().url("Clinic photo must be a valid URL").optional().nullable().or(z.literal("")),
 });
 
 // Doctor Settings Update Schema
 export const doctorSettingsSchema = z.object({
   bio: z.string().max(1000, "Bio is too long").optional().nullable(),
-  fee: z.number().int("Fee must be a whole number").min(0, "Fee cannot be negative").max(100000).optional(),
+  fee: z.number().int("Fee must be a whole number").min(0, "Fee cannot be negative").max(5000, "Fee cannot exceed 5000 rupees").optional(),
   averageConsultationTime: z.number().int().min(5).max(180).optional(),
-  name: z.string().min(2, "Name must be at least 2 characters").max(100).regex(/^[a-zA-Z\s\.]+$/, "Name can only contain letters, spaces, and periods").optional(),
-  regNumber: z.string().min(2, "Registration number must be at least 2 characters").max(100).optional(),
+  name: z.string().min(3, "Name must be at least 3 characters").max(60, "Name is too long").regex(/^[a-zA-Z\s\.]+$/, "Name can only contain letters, spaces, and periods").optional(),
+  regNumber: z.string().min(5, "Registration number must be at least 5 characters").max(30, "Registration number is too long").regex(/^[A-Z0-9\-]+$/, "Registration number must contain only uppercase letters, numbers, and hyphens").optional(),
   isClosedToday: z.boolean().optional(),
   maxCapacity: z.number().int().min(0).max(1000).optional(),
   pauseOnlineBooking: z.boolean().optional(),
@@ -66,6 +81,9 @@ export const doctorSettingsSchema = z.object({
   emergencyAvailable: z.boolean().optional(),
   onlineConsultationAvailable: z.boolean().optional(),
   emergencyConsultationAvailable: z.boolean().optional(),
+  status: z.enum(["AVAILABLE", "LIMITED_SLOTS", "SHORT_BREAK", "EMERGENCY_ONLY", "FULLY_BOOKED_AUTO", "CLINIC_CLOSED"]).optional(),
+  statusReason: z.string().max(150, "Reason is too long").optional().nullable(),
+  breakDuration: z.number().int().min(5).max(120).optional().nullable(),
 });
 
 // 5. Admin Verify Doctor Schema
