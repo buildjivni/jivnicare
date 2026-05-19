@@ -127,81 +127,72 @@ function OnboardingContent() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row font-sans overflow-x-hidden selection:bg-emerald-500/30 selection:text-emerald-900">
+    <div className="min-h-screen bg-white flex flex-col md:flex-row font-sans overflow-x-hidden selection:bg-sky-500/20 selection:text-sky-900">
       
-      {/* LEFT SIDEBAR - STICKY */}
-      <div className="md:w-[420px] lg:w-[480px] bg-slate-900 flex flex-col shrink-0 relative overflow-hidden md:sticky md:top-0 md:h-screen shadow-2xl z-20">
+      {/* LEFT SIDEBAR - STICKY LIGHT BRAND */}
+      <div className="md:w-[420px] lg:w-[480px] bg-gradient-to-br from-sky-50 via-white to-emerald-50 flex flex-col shrink-0 relative overflow-hidden md:sticky md:top-0 md:h-screen shadow-lg border-r border-sky-100 z-20">
         
-        {/* Dynamic Abstract Background Elements */}
-        <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-40">
-          <div className="absolute -top-[10%] -right-[20%] w-[60%] h-[50%] rounded-full bg-emerald-500/20 blur-[100px]" />
-          <div className="absolute bottom-[10%] -left-[20%] w-[50%] h-[50%] rounded-full bg-blue-500/20 blur-[100px]" />
+        {/* Subtle background glows */}
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+          <div className="absolute -top-[15%] -right-[10%] w-[55%] h-[40%] rounded-full bg-sky-400/10 blur-[80px]" />
+          <div className="absolute bottom-[5%] -left-[10%] w-[50%] h-[40%] rounded-full bg-emerald-400/10 blur-[80px]" />
         </div>
 
         <div className="p-8 md:p-12 flex-1 flex flex-col relative z-10">
           {/* Logo */}
-          <Link href="/" className="inline-flex items-center gap-2 mb-16 group">
-            <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
-              <Activity className="w-6 h-6 text-white" />
+          <Link href="/" className="inline-flex items-center gap-3 mb-14 group">
+            <div className="w-11 h-11 rounded-2xl overflow-hidden shadow-md group-hover:scale-105 transition-transform bg-white border border-sky-100 p-1">
+              <img src="/logo.png" alt="JivniCare" className="w-full h-full object-contain" />
             </div>
-            <span className="text-2xl font-black tracking-tight text-white">Jivni<span className="text-emerald-400">Care</span></span>
+            <span className="text-2xl font-black tracking-tight text-slate-800">Jivni<span className="text-emerald-500">Care</span></span>
           </Link>
 
           {/* Value Prop */}
-          <div className="mb-16">
-            <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight leading-[1.1] mb-6">
+          <div className="mb-14">
+            <h1 className="text-3xl md:text-4xl font-black text-slate-800 tracking-tight leading-[1.15] mb-5">
               Modernize your <br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">clinical practice.</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-500 to-emerald-500">clinical practice.</span>
             </h1>
-            <p className="text-slate-400 text-lg font-medium leading-relaxed">
+            <p className="text-slate-500 text-base font-medium leading-relaxed">
               Join Bihar's fastest-growing digital healthcare network. Reduce no-shows, manage queues, and boost revenue.
             </p>
           </div>
 
           {/* Vertical Stepper */}
           <div className="mt-auto hidden md:block">
-            <div className="space-y-8 relative before:absolute before:inset-0 before:ml-[15px] before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-800 before:to-transparent">
-              
-              <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-                <div className={`flex items-center justify-center w-8 h-8 rounded-full border-4 border-slate-900 bg-emerald-500 text-slate-900 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 transition-colors duration-500`}>
-                  {step > 1 ? <CheckCircle2 className="w-4 h-4 text-white" /> : <span className="font-bold text-xs">1</span>}
+            <div className="space-y-5">
+              {[
+                { num: 1, label: 'Identity & Clinic', icon: null },
+                { num: 2, label: 'Profile Polish', icon: null },
+                { num: 3, label: 'Verification', icon: 'shield' }
+              ].map((s) => (
+                <div key={s.num} className="flex items-center gap-3">
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm shadow-sm transition-all duration-300 shrink-0 ${
+                    step > s.num ? 'bg-emerald-500 text-white' :
+                    step === s.num ? 'bg-sky-500 text-white shadow-sky-300/50 shadow-md' :
+                    'bg-white border-2 border-slate-200 text-slate-400'
+                  }`}>
+                    {step > s.num ? <CheckCircle2 className="w-4 h-4" /> : s.icon === 'shield' ? <ShieldCheck className="w-4 h-4" /> : <span>{s.num}</span>}
+                  </div>
+                  <p className={`font-semibold text-sm transition-colors ${
+                    step >= s.num ? 'text-slate-800' : 'text-slate-400'
+                  }`}>{s.label}</p>
+                  {step === s.num && <div className="ml-auto w-2 h-2 rounded-full bg-sky-500 animate-pulse" />}
                 </div>
-                <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] text-left md:text-right md:group-odd:text-left">
-                  <p className={`font-bold text-sm transition-colors ${step >= 1 ? 'text-white' : 'text-slate-500'}`}>Identity & Clinic</p>
-                </div>
-              </div>
-
-              <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
-                <div className={`flex items-center justify-center w-8 h-8 rounded-full border-4 border-slate-900 ${step >= 2 ? 'bg-emerald-500 text-slate-900' : 'bg-slate-800 text-slate-400'} shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 transition-colors duration-500`}>
-                  {step > 2 ? <CheckCircle2 className="w-4 h-4 text-white" /> : <span className="font-bold text-xs">2</span>}
-                </div>
-                <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] text-left md:text-right md:group-odd:text-left">
-                  <p className={`font-bold text-sm transition-colors ${step >= 2 ? 'text-white' : 'text-slate-500'}`}>Profile Polish</p>
-                </div>
-              </div>
-
-              <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
-                <div className={`flex items-center justify-center w-8 h-8 rounded-full border-4 border-slate-900 ${step === 3 ? 'bg-emerald-500 text-slate-900' : 'bg-slate-800 text-slate-400'} shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 transition-colors duration-500`}>
-                  <ShieldCheck className={`w-4 h-4 ${step === 3 ? 'text-slate-900' : 'text-slate-500'}`} />
-                </div>
-                <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] text-left md:text-right md:group-odd:text-left">
-                  <p className={`font-bold text-sm transition-colors ${step === 3 ? 'text-white' : 'text-slate-500'}`}>Verification</p>
-                </div>
-              </div>
-
+              ))}
             </div>
           </div>
           
-          {/* Trust Badge Mobile */}
-          <div className="mt-12 pt-8 border-t border-slate-800 flex items-center gap-4">
+          {/* Trust Badge */}
+          <div className="mt-10 pt-8 border-t border-sky-100 flex items-center gap-3">
              <div className="flex -space-x-3">
-                <div className="w-10 h-10 rounded-full border-2 border-slate-900 bg-slate-800" />
-                <div className="w-10 h-10 rounded-full border-2 border-slate-900 bg-slate-700" />
-                <div className="w-10 h-10 rounded-full border-2 border-slate-900 bg-slate-600 flex items-center justify-center">
-                  <span className="text-[10px] font-black text-white">+5k</span>
+                <div className="w-9 h-9 rounded-full border-2 border-white bg-sky-300" />
+                <div className="w-9 h-9 rounded-full border-2 border-white bg-emerald-300" />
+                <div className="w-9 h-9 rounded-full border-2 border-white bg-sky-500 flex items-center justify-center">
+                  <span className="text-[9px] font-black text-white">+5k</span>
                 </div>
              </div>
-             <p className="text-xs font-medium text-slate-400 leading-tight">Join thousands of verified<br/>healthcare professionals.</p>
+             <p className="text-xs font-medium text-slate-500 leading-tight">Join thousands of verified<br/>healthcare professionals.</p>
           </div>
         </div>
       </div>
@@ -253,7 +244,7 @@ function OnboardingContent() {
                     <div className="p-6 md:p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2 md:col-span-2">
                         <label className="text-xs font-bold text-slate-700">Full Legal Name</label>
-                        <Input placeholder="Dr. Rajesh Kumar" value={formData.fullName} onChange={(e) => setFormData({...formData, fullName: e.target.value.replace(/[^a-zA-Z\\s\\.]/g, '')})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all ${errors.fullName ? 'border-rose-500 focus:ring-rose-500/20' : ''}`} />
+                        <Input placeholder="Dr. Rajesh Kumar" value={formData.fullName} onChange={(e) => { const v = e.target.value; if (/^[a-zA-Z. ]*$/.test(v)) setFormData({...formData, fullName: v}); }} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.fullName ? 'border-rose-500 focus:ring-rose-500/20' : ''}`} />
                         {errors.fullName && <p className="text-[10px] font-bold text-rose-500">{errors.fullName}</p>}
                       </div>
                       <div className="space-y-2">
@@ -285,7 +276,7 @@ function OnboardingContent() {
                     <div className="p-6 md:p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-700">Mobile Number (Primary)</label>
-                        <Input placeholder="9876543210" value={formData.contactNumber} maxLength={10} onChange={(e) => setFormData({...formData, contactNumber: e.target.value.replace(/\\D/g, '')})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all ${errors.contactNumber ? 'border-rose-500' : ''}`} />
+                        <Input placeholder="9876543210" value={formData.contactNumber} maxLength={10} onChange={(e) => setFormData({...formData, contactNumber: e.target.value.replace(/[^0-9]/g, '')})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.contactNumber ? 'border-rose-500' : ''}`} />
                         {errors.contactNumber && <p className="text-[10px] font-bold text-rose-500">{errors.contactNumber}</p>}
                       </div>
                       <div className="space-y-2">
@@ -314,7 +305,7 @@ function OnboardingContent() {
                     <div className="p-6 md:p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-700">Medical Registration No.</label>
-                        <Input placeholder="BMC-12345" value={formData.medicalRegistrationNumber} onChange={(e) => setFormData({...formData, medicalRegistrationNumber: e.target.value.toUpperCase().replace(/[^A-Z0-9\\-]/g, '')})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all ${errors.medicalRegistrationNumber ? 'border-rose-500' : ''}`} />
+                        <Input placeholder="BMC-12345" value={formData.medicalRegistrationNumber} onChange={(e) => setFormData({...formData, medicalRegistrationNumber: e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, '')})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.medicalRegistrationNumber ? 'border-rose-500' : ''}`} />
                         {errors.medicalRegistrationNumber && <p className="text-[10px] font-bold text-rose-500">{errors.medicalRegistrationNumber}</p>}
                       </div>
                       <div className="space-y-2">
@@ -363,7 +354,7 @@ function OnboardingContent() {
                     <div className="p-6 md:p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2 md:col-span-2">
                         <label className="text-xs font-bold text-slate-700">Clinic Name</label>
-                        <Input placeholder="JivniCare Clinic" value={formData.practiceName} onChange={(e) => setFormData({...formData, practiceName: e.target.value})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all ${errors.practiceName ? 'border-rose-500' : ''}`} />
+                        <Input placeholder="JivniCare Clinic" value={formData.practiceName} onChange={(e) => setFormData({...formData, practiceName: e.target.value.replace(/[0-9]/g, '')})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.practiceName ? 'border-rose-500' : ''}`} />
                         {errors.practiceName && <p className="text-[10px] font-bold text-rose-500">{errors.practiceName}</p>}
                       </div>
                       <div className="space-y-2 md:col-span-2">
@@ -373,7 +364,7 @@ function OnboardingContent() {
                       </div>
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-700">Locality</label>
-                        <Input placeholder="Boring Road" value={formData.locality} onChange={(e) => setFormData({...formData, locality: e.target.value})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all ${errors.locality ? 'border-rose-500' : ''}`} />
+                        <Input placeholder="Boring Road" value={formData.locality} onChange={(e) => setFormData({...formData, locality: e.target.value.replace(/[0-9]/g, '')})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.locality ? 'border-rose-500' : ''}`} />
                         {errors.locality && <p className="text-[10px] font-bold text-rose-500">{errors.locality}</p>}
                       </div>
                       <div className="space-y-2">
@@ -383,7 +374,7 @@ function OnboardingContent() {
                       </div>
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-700">Pincode</label>
-                        <Input placeholder="800001" value={formData.pincode} onChange={(e) => setFormData({...formData, pincode: e.target.value.replace(/\\D/g, '')})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all ${errors.pincode ? 'border-rose-500' : ''}`} />
+                        <Input placeholder="800001" value={formData.pincode} maxLength={6} onChange={(e) => setFormData({...formData, pincode: e.target.value.replace(/[^0-9]/g, '')})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.pincode ? 'border-rose-500' : ''}`} />
                         {errors.pincode && <p className="text-[10px] font-bold text-rose-500">{errors.pincode}</p>}
                       </div>
                     </div>
