@@ -116,7 +116,11 @@ function DoctorDashboardContent() {
   const [statusReason, setStatusReason] = useState<string>("");
   const [statusExpiresAt, setStatusExpiresAt] = useState<string | null>(null);
   
-  const [profileData, setProfileData] = useState({ name: "", bio: "", regNumber: "", specialty: "" });
+  const [profileData, setProfileData] = useState({ 
+    name: "", bio: "", regNumber: "", specialty: "", 
+    experience: "", qualifications: "", hospitalName: "", 
+    address: "", city: "", district: "", consultationFee: "", phone: "" 
+  });
   const [settingsData, setSettingsData] = useState({ fee: "0", maxCapacity: "40", averageConsultationTime: "15", pauseOnlineBooking: false, emergencySlots: "0" });
   const [weeklySchedule, setWeeklySchedule] = useState<any>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -160,7 +164,15 @@ function DoctorDashboardContent() {
           name: data.doctor.name || "Dr. Sanctuary",
           bio: data.doctor.bio || "",
           regNumber: data.doctor.medicalRegistrationNumber || "",
-          specialty: data.doctor.specialties?.[0]?.name || "General Medicine"
+          specialty: data.doctor.specialties?.[0]?.name || "General Medicine",
+          experience: data.doctor.experience?.toString() || "",
+          qualifications: data.doctor.qualifications || "",
+          hospitalName: data.doctor.hospitalName || "",
+          address: data.doctor.clinicOperations?.address || data.doctor.address || "",
+          city: data.doctor.city || "",
+          district: data.doctor.district || "",
+          consultationFee: data.doctor.consultationFee?.toString() || data.doctor.fee?.toString() || "0",
+          phone: data.doctor.user?.phone || "",
         });
         setSettingsData({
           fee: data.doctor.fee?.toString() || "0",
@@ -619,10 +631,85 @@ function DoctorDashboardContent() {
             <textarea value={profileData.bio} onChange={e => setProfileData({...profileData, bio: e.target.value})} className="w-full h-24 px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all hover:bg-white" />
             <p className="text-[10px] text-slate-400 font-medium mt-1">This is visible on your public profile. Safe to edit instantly.</p>
           </div>
+        </div>
+        
+        <div className="space-y-6 mt-8 pt-8 border-t border-slate-100">
+          <h3 className="text-lg font-black text-slate-900 mb-4 flex items-center gap-2"><MapPin className="w-5 h-5 text-emerald-600"/> Clinic Details</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Clinic / Hospital Name</label>
+              <Input 
+                value={profileData.hospitalName} 
+                onChange={e => setProfileData({...profileData, hospitalName: e.target.value})}
+                className="h-12 rounded-xl bg-slate-50 text-slate-900 border-slate-200" 
+              />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">City</label>
+              <Input 
+                value={profileData.city} 
+                onChange={e => setProfileData({...profileData, city: e.target.value})}
+                className="h-12 rounded-xl bg-slate-50 text-slate-900 border-slate-200" 
+              />
+            </div>
+          </div>
+          <div>
+            <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Full Address</label>
+            <Input 
+              value={profileData.address} 
+              onChange={e => setProfileData({...profileData, address: e.target.value})}
+              className="h-12 rounded-xl bg-slate-50 text-slate-900 border-slate-200" 
+            />
+          </div>
+        </div>
+
+        <div className="space-y-6 mt-8 pt-8 border-t border-slate-100">
+          <h3 className="text-lg font-black text-slate-900 mb-4 flex items-center gap-2"><Wallet className="w-5 h-5 text-emerald-600"/> Professional Info</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Experience (Years)</label>
+              <Input 
+                type="number"
+                value={profileData.experience} 
+                onChange={e => setProfileData({...profileData, experience: e.target.value})}
+                className="h-12 rounded-xl bg-slate-50 text-slate-900 border-slate-200" 
+              />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Consultation Fee (₹)</label>
+              <Input 
+                type="number"
+                value={profileData.consultationFee} 
+                onChange={e => setProfileData({...profileData, consultationFee: e.target.value})}
+                className="h-12 rounded-xl bg-slate-50 text-slate-900 border-slate-200" 
+              />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Qualifications</label>
+              <Input 
+                value={profileData.qualifications} 
+                onChange={e => setProfileData({...profileData, qualifications: e.target.value})}
+                className="h-12 rounded-xl bg-slate-50 text-slate-900 border-slate-200" 
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-8 pt-6">
           <Button 
-            onClick={() => handleUpdateSettings({ name: profileData.name, regNumber: profileData.regNumber, bio: profileData.bio })} 
+            onClick={() => handleUpdateSettings({ 
+              name: profileData.name, 
+              regNumber: profileData.regNumber, 
+              bio: profileData.bio,
+              hospitalName: profileData.hospitalName,
+              city: profileData.city,
+              address: profileData.address,
+              experience: parseInt(profileData.experience) || 0,
+              fee: parseInt(profileData.consultationFee) || 0,
+              qualifications: profileData.qualifications
+            })} 
             disabled={isSaving} 
-            className="h-14 px-8 rounded-xl bg-primary text-white font-bold w-full md:w-auto mt-4 shadow-lg hover:brightness-110"
+            className="h-14 px-8 rounded-xl bg-primary text-white font-bold w-full md:w-auto shadow-lg hover:brightness-110"
           >
             {isSaving ? "Saving..." : "Save & Update Profile"}
           </Button>

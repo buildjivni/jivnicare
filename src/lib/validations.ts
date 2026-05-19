@@ -84,13 +84,18 @@ export const doctorSettingsSchema = z.object({
   status: z.enum(["AVAILABLE", "LIMITED_SLOTS", "SHORT_BREAK", "EMERGENCY_ONLY", "FULLY_BOOKED_AUTO", "CLINIC_CLOSED"]).optional(),
   statusReason: z.string().max(150, "Reason is too long").optional().nullable(),
   breakDuration: z.number().int().min(5).max(120).optional().nullable(),
+  hospitalName: z.string().max(150).optional().nullable(),
+  city: z.string().max(100).optional().nullable(),
+  address: z.string().max(300).optional().nullable(),
+  experience: z.number().int().min(0).max(65).optional().nullable(),
+  qualifications: z.string().max(300).optional().nullable(),
 });
 
-// 5. Admin Verify Doctor Schema
 export const verifyDoctorSchema = z.object({
   doctorId: idSchema,
   status: z.enum(["DRAFT", "PENDING", "PENDING_VERIFICATION", "VERIFIED", "UPDATE_PENDING", "REJECTED", "SUSPENDED"]),
   adminNotes: z.string().max(1000).optional().nullable(),
+  password: z.string().min(6, "Password must be at least 6 characters").max(50).optional().nullable(),
 });
 
 // 6. Admin Approve Profile Update Schema
