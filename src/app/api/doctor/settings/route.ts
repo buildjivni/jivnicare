@@ -96,7 +96,7 @@ export async function PUT(request: Request) {
     if (validatedData.onlineConsultationAvailable !== undefined) instantData.onlineConsultationAvailable = validatedData.onlineConsultationAvailable;
     if (validatedData.emergencyConsultationAvailable !== undefined) instantData.emergencyConsultationAvailable = validatedData.emergencyConsultationAvailable;
     if (validatedData.city !== undefined) instantData.city = validatedData.city;
-    if (validatedData.address !== undefined) instantData.address = validatedData.address;
+    if (validatedData.address !== undefined) instantData.fullAddress = validatedData.address;
     if (validatedData.experience !== undefined) instantData.experience = validatedData.experience;
 
     // Apply qualifications & specialties instantly if they are verified to be purely additive
