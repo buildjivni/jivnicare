@@ -35,6 +35,9 @@ export async function PUT(request: Request) {
     if (body.emergencySlots !== undefined && body.emergencySlots !== null && body.emergencySlots !== "") {
       body.emergencySlots = parseInt(body.emergencySlots, 10);
     }
+    if (body.experience !== undefined && body.experience !== null && body.experience !== "") {
+      body.experience = parseInt(body.experience, 10);
+    }
 
     // 2. Validate using strict Settings Schema
     const validation = doctorSettingsSchema.safeParse(body);
@@ -92,6 +95,9 @@ export async function PUT(request: Request) {
     if (validatedData.emergencyAvailable !== undefined) instantData.emergencyAvailable = validatedData.emergencyAvailable;
     if (validatedData.onlineConsultationAvailable !== undefined) instantData.onlineConsultationAvailable = validatedData.onlineConsultationAvailable;
     if (validatedData.emergencyConsultationAvailable !== undefined) instantData.emergencyConsultationAvailable = validatedData.emergencyConsultationAvailable;
+    if (validatedData.city !== undefined) instantData.city = validatedData.city;
+    if (validatedData.address !== undefined) instantData.address = validatedData.address;
+    if (validatedData.experience !== undefined) instantData.experience = validatedData.experience;
 
     // Apply qualifications & specialties instantly if they are verified to be purely additive
     if (body.qualifications !== undefined) {
