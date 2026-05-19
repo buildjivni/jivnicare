@@ -205,7 +205,6 @@ function AdminDashboardContent() {
   const [filter, setFilter] = useState<"ALL" | "PENDING" | "VERIFIED" | "REJECTED" | "SUSPENDED">("ALL");
   const [bookingFilter, setBookingFilter] = useState<"ALL" | "COMPLETED" | "PENDING" | "CANCELLED">("ALL");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [verifyPassword, setVerifyPassword] = useState("");
 
   const selectedDoctor = doctors.find(d => d.id === selectedDoctorId);
 
@@ -218,19 +217,13 @@ function AdminDashboardContent() {
         return;
       }
 
-      if (newStatus === 'VERIFIED' && !verifyPassword) {
-        setToastMessage({ type: 'error', text: 'Please set an initial password for the doctor.' });
-        return;
-      }
-
       const res = await fetch("/api/admin/verify-doctor", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           doctorId: id, 
           status: newStatus, 
-          adminNotes: reason,
-          password: newStatus === 'VERIFIED' ? verifyPassword : undefined 
+          adminNotes: reason
         })
       });
       
@@ -239,7 +232,6 @@ function AdminDashboardContent() {
         setDoctors(prev => prev.map(doc => doc.id === id ? { ...doc, status: newStatus } : doc));
         setIsModModalOpen(false);
         setModReason("");
-        setVerifyPassword("");
         setPendingAction(null);
         setToastMessage({ type: 'success', text: `Doctor status updated to ${newStatus}` });
       } else {
@@ -778,17 +770,6 @@ function AdminDashboardContent() {
             <div className="p-6 border-t border-slate-200 bg-slate-50 sticky bottom-0 z-20 space-y-3">
               {selectedDoctor.status === "PENDING" ? (
                 <div className="space-y-3">
-                  <div className="bg-white p-3 rounded-xl border border-slate-200">
-                    <label className="text-xs font-bold text-slate-500 mb-1 block">Assign Initial Password</label>
-                    <Input 
-                      type="text" 
-                      placeholder="e.g. Secure@123" 
-                      value={verifyPassword}
-                      onChange={(e) => setVerifyPassword(e.target.value)}
-                      className="font-mono text-sm"
-                    />
-                    <p className="text-[10px] text-slate-400 mt-1">Doctor will use their Phone Number and this Password to log in.</p>
-                  </div>
                   <div className="grid grid-cols-2 gap-3">
                     <Button onClick={() => handleStatusUpdate(selectedDoctor.id, "VERIFIED")} className="h-14 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black shadow-lg shadow-emerald-600/20 text-base"><CheckCircle2 className="w-5 h-5 mr-2"/> Approve</Button>
                     <Button onClick={() => handleStatusUpdate(selectedDoctor.id, "REJECTED")} variant="outline" className="h-14 rounded-xl border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 font-bold bg-white"><XCircle className="w-5 h-5 mr-2"/> Reject</Button>

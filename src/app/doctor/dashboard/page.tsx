@@ -35,6 +35,7 @@ function DoctorDashboardContent() {
     total: 0, waiting: 0, completed: 0, currentActive: 0, avgWaitTime: 0
   });
   const [profileCompleteness, setProfileCompleteness] = useState(0);
+  const [verificationStatus, setVerificationStatus] = useState<string>("PENDING_VERIFICATION");
   const [isLoadingQueue, setIsLoadingQueue] = useState(true);
   const [isProcessingMutation, setIsProcessingMutation] = useState(false);
 
@@ -189,6 +190,7 @@ function DoctorDashboardContent() {
           setStatusExpiresAt(data.doctor.clinicOperations.statusExpiresAt || null);
         }
         if (data.completeness) setProfileCompleteness(data.completeness);
+        if (data.doctor.verificationStatus) setVerificationStatus(data.doctor.verificationStatus);
       }
     } catch (err) {
       console.error("Hydration failed", err);
@@ -763,6 +765,30 @@ function DoctorDashboardContent() {
     </div>
   );
 
+  const VerificationGuard = ({ children, allowedTabs }: any) => {
+    if (verificationStatus === "VERIFIED") return <>{children}</>;
+    if (allowedTabs.includes(activeTab)) return <>{children}</>;
+
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh] text-center max-w-md mx-auto fade-in">
+        <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-6 shadow-inner ${verificationStatus === "REJECTED" ? "bg-rose-100 text-rose-600" : "bg-amber-100 text-amber-600"}`}>
+          <ShieldCheck className="w-10 h-10" />
+        </div>
+        <h2 className="text-2xl font-black text-slate-900 mb-3">
+          {verificationStatus === "REJECTED" ? "Verification Rejected" : "Verification Required"}
+        </h2>
+        <p className="text-slate-500 font-medium mb-6 leading-relaxed">
+          {verificationStatus === "REJECTED" 
+            ? "Your application was rejected. Please review your profile and update any incorrect information to re-apply."
+            : "Your account is currently under review by our clinical team. Operational features like live queue and bookings are locked until verification is complete."}
+        </p>
+        <Button onClick={() => router.push('?tab=overview')} className="h-12 px-8 rounded-xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-colors">
+          Return to Overview
+        </Button>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-[#f8f9fa] flex font-sans overflow-hidden">
       {renderSidebar()}
@@ -777,11 +803,12 @@ function DoctorDashboardContent() {
           <div className="w-10"></div>
         </div>
         <div className="flex-1 p-4 md:p-10 overflow-y-auto">
-          {activeTab === "overview" && renderOverview()}
-          {activeTab === "queue" && renderQueue()}
-          {activeTab === "profile" && renderProfile()}
-          {activeTab === "settings" && renderSettings()}
-          {activeTab === "reviews" && (
+          <VerificationGuard allowedTabs={["overview", "profile"]}>
+            {activeTab === "overview" && renderOverview()}
+            {activeTab === "queue" && renderQueue()}
+            {activeTab === "profile" && renderProfile()}
+            {activeTab === "settings" && renderSettings()}
+            {activeTab === "reviews" && (
             <div className="max-w-4xl fade-in pb-20">
               <div className="mb-8">
                 <h1 className="text-3xl font-black text-slate-900">Reviews & Reputation</h1>
@@ -857,6 +884,7 @@ function DoctorDashboardContent() {
               </div>
             </div>
           )}
+          </VerificationGuard>
         </div>
       </div>
     </div>
