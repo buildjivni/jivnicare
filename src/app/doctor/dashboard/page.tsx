@@ -384,7 +384,7 @@ function DoctorDashboardContent() {
              )}
            </div>
          </div>
-         <div className="bg-emerald-600 rounded-2xl border border-emerald-500 shadow-premium p-6 text-white flex flex-col justify-between relative overflow-hidden">
+          <div className="bg-emerald-600 rounded-2xl border border-emerald-500 shadow-premium p-6 text-white flex flex-col justify-between relative overflow-hidden">
             <div className="absolute top-0 right-0 p-4 opacity-10"><Wallet className="w-24 h-24 text-white" /></div>
             <div className="relative z-10">
               <span className="text-emerald-100 text-[10px] font-bold uppercase tracking-widest">Today's Revenue</span>
@@ -393,7 +393,7 @@ function DoctorDashboardContent() {
             <div className="relative z-10 mt-6 pt-4 border-t border-emerald-500/50 flex justify-between items-center">
                <span className="text-emerald-100 font-medium text-sm">Patients Served: <strong>{queueStats.completed}</strong></span>
             </div>
-         </div>
+          </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
