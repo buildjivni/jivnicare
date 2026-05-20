@@ -66,8 +66,8 @@ export function DoctorProfileView({ doctor, relatedDoctors }: DoctorProfileViewP
 
   const handleShare = async () => {
     const shareData = {
-      title: `${doctor.name} | ${doctor.specialty} on JivniCare`,
-      text: `Check out ${doctor.name}, ${doctor.specialty} at ${doctor.clinic}.`,
+      title: `Dr. ${doctor.name} | ${doctor.specialty} on JivniCare`,
+      text: `Check out Dr. ${doctor.name}, ${doctor.specialty} at ${doctor.clinic}.`,
       url: window.location.href,
     };
 
@@ -221,7 +221,7 @@ export function DoctorProfileView({ doctor, relatedDoctors }: DoctorProfileViewP
           </div>
 
           <div className="inline-flex items-center gap-2 bg-white border border-slate-100 shadow-sm text-[11px] font-black px-4 py-2 rounded-xl mb-4">
-            <img src="/icon-only.png" alt="" className="h-4 w-auto object-contain shrink-0" />
+            <img src="/logo.png" alt="" className="w-4 h-4 object-contain shrink-0" />
             <span className="uppercase tracking-widest text-slate-400">
                {badge} · <span className="text-primary">Jivni</span><span className="text-secondary">Care</span> Verified
             </span>
@@ -250,7 +250,7 @@ export function DoctorProfileView({ doctor, relatedDoctors }: DoctorProfileViewP
 
           <div className="grid grid-cols-4 gap-2 mt-1">
             <div className="flex flex-col items-center text-center p-2.5 bg-amber-50/60 border border-amber-100/60 rounded-[14px]">
-              <Star className="h-4 w-auto fill-amber-400 text-amber-400 mb-1" />
+              <Star className="w-4 h-4 fill-amber-400 text-amber-400 mb-1" />
               <span className="font-black text-[15px] text-slate-900 leading-none tabular-nums">
                 {typeof doctor.rating === "number" ? doctor.rating.toFixed(1) : "4.8"}
               </span>
@@ -258,7 +258,7 @@ export function DoctorProfileView({ doctor, relatedDoctors }: DoctorProfileViewP
             </div>
 
             <div className="flex flex-col items-center text-center p-2.5 bg-blue-50/60 border border-blue-100/60 rounded-[14px]">
-              <Users className="h-4 w-auto text-[#205E98] mb-1" />
+              <Users className="w-4 h-4 text-[#205E98] mb-1" />
               <span className="font-black text-[15px] text-slate-900 leading-none">{consultCount}</span>
               <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wide mt-1">Patients</span>
             </div>
@@ -269,9 +269,9 @@ export function DoctorProfileView({ doctor, relatedDoctors }: DoctorProfileViewP
                 : "bg-slate-50 border border-slate-100"
             }`}>
               {doctor.isQueueActive ? (
-                <Zap className="h-4 w-auto text-[#205E98] mb-1" />
+                <Zap className="w-4 h-4 text-[#205E98] mb-1" />
               ) : (
-                <Activity className="h-4 w-auto text-emerald-600 mb-1" />
+                <Activity className="w-4 h-4 text-emerald-600 mb-1" />
               )}
               <span className="font-black text-[11px] text-slate-900 leading-tight">
                 {doctor.isQueueActive ? "Live" : (availableToday ? "Open" : "Check")}
@@ -305,7 +305,7 @@ export function DoctorProfileView({ doctor, relatedDoctors }: DoctorProfileViewP
             />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-[#205E98]/10 to-blue-50 flex items-center justify-center">
-              <Stethoscope className="h-8 w-auto text-[#205E98]/30" />
+              <Stethoscope className="w-8 h-8 text-[#205E98]/30" />
             </div>
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
@@ -425,7 +425,7 @@ export function DoctorProfileView({ doctor, relatedDoctors }: DoctorProfileViewP
         <CardContent className="p-4 md:p-5 space-y-4">
           <div>
             <h2 className="text-[13px] font-black text-slate-900 flex items-center gap-1.5 mb-2.5 uppercase tracking-wide">
-              <ShieldCheck className="h-4 w-auto text-[#205E98]" />
+              <ShieldCheck className="w-4 h-4 text-[#205E98]" />
               About the Doctor
             </h2>
             <p className="text-[13.5px] text-slate-600 leading-[1.7] font-medium">
@@ -526,7 +526,7 @@ export function DoctorProfileView({ doctor, relatedDoctors }: DoctorProfileViewP
                       <div className="min-w-0 flex-1">
                         <h4 className="font-black text-sm text-slate-900 leading-snug line-clamp-1 hover:text-[#205E98] transition-colors">
                           <Link href={`/doctors/${relDoc.slug}`}>
-                            {relDoc.name}
+                            Dr. {relDoc.name}
                           </Link>
                         </h4>
                         <p className="text-[11px] font-bold text-[#205E98] mt-0.5">{relDoc.specialty}</p>

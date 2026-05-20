@@ -176,9 +176,12 @@ function OnboardingContent() {
       <header className="w-full bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-50 px-6 py-4 shadow-sm shadow-slate-100/30">
         <div className="max-w-5xl mx-auto flex items-center justify-between w-full">
           <Link href="/" className="inline-flex items-center gap-3 group">
-            <div className="h-10 w-auto rounded-xl overflow-hidden shadow-md group-hover:scale-105 transition-transform bg-white border border-sky-100 p-1.5 flex items-center justify-center">
-              <img src="/logo.png" alt="JivniCare" className="h-8 w-auto object-contain" />
+            <div className="w-10 h-10 rounded-xl overflow-hidden shadow-md group-hover:scale-105 transition-transform bg-white border border-sky-100 p-1.5 flex items-center justify-center">
+              <img src="/logo.png" alt="JivniCare" className="w-8 h-8 object-contain" />
             </div>
+            <span className="text-xl font-black tracking-tight text-slate-800 leading-none">
+              <span className="text-[#5298D2]">Jivni</span><span className="text-[#489C66]">Care</span>
+            </span>
           </Link>
           <Link href="/partners/login" className="px-5 py-2.5 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-655 hover:text-[#5298D2] hover:border-sky-200 shadow-sm transition-all flex items-center gap-2">
             Already a partner? <span className="text-[#5298D2]">Sign In</span>
@@ -267,7 +270,7 @@ function OnboardingContent() {
                   {/* Section: Personal Info */}
                   <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
                     <div className="p-6 md:p-8 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3">
-                      <div className="h-10 w-auto rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                      <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
                         <UserCircle className="w-5 h-5" />
                       </div>
                       <div>
@@ -299,7 +302,7 @@ function OnboardingContent() {
                   {/* Section: Account Security */}
                   <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
                     <div className="p-6 md:p-8 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3">
-                      <div className="h-10 w-auto rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
+                      <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
                         <Lock className="w-5 h-5" />
                       </div>
                       <div>
@@ -328,7 +331,7 @@ function OnboardingContent() {
                   {/* Section: Medical Credentials */}
                   <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
                     <div className="p-6 md:p-8 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3">
-                      <div className="h-10 w-auto rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
                         <Briefcase className="w-5 h-5" />
                       </div>
                       <div>
@@ -378,7 +381,7 @@ function OnboardingContent() {
                   <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
                     <div className="p-6 md:p-8 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-auto rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+                        <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
                           <Building className="w-5 h-5" />
                         </div>
                         <div>
@@ -510,7 +513,7 @@ function OnboardingContent() {
                           >
                             <motion.div 
                               layout 
-                              className="h-4 w-auto bg-white rounded-full shadow-sm" 
+                              className="w-4 h-4 bg-white rounded-full shadow-sm" 
                               animate={{ x: formData.emergencyAvailable ? 24 : 0 }} 
                               transition={{ type: "spring", stiffness: 500, damping: 30 }}
                             />
@@ -555,7 +558,7 @@ function OnboardingContent() {
                   <div className="flex flex-col items-center justify-center text-center pt-8 pb-4">
                     <div className="relative mb-6">
                       <div className="w-20 h-20 bg-emerald-100 rounded-3xl flex items-center justify-center shadow-md relative z-10 border border-emerald-200">
-                        <ShieldCheck className="h-10 w-auto text-emerald-600 animate-pulse" />
+                        <ShieldCheck className="w-10 h-10 text-emerald-600 animate-pulse" />
                       </div>
                       <div className="absolute inset-0 bg-emerald-200/50 rounded-3xl blur-xl scale-125 -z-10 animate-ping duration-1000" />
                     </div>
@@ -573,7 +576,7 @@ function OnboardingContent() {
                     
                     {/* Header */}
                     <div className="p-6 md:p-8 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3">
-                      <div className="h-10 w-auto rounded-xl bg-sky-100 text-sky-600 flex items-center justify-center shrink-0">
+                      <div className="w-10 h-10 rounded-xl bg-sky-100 text-sky-600 flex items-center justify-center shrink-0">
                         <FileText className="w-5 h-5" />
                       </div>
                       <div>
@@ -613,7 +616,7 @@ function OnboardingContent() {
                   {/* Verification Workflow Timeline */}
                   <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 md:p-8 space-y-6">
                     <h4 className="font-extrabold text-slate-955 text-base tracking-tight flex items-center gap-2">
-                      <Activity className="h-4 w-auto text-sky-500" />
+                      <Activity className="w-4 h-4 text-sky-500" />
                       Verification & Activation Steps
                     </h4>
 
@@ -622,7 +625,7 @@ function OnboardingContent() {
                       {/* Step 1 */}
                       <div className="relative">
                         <div className="absolute -left-[35px] top-0 w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-md">
-                          <CheckCircle2 className="h-4 w-auto" />
+                          <CheckCircle2 className="w-4 h-4" />
                         </div>
                         <div>
                           <h5 className="font-bold text-slate-900 text-sm">Application Received</h5>
@@ -660,7 +663,7 @@ function OnboardingContent() {
 
                   {/* Sandbox Notice Banner */}
                   <div className="bg-gradient-to-r from-sky-50 to-indigo-50 border border-sky-100 rounded-3xl p-6 flex gap-4">
-                    <div className="h-10 w-auto rounded-2xl bg-white text-sky-600 flex items-center justify-center shrink-0 shadow-sm border border-sky-50">
+                    <div className="w-10 h-10 rounded-2xl bg-white text-sky-600 flex items-center justify-center shrink-0 shadow-sm border border-sky-50">
                       <Sparkles className="w-5 h-5 text-sky-500 animate-pulse" />
                     </div>
                     <div className="space-y-1">
@@ -703,7 +706,7 @@ function OnboardingContent() {
     {/* Elegant clean trust footer outside the main card */}
     <footer className="mt-8 mb-16 text-center max-w-2xl mx-auto px-4 flex flex-col items-center gap-3 text-slate-400">
       <div className="flex items-center gap-1.5 justify-center">
-        <ShieldCheck className="h-4 w-auto text-[#5298D2] shrink-0" />
+        <ShieldCheck className="w-4 h-4 text-[#5298D2] shrink-0" />
         <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600">JivniCare B2B Platform Disclaimer</span>
       </div>
       <p className="text-[10px] text-slate-400 leading-relaxed max-w-xl mx-auto">
@@ -758,7 +761,7 @@ function OnboardingContent() {
               </div>
               <button 
                 onClick={() => setShowTerms(false)}
-                className="h-8 w-auto rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center text-sm font-bold transition-all"
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center text-sm font-bold transition-all"
               >
                 ✕
               </button>
@@ -841,7 +844,7 @@ function OnboardingContent() {
               </div>
               <button 
                 onClick={() => setShowPrivacy(false)}
-                className="h-8 w-auto rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center text-sm font-bold transition-all"
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center text-sm font-bold transition-all"
               >
                 ✕
               </button>

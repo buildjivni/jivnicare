@@ -320,8 +320,15 @@ function AdminDashboardContent() {
         )}
         <div className={`w-72 bg-white border-r border-slate-200 flex flex-col h-screen shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-50 fixed md:relative transition-transform duration-300 ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
           <div className="p-6 pb-6 border-b border-slate-100 bg-gradient-to-b from-slate-50 to-white flex items-center justify-between">
-            <div className="flex items-center gap-3 mb-8 px-2">
-               <img src="/icon-only.png" alt="JivniCare Logo" className="h-10 w-auto drop-shadow-md object-contain" />
+            <div className="flex items-center gap-3">
+               <img src="/logo.png" alt="JivniCare Logo" className="w-10 h-10 drop-shadow-md object-contain" />
+              <div>
+                <h2 className="text-2xl font-black tracking-tight text-slate-900">
+                  <span className="text-primary">Jivni</span>
+                  <span className="text-emerald-600">Care</span>
+                </h2>
+                <p className="text-[10px] font-black text-slate-400 tracking-widest uppercase">Admin Command</p>
+              </div>
             </div>
             <button className="md:hidden text-slate-500 hover:bg-slate-100 p-2 rounded-full" onClick={() => setMobileMenuOpen(false)}>
               <X className="w-5 h-5" />
@@ -381,9 +388,9 @@ function AdminDashboardContent() {
       
       {toastMessage && (
         <div className={`hidden md:flex absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 items-center gap-2 px-4 py-2 rounded-full shadow-sm border text-sm font-bold ${toastMessage.type === 'error' ? 'bg-red-50 text-red-600 border-red-200' : 'bg-emerald-50 text-emerald-600 border-emerald-200'} animate-in fade-in slide-in-from-top-4`}>
-          {toastMessage.type === 'error' ? <AlertTriangle className="h-4 w-auto"/> : <CheckCircle2 className="h-4 w-auto"/>}
+          {toastMessage.type === 'error' ? <AlertTriangle className="w-4 h-4"/> : <CheckCircle2 className="w-4 h-4"/>}
           {toastMessage.text}
-          <button onClick={() => setToastMessage(null)} className="ml-2 hover:opacity-70"><X className="h-4 w-auto"/></button>
+          <button onClick={() => setToastMessage(null)} className="ml-2 hover:opacity-70"><X className="w-4 h-4"/></button>
         </div>
       )}
 
@@ -424,7 +431,7 @@ function AdminDashboardContent() {
           </div>
         </div>
         <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm relative overflow-hidden group hover:border-[#489C66] transition-colors">
-          <div className="h-10 w-auto bg-emerald-50 rounded-2xl flex items-center justify-center mb-4 text-[#489C66] group-hover:scale-110 transition-transform">
+          <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center mb-4 text-[#489C66] group-hover:scale-110 transition-transform">
             <ActivitySquare className="w-6 h-6" />
           </div>
           <p className="text-sm font-bold text-slate-500">Today&apos;s Bookings</p>
@@ -432,7 +439,7 @@ function AdminDashboardContent() {
           <p className="text-xs font-bold text-emerald-600 mt-2 flex items-center gap-1"><TrendingUp className="w-3 h-3"/> Real-time traffic</p>
         </div>
         <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm relative overflow-hidden group hover:border-amber-400 transition-colors">
-          <div className="h-10 w-auto bg-amber-50 rounded-2xl flex items-center justify-center mb-4 text-amber-500 group-hover:scale-110 transition-transform">
+          <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center mb-4 text-amber-500 group-hover:scale-110 transition-transform">
             <FileText className="w-6 h-6" />
           </div>
           <p className="text-sm font-bold text-slate-500">Pending Approvals</p>
@@ -440,7 +447,7 @@ function AdminDashboardContent() {
           <p className="text-xs font-bold text-amber-600 mt-2 flex items-center gap-1"><AlertTriangle className="w-3 h-3"/> Action Required</p>
         </div>
         <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm relative overflow-hidden group hover:border-purple-400 transition-colors">
-          <div className="h-10 w-auto bg-purple-50 rounded-2xl flex items-center justify-center mb-4 text-purple-500 group-hover:scale-110 transition-transform">
+          <div className="w-12 h-12 bg-purple-50 rounded-2xl flex items-center justify-center mb-4 text-purple-500 group-hover:scale-110 transition-transform">
             <Star className="w-6 h-6" />
           </div>
           <p className="text-sm font-bold text-slate-500">Total Patients</p>
@@ -453,8 +460,8 @@ function AdminDashboardContent() {
       <h3 className="text-xl font-bold text-slate-900 mb-4 mt-10">Operational Status</h3>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex items-center gap-4">
-          <div className="h-12 w-auto rounded-full bg-blue-50 flex items-center justify-center text-[#5298D2]">
-            <img src="/icon-only.png" alt="JivniCare Logo" className="h-8 w-auto object-contain" />
+          <div className="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center text-[#5298D2]">
+            <img src="/logo.png" alt="JivniCare Logo" className="w-8 h-8 object-contain" />
           </div>
           <div>
             <p className="text-sm font-bold text-slate-500">Active Queues Today</p>
@@ -462,8 +469,8 @@ function AdminDashboardContent() {
           </div>
         </div>
         <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex items-center gap-4">
-          <div className="h-12 w-auto rounded-full bg-red-50 flex items-center justify-center text-red-500">
-            <Zap className="h-8 w-auto" />
+          <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center text-red-500">
+            <Zap className="w-8 h-8" />
           </div>
           <div>
             <p className="text-sm font-bold text-slate-500">Emergency-Enabled Clinics</p>
@@ -471,8 +478,8 @@ function AdminDashboardContent() {
           </div>
         </div>
         <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex items-center gap-4">
-          <div className="h-12 w-auto rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
-            <Ban className="h-8 w-auto" />
+          <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
+            <Ban className="w-8 h-8" />
           </div>
           <div>
             <p className="text-sm font-bold text-slate-500">Suspended Accounts</p>
@@ -550,7 +557,7 @@ function AdminDashboardContent() {
                   ))}
                   {filteredDoctors.length === 0 && (
                      <div className="flex flex-col items-center justify-center h-40 text-slate-400">
-                       <AlertTriangle className="h-8 w-auto mb-2 opacity-50" />
+                       <AlertTriangle className="w-8 h-8 mb-2 opacity-50" />
                        <p className="font-bold">No doctors found in this category.</p>
                      </div>
                   )}
@@ -589,7 +596,7 @@ function AdminDashboardContent() {
               {/* ── Verification Checklist ── */}
               {(selectedDoctor.status === "PENDING" || selectedDoctor.status === "PENDING_VERIFICATION" || selectedDoctor.status === "DRAFT") && (
                 <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
-                  <p className="text-[11px] font-black text-amber-700 uppercase tracking-widest mb-3 flex items-center gap-2"><AlertTriangle className="h-4 w-auto"/> Verification Checklist</p>
+                  <p className="text-[11px] font-black text-amber-700 uppercase tracking-widest mb-3 flex items-center gap-2"><AlertTriangle className="w-4 h-4"/> Verification Checklist</p>
                   {[
                     { label: "Identity confirmed", done: !!selectedDoctor.name },
                     { label: "Qualification documented", done: !!selectedDoctor.qualifications },
@@ -611,7 +618,7 @@ function AdminDashboardContent() {
               {selectedDoctor.updateLogs && selectedDoctor.updateLogs.length > 0 && (
                 <div className="bg-sky-50 border border-sky-200 rounded-2xl p-4 space-y-3">
                   <p className="text-[11px] font-black text-sky-800 uppercase tracking-widest flex items-center gap-2">
-                    <UserCog className="h-4 w-auto text-sky-600"/> Proposed Profile Modifications
+                    <UserCog className="w-4 h-4 text-sky-600"/> Proposed Profile Modifications
                   </p>
                   <p className="text-xs text-sky-700 font-medium">
                     This doctor has submitted updates to sensitive profile credentials. Review and authorize these modifications.
@@ -672,7 +679,7 @@ function AdminDashboardContent() {
 
               {/* ── Qualifications & License ── */}
               <div>
-                <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-100 pb-2 flex items-center gap-2"><Star className="h-4 w-auto"/> Medical Credentials</h4>
+                <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-100 pb-2 flex items-center gap-2"><Star className="w-4 h-4"/> Medical Credentials</h4>
                 <div className="space-y-2.5">
                   <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Qualifications</p>
@@ -698,7 +705,7 @@ function AdminDashboardContent() {
               {/* ── Specialties ── */}
               {selectedDoctor.specialties?.length > 0 && (
                 <div>
-                  <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-100 pb-2 flex items-center gap-2"><ActivitySquare className="h-4 w-auto"/> Specialties</h4>
+                  <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-100 pb-2 flex items-center gap-2"><ActivitySquare className="w-4 h-4"/> Specialties</h4>
                   <div className="flex flex-wrap gap-2">
                     {selectedDoctor.specialties.map((s) => (
                       <span key={s.slug} className="bg-blue-50 text-blue-700 border border-blue-100 px-3 py-1 rounded-full text-xs font-bold">{s.name}</span>
@@ -709,7 +716,7 @@ function AdminDashboardContent() {
 
               {/* ── Emergency Capability ── */}
               <div>
-                <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-100 pb-2 flex items-center gap-2"><Zap className="h-4 w-auto text-red-500"/> Emergency Capability</h4>
+                <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-100 pb-2 flex items-center gap-2"><Zap className="w-4 h-4 text-red-500"/> Emergency Capability</h4>
                 <div className="grid grid-cols-2 gap-2">
                   {[
                     { label: "Emergency Available", value: selectedDoctor.emergencyAvailable, type: "bool" },
@@ -733,12 +740,12 @@ function AdminDashboardContent() {
 
               {/* ── Contact Info ── */}
               <div>
-                <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-100 pb-2 flex items-center gap-2"><Phone className="h-4 w-auto"/> Contact & Clinic</h4>
+                <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-100 pb-2 flex items-center gap-2"><Phone className="w-4 h-4"/> Contact & Clinic</h4>
                 <div className="space-y-2.5 bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
-                  <p className="flex items-center gap-3 text-sm font-bold text-slate-700"><Mail className="h-4 w-auto text-slate-400"/>{selectedDoctor.email}</p>
-                  <p className="flex items-center gap-3 text-sm font-bold text-slate-700"><Phone className="h-4 w-auto text-slate-400"/>{selectedDoctor.phone}</p>
+                  <p className="flex items-center gap-3 text-sm font-bold text-slate-700"><Mail className="w-4 h-4 text-slate-400"/>{selectedDoctor.email}</p>
+                  <p className="flex items-center gap-3 text-sm font-bold text-slate-700"><Phone className="w-4 h-4 text-slate-400"/>{selectedDoctor.phone}</p>
                   <div className="flex items-start gap-3 text-sm font-bold text-slate-700 pt-2.5 border-t border-slate-100 mt-2.5">
-                    <Building2 className="h-4 w-auto text-slate-400 shrink-0 mt-0.5"/>
+                    <Building2 className="w-4 h-4 text-slate-400 shrink-0 mt-0.5"/>
                     <div>
                       <p className="text-slate-900">{selectedDoctor.clinicName}</p>
                       <p className="text-slate-500 font-medium text-xs mt-0.5">{selectedDoctor.address}</p>
@@ -750,7 +757,7 @@ function AdminDashboardContent() {
               {/* ── Moderation History ── */}
               {selectedDoctor.moderationHistory?.length > 0 && (
                 <div>
-                  <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-100 pb-2 flex items-center gap-2"><Clipboard className="h-4 w-auto"/> Moderation History</h4>
+                  <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-100 pb-2 flex items-center gap-2"><Clipboard className="w-4 h-4"/> Moderation History</h4>
                   <div className="space-y-2">
                     {selectedDoctor.moderationHistory.map((log, i) => (
                       <div key={i} className="bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3">
@@ -830,7 +837,7 @@ function AdminDashboardContent() {
                 .map(patient => (
                 <div key={patient.id} className="grid grid-cols-4 gap-4 p-5 items-center hover:bg-slate-50 transition-colors">
                   <div className="pl-4 font-bold text-slate-900 flex items-center gap-3">
-                    <div className="h-10 w-auto rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-black">{patient.name?.charAt(0) || 'P'}</div>
+                    <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-black">{patient.name?.charAt(0) || 'P'}</div>
                     {patient.name || 'Anonymous Patient'}
                   </div>
                   <div className="text-sm font-medium text-slate-600">
@@ -845,7 +852,7 @@ function AdminDashboardContent() {
               ))}
               {patients.length === 0 && (
                  <div className="p-20 text-center text-slate-400">
-                   <Users className="h-10 w-auto mx-auto mb-4 opacity-20" />
+                   <Users className="w-12 h-12 mx-auto mb-4 opacity-20" />
                    <p className="font-bold">No patient records found.</p>
                  </div>
               )}
@@ -910,7 +917,7 @@ function AdminDashboardContent() {
               ))}
               {bookings.length === 0 && (
                  <div className="p-20 text-center text-slate-400">
-                   <Calendar className="h-10 w-auto mx-auto mb-4 opacity-20" />
+                   <Calendar className="w-12 h-12 mx-auto mb-4 opacity-20" />
                    <p className="font-bold">No recent bookings found.</p>
                  </div>
               )}
@@ -962,7 +969,7 @@ function AdminDashboardContent() {
               </div>
             )) : (
               <div className="p-20 text-center bg-white rounded-3xl border border-dashed border-slate-200">
-                <Activity className="h-10 w-auto text-slate-200 mx-auto mb-4" />
+                <Activity className="w-12 h-12 text-slate-200 mx-auto mb-4" />
                 <p className="text-slate-400 font-bold">No active queues found today.</p>
               </div>
             )}
@@ -1091,7 +1098,7 @@ function AdminDashboardContent() {
     <div className="p-8 max-w-7xl mx-auto fade-in">
       <div className="mb-8">
         <h1 className="text-3xl font-black text-slate-900 flex items-center gap-3">
-          <ShieldAlert className="h-8 w-auto text-red-500" /> Trust & Safety
+          <ShieldAlert className="w-8 h-8 text-red-500" /> Trust & Safety
         </h1>
         <p className="text-slate-500 mt-1">Review emergency capability claims, suspended accounts, and moderation integrity.</p>
       </div>
@@ -1107,7 +1114,7 @@ function AdminDashboardContent() {
             {trustDoctors.map((doc) => (
               <div key={doc.id} className="bg-white border border-slate-200 rounded-2xl p-5 flex items-center justify-between hover:border-red-200 transition-colors shadow-sm">
                 <div className="flex items-center gap-4">
-                  <div className="h-10 w-auto rounded-full bg-red-50 border border-red-100 flex items-center justify-center font-black text-red-600">
+                  <div className="w-12 h-12 rounded-full bg-red-50 border border-red-100 flex items-center justify-center font-black text-red-600">
                     {doc.name.split(" ")[1]?.charAt(0) || "D"}
                   </div>
                   <div>
@@ -1154,7 +1161,7 @@ function AdminDashboardContent() {
           </div>
         ) : (
           <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-6 text-center">
-            <CheckCircle2 className="h-8 w-auto text-emerald-500 mx-auto mb-2" />
+            <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
             <p className="font-black text-emerald-800">No emergency capability claims to review</p>
             <p className="text-sm text-emerald-600 font-medium mt-1">All active doctors have standard profiles.</p>
           </div>
@@ -1174,7 +1181,7 @@ function AdminDashboardContent() {
             {doctors.filter(d => d.status === "SUSPENDED").map((doc) => (
               <div key={doc.id} className="bg-white border border-slate-200 rounded-2xl p-5 flex items-center justify-between shadow-sm">
                 <div className="flex items-center gap-4">
-                  <div className="h-10 w-auto rounded-full bg-slate-100 flex items-center justify-center font-black text-slate-500">
+                  <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center font-black text-slate-500">
                     {doc.name.split(" ")[1]?.charAt(0) || "D"}
                   </div>
                   <div>
@@ -1211,10 +1218,10 @@ function AdminDashboardContent() {
 
         <div className={`md:hidden fixed top-4 left-4 right-4 z-[100] flex items-center justify-between gap-2 px-4 py-3 rounded-2xl shadow-lg border text-sm font-bold ${toastMessage.type === 'error' ? 'bg-red-50 text-red-600 border-red-200' : 'bg-emerald-50 text-emerald-600 border-emerald-200'} animate-in fade-in slide-in-from-top-4`}>
           <div className="flex items-center gap-2">
-            {toastMessage.type === 'error' ? <AlertTriangle className="h-4 w-auto"/> : <CheckCircle2 className="h-4 w-auto"/>}
+            {toastMessage.type === 'error' ? <AlertTriangle className="w-4 h-4"/> : <CheckCircle2 className="w-4 h-4"/>}
             {toastMessage.text}
           </div>
-          <button onClick={() => setToastMessage(null)} className="hover:opacity-70"><X className="h-4 w-auto"/></button>
+          <button onClick={() => setToastMessage(null)} className="hover:opacity-70"><X className="w-4 h-4"/></button>
         </div>
       )}
       
@@ -1236,8 +1243,8 @@ function AdminDashboardContent() {
         {isModModalOpen && (
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
             <div className="bg-white rounded-[2.5rem] p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-300">
-              <div className="h-12 w-auto bg-red-50 rounded-2xl flex items-center justify-center mb-6 text-red-600 mx-auto">
-                <AlertTriangle className="h-8 w-auto" />
+              <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center mb-6 text-red-600 mx-auto">
+                <AlertTriangle className="w-8 h-8" />
               </div>
               <h3 className="text-2xl font-black text-slate-900 text-center mb-2">Moderation Action</h3>
               <p className="text-slate-500 text-center mb-6">Please provide a clear reason for this {pendingAction?.status.toLowerCase()} action. This will be logged for audit.</p>

@@ -51,7 +51,7 @@ export function WhyJivniCareSection() {
               
               <div className="absolute bottom-8 left-8 right-8 text-white">
                 <div className="bg-white/90 w-fit px-4 py-2 rounded-xl mb-4 backdrop-blur-sm">
-                  <Logo variant="icon" className="h-8 w-auto drop-shadow-md" />
+                  <Logo className="h-8 w-auto drop-shadow-md" />
                 </div>
                 <h3 className="text-2xl font-bold mb-2">Care You Can Trust</h3>
                 <p className="text-white/80 text-sm">Join thousands of patients who trust our verified medical professionals.</p>
