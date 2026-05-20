@@ -158,7 +158,7 @@ function DoctorDashboardContent() {
 
   const fetchProfile = async () => {
     try {
-      const res = await fetch("/api/doctor/profile");
+      const res = await fetch("/api/doctor/profile?t=" + Date.now());
       const data = await res.json();
       if (data.success && data.doctor) {
         setProfileData({
@@ -766,7 +766,7 @@ function DoctorDashboardContent() {
   );
 
   const VerificationGuard = ({ children, allowedTabs }: any) => {
-    if (verificationStatus === "VERIFIED") return <>{children}</>;
+    if (verificationStatus === "VERIFIED" || verificationStatus === "UPDATE_PENDING") return <>{children}</>;
     if (allowedTabs.includes(activeTab)) return <>{children}</>;
 
     return (
