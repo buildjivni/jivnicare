@@ -1,62 +1,35 @@
 const sharp = require('sharp');
-const fs = require('fs');
 
-async function processIcons() {
-  try {
-    const inputPath = '../logo2.png';
-    console.log('Processing', inputPath);
+async function replaceIcons() {
+  // Use the standalone icon file directly - no crop needed
+  const iconSource = 'C:\\Users\\dharm\\Downloads\\icon 2.png';
+  const logoSource = 'C:\\Users\\dharm\\Downloads\\JivniCare3.png'; // logo with text for OG image
 
-    const image = sharp(inputPath);
-    const metadata = await image.metadata();
-    
-    const width = metadata.width;
-    const height = metadata.height;
-    
-    // Zoom factor 1.2
-    const cropWidth = Math.floor(width * 0.8);
-    const cropHeight = Math.floor(height * 0.8);
-    const left = Math.floor((width - cropWidth) / 2);
-    const top = Math.floor((height - cropHeight) / 2);
+  const meta = await sharp(iconSource).metadata();
+  console.log('Icon source:', meta.width, 'x', meta.height);
 
-    // 1. Google Favicon (48x48) - standard ICO replacement
-    await sharp(inputPath)
-      .extract({ left, top, width: cropWidth, height: cropHeight })
-      .resize(48, 48, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
-      .toFile('src/app/favicon.ico');
-    console.log('Saved src/app/favicon.ico (48x48)');
+  // 1. public/logo.png - full logo with text (used for OG / branding)
+  await sharp(logoSource)
+    .resize(400, null, { fit: 'inside' })
+    .png()
+    .toFile('public/logo.png');
+  console.log('✓ public/logo.png (full logo with text)');
 
-    // 2. High-res Favicon (192x192, multiple of 48px as required by Google)
-    await sharp(inputPath)
-      .extract({ left, top, width: cropWidth, height: cropHeight })
-      .resize(192, 192, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
-      .toFile('src/app/icon.png');
-    console.log('Saved src/app/icon.png (192x192)');
+  // 2. src/app/icon.png - 512x512 square app icon (Next.js uses this)
+  await sharp(iconSource)
+    .resize(512, 512, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
+    .png()
+    .toFile('src/app/icon.png');
+  console.log('✓ src/app/icon.png (512x512)');
 
-    // 3. Apple Touch Icon (180x180)
-    await sharp(inputPath)
-      .extract({ left, top, width: cropWidth, height: cropHeight })
-      .resize(180, 180, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
-      .toFile('src/app/apple-icon.png');
-    console.log('Saved src/app/apple-icon.png (180x180)');
-    
-    // 4. OpenGraph Image (1200x630)
-    // For OG, we usually want a rectangular image. We'll place the logo in the center.
-    await sharp(inputPath)
-      .extract({ left, top, width: cropWidth, height: cropHeight })
-      .resize(600, 600, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
-      .extend({
-        top: 15,
-        bottom: 15,
-        left: 300,
-        right: 300,
-        background: { r: 255, g: 255, b: 255, alpha: 1 }
-      })
-      .toFile('public/logo.png');
-    console.log('Saved public/logo.png (OpenGraph 1200x630)');
+  // 3. src/app/apple-icon.png - 180x180 for Apple touch icon
+  await sharp(iconSource)
+    .resize(180, 180, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 1 } })
+    .png()
+    .toFile('src/app/apple-icon.png');
+  console.log('✓ src/app/apple-icon.png (180x180)');
 
-  } catch (err) {
-    console.error('Error processing logo:', err);
-  }
+  console.log('\n✅ All icons replaced with correct standalone JivniCare icon!');
 }
 
-processIcons();
+replaceIcons().catch(console.error);

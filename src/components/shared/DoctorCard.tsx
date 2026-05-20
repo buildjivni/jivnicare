@@ -304,7 +304,7 @@ export function DoctorCard({ doctor, className }: DoctorCardProps) {
             <div className="flex flex-col">
               <div className="flex items-baseline gap-1">
                 <span className="text-[18px] font-black text-slate-900 leading-none">{doctor.fee}</span>
-                <span className="text-[11px] text-slate-400 font-bold line-through opacity-50">₹500</span>
+                {/* Original price placeholder removed */}
               </div>
               <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">
                 Consultation Fee
