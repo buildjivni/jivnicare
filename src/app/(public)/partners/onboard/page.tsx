@@ -371,7 +371,7 @@ function OnboardingContent() {
                       </div>
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-700">Qualifications</label>
-                        <Input placeholder="MBBS, MD" value={formData.qualifications} onChange={(e) => setFormData({...formData, qualifications: e.target.value})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.qualifications ? 'border-rose-500' : ''}`} />
+                        <Input placeholder="MBBS, MD" value={formData.qualifications} onChange={(e) => setFormData({...formData, qualifications: e.target.value.replace(/[^a-zA-Z\s.,()-]/g, '')})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.qualifications ? 'border-rose-500' : ''}`} />
                         {errors.qualifications && <p className="text-[10px] font-bold text-rose-500">{errors.qualifications}</p>}
                       </div>
                     </div>
