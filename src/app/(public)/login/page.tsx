@@ -173,8 +173,8 @@ function PatientLoginContent() {
 
           <div className="relative z-10">
             <Link href="/" className="flex items-center gap-3 mb-12 group">
-              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-xl group-hover:scale-105 transition-transform duration-300">
-                <img src="/logo.png" alt="JivniCare Logo" className="w-8 h-8 object-contain" />
+              <div className="h-10 w-auto bg-white rounded-2xl flex items-center justify-center shadow-xl group-hover:scale-105 transition-transform duration-300">
+                <img src="/logo.png" alt="JivniCare Logo" className="h-8 w-auto object-contain" />
               </div>
               <div className="flex flex-col">
                 <span className="text-2xl font-black text-white leading-none">JivniCare</span>
@@ -195,7 +195,7 @@ function PatientLoginContent() {
 
           <div className="relative z-10 space-y-4">
             <div className="flex items-center gap-4 bg-white/10 backdrop-blur-md p-5 rounded-3xl border border-white/20 shadow-lg">
-              <div className="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center shrink-0 shadow-inner">
+              <div className="h-10 w-auto bg-emerald-500 rounded-2xl flex items-center justify-center shrink-0 shadow-inner">
                 <ShieldCheck className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -429,7 +429,7 @@ function PatientLoginContent() {
                         onClick={() => handleSendOtp()}
                         className="inline-flex items-center gap-2 text-xs font-black text-primary hover:text-[#184a7a] transition-all"
                       >
-                        <RefreshCw className="w-4 h-4" /> RESEND OTP
+                        <RefreshCw className="h-4 w-auto" /> RESEND OTP
                       </button>
                     ) : (
                       <p className="text-[11px] font-bold text-slate-400 tracking-wider">

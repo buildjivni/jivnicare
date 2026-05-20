@@ -59,7 +59,7 @@ export function Footer() {
           <div className="lg:col-span-4 space-y-6 pr-0 lg:pr-10">
             <Link href="/" className="flex items-center gap-3 group w-fit">
               <div className="bg-white px-4 py-2.5 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
-                <Logo className="h-8 w-auto" />
+                <Logo className="h-10 w-auto" />
               </div>
             </Link>
 
