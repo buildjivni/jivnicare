@@ -320,15 +320,8 @@ function AdminDashboardContent() {
         )}
         <div className={`w-72 bg-white border-r border-slate-200 flex flex-col h-screen shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-50 fixed md:relative transition-transform duration-300 ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
           <div className="p-6 pb-6 border-b border-slate-100 bg-gradient-to-b from-slate-50 to-white flex items-center justify-between">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 mb-8 px-2">
                <img src="/logo.png" alt="JivniCare Logo" className="w-10 h-10 drop-shadow-md object-contain" />
-              <div>
-                <h2 className="text-2xl font-black tracking-tight text-slate-900">
-                  <span className="text-primary">Jivni</span>
-                  <span className="text-emerald-600">Care</span>
-                </h2>
-                <p className="text-[10px] font-black text-slate-400 tracking-widest uppercase">Admin Command</p>
-              </div>
             </div>
             <button className="md:hidden text-slate-500 hover:bg-slate-100 p-2 rounded-full" onClick={() => setMobileMenuOpen(false)}>
               <X className="w-5 h-5" />

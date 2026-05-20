@@ -179,9 +179,6 @@ function OnboardingContent() {
             <div className="w-10 h-10 rounded-xl overflow-hidden shadow-md group-hover:scale-105 transition-transform bg-white border border-sky-100 p-1.5 flex items-center justify-center">
               <img src="/logo.png" alt="JivniCare" className="w-8 h-8 object-contain" />
             </div>
-            <span className="text-xl font-black tracking-tight text-slate-800 leading-none">
-              <span className="text-[#5298D2]">Jivni</span><span className="text-[#489C66]">Care</span>
-            </span>
           </Link>
           <Link href="/partners/login" className="px-5 py-2.5 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-655 hover:text-[#5298D2] hover:border-sky-200 shadow-sm transition-all flex items-center gap-2">
             Already a partner? <span className="text-[#5298D2]">Sign In</span>

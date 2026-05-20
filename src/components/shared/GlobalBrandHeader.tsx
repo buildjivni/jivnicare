@@ -30,15 +30,6 @@ export function GlobalBrandHeader({
         <div className="flex items-center gap-3 shrink-0">
           <Link href="/" className="flex items-center gap-2.5 md:gap-3.5 group shrink min-w-0">
             <Logo className="h-11 md:h-14 w-auto shrink-0 transition-transform duration-300 group-hover:scale-[1.01]" />
-            <div className="flex flex-col -space-y-0.5 md:-space-y-1 pt-0.5">
-              <span className="text-[20px] md:text-2xl font-bold tracking-tight leading-none text-slate-800">
-                <span className="text-[#5298D2]">Jivni</span>
-                <span className="text-[#489C66]">Care</span>
-              </span>
-              <span className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-[0.25em] pl-0.5 mt-0.5">
-                {subtitle}
-              </span>
-            </div>
           </Link>
           
           {tagline && (
