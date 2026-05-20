@@ -229,7 +229,7 @@ export function DoctorCard({ doctor, className }: DoctorCardProps) {
         <div className="space-y-1 mb-4">
           <div className="flex items-center gap-1.5">
             <h3 className="text-[17px] font-black text-slate-900 leading-tight group-hover:text-[#205E98] transition-colors">
-              Dr. {doctor.name}
+              {doctor.name}
             </h3>
             <ShieldCheck className="w-4 h-4 text-[#205E98]" />
           </div>

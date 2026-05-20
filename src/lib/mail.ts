@@ -42,7 +42,7 @@ export const sendVerificationEmail = async (doctorEmail: string, doctorName: str
         </div>
         
         <h2 style="color: #1e293b; font-size: 20px;">Verification Successful</h2>
-        <p style="font-size: 16px; line-height: 1.5;">Dear Dr. ${doctorName},</p>
+        <p style="font-size: 16px; line-height: 1.5;">Dear ${doctorName},</p>
         <p style="font-size: 16px; line-height: 1.5;">
           Congratulations! Your professional doctor profile has been successfully verified by our clinical audit team. 
           Welcome to the JivniCare Partner Network.

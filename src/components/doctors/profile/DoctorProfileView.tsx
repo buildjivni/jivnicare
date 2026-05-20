@@ -66,8 +66,8 @@ export function DoctorProfileView({ doctor, relatedDoctors }: DoctorProfileViewP
 
   const handleShare = async () => {
     const shareData = {
-      title: `Dr. ${doctor.name} | ${doctor.specialty} on JivniCare`,
-      text: `Check out Dr. ${doctor.name}, ${doctor.specialty} at ${doctor.clinic}.`,
+      title: `${doctor.name} | ${doctor.specialty} on JivniCare`,
+      text: `Check out ${doctor.name}, ${doctor.specialty} at ${doctor.clinic}.`,
       url: window.location.href,
     };
 
@@ -526,7 +526,7 @@ export function DoctorProfileView({ doctor, relatedDoctors }: DoctorProfileViewP
                       <div className="min-w-0 flex-1">
                         <h4 className="font-black text-sm text-slate-900 leading-snug line-clamp-1 hover:text-[#205E98] transition-colors">
                           <Link href={`/doctors/${relDoc.slug}`}>
-                            Dr. {relDoc.name}
+                            {relDoc.name}
                           </Link>
                         </h4>
                         <p className="text-[11px] font-bold text-[#205E98] mt-0.5">{relDoc.specialty}</p>
