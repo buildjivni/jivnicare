@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/useAuthStore";
 
-type DoctorStatus = "PENDING" | "VERIFIED" | "REJECTED" | "SUSPENDED";
+type DoctorStatus = "DRAFT" | "PENDING" | "PENDING_VERIFICATION" | "VERIFIED" | "UPDATE_PENDING" | "REJECTED" | "SUSPENDED";
 
 interface DoctorEntry {
   id: string;
@@ -289,10 +289,14 @@ function AdminDashboardContent() {
 
   const getStatusBadge = (status: DoctorStatus) => {
     switch(status) {
-      case "PENDING": return <span className="bg-amber-100/80 border border-amber-200 text-amber-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide shadow-sm">Pending</span>;
+      case "DRAFT": return <span className="bg-slate-100 border border-slate-200 text-slate-500 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide shadow-sm">Draft</span>;
+      case "PENDING":
+      case "PENDING_VERIFICATION": return <span className="bg-amber-100/80 border border-amber-200 text-amber-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide shadow-sm">Pending</span>;
+      case "UPDATE_PENDING": return <span className="bg-sky-100/80 border border-sky-200 text-sky-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide shadow-sm">Update Req</span>;
       case "VERIFIED": return <span className="bg-emerald-100/80 border border-emerald-200 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide shadow-sm">Verified</span>;
       case "REJECTED": return <span className="bg-red-100/80 border border-red-200 text-red-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide shadow-sm">Rejected</span>;
       case "SUSPENDED": return <span className="bg-slate-200/80 border border-slate-300 text-slate-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide shadow-sm">Suspended</span>;
+      default: return <span className="bg-slate-100 border border-slate-200 text-slate-500 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide shadow-sm">{status}</span>;
     }
   };
 
@@ -487,7 +491,12 @@ function AdminDashboardContent() {
   );
 
   const renderDoctorManagement = () => {
-    const filteredDoctors = filter === "ALL" ? doctors : doctors.filter(d => d.status === filter);
+    const filteredDoctors = filter === "ALL" 
+      ? doctors 
+      : doctors.filter(d => {
+          if (filter === "PENDING") return ["DRAFT", "PENDING", "PENDING_VERIFICATION", "UPDATE_PENDING"].includes(d.status);
+          return d.status === filter;
+        });
 
     return (
       <div className="h-[calc(100vh-80px)] flex fade-in">
@@ -576,7 +585,7 @@ function AdminDashboardContent() {
                 )}
                 <div className={`w-24 h-24 rounded-full border-4 shadow-xl mb-4 flex items-center justify-center text-3xl font-black text-white ${selectedDoctor.status === 'SUSPENDED' ? 'bg-slate-400 border-slate-200' : 'bg-gradient-to-br from-[#5298D2] to-[#1E3A8A] border-white'}`}>
                   {selectedDoctor.name.split(' ')[1]?.charAt(0) || 'D'}
-                  {selectedDoctor.status === "PENDING" && <div className="absolute -bottom-2 -right-2 bg-amber-500 border-4 border-white text-white w-8 h-8 rounded-full flex items-center justify-center font-black shadow-sm">!</div>}
+                  {selectedDoctor.status !== 'VERIFIED' && selectedDoctor.status !== 'SUSPENDED' && selectedDoctor.status !== 'REJECTED' && <div className="absolute -bottom-2 -right-2 bg-amber-500 border-4 border-white text-white w-8 h-8 rounded-full flex items-center justify-center font-black shadow-sm">!</div>}
                 </div>
                 <h2 className="text-2xl font-black text-slate-900">{selectedDoctor.name}</h2>
                 <p className="text-sm font-black text-[#489C66] uppercase tracking-widest mt-1 bg-green-50 px-3 py-1 rounded-full inline-block">{selectedDoctor.specialization}</p>
@@ -585,7 +594,7 @@ function AdminDashboardContent() {
               </div>
 
               {/* ── Verification Checklist ── */}
-              {selectedDoctor.status === "PENDING" && (
+              {(selectedDoctor.status === "PENDING" || selectedDoctor.status === "PENDING_VERIFICATION" || selectedDoctor.status === "DRAFT") && (
                 <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
                   <p className="text-[11px] font-black text-amber-700 uppercase tracking-widest mb-3 flex items-center gap-2"><AlertTriangle className="w-4 h-4"/> Verification Checklist</p>
                   {[
@@ -768,7 +777,7 @@ function AdminDashboardContent() {
             </div>
 
             <div className="p-6 border-t border-slate-200 bg-slate-50 sticky bottom-0 z-20 space-y-3">
-              {selectedDoctor.status === "PENDING" ? (
+              {(selectedDoctor.status === "PENDING" || selectedDoctor.status === "PENDING_VERIFICATION" || selectedDoctor.status === "DRAFT") ? (
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
                     <Button onClick={() => handleStatusUpdate(selectedDoctor.id, "VERIFIED")} className="h-14 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black shadow-lg shadow-emerald-600/20 text-base"><CheckCircle2 className="w-5 h-5 mr-2"/> Approve</Button>
