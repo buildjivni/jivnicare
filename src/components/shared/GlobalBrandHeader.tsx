@@ -29,7 +29,7 @@ export function GlobalBrandHeader({
         {/* Brand Group */}
         <div className="flex items-center gap-3 shrink-0">
           <Link href="/" className="flex items-center gap-2.5 md:gap-3.5 group shrink min-w-0">
-            <Logo className="h-11 md:h-14 w-auto shrink-0 transition-transform duration-300 group-hover:scale-[1.01]" />
+            <Logo className="h-12 md:h-[64px] w-auto shrink-0 transition-transform duration-300 group-hover:scale-[1.01]" />
           </Link>
           
           {tagline && (
