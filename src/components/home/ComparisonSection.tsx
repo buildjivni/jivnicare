@@ -40,7 +40,7 @@ export function ComparisonSection() {
               </div>
               <div className="p-6 md:p-8 text-center font-black text-primary flex flex-col items-center gap-2 bg-primary/5 border-x border-primary/10 relative overflow-hidden">
                 <div className="absolute top-0 inset-x-0 h-1 bg-[#258C54]" />
-                <Logo className="h-10 w-auto" />
+                <Logo variant="icon" className="h-8 w-auto" />
               </div>
             </div>
           

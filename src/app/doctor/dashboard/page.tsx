@@ -259,7 +259,7 @@ function DoctorDashboardContent() {
         )}
         <div className={`w-64 bg-card border-r border-border flex flex-col h-screen shrink-0 z-50 fixed md:relative transition-transform duration-300 ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
           <div className="p-6 border-b border-border flex items-center justify-between">
-            <Logo className="h-10 w-auto" />
+            <Logo variant="icon" className="h-8 w-auto" />
             <button className="md:hidden text-slate-500 hover:bg-slate-100 p-2 rounded-xl" onClick={() => setMobileMenuOpen(false)}>
               <X className="w-5 h-5" />
             </button>
@@ -768,7 +768,7 @@ function DoctorDashboardContent() {
           <button className="p-2 rounded-xl text-slate-600 hover:bg-slate-100 active:scale-95 transition-all min-h-[44px] min-w-[44px] flex items-center justify-center" onClick={() => setMobileMenuOpen(true)}>
             <Menu className="w-6 h-6" />
           </button>
-          <Logo className="h-10 w-auto" />
+          <Logo variant="icon" className="h-8 w-auto" />
           <div className="w-10"></div>
         </div>
         <div className="flex-1 p-4 md:p-10 overflow-y-auto">

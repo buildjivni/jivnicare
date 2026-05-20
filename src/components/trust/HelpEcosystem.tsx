@@ -92,7 +92,7 @@ export function HelpEcosystem({ className }: { className?: string }) {
            </h4>
            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm h-[calc(100%-2rem)] flex flex-col justify-center">
              <div className="h-10 w-auto rounded-xl bg-white border border-slate-100 flex items-center justify-center mb-5 shadow-sm">
-               <img src="/logo.png" alt="" className="h-8 w-auto object-contain" />
+               <img src="/icon-only.png" alt="" className="h-8 w-auto object-contain" />
              </div>
              <h5 className="text-lg font-black text-slate-900 mb-3">Your Health, Our Priority</h5>
              <p className="text-sm text-slate-600 leading-relaxed font-medium mb-6">

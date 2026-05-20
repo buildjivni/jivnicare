@@ -221,7 +221,7 @@ export function DoctorProfileView({ doctor, relatedDoctors }: DoctorProfileViewP
           </div>
 
           <div className="inline-flex items-center gap-2 bg-white border border-slate-100 shadow-sm text-[11px] font-black px-4 py-2 rounded-xl mb-4">
-            <img src="/logo.png" alt="" className="h-4 w-auto object-contain shrink-0" />
+            <img src="/icon-only.png" alt="" className="h-4 w-auto object-contain shrink-0" />
             <span className="uppercase tracking-widest text-slate-400">
                {badge} · <span className="text-primary">Jivni</span><span className="text-secondary">Care</span> Verified
             </span>
