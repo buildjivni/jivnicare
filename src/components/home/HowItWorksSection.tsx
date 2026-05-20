@@ -29,7 +29,7 @@ export function HowItWorksSection() {
   ];
 
   return (
-    <section id="how-it-works" className="py-16 md:py-24 bg-white relative overflow-hidden">
+    <section id="how-it-works" className="py-16 md:py-24 bg-white relative overflow-hidden scroll-mt-24">
       <div className="container mx-auto px-4 max-w-6xl relative z-10">
         <div className="text-center max-w-3xl mx-auto mb-12 md:mb-16">
           <h2 className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tight text-slate-900 mb-6">

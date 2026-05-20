@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function SecurityPage() {
   return (
-    <div className="bg-slate-50 min-h-screen page-enter">
+    <div className="bg-slate-50 min-h-screen">
       <div className="bg-slate-900 text-white pt-16 pb-14">
         <div className="container mx-auto px-4 md:px-6 max-w-3xl text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-emerald-400 text-xs font-bold uppercase tracking-widest mb-6">

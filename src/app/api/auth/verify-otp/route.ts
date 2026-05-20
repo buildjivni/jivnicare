@@ -1,9 +1,25 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import jwt from 'jsonwebtoken';
+import { checkRateLimit } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 export async function POST(request: Request) {
   try {
+    const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
+    
+    // Rate Limiting: 5 attempts per 10 minutes per IP
+    const rateLimit = await checkRateLimit({
+      identifier: `otp_verify_${ip}`,
+      limit: 5,
+      windowMs: 10 * 60 * 1000,
+    });
+    
+    if (!rateLimit.success) {
+      logger.warn({ category: 'OTP', message: 'Rate limit exceeded for OTP verification', metadata: { ip } });
+      return NextResponse.json({ error: 'Too many attempts, please try again later.' }, { status: 429 });
+    }
+
     const body = await request.json();
     const { phone, otp, name, location } = body;
 
@@ -82,14 +98,14 @@ export async function POST(request: Request) {
     response.cookies.set('auth-token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      sameSite: 'strict',
       maxAge: 7 * 24 * 60 * 60, // 7 days
       path: '/',
     });
 
     return response;
   } catch (error) {
-    console.error('Verify OTP Error:', error);
+    logger.error({ category: 'API_EXCEPTION', message: 'Internal server error while verifying OTP', error });
     return NextResponse.json(
       { error: 'Internal server error while verifying OTP' },
       { status: 500 }

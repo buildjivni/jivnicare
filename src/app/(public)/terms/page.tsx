@@ -31,7 +31,7 @@ const SECTIONS = [
 
 export default function TermsPage() {
   return (
-    <div className="bg-slate-50 min-h-screen page-enter">
+    <div className="bg-slate-50 min-h-screen">
       <div className="bg-white border-b border-slate-200 pt-16 pb-14">
         <div className="container mx-auto px-4 md:px-6 max-w-3xl text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-xs font-bold uppercase tracking-widest mb-6">

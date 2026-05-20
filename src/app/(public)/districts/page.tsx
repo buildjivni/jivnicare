@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   alternates: { canonical: `${SITE_CONFIG.baseUrl}/districts` },
 };
 
-const FEATURED_DISTRICTS = ["Patna", "Gaya", "Muzaffarpur", "Bhagalpur", "Darbhanga", "Purnia"];
+const FEATURED_DISTRICTS = ["Patna", "Gaya", "Muzaffarpur", "Bhagalpur", "Darbhanga", "Jamui"];
 
 export default function DistrictsIndexPage() {
   return (

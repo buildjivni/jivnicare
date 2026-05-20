@@ -5,16 +5,6 @@ import { Logo } from "@/components/brand/Logo";
 
 const FOOTER_SECTIONS = [
   {
-    title: "Company",
-    links: [
-      { label: "About JivniCare", href: "/about" },
-      { label: "Our Mission", href: "/about#mission" },
-      { label: "Digital OPD Vision", href: "/about#vision" },
-      { label: "Careers", href: "mailto:careers@jivnicare.com" },
-      { label: "Contact Us", href: "mailto:support@jivnicare.com" },
-    ],
-  },
-  {
     title: "For Patients",
     links: [
       { label: "Find a Doctor", href: "/doctors" },
@@ -31,6 +21,16 @@ const FOOTER_SECTIONS = [
       { label: "Clinic Partnership", href: "/partners" },
       { label: "Provider Dashboard", href: "/login?role=DOCTOR" },
       { label: "Partner Support", href: "mailto:partners@jivnicare.com" },
+    ],
+  },
+  {
+    title: "Company",
+    links: [
+      { label: "About JivniCare", href: "/about" },
+      { label: "Our Mission", href: "/about#mission" },
+      { label: "Digital OPD Vision", href: "/about#vision" },
+      { label: "Careers", href: "/about#careers" },
+      { label: "Contact Us", href: "#contact" },
     ],
   },
   {
@@ -53,7 +53,7 @@ export function Footer() {
       <div className="container mx-auto px-4 md:px-6 max-w-7xl relative z-10">
 
         {/* Top: Brand + Navigation Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 md:gap-8 mb-14 md:mb-20">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 md:gap-8 mb-14 md:mb-20">
 
           {/* Brand & Mission */}
           <div className="lg:col-span-4 space-y-6 pr-0 lg:pr-10">
@@ -109,33 +109,34 @@ export function Footer() {
           </div>
 
           {/* Navigation Columns */}
-          {FOOTER_SECTIONS.map((section) => (
-            <div key={section.title} className="lg:col-span-2">
-              <h4 className="text-slate-900 font-bold mb-6 text-sm uppercase tracking-wider">{section.title}</h4>
-              <ul className="space-y-3">
-                {section.links.map((link) => {
-                  const isExternal = link.href.startsWith("mailto:") || link.href.startsWith("http");
-                  const Tag = isExternal ? "a" : Link;
-                  const extraProps = isExternal ? { href: link.href } : { href: link.href };
-                  return (
-                    <li key={link.label}>
-                      <Tag
-                        {...extraProps}
-                        className={`text-sm hover:translate-x-1 inline-block transition-all duration-300 ${
-                          "accent" in link && link.accent
-                            ? "text-emerald-500 font-semibold hover:text-emerald-600"
-                            : "text-slate-500 hover:text-primary"
-                        }`}
-                      >
-                        {link.label}
-                      </Tag>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          ))}
-
+          <div className="lg:col-span-8 grid grid-cols-2 md:grid-cols-4 gap-8">
+            {FOOTER_SECTIONS.map((section) => (
+              <div key={section.title} className="col-span-1">
+                <h4 className="text-slate-900 font-bold mb-6 text-sm uppercase tracking-wider">{section.title}</h4>
+                <ul className="space-y-3">
+                  {section.links.map((link) => {
+                    const isExternal = link.href.startsWith("mailto:") || link.href.startsWith("http");
+                    const Tag = isExternal ? "a" : Link;
+                    const extraProps = isExternal ? { href: link.href } : { href: link.href };
+                    return (
+                      <li key={link.label}>
+                        <Tag
+                          {...extraProps}
+                          className={`text-sm hover:translate-x-1 inline-block transition-all duration-300 ${
+                            "accent" in link && link.accent
+                              ? "text-emerald-500 font-semibold hover:text-emerald-600"
+                              : "text-slate-500 hover:text-primary"
+                          }`}
+                        >
+                          {link.label}
+                        </Tag>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Mid: Top Specialties + Contact */}
@@ -160,7 +161,7 @@ export function Footer() {
           </div>
 
           {/* Contact Card */}
-          <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 space-y-4">
+          <div id="contact" className="bg-slate-50 p-6 rounded-2xl border border-slate-100 space-y-4 scroll-mt-24">
             <h4 className="text-slate-900 font-bold text-sm uppercase tracking-wider">Get in Touch</h4>
             <ul className="space-y-3">
               <li className="flex items-start gap-3">

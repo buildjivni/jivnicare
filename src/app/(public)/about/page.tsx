@@ -44,7 +44,7 @@ const STATS = [
 
 export default function AboutPage() {
   return (
-    <div className="bg-white min-h-screen page-enter">
+    <div className="bg-white min-h-screen">
 
       {/* Hero */}
       <section className="relative pt-24 pb-20 md:pt-32 md:pb-28 overflow-hidden bg-slate-950 text-white">
@@ -100,7 +100,7 @@ export default function AboutPage() {
       </section>
 
       {/* Mission Pillars */}
-      <section className="py-20 md:py-28 bg-slate-50 border-t border-slate-100">
+      <section id="mission" className="py-20 md:py-28 bg-slate-50 border-t border-slate-100 scroll-mt-24">
         <div className="container mx-auto px-4 md:px-6 max-w-6xl">
           <div className="text-center max-w-2xl mx-auto mb-16">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-700 text-xs font-bold uppercase tracking-widest mb-6">
@@ -125,7 +125,7 @@ export default function AboutPage() {
       </section>
 
       {/* Digital OPD Vision */}
-      <section className="py-20 md:py-28 bg-slate-900 text-white overflow-hidden relative">
+      <section id="vision" className="py-20 md:py-28 bg-slate-900 text-white overflow-hidden relative scroll-mt-24">
         <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-[100px] pointer-events-none" />
         <div className="container mx-auto px-4 md:px-6 max-w-4xl text-center relative z-10">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-xs font-bold uppercase tracking-widest mb-8">
@@ -153,7 +153,7 @@ export default function AboutPage() {
       </section>
 
       {/* Team/Hiring Placeholder */}
-      <section className="py-20 md:py-24 bg-white border-t border-slate-100">
+      <section id="careers" className="py-20 md:py-24 bg-white border-t border-slate-100 scroll-mt-24">
         <div className="container mx-auto px-4 md:px-6 max-w-3xl text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-xs font-bold uppercase tracking-widest mb-6">
             <Users className="w-3.5 h-3.5" /> Join the Team

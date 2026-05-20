@@ -4,6 +4,8 @@ import { verifyToken } from "@/lib/jwt";
 import { cookies } from "next/headers";
 import { QueueService } from "@/services/queueService";
 import { bookAppointmentSchema, formatZodError } from "@/lib/validations";
+import { checkRateLimit } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 export async function POST(request: Request) {
   try {
@@ -17,6 +19,17 @@ export async function POST(request: Request) {
     const payload: any = await verifyToken(token);
     if (!payload || !payload.id) {
       return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    }
+    const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
+    const rateLimit = await checkRateLimit({
+      identifier: `book_appt_${payload.id}`, // Rate limit by patient ID
+      limit: 10,
+      windowMs: 60 * 60 * 1000, // 10 bookings per hour
+    });
+
+    if (!rateLimit.success) {
+      logger.warn({ category: 'BOOKING', message: 'Rate limit exceeded for booking', metadata: { userId: payload.id, ip } });
+      return NextResponse.json({ error: "Too many booking attempts. Please try again later." }, { status: 429 });
     }
 
     const body = await request.json();
@@ -44,7 +57,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, token: newQueueToken });
   } catch (error: any) {
-    console.error("Booking error:", error);
+    logger.error({ category: 'BOOKING', message: 'Booking error', error });
     
     // Phase 2: Explicit Error Messages for Patients
     const errorMessages: Record<string, string> = {
