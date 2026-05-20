@@ -81,7 +81,7 @@ function OnboardingContent() {
         setGpsStatus('success'); setGpsLoading(false);
       },
       () => { setGpsStatus('error'); setGpsLoading(false); },
-      { timeout: 10000, enableHighAccuracy: true }
+      { timeout: 20000, enableHighAccuracy: false, maximumAge: 60000 }
     );
   };
 

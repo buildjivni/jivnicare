@@ -81,7 +81,7 @@ function DoctorListingContent() {
           console.warn("Geo error or denied:", err);
           setGeoStatus("denied");
         },
-        { timeout: 10000, maximumAge: 60000 }
+        { timeout: 15000, maximumAge: 60000 }
       );
     } else {
       setGeoStatus("denied");
