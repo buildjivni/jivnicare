@@ -90,7 +90,10 @@ export async function PUT(request: Request) {
     // ── Category B: Instantly Editable Fields ────────────────────
     const instantData: any = {};
     if (validatedData.bio !== undefined) instantData.bio = validatedData.bio;
-    if (validatedData.fee !== undefined) instantData.fee = validatedData.fee;
+    if (validatedData.fee !== undefined) {
+      instantData.fee = validatedData.fee;
+      instantData.consultationFee = validatedData.fee;
+    }
     if (validatedData.averageConsultationTime !== undefined) instantData.averageConsultationTime = validatedData.averageConsultationTime;
     if (validatedData.emergencyAvailable !== undefined) instantData.emergencyAvailable = validatedData.emergencyAvailable;
     if (validatedData.onlineConsultationAvailable !== undefined) instantData.onlineConsultationAvailable = validatedData.onlineConsultationAvailable;
