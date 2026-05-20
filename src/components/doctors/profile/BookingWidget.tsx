@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Stethoscope, Video, Users, Clock, Activity, Shield, CheckCircle2, Zap } from "lucide-react";
+import { Stethoscope, Video, Users, Clock, Activity, Shield, CheckCircle2, Zap, CalendarCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import type { Doctor } from "@/types";
@@ -213,26 +213,31 @@ export function BookingWidget({
               }}
               disabled={!canBook || isNavigating}
               className={[
-                "w-full h-12 rounded-[14px] text-[14px] font-bold",
+                "w-full h-[52px] rounded-[16px] text-[15px] font-black tracking-wide",
                 canBook
-                  ? "bg-[#205E98] hover:bg-[#1a4f82] text-white shadow-[0_4px_16px_rgba(32,94,152,0.28)] hover:shadow-[0_6px_20px_rgba(32,94,152,0.36)]"
+                  ? "bg-gradient-to-b from-[#2366a8] to-[#1a4e87] hover:from-[#1a5898] hover:to-[#153e6e] text-white shadow-[0_6px_24px_rgba(32,94,152,0.35)] hover:shadow-[0_8px_28px_rgba(32,94,152,0.45)]"
                   : isPaused && !isClosedToday
                   ? "bg-amber-500 hover:bg-amber-600 text-white"
                   : "bg-slate-200 text-slate-500",
-                "active:scale-[0.98] transition-all duration-200",
-                "disabled:opacity-60 disabled:cursor-not-allowed disabled:shadow-none flex items-center justify-center gap-2",
+                "active:scale-[0.97] transition-all duration-200",
+                "disabled:opacity-60 disabled:cursor-not-allowed disabled:shadow-none flex items-center justify-center gap-2.5",
               ].join(" ")}
             >
               {isNavigating
-                ? "Redirecting..."
+                ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                    Booking...
+                  </>
+                )
                 : isClosedToday
-                ? "🔴 Closed Today"
+                ? "🔴 Clinic Closed Today"
                 : isPaused
-                ? "⏸ Booking Paused — Walk-in Only"
+                ? "⏸ Walk-in Only — Call Clinic"
                 : (
                   <>
-                    <Shield className="w-4 h-4 text-white/90" />
-                    Confirm Clinic Visit
+                    <CalendarCheck className="w-4.5 h-4.5 text-white/90" />
+                    Book Appointment Now
                   </>
                 )}
             </Button>
