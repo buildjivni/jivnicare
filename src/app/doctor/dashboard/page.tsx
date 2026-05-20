@@ -166,13 +166,13 @@ function DoctorDashboardContent() {
           bio: data.doctor.bio || "",
           regNumber: data.doctor.medicalRegistrationNumber || "",
           specialty: data.doctor.specialties?.[0]?.name || "General Medicine",
-          experience: data.doctor.experience?.toString() || "",
+          experience: data.doctor.experience?.toString() || "0",
+          consultationFee: (data.doctor.fee || data.doctor.consultationFee || 0).toString(),
           qualifications: data.doctor.qualifications || "",
           hospitalName: data.doctor.hospitalName || "",
           address: data.doctor.clinicOperations?.address || data.doctor.address || "",
           city: data.doctor.city || "",
           district: data.doctor.district || "",
-          consultationFee: data.doctor.consultationFee?.toString() || data.doctor.fee?.toString() || "0",
           phone: data.doctor.user?.phone || "",
         });
         setSettingsData({
