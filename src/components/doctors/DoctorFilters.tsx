@@ -55,7 +55,7 @@ export function DoctorFilters({
 
   const visibleSpecialties = showAllSpecialties ? HEALTHCARE_SPECIALTIES : HEALTHCARE_SPECIALTIES.slice(0, 6);
 
-  const FilterContent = () => (
+  const renderFilterContent = () => (
     <div className="space-y-6" role="group" aria-label="Filter doctors">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -185,7 +185,7 @@ export function DoctorFilters({
       {/* Desktop Sidebar Filters */}
       <aside className="hidden md:block w-64 shrink-0 sticky top-28 self-start">
         <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
-          <FilterContent />
+          {renderFilterContent()}
         </div>
       </aside>
 
@@ -227,7 +227,7 @@ export function DoctorFilters({
               </div>
               
               <div className="overflow-y-auto p-6 pb-24">
-                <FilterContent />
+                {renderFilterContent()}
               </div>
 
               <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-white via-white to-transparent pt-12">
