@@ -12,14 +12,12 @@ const protectedPaths = [
   { prefix: '/checkout', roles: ['PATIENT', 'DOCTOR', 'ADMIN'] },
 ];
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Check if the path is protected
   const isAuthPage = pathname.endsWith('/login') || pathname.endsWith('/register');
-  const protectedRoute = !isAuthPage 
-    ? protectedPaths.find((route) => pathname === route.prefix || pathname.startsWith(`${route.prefix}/`)) 
-    : undefined;
+  const protectedRoute = !isAuthPage ? protectedPaths.find((route) => pathname.startsWith(route.prefix)) : undefined;
 
   if (!protectedRoute) {
     return NextResponse.next();

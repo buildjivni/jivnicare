@@ -67,7 +67,14 @@ const nextConfig: NextConfig = {
           },
         ],
       },
-
+      {
+        // Force revalidation of dev chunks to prevent stale Turbopack module factories
+        source: "/_next/dev/(.*)",
+        headers: [
+          { key: "Cache-Control", value: "no-cache, no-store, must-revalidate" },
+          { key: "Pragma", value: "no-cache" },
+        ],
+      },
       // NOTE: Do NOT set Cache-Control for /_next/static in dev — it breaks Turbopack HMR.
       // In production (Vercel/CDN), these are handled automatically with content-hashing.
     ];

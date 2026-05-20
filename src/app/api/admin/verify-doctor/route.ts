@@ -5,8 +5,6 @@ import { cookies } from 'next/headers';
 import { verifyDoctorSchema, formatZodError } from '@/lib/validations';
 import { generateSequentialDoctorCode } from '@/lib/slug';
 
-import { sendVerificationEmail } from '@/lib/mail';
-
 export async function POST(request: Request) {
   try {
     // 1. Authenticate Admin
@@ -43,10 +41,7 @@ export async function POST(request: Request) {
 
     const { doctorId, status, adminNotes } = validation.data;
 
-    const doctor = await prisma.doctor.findUnique({ 
-      where: { id: doctorId },
-      include: { user: true }
-    });
+    const doctor = await prisma.doctor.findUnique({ where: { id: doctorId } });
     if (!doctor) {
       return NextResponse.json({ error: 'Doctor not found.' }, { status: 404 });
     }
@@ -110,14 +105,8 @@ export async function POST(request: Request) {
         });
       }
 
-      return { status, doctorCode, user: doctor.user };
+      return { status, doctorCode };
     });
-    
-    // Dispatch Email asynchronously if successfully verified
-    if (result.status === 'VERIFIED' && result.user?.email) {
-      // Send email without awaiting to prevent blocking the response
-      sendVerificationEmail(result.user.email, doctor.name).catch(console.error);
-    }
 
     return NextResponse.json({
       success: true,
