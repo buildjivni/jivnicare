@@ -7,6 +7,7 @@ import {
   LogOut, Wallet, CalendarX, Link as LinkIcon, AlertCircle, ShieldCheck, CheckCircle2,
   X, Menu, TrendingUp, RefreshCw, MapPin, Clock
 } from "lucide-react";
+import { Logo } from "@/components/brand/Logo";
 import { QueueStatCards } from "@/components/doctor/queue/QueueStatCards";
 import { NowCallingController } from "@/components/doctor/queue/NowCallingController";
 import { QueueOperationsMenu } from "@/components/doctor/queue/QueueOperationsMenu";
@@ -258,15 +259,7 @@ function DoctorDashboardContent() {
         )}
         <div className={`w-64 bg-card border-r border-border flex flex-col h-screen shrink-0 z-50 fixed md:relative transition-transform duration-300 ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
           <div className="p-6 border-b border-border flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center">
-                 <span className="text-white font-black text-sm">JC</span>
-              </div>
-              <div>
-                <h2 className="text-lg font-black tracking-tight text-slate-900 leading-none">JivniCare</h2>
-                <p className="text-[9px] font-bold text-emerald-600 tracking-widest uppercase mt-0.5">Doctor Panel</p>
-              </div>
-            </div>
+            <Logo className="h-8 w-auto" />
             <button className="md:hidden text-slate-500 hover:bg-slate-100 p-2 rounded-xl" onClick={() => setMobileMenuOpen(false)}>
               <X className="w-5 h-5" />
             </button>
@@ -775,9 +768,7 @@ function DoctorDashboardContent() {
           <button className="p-2 rounded-xl text-slate-600 hover:bg-slate-100 active:scale-95 transition-all min-h-[44px] min-w-[44px] flex items-center justify-center" onClick={() => setMobileMenuOpen(true)}>
             <Menu className="w-6 h-6" />
           </button>
-          <h2 className="font-black text-slate-900 text-lg">
-            <span className="text-primary">Jivni</span><span className="text-emerald-600">Care</span>
-          </h2>
+          <Logo className="h-8 w-auto" />
           <div className="w-10"></div>
         </div>
         <div className="flex-1 p-4 md:p-10 overflow-y-auto">
