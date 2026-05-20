@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 // ── Rich Skeleton Loading ────────────────────────────────────────────────────
 function PageSkeleton() {
   return (
-    <div className="bg-[#f7f9fc] min-h-[calc(100vh-64px)] page-enter">
+    <div className="bg-[#f7f9fc] min-h-[calc(100vh-64px)]">
       <div className="container mx-auto px-4 max-w-6xl py-6 md:py-10">
         <div className="flex flex-col md:flex-row gap-6">
           <aside className="hidden md:block w-64 shrink-0">

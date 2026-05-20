@@ -118,8 +118,9 @@ export function Header() {
     <>
       <header
         className={cn(
-          "sticky top-0 z-[100] w-full transition-all duration-300 bg-white border-b border-slate-100",
-          scrolled ? "shadow-sm h-16" : "h-20"
+          "sticky top-0 z-[100] w-full transition-all duration-300 bg-white/95 backdrop-blur-md border-b",
+          "h-16 md:h-20",
+          scrolled ? "shadow-sm border-slate-200" : "border-slate-100"
         )}
       >
         <div className="container mx-auto px-4 md:px-6 h-full flex items-center justify-between gap-3 max-w-7xl w-full box-border">

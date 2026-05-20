@@ -60,7 +60,7 @@ export default async function BlogPostPage({ params }: Props) {
   const relatedPosts = getFeaturedPosts().filter((p) => p.id !== post.id).slice(0, 2);
 
   return (
-    <div className="bg-slate-50 min-h-screen pb-20 page-enter">
+    <div className="bg-slate-50 min-h-screen pb-20">
       {/* Header / Hero */}
       <div className="bg-white border-b border-slate-200 pt-8 pb-16">
         <div className="container mx-auto px-4 md:px-6 max-w-4xl">

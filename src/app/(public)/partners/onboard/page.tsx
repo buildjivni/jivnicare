@@ -197,9 +197,6 @@ function OnboardingContent() {
           
           {/* Header Title Section */}
           <div className="flex flex-col items-center pt-10 pb-8 px-6 border-b border-slate-100 bg-slate-50/30">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-sky-50 border border-sky-100 text-[#5298D2] rounded-full text-[10px] font-bold uppercase tracking-widest mb-4">
-              <Sparkles className="w-3.5 h-3.5 text-sky-500 animate-pulse" /> B2B Partner Portal
-            </span>
             <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight text-center">
               Doctor Registration Portal
             </h1>

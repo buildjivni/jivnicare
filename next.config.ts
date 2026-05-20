@@ -1,5 +1,11 @@
 import type { NextConfig } from "next";
 
+// ── Build-time Environment Validation ──
+if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
+  if (!process.env.JWT_SECRET) console.warn("⚠️ FATAL: JWT_SECRET is missing. Authentication will fail.");
+  if (!process.env.DATABASE_URL) console.warn("⚠️ FATAL: DATABASE_URL is missing. Database connection will fail.");
+}
+
 const nextConfig: NextConfig = {
   // ── Tech Stack Obfuscation ──────────────────────────────────────────────────
   poweredByHeader: false,
