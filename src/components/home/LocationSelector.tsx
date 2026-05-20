@@ -41,26 +41,32 @@ export function LocationSelector({ className, buttonClassName }: { className?: s
 
   const handleAutoDetect = () => {
     setIsLocating(true);
-    // Simulate location detection delay
-    setTimeout(() => {
-      if ("geolocation" in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&addressdetails=1`);
+            const geo = await res.json();
+            const addr = geo.address || {};
+            const city = addr.city || addr.town || addr.village || addr.county || "Patna";
+            setLocation(city);
+            localStorage.setItem("jivnicare_location", city);
+          } catch (e) {
             setLocation("Patna");
             localStorage.setItem("jivnicare_location", "Patna");
-            setIsLocating(false);
-            setIsOpen(false);
-          },
-          (err) => {
-            console.warn("Location access denied or failed", err);
-            setIsLocating(false);
-          },
-          { timeout: 5000 }
-        );
-      } else {
-        setIsLocating(false);
-      }
-    }, 800);
+          }
+          setIsLocating(false);
+          setIsOpen(false);
+        },
+        (err) => {
+          console.warn("Location access denied or failed", err);
+          setIsLocating(false);
+        },
+        { timeout: 15000, maximumAge: 60000 }
+      );
+    } else {
+      setIsLocating(false);
+    }
   };
 
   const handleSelect = (city: string) => {
