@@ -61,12 +61,6 @@ export function Footer() {
               <div className="bg-white px-4 py-2.5 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
                 <Logo className="h-8 w-auto" />
               </div>
-              <div className="flex flex-col -space-y-1">
-                 <span className="text-xl font-black tracking-tight leading-none text-white">
-                    <span className="text-primary">Jivni</span><span className="text-secondary">Care</span>
-                 </span>
-                 <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] pl-0.5">Bihar</span>
-              </div>
             </Link>
 
             <p className="text-slate-400 text-[13px] font-bold leading-relaxed max-w-xs">
