@@ -94,7 +94,7 @@ function DoctorLoginContent() {
 
           <div className="relative z-10">
             <Link href="/" className="flex items-center gap-3 mb-12 group">
-              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-xl group-hover:scale-105 transition-transform duration-300">
+              <div className="h-10 w-auto bg-white rounded-2xl flex items-center justify-center shadow-xl group-hover:scale-105 transition-transform duration-300">
                 <img src="/logo.png" alt="JivniCare Logo" className="h-8 w-auto object-contain" />
               </div>
               <div className="flex flex-col">
@@ -118,7 +118,7 @@ function DoctorLoginContent() {
 
           <div className="relative z-10 space-y-4">
             <div className="flex items-center gap-4 bg-white/10 backdrop-blur-md p-5 rounded-3xl border border-white/20 shadow-lg">
-              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shrink-0 shadow-inner">
+              <div className="h-10 w-auto bg-white rounded-2xl flex items-center justify-center shrink-0 shadow-inner">
                 <Stethoscope className="w-6 h-6 text-sky-500" />
               </div>
               <div>
@@ -151,7 +151,7 @@ function DoctorLoginContent() {
                     animate={{ opacity: 1, scale: 1 }}
                     className="mb-8 p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-start gap-3"
                   >
-                    <AlertCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+                    <AlertCircle className="h-4 w-auto text-rose-500 shrink-0 mt-0.5" />
                     <p className="text-xs font-bold text-rose-900 leading-relaxed">{error}</p>
                   </motion.div>
                 )}
@@ -212,7 +212,7 @@ function DoctorLoginContent() {
                   <p className="text-[13px] font-bold text-slate-500">
                     New to the network? <br />
                     <Link href="/partners/onboard" className="text-sky-600 font-black hover:text-sky-700 mt-2 inline-flex items-center gap-1.5 group transition-all">
-                      Request Partnership <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                      Request Partnership <ArrowRight className="h-4 w-auto group-hover:translate-x-1 transition-transform" />
                     </Link>
                   </p>
                 </div>

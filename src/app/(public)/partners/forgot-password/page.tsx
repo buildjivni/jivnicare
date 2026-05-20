@@ -122,7 +122,7 @@ export default function ForgotPasswordPage() {
 
           <div className="relative z-10">
             <Link href="/" className="flex items-center gap-3 mb-12 group">
-              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-xl group-hover:scale-105 transition-transform duration-300">
+              <div className="h-10 w-auto bg-white rounded-2xl flex items-center justify-center shadow-xl group-hover:scale-105 transition-transform duration-300">
                 <img src="/logo.png" alt="JivniCare Logo" className="h-8 w-auto object-contain" />
               </div>
               <div className="flex flex-col">
@@ -146,7 +146,7 @@ export default function ForgotPasswordPage() {
 
           <div className="relative z-10 space-y-4">
             <div className="flex items-center gap-4 bg-white/10 backdrop-blur-md p-5 rounded-3xl border border-white/20 shadow-lg">
-              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shrink-0 shadow-inner">
+              <div className="h-10 w-auto bg-white rounded-2xl flex items-center justify-center shrink-0 shadow-inner">
                 <KeyRound className="w-6 h-6 text-sky-500" />
               </div>
               <div>
@@ -180,7 +180,7 @@ export default function ForgotPasswordPage() {
                       animate={{ opacity: 1, scale: 1 }}
                       className="mb-8 p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-start gap-3"
                     >
-                      <AlertCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+                      <AlertCircle className="h-4 w-auto text-rose-500 shrink-0 mt-0.5" />
                       <p className="text-xs font-bold text-rose-900 leading-relaxed">{error}</p>
                     </motion.div>
                   )}
@@ -247,7 +247,7 @@ export default function ForgotPasswordPage() {
                       animate={{ opacity: 1, scale: 1 }}
                       className="mb-8 p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-start gap-3"
                     >
-                      <AlertCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+                      <AlertCircle className="h-4 w-auto text-rose-500 shrink-0 mt-0.5" />
                       <p className="text-xs font-bold text-rose-900 leading-relaxed">{error}</p>
                     </motion.div>
                   )}
@@ -342,7 +342,7 @@ export default function ForgotPasswordPage() {
                   className="text-center"
                 >
                   <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center shadow-inner mx-auto mb-8 relative">
-                    <CheckCircle2 className="w-10 h-10 text-emerald-600" />
+                    <CheckCircle2 className="h-10 w-auto text-emerald-600" />
                     <div className="absolute inset-0 bg-emerald-100 rounded-full animate-ping opacity-25 pointer-events-none" />
                   </div>
 

@@ -55,8 +55,8 @@ export default function AdminLogin() {
           
           <div className="relative z-10">
             <div className="flex items-center gap-3 mb-8">
-              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-lg">
-                 <img src="/logo.png" alt="JivniCare Logo" className="w-8 h-8 object-contain" />
+              <div className="h-10 w-auto bg-white rounded-2xl flex items-center justify-center shadow-lg">
+                 <img src="/logo.png" alt="JivniCare Logo" className="h-8 w-auto object-contain" />
               </div>
               <h2 className="text-3xl font-bold tracking-tight text-white leading-none">
                 Jivni<span className="text-[#489C66]">Care</span>
@@ -72,7 +72,7 @@ export default function AdminLogin() {
 
           <div className="relative z-10 bg-white/10 backdrop-blur-md p-6 rounded-3xl border border-white/20">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center shrink-0">
+              <div className="h-10 w-auto bg-emerald-500 rounded-full flex items-center justify-center shrink-0">
                 <ShieldCheck className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -87,7 +87,7 @@ export default function AdminLogin() {
         <div className="w-full md:w-1/2 p-12 lg:p-20 flex flex-col justify-center bg-white relative">
           <div className="max-w-sm w-full mx-auto">
             <div className="mb-10 text-center md:text-left flex flex-col items-center md:items-start">
-              <img src="/logo.png" alt="JivniCare Logo" className="w-16 h-16 object-contain mb-4 md:hidden" />
+              <img src="/logo.png" alt="JivniCare Logo" className="h-12 w-auto object-contain mb-4 md:hidden" />
               <h2 className="text-3xl font-black text-slate-900">Admin Login</h2>
               <p className="text-slate-500 font-medium mt-2">Enter your credentials to access the dashboard.</p>
             </div>
@@ -125,7 +125,7 @@ export default function AdminLogin() {
 
               <div className="flex items-center justify-between">
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" className="w-4 h-4 rounded text-[#5298D2] border-slate-300 focus:ring-[#5298D2]" />
+                  <input type="checkbox" className="h-4 w-auto rounded text-[#5298D2] border-slate-300 focus:ring-[#5298D2]" />
                   <span className="text-sm font-medium text-slate-600">Remember me</span>
                 </label>
                 <button type="button" className="text-sm font-bold text-[#5298D2] hover:underline">Forgot password?</button>
