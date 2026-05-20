@@ -803,7 +803,7 @@ function DoctorDashboardContent() {
           <div className="w-10"></div>
         </div>
         <div className="flex-1 p-4 md:p-10 overflow-y-auto">
-          <VerificationGuard allowedTabs={["overview", "profile"]}>
+          <VerificationGuard allowedTabs={["profile"]}>
             {activeTab === "overview" && renderOverview()}
             {activeTab === "queue" && renderQueue()}
             {activeTab === "profile" && renderProfile()}
