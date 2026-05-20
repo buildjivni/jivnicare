@@ -46,6 +46,13 @@ const DAYS = [
   { id: "sunday",    label: "Sun" },
 ];
 
+/** Returns display name — never double-prefixes with Dr. */
+function displayName(name: string): string {
+  if (!name) return "";
+  const trimmed = name.trim();
+  return /^Dr\.?\s/i.test(trimmed) ? trimmed : `Dr. ${trimmed}`;
+}
+
 export function DoctorProfileView({ doctor, relatedDoctors }: DoctorProfileViewProps) {
   const [showToast, setShowToast] = useState(false);
   const availableToday = doctor.available?.toLowerCase() === "available today";
@@ -526,7 +533,7 @@ export function DoctorProfileView({ doctor, relatedDoctors }: DoctorProfileViewP
                       <div className="min-w-0 flex-1">
                         <h4 className="font-black text-sm text-slate-900 leading-snug line-clamp-1 hover:text-[#205E98] transition-colors">
                           <Link href={`/doctors/${relDoc.slug}`}>
-                            Dr. {relDoc.name}
+                            {displayName(relDoc.name)}
                           </Link>
                         </h4>
                         <p className="text-[11px] font-bold text-[#205E98] mt-0.5">{relDoc.specialty}</p>
