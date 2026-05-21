@@ -20,6 +20,8 @@ import { PublicGuard } from "@/components/shared";
 import { useFirebasePhoneAuth } from "@/hooks/useFirebasePhoneAuth";
 import { isFirebaseClientConfigured } from "@/lib/firebase/config";
 import { parseResponseJson } from "@/lib/safe-json";
+import { logFirebaseOtp, maskConfigForLog } from "@/lib/firebase/otp-log";
+import { getPublicFirebaseConfig } from "@/lib/firebase/config";
 
 function PatientLoginContent() {
   const router = useRouter();
@@ -39,8 +41,21 @@ function PatientLoginContent() {
   const [error, setError] = useState<string | null>(null);
   const [userExists, setUserExists] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
-  const { sendOtp: sendFirebaseOtp, verifyOtpCode, isSending: isSendingFirebase, resetConfirmation } =
-    useFirebasePhoneAuth("firebase-recaptcha-login");
+  const {
+    sendOtp: sendFirebaseOtp,
+    verifyOtpCode,
+    isSending: isSendingFirebase,
+    otpReady,
+    resetConfirmation,
+  } = useFirebasePhoneAuth("firebase-recaptcha-login");
+
+  useEffect(() => {
+    logFirebaseOtp("config_check", {
+      page: "login",
+      ...maskConfigForLog(getPublicFirebaseConfig()),
+      configured: isFirebaseClientConfigured(),
+    });
+  }, []);
 
   // Already-logged-in guard
   useEffect(() => {
@@ -96,8 +111,8 @@ function PatientLoginContent() {
       if (!data.userExists) {
         setStep("name");
       } else {
-        setStep("otp");
         await requestFirebaseOtp();
+        setStep("otp");
       }
     } catch (err: any) {
       setError(err.message || "Failed to send OTP. Please try again.");
@@ -109,10 +124,9 @@ function PatientLoginContent() {
   const requestFirebaseOtp = async () => {
     setError(null);
     if (!isFirebaseClientConfigured()) {
-      setOtpSent(true);
-      setResendTimer(30);
-      setCanResend(false);
-      return;
+      throw new Error(
+        "Phone verification is not available. Firebase client configuration is missing on this build."
+      );
     }
     resetConfirmation();
     await sendFirebaseOtp(phone);
@@ -129,10 +143,11 @@ function PatientLoginContent() {
       return;
     }
     if (name.length < 2 || location.length < 2) return;
-    setStep("otp");
     setIsLoading(true);
+    setError(null);
     try {
       await requestFirebaseOtp();
+      setStep("otp");
     } catch (err: any) {
       setError(err.message || "Failed to send OTP.");
     } finally {
@@ -148,6 +163,10 @@ function PatientLoginContent() {
     setError(null);
 
     try {
+      if (isFirebaseClientConfigured() && !otpReady) {
+        throw new Error("Please request an OTP first.");
+      }
+
       const payload: Record<string, string | undefined> = {
         phone,
         name: name.trim() || undefined,
@@ -360,7 +379,7 @@ function PatientLoginContent() {
 
                     <Button
                       type="submit"
-                      disabled={isLoading || phone.length < 10}
+                      disabled={isLoading || isSendingFirebase || phone.length < 10}
                       className="w-full h-16 rounded-2xl bg-[#205E98] hover:bg-[#1a4f82] text-white font-black text-lg shadow-[0_12px_24px_-8px_rgba(32,94,152,0.3)] hover:shadow-[0_20px_40px_-12px_rgba(32,94,152,0.4)] active:scale-[0.98] transition-all flex items-center justify-center gap-3"
                     >
                       {isLoading ? (
@@ -496,7 +515,11 @@ function PatientLoginContent() {
 
                     <Button
                       type="submit"
-                      disabled={isLoading || otp.length < 6}
+                      disabled={
+                        isLoading ||
+                        otp.length < 6 ||
+                        (isFirebaseClientConfigured() && !otpReady)
+                      }
                       className="w-full h-16 rounded-2xl bg-[#205E98] hover:bg-[#1a4f82] text-white font-black text-lg shadow-[0_12px_24px_-8px_rgba(32,94,152,0.3)] transition-all flex items-center justify-center gap-3"
                     >
                       {isLoading ? (
@@ -508,11 +531,13 @@ function PatientLoginContent() {
                   </form>
 
                   <div className="mt-8 text-center">
-                    {!otpSent && (
+                    {!otpSent && !otpReady && (
                       <button
                         type="button"
                         onClick={async () => {
+                          if (isLoading || isSendingFirebase) return;
                           setIsLoading(true);
+                          setError(null);
                           try {
                             await requestFirebaseOtp();
                           } catch (err: any) {
@@ -522,16 +547,23 @@ function PatientLoginContent() {
                           }
                         }}
                         disabled={isLoading || isSendingFirebase}
-                        className="mb-4 text-xs font-bold text-primary"
+                        className="mb-4 text-xs font-bold text-primary disabled:opacity-50"
                       >
-                        Send OTP to +91 {phone}
+                        {isSendingFirebase ? "Sending OTP…" : `Send OTP to +91 ${phone}`}
                       </button>
+                    )}
+                    {otpReady && (
+                      <p className="mb-4 text-xs font-bold text-emerald-600">
+                        OTP sent to +91 {phone}
+                      </p>
                     )}
                     {canResend ? (
                       <button
                         type="button"
                         onClick={async () => {
+                          if (isLoading || isSendingFirebase) return;
                           setIsLoading(true);
+                          setError(null);
                           try {
                             await requestFirebaseOtp();
                           } catch (err: any) {
@@ -540,7 +572,8 @@ function PatientLoginContent() {
                             setIsLoading(false);
                           }
                         }}
-                        className="inline-flex items-center gap-2 text-xs font-black text-primary hover:text-[#184a7a] transition-all"
+                        disabled={isLoading || isSendingFirebase}
+                        className="inline-flex items-center gap-2 text-xs font-black text-primary hover:text-[#184a7a] transition-all disabled:opacity-50"
                       >
                         <RefreshCw className="w-4 h-4" /> RESEND OTP
                       </button>
@@ -570,7 +603,11 @@ function PatientLoginContent() {
           </div>
         </div>
       </motion.div>
-      <div id="firebase-recaptcha-login" className="sr-only" aria-hidden />
+      <div
+        id="firebase-recaptcha-login"
+        className="fixed bottom-0 left-0 w-[1px] h-[1px] opacity-0 pointer-events-none overflow-hidden"
+        aria-hidden="true"
+      />
     </div>
   );
 }
