@@ -31,7 +31,12 @@ export default function ForgotPasswordPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
-  const { sendOtp: sendFirebaseOtp, verifyOtpCode } = useFirebasePhoneAuth("firebase-recaptcha-forgot");
+  const {
+    sendOtp: sendFirebaseOtp,
+    verifyOtpCode,
+    isSending: isSendingFirebase,
+    otpReady,
+  } = useFirebasePhoneAuth("firebase-recaptcha-forgot");
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,9 +59,12 @@ export default function ForgotPasswordPage() {
         throw new Error("This phone number is not registered as a doctor.");
       }
 
-      if (isFirebaseClientConfigured()) {
-        await sendFirebaseOtp(phone);
+      if (!isFirebaseClientConfigured()) {
+        throw new Error(
+          "Phone verification is not available. Firebase client configuration is missing."
+        );
       }
+      await sendFirebaseOtp(phone);
       setStep(2);
     } catch (err: any) {
       setError(err.message || "Something went wrong.");
@@ -82,12 +90,11 @@ export default function ForgotPasswordPage() {
     setError(null);
 
     try {
-      const body: Record<string, string> = { phone, password };
-      if (isFirebaseClientConfigured()) {
-        body.firebaseIdToken = await verifyOtpCode(otp);
-      } else {
-        body.otp = otp;
+      if (!otpReady) {
+        throw new Error("Please request an OTP first.");
       }
+      const body: Record<string, string> = { phone, password };
+      body.firebaseIdToken = await verifyOtpCode(otp);
       const res = await fetch("/api/auth/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -376,7 +383,11 @@ export default function ForgotPasswordPage() {
           </div>
         </div>
       </motion.div>
-      <div id="firebase-recaptcha-forgot" className="sr-only" aria-hidden />
+      <div
+        id="firebase-recaptcha-forgot"
+        className="fixed bottom-0 left-0 w-[1px] h-[1px] opacity-0 pointer-events-none overflow-hidden"
+        aria-hidden="true"
+      />
     </div>
   );
 }
