@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { doctorSettingsSchema, formatZodError } from "@/lib/validations";
 import { VerificationStatus } from "@prisma/client";
 import { normalizeQualifications, normalizeLanguages } from "@/lib/normalizers";
+import { getCurrentLogicalDay, getUnifiedQueueCapacity } from "@/lib/clinic-utils";
 
 export async function PUT(request: Request) {
   try {
@@ -184,7 +185,7 @@ export async function PUT(request: Request) {
         
         if (body.maxCapacity !== undefined) {
           opsUpdate.walkInLimit = body.maxCapacity;
-          opsUpdate.onlineLimit = body.maxCapacity;
+          opsUpdate.onlineLimit = 0;
         }
 
         if (body.status !== undefined) {
@@ -220,6 +221,14 @@ export async function PUT(request: Request) {
           update: opsUpdate,
           create: { doctorId: doctor.id, ...opsUpdate }
         });
+
+        if (body.maxCapacity !== undefined) {
+          const unifiedCapacity = getUnifiedQueueCapacity(updatedClinicOps);
+          await tx.dailyQueue.updateMany({
+            where: { doctorId: doctor.id, date: getCurrentLogicalDay() },
+            data: { maxCapacity: unifiedCapacity },
+          });
+        }
       }
 
       // Update Weekly Schedule (Instantly Editable)

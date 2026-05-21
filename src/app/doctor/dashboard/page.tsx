@@ -3,8 +3,8 @@
 import { Suspense, useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { 
-  LayoutDashboard, Users, UserCircle, Settings, Star, 
-  LogOut, Wallet, CalendarX, Link as LinkIcon, AlertCircle, ShieldCheck, CheckCircle2,
+  LayoutDashboard, Users, UserCircle, Settings,
+  LogOut, Wallet, CalendarX, AlertCircle, ShieldCheck, CheckCircle2,
   X, Menu, TrendingUp, RefreshCw, MapPin, Clock
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
@@ -15,8 +15,10 @@ import { PatientListTable, PatientListItem } from "@/components/doctor/queue/Pat
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useDoctorWorkspace } from "@/hooks/useDoctorWorkspace";
 import { WeeklyScheduleEditor } from "@/components/doctor/settings/WeeklyScheduleEditor";
 import { ClinicOperationsForm } from "@/components/doctor/settings/ClinicOperationsForm";
+import { ImageUploadField } from "@/components/shared/ImageUploadField";
 import { cn } from "@/lib/utils";
 
 // ── BRAND COLORS (From Logo) ──────────────────────────────────────
@@ -35,8 +37,17 @@ function DoctorDashboardContent() {
   const [queueStats, setQueueStats] = useState<any>({
     total: 0, waiting: 0, completed: 0, currentActive: 0, avgWaitTime: 0
   });
-  const [profileCompleteness, setProfileCompleteness] = useState(0);
-  const [verificationStatus, setVerificationStatus] = useState<string>("PENDING_VERIFICATION");
+  const {
+    profile: profileData,
+    settings: settingsData,
+    weeklySchedule,
+    verificationStatus,
+    profileCompleteness,
+    isReady: profileReady,
+    refresh: refreshProfile,
+    setProfileField,
+    setSettingsField,
+  } = useDoctorWorkspace();
   const [isLoadingQueue, setIsLoadingQueue] = useState(true);
   const [isProcessingMutation, setIsProcessingMutation] = useState(false);
 
@@ -47,13 +58,30 @@ function DoctorDashboardContent() {
         useAuthStore.getState().logout();
         return;
       }
-      const data = await res.json();
-      if (data.success && data.tokens) {
+      let data: {
+        success?: boolean;
+        tokens?: unknown[];
+        stats?: { currentActive?: number };
+        doctor?: { averageConsultationTime?: number };
+      } | null = null;
+      try {
+        data = await res.json();
+      } catch {
+        return;
+      }
+      if (data?.success && data.tokens) {
         const avgTime = data.doctor?.averageConsultationTime || 15;
         const currentActive = data.stats?.currentActive || 0;
         const formatted = data.tokens.map((t: any) => {
-          const waitTokens = Math.max(0, t.tokenNumber - currentActive - 1);
-          const waitTime = t.status === "WAITING" ? (waitTokens * avgTime) : 0;
+          const isEmergency =
+            t.isEmergency || t.tokenNumber >= 9000;
+          const waitTokens = isEmergency
+            ? 0
+            : Math.max(0, t.tokenNumber - currentActive - 1);
+          const waitTime =
+            t.status === "WAITING" && !isEmergency
+              ? waitTokens * avgTime
+              : 0;
           return {
             id: t.id,
             name: t.user?.name || t.walkInEntry?.patientName || "Unknown",
@@ -71,8 +99,8 @@ function DoctorDashboardContent() {
         setPatients(formatted);
         if (data.stats) setQueueStats(data.stats);
       }
-    } catch (err) {
-      console.error("Fetch queue failed", err);
+    } catch {
+      // Queue poll failure is non-fatal; next interval retries
     } finally {
       setIsLoadingQueue(false);
     }
@@ -118,13 +146,6 @@ function DoctorDashboardContent() {
   const [statusReason, setStatusReason] = useState<string>("");
   const [statusExpiresAt, setStatusExpiresAt] = useState<string | null>(null);
   
-  const [profileData, setProfileData] = useState({ 
-    name: "", bio: "", regNumber: "", specialty: "", 
-    experience: "", qualifications: "", hospitalName: "", 
-    address: "", city: "", district: "", consultationFee: "", phone: "" 
-  });
-  const [settingsData, setSettingsData] = useState({ fee: "0", maxCapacity: "40", averageConsultationTime: "15", pauseOnlineBooking: false, emergencySlots: "0" });
-  const [weeklySchedule, setWeeklySchedule] = useState<any>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isTogglingLeave, setIsTogglingLeave] = useState(false);
@@ -146,7 +167,7 @@ function DoctorDashboardContent() {
       if (res.ok) {
         setClinicStatus(status);
         if (reason !== undefined) setStatusReason(reason);
-        await fetchProfile();
+        await refreshProfile();
       } else {
         alert(data.error || "Failed to update clinic status.");
       }
@@ -157,48 +178,78 @@ function DoctorDashboardContent() {
     }
   };
 
-  const fetchProfile = async () => {
+  useEffect(() => {
+    if (profileReady) {
+      setLeaveMode(settingsData.leaveMode);
+      setClinicStatus(settingsData.clinicStatus);
+      setStatusReason(settingsData.statusReason);
+      setStatusExpiresAt(settingsData.statusExpiresAt);
+    }
+  }, [profileReady, settingsData]);
+
+  const handleSaveProfile = async () => {
+    setIsSaving(true);
+    setSaveStatus(null);
     try {
-      const res = await fetch("/api/doctor/profile?t=" + Date.now());
+      const imgRes = await fetch("/api/doctor/profile/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          updates: {
+            profileImage: profileData.profileImage || null,
+            clinicImage: profileData.clinicImage || null,
+          },
+        }),
+      });
+      if (!imgRes.ok) {
+        const err = await imgRes.json();
+        setSaveStatus({
+          success: false,
+          message: err.error || "Failed to save profile images.",
+        });
+        return;
+      }
+
+      const res = await fetch("/api/doctor/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: profileData.name,
+          regNumber: profileData.regNumber,
+          bio: profileData.bio,
+          hospitalName: profileData.hospitalName,
+          city: profileData.city,
+          address: profileData.address,
+          experience: parseInt(profileData.experience) || 0,
+          fee: parseInt(profileData.consultationFee) || 0,
+          qualifications: profileData.qualifications,
+        }),
+      });
       const data = await res.json();
-      if (data.success && data.doctor) {
-        setProfileData({
-          name: data.doctor.name || "Dr. Sanctuary",
-          bio: data.doctor.bio || "",
-          regNumber: data.doctor.medicalRegistrationNumber || "",
-          specialty: data.doctor.specialties?.[0]?.name || "General Medicine",
-          experience: data.doctor.experience?.toString() || "0",
-          consultationFee: (data.doctor.fee || data.doctor.consultationFee || 0).toString(),
-          qualifications: data.doctor.qualifications || "",
-          hospitalName: data.doctor.hospitalName || "",
-          address: data.doctor.clinicOperations?.address || data.doctor.address || "",
-          city: data.doctor.city || "",
-          district: data.doctor.district || "",
-          phone: data.doctor.user?.phone || "",
+      if (res.ok) {
+        setSaveStatus({
+          success: true,
+          message:
+            "Profile and images saved successfully. Name or registration changes may require admin approval.",
         });
-        setSettingsData({
-          fee: data.doctor.fee?.toString() || "0",
-          maxCapacity: data.doctor.clinicOperations?.walkInLimit?.toString() || "40",
-          averageConsultationTime: data.doctor.averageConsultationTime?.toString() || "15",
-          pauseOnlineBooking: data.doctor.clinicOperations?.pauseOnlineBooking || false,
-          emergencySlots: data.doctor.clinicOperations?.emergencySlots?.toString() || "0"
+        await refreshProfile();
+      } else {
+        setSaveStatus({
+          success: false,
+          message: data.error || "Failed to update profile settings.",
         });
-        if (data.doctor.weeklySchedule) setWeeklySchedule(data.doctor.weeklySchedule);
-        if (data.doctor.clinicOperations) {
-          setLeaveMode(data.doctor.clinicOperations.isClosedToday);
-          setClinicStatus(data.doctor.clinicOperations.status || "AVAILABLE");
-          setStatusReason(data.doctor.clinicOperations.statusReason || "");
-          setStatusExpiresAt(data.doctor.clinicOperations.statusExpiresAt || null);
-        }
-        if (data.completeness) setProfileCompleteness(data.completeness);
-        if (data.doctor.verificationStatus) setVerificationStatus(data.doctor.verificationStatus);
       }
     } catch (err) {
-      console.error("Hydration failed", err);
+      console.error("Profile save failed", err);
+      setSaveStatus({
+        success: false,
+        message: "A network error occurred. Please try again.",
+      });
+    } finally {
+      setIsSaving(false);
     }
   };
-
-  useEffect(() => { fetchProfile(); }, []);
 
   const handleUpdateSettings = async (updates: any) => {
     setIsSaving(true);
@@ -217,7 +268,7 @@ function DoctorDashboardContent() {
             ? "Changes saved! Sensitive updates (Name, Registration) are queued for Admin approval."
             : "Profile changes saved successfully!"
         });
-        await fetchProfile();
+        await refreshProfile();
       } else {
         setSaveStatus({
           success: false,
@@ -235,6 +286,15 @@ function DoctorDashboardContent() {
     }
   };
 
+  const profileInitials =
+    profileData.name
+      .split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((p) => p[0])
+      .join("")
+      .toUpperCase() || "DR";
+
   const toggleLeaveMode = async () => {
     if (isTogglingLeave) return;
     const newMode = !leaveMode;
@@ -250,7 +310,6 @@ function DoctorDashboardContent() {
       { id: "queue", label: "Live Queue", icon: Users },
       { id: "profile", label: "My Profile", icon: UserCircle },
       { id: "settings", label: "Clinic Settings", icon: Settings },
-      { id: "reviews", label: "Reviews", icon: Star },
     ];
     return (
       <>
@@ -411,24 +470,13 @@ function DoctorDashboardContent() {
             {patients.length === 0 && <p className="text-xs text-slate-400 italic">No data yet today</p>}
           </div>
         </div>
-        <div className="bg-white rounded-2xl border border-border p-6 shadow-soft">
-          <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2 text-sm">
-            <Clock className="w-4 h-4 text-emerald-600" /> Peak Hours Insight
+        <div className="bg-white rounded-2xl border border-border p-6 shadow-soft flex flex-col justify-center">
+          <h3 className="font-bold text-slate-900 mb-2 flex items-center gap-2 text-sm">
+            <Clock className="w-4 h-4 text-emerald-600" /> Clinic Hours
           </h3>
-          <div className="flex items-end gap-1 h-20 px-2">
-            {[20, 45, 90, 65, 30, 40, 55].map((h, i) => (
-              <div key={i} className="flex-1 bg-emerald-100 rounded-t-md hover:bg-emerald-500 transition-colors relative group" style={{ height: `${h}%` }}>
-                <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[8px] font-bold px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                  {h}%
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="flex justify-between mt-2 px-1 text-[8px] font-bold text-slate-400 uppercase tracking-widest">
-            <span>Morning</span>
-            <span>Afternoon</span>
-            <span>Evening</span>
-          </div>
+          <p className="text-xs text-slate-500 font-medium">
+            Peak-hour analytics will appear here once enough patient visit data is collected.
+          </p>
         </div>
       </div>
 
@@ -525,11 +573,11 @@ function DoctorDashboardContent() {
             onPauseToggle={async () => {
               const newState = !settingsData.pauseOnlineBooking;
               await handleUpdateSettings({ pauseOnlineBooking: newState });
-              setSettingsData(prev => ({ ...prev, pauseOnlineBooking: newState }));
+              setSettingsField("pauseOnlineBooking", newState);
             }}
             onEmergencyHalt={async () => {
               await handleUpdateSettings({ isClosedToday: true });
-              setSettingsData(prev => ({ ...prev, isClosedToday: true }));
+              setSettingsField("leaveMode", true);
               alert("OPD has been halted for today. All digital queues are closed.");
             }}
             onAddOffline={async () => {
@@ -582,15 +630,38 @@ function DoctorDashboardContent() {
 
       <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-sm">
         <div className="flex items-center gap-6 mb-8 pb-8 border-b border-slate-100">
-          <div className="w-24 h-24 rounded-full flex items-center justify-center border-4 border-white shadow-lg text-2xl font-black text-white bg-primary">
-            {profileData.name.substring(3, 5).toUpperCase() || "DR"}
-          </div>
+          {profileData.profileImage ? (
+            <img
+              src={profileData.profileImage}
+              alt={profileData.name}
+              className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
+            />
+          ) : (
+            <div className="w-24 h-24 rounded-full flex items-center justify-center border-4 border-white shadow-lg text-2xl font-black text-white bg-primary">
+              {profileInitials}
+            </div>
+          )}
           <div>
-            <h2 className="text-2xl font-bold text-slate-900">{profileData.name}</h2>
+            <h2 className="text-2xl font-bold text-slate-900">{profileData.name || "Doctor Profile"}</h2>
             <p className="text-slate-500">{profileData.specialty}</p>
-            <Button variant="outline" className="mt-3 h-9 rounded-full font-bold border-slate-200 text-slate-700">Upload New Photo</Button>
           </div>
         </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <ImageUploadField
+            label="Profile photo"
+            value={profileData.profileImage}
+            onChange={(url) => setProfileField("profileImage", url)}
+            filenamePrefix="doctor-profile"
+          />
+          <ImageUploadField
+            label="Clinic photo"
+            value={profileData.clinicImage}
+            onChange={(url) => setProfileField("clinicImage", url)}
+            filenamePrefix="doctor-clinic"
+          />
+        </div>
+
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -599,7 +670,7 @@ function DoctorDashboardContent() {
               </label>
               <Input 
                 value={profileData.name} 
-                onChange={e => setProfileData({...profileData, name: e.target.value})}
+                onChange={e => setProfileField("name", e.target.value)}
                 className="h-12 rounded-xl bg-slate-50 text-slate-900 border-slate-200 focus:bg-white" 
               />
             </div>
@@ -617,13 +688,13 @@ function DoctorDashboardContent() {
             <Input 
               placeholder="e.g. MCI-12345" 
               value={profileData.regNumber} 
-              onChange={e => setProfileData({...profileData, regNumber: e.target.value})}
+              onChange={e => setProfileField("regNumber", e.target.value)}
               className="h-12 rounded-xl bg-slate-50 text-slate-900 border-slate-200 focus:bg-white" 
             />
           </div>
           <div>
             <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Short Biography</label>
-            <textarea value={profileData.bio} onChange={e => setProfileData({...profileData, bio: e.target.value})} className="w-full h-24 px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all hover:bg-white" />
+            <textarea value={profileData.bio} onChange={e => setProfileField("bio", e.target.value)} className="w-full h-24 px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all hover:bg-white" />
             <p className="text-[10px] text-slate-400 font-medium mt-1">This is visible on your public profile. Safe to edit instantly.</p>
           </div>
         </div>
@@ -635,7 +706,7 @@ function DoctorDashboardContent() {
               <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Clinic / Hospital Name</label>
               <Input 
                 value={profileData.hospitalName} 
-                onChange={e => setProfileData({...profileData, hospitalName: e.target.value})}
+                onChange={e => setProfileField("hospitalName", e.target.value)}
                 className="h-12 rounded-xl bg-slate-50 text-slate-900 border-slate-200" 
               />
             </div>
@@ -643,7 +714,7 @@ function DoctorDashboardContent() {
               <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">City</label>
               <Input 
                 value={profileData.city} 
-                onChange={e => setProfileData({...profileData, city: e.target.value})}
+                onChange={e => setProfileField("city", e.target.value)}
                 className="h-12 rounded-xl bg-slate-50 text-slate-900 border-slate-200" 
               />
             </div>
@@ -652,7 +723,7 @@ function DoctorDashboardContent() {
             <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Full Address</label>
             <Input 
               value={profileData.address} 
-              onChange={e => setProfileData({...profileData, address: e.target.value})}
+              onChange={e => setProfileField("address", e.target.value)}
               className="h-12 rounded-xl bg-slate-50 text-slate-900 border-slate-200" 
             />
           </div>
@@ -666,7 +737,7 @@ function DoctorDashboardContent() {
               <Input 
                 type="number"
                 value={profileData.experience} 
-                onChange={e => setProfileData({...profileData, experience: e.target.value})}
+                onChange={e => setProfileField("experience", e.target.value)}
                 className="h-12 rounded-xl bg-slate-50 text-slate-900 border-slate-200" 
               />
             </div>
@@ -675,7 +746,7 @@ function DoctorDashboardContent() {
               <Input 
                 type="number"
                 value={profileData.consultationFee} 
-                onChange={e => setProfileData({...profileData, consultationFee: e.target.value})}
+                onChange={e => setProfileField("consultationFee", e.target.value)}
                 className="h-12 rounded-xl bg-slate-50 text-slate-900 border-slate-200" 
               />
             </div>
@@ -683,7 +754,7 @@ function DoctorDashboardContent() {
               <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Qualifications</label>
               <Input 
                 value={profileData.qualifications} 
-                onChange={e => setProfileData({...profileData, qualifications: e.target.value})}
+                onChange={e => setProfileField("qualifications", e.target.value)}
                 className="h-12 rounded-xl bg-slate-50 text-slate-900 border-slate-200" 
               />
             </div>
@@ -692,17 +763,7 @@ function DoctorDashboardContent() {
 
         <div className="mt-8 pt-6">
           <Button 
-            onClick={() => handleUpdateSettings({ 
-              name: profileData.name, 
-              regNumber: profileData.regNumber, 
-              bio: profileData.bio,
-              hospitalName: profileData.hospitalName,
-              city: profileData.city,
-              address: profileData.address,
-              experience: parseInt(profileData.experience) || 0,
-              fee: parseInt(profileData.consultationFee) || 0,
-              qualifications: profileData.qualifications
-            })} 
+            onClick={handleSaveProfile}
             disabled={isSaving} 
             className="h-14 px-8 rounded-xl bg-primary text-white font-bold w-full md:w-auto shadow-lg hover:brightness-110"
           >
@@ -724,21 +785,20 @@ function DoctorDashboardContent() {
           <ClinicOperationsForm 
             initialData={settingsData} 
             isSaving={isSaving} 
-            onSave={async (newData) => { 
-              await handleUpdateSettings(newData); 
-              setSettingsData({
-                ...newData,
-                pauseOnlineBooking: newData.pauseOnlineBooking ?? false,
-                emergencySlots: newData.emergencySlots ?? "0"
-              }); 
-            }} 
+            onSave={async (newData) => {
+              await handleUpdateSettings(newData);
+              await refreshProfile();
+            }}
           />
         </section>
         <section className="bg-white rounded-[2rem] border border-slate-200 p-8 shadow-sm">
           <WeeklyScheduleEditor 
-            initialSchedule={weeklySchedule} 
+            initialSchedule={(weeklySchedule ?? undefined) as Parameters<typeof WeeklyScheduleEditor>[0]["initialSchedule"]} 
             isSaving={isSaving} 
-            onSave={async (newSchedule) => { await handleUpdateSettings({ weeklySchedule: newSchedule }); setWeeklySchedule(newSchedule); }} 
+            onSave={async (newSchedule) => {
+              await handleUpdateSettings({ weeklySchedule: newSchedule });
+              await refreshProfile();
+            }}
           />
         </section>
         <section className="bg-red-50/50 rounded-[2rem] border border-red-100 p-8 shadow-sm">
@@ -759,6 +819,17 @@ function DoctorDashboardContent() {
   );
 
 
+
+  if (!profileReady) {
+    return (
+      <div className="min-h-screen bg-[#f8f9fa] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <RefreshCw className="w-8 h-8 text-primary animate-spin" />
+          <p className="text-sm font-medium text-slate-500">Loading clinic workspace...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] flex font-sans overflow-hidden">
@@ -782,82 +853,6 @@ function DoctorDashboardContent() {
             {activeTab === "queue" && renderQueue()}
             {activeTab === "profile" && renderProfile()}
             {activeTab === "settings" && renderSettings()}
-            {activeTab === "reviews" && (
-            <div className="max-w-4xl fade-in pb-20">
-              <div className="mb-8">
-                <h1 className="text-3xl font-black text-slate-900">Reviews & Reputation</h1>
-                <p className="text-slate-500 mt-1">Track how patients rate your consultations and build your online credibility.</p>
-              </div>
-
-              {/* Rating Overview */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
-                <div className="bg-white rounded-2xl border border-border shadow-soft p-6 text-center col-span-1">
-                  <div className="text-5xl font-black text-amber-500 mb-2">4.8</div>
-                  <div className="flex justify-center gap-1 mb-3">
-                    {[1,2,3,4,5].map(i => <Star key={i} className={`w-5 h-5 ${i <= 4 ? "fill-amber-400 text-amber-400" : "fill-amber-200 text-amber-200"}`} />)}
-                  </div>
-                  <p className="text-sm font-medium text-slate-500">Overall Rating</p>
-                </div>
-                <div className="bg-white rounded-2xl border border-border shadow-soft p-6 md:col-span-2">
-                  <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Rating Breakdown</p>
-                  <div className="space-y-2.5">
-                    {[{stars: 5, pct: 72}, {stars: 4, pct: 18}, {stars: 3, pct: 7}, {stars: 2, pct: 2}, {stars: 1, pct: 1}].map(r => (
-                      <div key={r.stars} className="flex items-center gap-3">
-                        <span className="text-xs font-bold text-slate-600 w-4">{r.stars}</span>
-                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400 shrink-0" />
-                        <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
-                          <div className="h-full bg-amber-400 rounded-full" style={{width: `${r.pct}%`}} />
-                        </div>
-                        <span className="text-xs text-slate-400 font-medium w-8 text-right">{r.pct}%</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Trust Nudge */}
-              <div className="bg-gradient-to-r from-primary/5 to-emerald-50/50 rounded-2xl border border-primary/10 p-6 flex flex-col sm:flex-row items-start sm:items-center gap-5 mb-8">
-                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                  <ShieldCheck className="w-6 h-6 text-primary" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-black text-slate-900 mb-1">Boost Your Profile Visibility</h3>
-                  <p className="text-sm text-slate-600 font-medium leading-relaxed">Doctors with 10+ reviews appear higher in search results. Share your clinic link with patients to collect reviews.</p>
-                </div>
-                <Button className="h-11 px-6 rounded-xl bg-primary text-white font-bold shrink-0 shadow-sm hover:bg-primary/90 transition-all">
-                  <LinkIcon className="w-4 h-4 mr-2" /> Copy Clinic Link
-                </Button>
-              </div>
-
-              {/* Recent Reviews Placeholder */}
-              <div className="bg-white rounded-2xl border border-border shadow-soft p-6">
-                <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-5">Recent Patient Feedback</p>
-                <div className="space-y-5">
-                  {[
-                    {name: "R. Verma", rating: 5, time: "2 days ago", comment: "Doctor explained everything clearly. Very professional."},
-                    {name: "Priya S.", rating: 5, time: "1 week ago", comment: "Queue system was great, no waiting at clinic. Highly recommend."},
-                    {name: "Amit K.", rating: 4, time: "2 weeks ago", comment: "Good experience overall. Clinic was clean and well-managed."},
-                  ].map((r, i) => (
-                    <div key={i} className="flex items-start gap-4 pb-5 border-b border-slate-50 last:border-0 last:pb-0">
-                      <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-xs font-black text-primary shrink-0">
-                        {r.name.charAt(0)}
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="font-bold text-slate-900 text-sm">{r.name}</span>
-                          <span className="text-xs text-slate-400">{r.time}</span>
-                        </div>
-                        <div className="flex gap-0.5 mb-1.5">
-                          {[1,2,3,4,5].map(s => <Star key={s} className={`w-3.5 h-3.5 ${s <= r.rating ? "fill-amber-400 text-amber-400" : "text-slate-200 fill-slate-200"}`} />)}
-                        </div>
-                        <p className="text-sm text-slate-600 font-medium leading-relaxed">{r.comment}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
           </VerificationGuard>
         </div>
       </div>
@@ -903,7 +898,15 @@ export default function DoctorDashboard() {
 }
 
 const VerificationGuard = ({ children, allowedTabs, verificationStatus, activeTab, onReturn }: any) => {
-  if (verificationStatus === "VERIFIED" || verificationStatus === "UPDATE_PENDING") return <>{children}</>;
+  const fullAccess =
+    verificationStatus === "VERIFIED" || verificationStatus === "UPDATE_PENDING";
+  const sandboxStatuses = ["DRAFT", "PENDING_VERIFICATION"];
+  const sandboxTabs = ["overview", "profile", "settings"];
+
+  if (fullAccess) return <>{children}</>;
+  if (sandboxStatuses.includes(verificationStatus) && sandboxTabs.includes(activeTab)) {
+    return <>{children}</>;
+  }
   if (allowedTabs.includes(activeTab)) return <>{children}</>;
 
   return (

@@ -71,8 +71,10 @@ export function Header() {
   // Dynamic navigation links based on user role and auth state
   const getNavLinks = () => {
     if (!isLoggedIn || !user) {
-      // Clean blank nav state for logged out, matching the reference image perfectly
-      return [];
+      return [
+        { label: "Find Doctors", href: "/doctors", icon: <Stethoscope className="w-4.5 h-4.5" /> },
+        { label: "Emergency Care", href: "/doctors?emergency=true", icon: <AlertTriangle className="w-4.5 h-4.5" />, highlight: true },
+      ];
     }
 
     switch (user.role) {

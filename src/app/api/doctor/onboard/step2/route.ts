@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import jwt from 'jsonwebtoken';
+import { verifyToken } from '@/lib/jwt';
 import { cookies } from 'next/headers';
 import { VerificationStatus } from '@prisma/client';
 import { step2OnboardSchema, formatZodError } from '@/lib/validations';
@@ -15,11 +15,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized. Please complete step 1 first.' }, { status: 401 });
     }
 
-    const jwtSecret = process.env.JWT_SECRET || 'fallback-secret';
-    let decoded: any;
-    try {
-      decoded = jwt.verify(token, jwtSecret);
-    } catch (err) {
+    const decoded = verifyToken(token) as { id: string; doctorId?: string } | null;
+    if (!decoded?.id) {
       return NextResponse.json({ error: 'Invalid or expired session. Please log in again.' }, { status: 401 });
     }
 

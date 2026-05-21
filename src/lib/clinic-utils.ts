@@ -25,3 +25,37 @@ export function getStartOfDay(date: Date): Date {
   d.setHours(0, 0, 0, 0);
   return d;
 }
+
+/** Canonical total queue capacity from clinic operations limits. */
+export function getUnifiedQueueCapacity(
+  ops?: { onlineLimit?: number | null; walkInLimit?: number | null } | null
+): number {
+  if (!ops) return 40;
+  const total = (ops.onlineLimit ?? 0) + (ops.walkInLimit ?? 0);
+  return total > 0 ? total : 40;
+}
+
+export const EMERGENCY_TOKEN_BASE = 9000;
+
+export function isEmergencyToken(t: {
+  tokenNumber: number;
+  isEmergency?: boolean | null;
+}): boolean {
+  return Boolean(t.isEmergency) || t.tokenNumber >= EMERGENCY_TOKEN_BASE;
+}
+
+/** Regular-token position ahead of the patient (0 if already serving or emergency). */
+export function getRegularQueuePosition(
+  regularTokens: { tokenNumber: number; status: string }[],
+  currentActive: number,
+  myTokenNumber: number
+): number {
+  if (myTokenNumber <= currentActive) return 0;
+  const waitingAhead = regularTokens.filter(
+    (t) =>
+      t.status === "WAITING" &&
+      t.tokenNumber > currentActive &&
+      t.tokenNumber < myTokenNumber
+  ).length;
+  return waitingAhead + 1;
+}

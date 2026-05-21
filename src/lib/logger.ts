@@ -9,35 +9,63 @@ type LogLevel = 'INFO' | 'WARN' | 'ERROR' | 'CRITICAL';
 interface LogPayload {
   category: 'AUTH' | 'BOOKING' | 'QUEUE' | 'OTP' | 'API_EXCEPTION' | 'SYSTEM';
   message: string;
-  metadata?: Record<string, any>;
-  error?: any;
+  metadata?: Record<string, unknown>;
+  error?: unknown;
+}
+
+const SENSITIVE_KEYS = /^(token|password|otp|firebaseidtoken|authorization|cookie|secret|privatekey|jwt)$/i;
+
+function sanitizeMetadata(meta?: Record<string, unknown>): Record<string, unknown> | undefined {
+  if (!meta) return undefined;
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(meta)) {
+    if (SENSITIVE_KEYS.test(key)) {
+      out[key] = "[redacted]";
+    } else if (key === "phone" && typeof value === "string" && value.length >= 4) {
+      out[key] = `***${value.slice(-4)}`;
+    } else {
+      out[key] = value;
+    }
+  }
+  return out;
 }
 
 class AppLogger {
   private formatMessage(level: LogLevel, payload: LogPayload) {
     const timestamp = new Date().toISOString();
-    
-    // In production, we format as JSON so Vercel/Datadog can parse it easily
+    const metadata = sanitizeMetadata(payload.metadata);
+
+    const errorBlock = payload.error
+      ? {
+          error: {
+            message:
+              payload.error instanceof Error
+                ? payload.error.message
+                : String(payload.error),
+            ...(process.env.NODE_ENV !== "production" &&
+            payload.error instanceof Error
+              ? { stack: payload.error.stack }
+              : {}),
+          },
+        }
+      : {};
+
     const logEntry = {
       timestamp,
       level,
       category: payload.category,
       message: payload.message,
-      metadata: payload.metadata,
-      ...(payload.error && {
-        error: {
-          message: payload.error.message || String(payload.error),
-          stack: payload.error.stack,
-        }
-      })
+      metadata,
+      ...errorBlock,
     };
 
     if (process.env.NODE_ENV === 'production') {
       return JSON.stringify(logEntry);
     }
     
-    // Developer friendly formatting for local
-    return `[${timestamp}] [${level}] [${payload.category}] ${payload.message} ${payload.metadata ? JSON.stringify(payload.metadata) : ''} ${payload.error ? '\n' + (payload.error.stack || payload.error) : ''}`;
+    const errStack =
+      payload.error instanceof Error ? payload.error.stack : undefined;
+    return `[${timestamp}] [${level}] [${payload.category}] ${payload.message} ${metadata ? JSON.stringify(metadata) : ""}${errStack ? "\n" + errStack : ""}`;
   }
 
   info(payload: LogPayload) {

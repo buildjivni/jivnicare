@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { isFirebaseConfigured, isTestOtpAllowed } from '@/lib/env';
 
 export async function POST(request: Request) {
   try {
@@ -13,17 +14,20 @@ export async function POST(request: Request) {
       );
     }
 
-    // ── TEST AUTH MODE ──────────────────────────────────────────
-    // Immediately return success without hitting Fast2SMS or creating OTP records.
-    // The user will proceed to the verify-otp step where `123456` will be accepted.
+    if (!isFirebaseConfigured() && !isTestOtpAllowed()) {
+      return NextResponse.json(
+        { error: 'Phone verification service is not configured on the server.' },
+        { status: 503 }
+      );
+    }
 
     const existingUser = await prisma.user.findUnique({
-      where: { phone },
-      select: { id: true }
+      where: { phone: phone.replace(/\D/g, '').slice(-10) },
+      select: { id: true },
     });
 
     return NextResponse.json({
-      message: 'OTP sent successfully (TEST MODE)',
+      message: 'Proceed with Firebase OTP on your device',
       userExists: !!existingUser,
     });
   } catch (error) {

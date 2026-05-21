@@ -81,8 +81,42 @@ export const useAuthStore = create<AuthState>()(
         user: state.user,
         isAuthenticated: state.isAuthenticated,
       }),
-      onRehydrateStorage: () => (state) => {
+      onRehydrateStorage: () => (state, err) => {
+        if (err) {
+          state?.logout();
+          state?.setHasHydrated(true);
+          return;
+        }
         state?.setHasHydrated(true);
+        if (state?.isAuthenticated) {
+          fetch("/api/auth/me", { credentials: "include" })
+            .then(async (res) => {
+              if (!res.ok) {
+                state?.logout();
+                return;
+              }
+              let data: { user?: AuthUser } | null = null;
+              try {
+                data = await res.json();
+              } catch {
+                state?.logout();
+                return;
+              }
+              if (data?.user?.id && data.user.role) {
+                state?.login({
+                  id: data.user.id,
+                  phone: data.user.phone,
+                  name: data.user.name,
+                  role: data.user.role,
+                  doctorId: data.user.doctorId ?? null,
+                  verified: data.user.verified,
+                });
+              } else {
+                state?.logout();
+              }
+            })
+            .catch(() => state?.logout());
+        }
       },
     }
   )

@@ -61,7 +61,7 @@ function AdminDashboardContent() {
   useEffect(() => {
     if (_hasHydrated) {
       if (!isAuthenticated || user?.role !== "ADMIN") {
-        router.replace("/login");
+        router.replace("/admin/login");
       }
     }
   }, [_hasHydrated, isAuthenticated, user, router]);

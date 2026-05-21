@@ -27,7 +27,14 @@ export function useJivniAuth() {
       if (res.ok) {
         const data = await res.json();
         if (data.user) {
-          login(data.user);
+          login({
+            id: data.user.id,
+            name: data.user.name,
+            phone: data.user.phone,
+            role: data.user.role,
+            verified: data.user.verified,
+            doctorId: data.user.doctorId ?? null,
+          });
         }
       } else if (res.status === 401) {
         // Since we are decoupling this from reactive loop, 

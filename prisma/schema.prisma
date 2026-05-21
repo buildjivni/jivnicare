@@ -99,6 +99,8 @@ model User {
   name        String?
   password    String?
   location    String?
+  latitude    Float?
+  longitude   Float?
   role        Role     @default(PATIENT)
   isVerified  Boolean  @default(false)
   createdAt   DateTime @default(now())

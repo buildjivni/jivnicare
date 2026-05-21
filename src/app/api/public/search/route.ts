@@ -71,7 +71,7 @@ export async function GET(request: Request) {
       
       // Phase 3: Lead/Search Tracking (Fire and forget)
       // We don't await this so it doesn't block the API response
-      const districtParam = searchParams.get('district') || 'Jamui';
+      const districtParam = searchParams.get('district') || 'Patna';
       prisma.searchAnalytics.create({
         data: {
           query,
@@ -83,7 +83,7 @@ export async function GET(request: Request) {
     }
     
     // ── Additional Filters ──────────────────────────────────────────────
-    const district = searchParams.get('district') || 'Jamui';
+    const district = searchParams.get('district') || 'Patna';
     const minExperience = parseInt(searchParams.get('minExperience') || '0', 10);
     const maxFee = parseInt(searchParams.get('maxFee') || '10000', 10);
     const availability = searchParams.get('availability'); // 'any', 'today'
@@ -115,9 +115,24 @@ export async function GET(request: Request) {
     // ── Fetch verified doctors from DB ───────────────────────────────────
     const dbDoctors = await prisma.doctor.findMany({
       where: whereClause,
-      include: {
-        specialties: true,
-        keywords: true,
+      select: {
+        id: true,
+        slug: true,
+        name: true,
+        education: true,
+        hospitalName: true,
+        district: true,
+        rating: true,
+        verificationStatus: true,
+        experience: true,
+        fee: true,
+        profileImage: true,
+        averageConsultationTime: true,
+        latitude: true,
+        longitude: true,
+        bio: true,
+        specialties: { select: { name: true } },
+        keywords: { select: { term: true } },
         weeklySchedule: true,
         clinicOperations: true,
         dailyQueues: {

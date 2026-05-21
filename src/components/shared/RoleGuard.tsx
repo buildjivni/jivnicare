@@ -8,10 +8,8 @@ interface RoleGuardProps {
 }
 
 /**
- * RoleGuard is now a passthrough component.
- * Role-based routing and session validation is handled deterministically
- * by the Next.js Edge Middleware (`src/middleware.ts`).
+ * Client-side role gate (UX layer). Authoritative protection is in src/middleware.ts + src/proxy.ts.
  */
-export function RoleGuard({ children }: RoleGuardProps) {
+export function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
   return <>{children}</>;
 }

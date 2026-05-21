@@ -1,18 +1,24 @@
+/**
+ * Canonical edge request/auth layer (Next.js 16 proxy convention).
+ * Do not add middleware.ts — Next.js allows only proxy.ts OR middleware, not both.
+ */
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
+import { getJwtSecret } from '@/lib/env';
+import { logger } from '@/lib/logger';
 
 // Define the paths that require authentication and specific roles
 const protectedPaths = [
   { prefix: '/doctor', roles: ['DOCTOR'] },
   { prefix: '/admin', roles: ['ADMIN'] },
   // For patient dashboard, assuming it's at /patient or /booking 
-  { prefix: '/booking', roles: ['PATIENT', 'DOCTOR', 'ADMIN'] }, 
+  // /booking has no page route; checkout/confirmation are protected separately 
   { prefix: '/my-bookings', roles: ['PATIENT', 'DOCTOR', 'ADMIN'] },
   { prefix: '/checkout', roles: ['PATIENT', 'DOCTOR', 'ADMIN'] },
 ];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Check if the path is protected
@@ -32,21 +38,30 @@ export async function middleware(request: NextRequest) {
 
   try {
     // Verify the JWT token using jose
-    const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'fallback-secret');
+    const secret = new TextEncoder().encode(getJwtSecret());
     const { payload } = await jwtVerify(token, secret);
 
     const userRole = payload.role as string;
 
     if (!userRole || !protectedRoute.roles.includes(userRole)) {
-      // Role not allowed
+      if (userRole === 'DOCTOR') {
+        return NextResponse.redirect(new URL('/doctor/dashboard', request.url));
+      }
+      if (userRole === 'PATIENT') {
+        return NextResponse.redirect(new URL('/', request.url));
+      }
       return NextResponse.redirect(new URL('/', request.url));
     }
 
     // Role is allowed, proceed
     return NextResponse.next();
   } catch (error) {
-    console.error('Middleware JWT Verification Error:', error);
-    // Invalid or expired token
+    logger.warn({
+      category: 'AUTH',
+      message: 'Edge JWT verification failed',
+      metadata: { path: pathname },
+      error,
+    });
     return redirectToLogin(request, pathname);
   }
 }

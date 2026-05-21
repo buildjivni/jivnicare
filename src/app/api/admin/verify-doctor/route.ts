@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import prisma from '@/lib/prisma';
-import jwt from 'jsonwebtoken';
+import { verifyToken } from '@/lib/jwt';
 import { cookies } from 'next/headers';
 import { verifyDoctorSchema, formatZodError } from '@/lib/validations';
 import { generateSequentialDoctorCode } from '@/lib/slug';
@@ -15,11 +16,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const jwtSecret = process.env.JWT_SECRET || 'fallback-secret';
-    let decoded: any;
-    try {
-      decoded = jwt.verify(token, jwtSecret);
-    } catch (err) {
+    const decoded = verifyToken(token) as { role: string } | null;
+    if (!decoded) {
       return NextResponse.json({ error: 'Invalid or expired session' }, { status: 401 });
     }
 
@@ -107,6 +105,11 @@ export async function POST(request: Request) {
 
       return { status, doctorCode };
     });
+
+    if (doctor.slug) {
+      revalidatePath(`/doctors/${doctor.slug}`);
+    }
+    revalidatePath('/doctors');
 
     return NextResponse.json({
       success: true,

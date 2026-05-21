@@ -1,23 +1,31 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
+import { isTestOtpAllowed, isFirebaseConfigured } from '@/lib/env';
+import { verifyFirebaseIdToken, normalizeIndianPhone } from '@/lib/firebase/admin';
 
 export async function POST(request: Request) {
   try {
-    const { phone, otp, password } = await request.json();
+    const { phone, otp, password, firebaseIdToken } = await request.json();
 
-    if (!phone || !otp || !password) {
-      return NextResponse.json({ error: 'Phone number, OTP, and new password are required' }, { status: 400 });
+    if (!phone || !password) {
+      return NextResponse.json({ error: 'Phone number and new password are required' }, { status: 400 });
     }
 
     if (password.length < 6) {
       return NextResponse.json({ error: 'Password must be at least 6 characters long' }, { status: 400 });
     }
 
-    // Find the user by phone
+    let phone10: string;
+    try {
+      phone10 = normalizeIndianPhone(phone);
+    } catch {
+      return NextResponse.json({ error: 'Invalid phone number' }, { status: 400 });
+    }
+
     const user = await prisma.user.findUnique({
-      where: { phone },
-      include: { doctor: true }
+      where: { phone: phone10 },
+      include: { doctor: true },
     });
 
     if (!user) {
@@ -28,27 +36,33 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Account is not registered as a Doctor.' }, { status: 403 });
     }
 
-    // Verify OTP (Test mode: Accept 123456)
-    if (otp !== '123456') {
-      return NextResponse.json({ error: 'Invalid OTP code. Please enter 123456 in test mode.' }, { status: 400 });
+    let verified = false;
+
+    if (firebaseIdToken && isFirebaseConfigured()) {
+      try {
+        const fb = await verifyFirebaseIdToken(firebaseIdToken);
+        verified = fb.phone10 === phone10;
+      } catch {
+        verified = false;
+      }
+    } else if (isTestOtpAllowed() && otp === '123456') {
+      verified = true;
     }
 
-    // Hash new password
+    if (!verified) {
+      return NextResponse.json({ error: 'Invalid or expired OTP verification.' }, { status: 401 });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Update user's password
     await prisma.user.update({
       where: { id: user.id },
-      data: { password: hashedPassword }
+      data: { password: hashedPassword },
     });
 
-    return NextResponse.json({
-      success: true,
-      message: 'Password reset successfully. Please login with your new password.'
-    });
-
+    return NextResponse.json({ success: true, message: 'Password reset successfully.' });
   } catch (error) {
-    console.error('Password Reset Error:', error);
+    console.error('Reset Password Error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

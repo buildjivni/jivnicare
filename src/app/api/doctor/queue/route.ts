@@ -2,7 +2,12 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { verifyToken } from "@/lib/jwt";
 import { cookies } from "next/headers";
-import { getCurrentLogicalDay, getStartOfDay } from "@/lib/clinic-utils";
+import {
+  getCurrentLogicalDay,
+  getStartOfDay,
+  getUnifiedQueueCapacity,
+  isEmergencyToken,
+} from "@/lib/clinic-utils";
 
 export async function GET(request: Request) {
   try {
@@ -58,7 +63,7 @@ export async function GET(request: Request) {
     if (!dailyQueue) {
       // Find operations to get max capacity
       const clinicOps = await prisma.clinicOperations.findUnique({ where: { doctorId: doctor.id } });
-      const maxCapacity = clinicOps ? clinicOps.walkInLimit : 40; // Unified Capacity
+      const maxCapacity = getUnifiedQueueCapacity(clinicOps);
 
       dailyQueue = await prisma.dailyQueue.create({
         data: {
@@ -80,14 +85,20 @@ export async function GET(request: Request) {
       });
     }
 
-    // Phase 4: Real-time Stats Aggregation
+    // Phase 4: Real-time Stats Aggregation (regular tokens only for capacity metrics)
     const tokens = dailyQueue.tokens || [];
+    const regularTokens = tokens.filter((t) => !isEmergencyToken(t));
+    const waitingRegular = regularTokens.filter((t) => t.status === "WAITING");
     const stats = {
-      total: tokens.length,
-      waiting: tokens.filter(t => t.status === "WAITING").length,
-      completed: tokens.filter(t => t.status === "COMPLETED").length,
+      total: regularTokens.length,
+      waiting: waitingRegular.length,
+      emergencyWaiting: tokens.filter(
+        (t) => isEmergencyToken(t) && t.status === "WAITING"
+      ).length,
+      completed: tokens.filter((t) => t.status === "COMPLETED").length,
       currentActive: dailyQueue.currentActiveToken || 0,
-      avgWaitTime: (tokens.filter(t => t.status === "WAITING").length) * (doctor.averageConsultationTime || 15)
+      avgWaitTime:
+        waitingRegular.length * (doctor.averageConsultationTime || 15),
     };
 
     return NextResponse.json({ 

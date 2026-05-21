@@ -19,7 +19,7 @@ const FOOTER_SECTIONS = [
     links: [
       { label: "Join JivniCare Network", href: "/partners", accent: true },
       { label: "Clinic Partnership", href: "/partners" },
-      { label: "Provider Dashboard", href: "/login?role=DOCTOR" },
+      { label: "Provider Dashboard", href: "/partners/login" },
       { label: "Partner Support", href: "mailto:partners@jivnicare.com" },
     ],
   },

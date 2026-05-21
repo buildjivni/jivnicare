@@ -1,21 +1,13 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { verifyToken } from "@/lib/jwt";
-import { cookies } from "next/headers";
+import { requireSession } from "@/lib/auth/session";
+import { mapDoctorWorkspace } from "@/lib/doctor-view";
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("auth-token")?.value;
-
-    if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const payload: any = await verifyToken(token);
-    if (!payload || !payload.id || payload.role !== "DOCTOR") {
-      return NextResponse.json({ error: "Invalid token or not a doctor" }, { status: 401 });
-    }
+    const auth = await requireSession(["DOCTOR"]);
+    if (auth.response) return auth.response;
+    const payload = auth.session!;
 
     const doctor = await prisma.doctor.findUnique({
       where: { userId: payload.id },
@@ -65,10 +57,13 @@ export async function GET(request: Request) {
     const completedFields = fields.filter(f => !!f.value).length;
     const completenessPercentage = Math.round((completedFields / fields.length) * 100);
 
-    return NextResponse.json({ 
-      success: true, 
-      doctor, 
-      completeness: completenessPercentage 
+    const view = mapDoctorWorkspace(doctor as Record<string, unknown>, completenessPercentage);
+
+    return NextResponse.json({
+      success: true,
+      doctor,
+      view,
+      completeness: completenessPercentage,
     });
   } catch (error: any) {
     console.error("Fetch doctor profile error:", error);

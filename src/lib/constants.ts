@@ -1,3 +1,6 @@
+/** Default discovery district when GPS / query param is unavailable */
+export const DEFAULT_DISTRICT = "Patna";
+
 export const SPECIALTIES = [
   { name: "General Physician", id: "General Physician" },
   { name: "Cardiologist", id: "Cardiologist" },

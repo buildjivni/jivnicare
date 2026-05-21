@@ -16,6 +16,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import { useFirebasePhoneAuth } from "@/hooks/useFirebasePhoneAuth";
+import { isFirebaseClientConfigured } from "@/lib/firebase/config";
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
@@ -29,8 +31,8 @@ export default function ForgotPasswordPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const { sendOtp: sendFirebaseOtp, verifyOtpCode } = useFirebasePhoneAuth("firebase-recaptcha-forgot");
 
-  // Send OTP handler (Test Mode)
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (phone.length < 10) return;
@@ -52,6 +54,9 @@ export default function ForgotPasswordPage() {
         throw new Error("This phone number is not registered as a doctor.");
       }
 
+      if (isFirebaseClientConfigured()) {
+        await sendFirebaseOtp(phone);
+      }
       setStep(2);
     } catch (err: any) {
       setError(err.message || "Something went wrong.");
@@ -77,10 +82,16 @@ export default function ForgotPasswordPage() {
     setError(null);
 
     try {
+      const body: Record<string, string> = { phone, password };
+      if (isFirebaseClientConfigured()) {
+        body.firebaseIdToken = await verifyOtpCode(otp);
+      } else {
+        body.otp = otp;
+      }
       const res = await fetch("/api/auth/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone, otp, password }),
+        body: JSON.stringify(body),
       });
 
       const data = await res.json();
@@ -269,9 +280,11 @@ export default function ForgotPasswordPage() {
                           className="h-16 pl-14 rounded-2xl bg-slate-50/50 border-slate-200/60 focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary/50 font-black text-xl tracking-widest transition-all shadow-sm"
                         />
                       </div>
-                      <p className="text-[9px] font-bold text-sky-600 mt-2 ml-1">
-                        * Enter 123456 for instant verification in TEST Mode.
-                      </p>
+                      {process.env.NODE_ENV !== "production" && (
+                        <p className="text-[9px] font-bold text-sky-600 mt-2 ml-1">
+                          * Dev only: test OTP when ALLOW_TEST_OTP is enabled.
+                        </p>
+                      )}
                     </div>
 
                     <div className="group">
@@ -363,6 +376,7 @@ export default function ForgotPasswordPage() {
           </div>
         </div>
       </motion.div>
+      <div id="firebase-recaptcha-forgot" className="sr-only" aria-hidden />
     </div>
   );
 }

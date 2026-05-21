@@ -14,7 +14,7 @@ export function mapPrismaDoctorToUI(doc: any): UIDoctor {
     slug: doc.slug || doc.id,
     specialty: doc.specialties?.[0]?.name || "General Physician",
     clinic: doc.hospitalName || "JivniCare Clinic",
-    location: doc.district || "Jamui",
+    location: doc.district || doc.city || "Patna",
     locality: doc.locality || doc.district,
     fullAddress: doc.fullAddress,
     landmark: doc.landmark,
