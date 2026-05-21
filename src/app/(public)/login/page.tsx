@@ -22,6 +22,9 @@ import { isFirebaseClientConfigured } from "@/lib/firebase/config";
 import { parseResponseJson } from "@/lib/safe-json";
 import { logFirebaseOtp, maskConfigForLog } from "@/lib/firebase/otp-log";
 import { getPublicFirebaseConfig } from "@/lib/firebase/config";
+import { logOnboarding } from "@/lib/auth/onboarding-log";
+
+type LoginStep = "phone" | "otp" | "identity";
 
 function PatientLoginContent() {
   const router = useRouter();
@@ -34,13 +37,14 @@ function PatientLoginContent() {
   const [location, setLocation] = useState("");
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
-  const [step, setStep] = useState<"phone" | "name" | "otp">("phone");
+  const [step, setStep] = useState<LoginStep>("phone");
   const [isLoading, setIsLoading] = useState(false);
   const [resendTimer, setResendTimer] = useState(30);
   const [canResend, setCanResend] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [userExists, setUserExists] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [needsProfile, setNeedsProfile] = useState(false);
   const {
     sendOtp: sendFirebaseOtp,
     verifyOtpCode,
@@ -57,12 +61,25 @@ function PatientLoginContent() {
     });
   }, []);
 
-  // Already-logged-in guard
+  const finishLoginRedirect = (role?: Parameters<typeof getRoleRedirect>[0]) => {
+    const target = redirectUrl || getRoleRedirect(role ?? user?.role ?? "PATIENT");
+    logOnboarding("redirect", { target, role: role ?? user?.role });
+    router.replace(target);
+  };
+
+  // Redirect when session is complete — never during identity collection
   useEffect(() => {
-    if (isAuthenticated && user) {
-      router.replace(redirectUrl || getRoleRedirect(user.role));
+    if (!isAuthenticated || !user) return;
+    if (step === "identity" || needsProfile) return;
+    if (otpVerified) {
+      finishLoginRedirect(user.role);
+      return;
     }
-  }, [isAuthenticated, user, router, redirectUrl]);
+    if (step === "phone") {
+      logOnboarding("auth_guard_skip", { reason: "existing_session" });
+      finishLoginRedirect(user.role);
+    }
+  }, [isAuthenticated, user, step, needsProfile, otpVerified, router, redirectUrl]);
 
   // Load persisted name/phone from sessionStorage
   useEffect(() => {
@@ -87,12 +104,14 @@ function PatientLoginContent() {
     }
   }, [step, resendTimer]);
 
-  // ── Step 1: Send OTP ────────────────────────────────────────────
+  // ── Step 1: Phone → send OTP (always before identity) ───────────
   const handleSendOtp = async (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (phone.length < 10) return;
+    if (phone.length < 10 || isLoading || isSendingFirebase) return;
     setIsLoading(true);
     setError(null);
+    setOtpVerified(false);
+    logOnboarding("phone_submit", { phoneSuffix: phone.slice(-4) });
 
     try {
       const res = await fetch("/api/auth/send-otp", {
@@ -101,21 +120,19 @@ function PatientLoginContent() {
         body: JSON.stringify({ phone }),
       });
 
-      const data = await res.json();
+      const data = await parseResponseJson<{ error?: string; userExists?: boolean }>(res);
+      if (!data) throw new Error("Invalid server response.");
+      if (!res.ok) throw new Error(data.error || "Failed to send OTP.");
 
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to send OTP.");
-      }
-
-      setUserExists(data.userExists);
-      if (!data.userExists) {
-        setStep("name");
-      } else {
-        await requestFirebaseOtp();
-        setStep("otp");
-      }
-    } catch (err: any) {
-      setError(err.message || "Failed to send OTP. Please try again.");
+      setNeedsProfile(!data.userExists);
+      logOnboarding("otp_send_start", { isNewUser: !data.userExists });
+      await requestFirebaseOtp();
+      setStep("otp");
+      logOnboarding("otp_send_success", { step: "otp" });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to send OTP.";
+      logOnboarding("otp_send_error", { message });
+      setError(message);
     } finally {
       setIsLoading(false);
     }
@@ -135,27 +152,7 @@ function PatientLoginContent() {
     setCanResend(false);
   };
 
-  // ── Step 1b: Name collected → go to OTP ─────────────────────────
-  const handleNameSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!/^[a-zA-Z\s]+$/.test(name.trim())) {
-      setError("Please enter a valid name (letters only).");
-      return;
-    }
-    if (name.length < 2 || location.length < 2) return;
-    setIsLoading(true);
-    setError(null);
-    try {
-      await requestFirebaseOtp();
-      setStep("otp");
-    } catch (err: any) {
-      setError(err.message || "Failed to send OTP.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // ── Step 2: Verify OTP ──────────────────────────────────────────
+  // ── Step 2: Verify OTP → session → identity or redirect ─────────
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (otp.length < 6) return;
@@ -163,86 +160,146 @@ function PatientLoginContent() {
     setError(null);
 
     try {
+      logOnboarding("otp_verify_start", { otpReady });
       if (isFirebaseClientConfigured() && !otpReady) {
         throw new Error("Please request an OTP first.");
       }
 
-      const payload: Record<string, string | undefined> = {
-        phone,
-        name: name.trim() || undefined,
-        location: location.trim() || undefined,
-      };
+      const payload: Record<string, string | undefined> = { phone };
       if (isFirebaseClientConfigured()) {
         payload.firebaseIdToken = await verifyOtpCode(otp);
       } else {
         payload.otp = otp;
       }
+
       const res = await fetch("/api/auth/verify-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(payload),
       });
 
       const data = await parseResponseJson<{
         error?: string;
         user?: Parameters<typeof login>[0];
-        userExists?: boolean;
+        needsProfile?: boolean;
       }>(res);
 
-      if (!data) {
-        throw new Error("Invalid server response. Please try again.");
+      if (!data) throw new Error("Invalid server response. Please try again.");
+      if (!res.ok) throw new Error(data.error || "OTP verification failed.");
+      if (!data.user) throw new Error("Invalid server response. Please try again.");
+
+      const showIdentity = Boolean(data.needsProfile);
+      setNeedsProfile(showIdentity);
+      setOtpVerified(true);
+
+      if (showIdentity) {
+        setStep("identity");
+        login(data.user);
+        logOnboarding("otp_verify_success", { needsProfile: true });
+        logOnboarding("session_created", { userId: data.user.id });
+        logOnboarding("identity_show");
+        return;
       }
 
-      if (!res.ok) {
-        throw new Error(data.error || "OTP verification failed.");
-      }
-
-      if (!data.user) {
-        throw new Error("Invalid server response. Please try again.");
-      }
-
-      // Clear persisted state
+      login(data.user);
+      logOnboarding("otp_verify_success", { needsProfile: false });
+      logOnboarding("session_created", { userId: data.user.id, role: data.user.role });
       sessionStorage.removeItem("jc_login_name");
       sessionStorage.removeItem("jc_login_phone");
+      setNeedsProfile(false);
+      finishLoginRedirect(data.user.role);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Invalid OTP. Please try again.";
+      setError(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-      // Update Zustand store
-      login(data.user);
+  // ── Step 3: Identity (only after OTP + session) ─────────────────
+  const handleIdentitySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmedName = name.trim();
+    const trimmedLocation = location.trim();
 
-      // Request geolocation for new users (userExists is false after OTP verification)
-      if (!data.userExists) {
-        if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(
-            async (position) => {
-              try {
-                await fetch("/api/auth/update-location", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    latitude: position.coords.latitude,
-                    longitude: position.coords.longitude,
-                  }),
-                });
-                // Show success toast
-                toast.success("Location saved successfully");
-              } catch (e) {
-                toast.error("Failed to save location.");
-              }
-            },
-            () => {
-              // Permission denied or error
-              toast.info("Location not granted — you can enable it later");
-            }
-          );
-        } else {
-          toast.info("Geolocation is not supported by this browser.");
-        }
+    if (!otpVerified || !isAuthenticated) {
+      setError("Please verify your phone number first.");
+      return;
+    }
+    if (trimmedName.length < 2) {
+      setError("Please enter your full name (at least 2 characters).");
+      return;
+    }
+    if (!/^[a-zA-Z\s.]+$/.test(trimmedName)) {
+      setError("Name can only contain letters, spaces, and periods.");
+      return;
+    }
+    if (trimmedLocation.length < 2) {
+      setError("Please enter your city or village.");
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+    logOnboarding("identity_submit", { nameLength: trimmedName.length });
+
+    try {
+      const res = await fetch("/api/auth/update-profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ name: trimmedName, location: trimmedLocation }),
+      });
+
+      const data = await parseResponseJson<{
+        success?: boolean;
+        error?: string;
+        user?: Parameters<typeof login>[0];
+      }>(res);
+
+      if (!data) throw new Error("Invalid server response.");
+      if (!res.ok) throw new Error(data.error || "Failed to save your profile.");
+
+      if (data.user) {
+        useAuthStore.getState().updateUser({
+          name: data.user.name,
+        });
       }
 
-      // Role-aware redirect
-      const target = redirectUrl || getRoleRedirect(data.user.role);
-      router.replace(target);
-    } catch (err: any) {
-      setError(err.message || "Invalid OTP. Please try again.");
+      logOnboarding("identity_success");
+
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            try {
+              await fetch("/api/auth/update-location", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({
+                  latitude: position.coords.latitude,
+                  longitude: position.coords.longitude,
+                }),
+              });
+              toast.success("Location saved");
+            } catch {
+              toast.error("Could not save GPS location.");
+            }
+          },
+          () => toast.info("Location permission skipped — you can enable later")
+        );
+      }
+
+      sessionStorage.removeItem("jc_login_name");
+      sessionStorage.removeItem("jc_login_phone");
+      setNeedsProfile(false);
+      finishLoginRedirect(data.user?.role ?? user?.role);
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Failed to save profile. Please try again.";
+      logOnboarding("identity_submit", { error: message });
+      setError(message);
     } finally {
       setIsLoading(false);
     }
@@ -392,10 +449,10 @@ function PatientLoginContent() {
                 </motion.div>
               )}
 
-              {/* Step 1b: Name Entry (new users only) */}
-              {step === "name" && (
+              {/* Step 3: Identity (after OTP verified + session created) */}
+              {step === "identity" && otpVerified && (
                 <motion.div
-                  key="name"
+                  key="identity"
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
@@ -404,7 +461,12 @@ function PatientLoginContent() {
                   <div className="mb-10 text-center relative flex flex-col items-center">
                     <div className="w-full flex justify-between items-center mb-6">
                       <button
-                        onClick={() => setStep("phone")}
+                        type="button"
+                        disabled={isLoading}
+                        onClick={() => {
+                          setError(null);
+                          setStep("otp");
+                        }}
                         className="flex items-center justify-center p-2 rounded-full bg-slate-50 text-slate-500 hover:text-primary hover:bg-slate-100 transition-all group"
                       >
                         <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
@@ -412,13 +474,19 @@ function PatientLoginContent() {
                     </div>
 
                     <img src="/logo.png" alt="JivniCare" className="h-16 w-auto object-contain mb-6" />
-                    <h2 className="text-3xl font-black text-slate-900 tracking-tight">Create Identity</h2>
+                    <h2 className="text-3xl font-black text-slate-900 tracking-tight">Complete Your Profile</h2>
                     <p className="text-slate-500 font-bold mt-2 text-base italic">
-                      New account for <span className="text-primary">+91 {phone}</span>
+                      Verified <span className="text-primary">+91 {phone}</span> — add your details
                     </p>
                   </div>
 
-                  <form onSubmit={handleNameSubmit} className="space-y-6">
+                  {error && (
+                    <div className="mb-6 p-4 bg-rose-50 border border-rose-100 rounded-2xl">
+                      <p className="text-xs font-bold text-rose-800 leading-relaxed">{error}</p>
+                    </div>
+                  )}
+
+                  <form onSubmit={handleIdentitySubmit} className="space-y-6">
                     <div className="group">
                       <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2.5 block ml-1">
                         Full Name
@@ -447,7 +515,7 @@ function PatientLoginContent() {
                           required
                           placeholder="e.g. Patna or Your Village"
                           value={location}
-                          onChange={(e) => setLocation(e.target.value.replace(/[^a-zA-Z\s]/g, ""))}
+                          onChange={(e) => setLocation(e.target.value.replace(/[^a-zA-Z0-9\s.,-]/g, ""))}
                           className="h-16 pl-14 rounded-2xl bg-slate-50/50 border-slate-200/60 focus:bg-white focus:ring-4 focus:ring-primary/5 focus:border-primary font-black text-lg transition-all"
                         />
                       </div>
@@ -455,10 +523,14 @@ function PatientLoginContent() {
 
                     <Button
                       type="submit"
-                      disabled={name.length < 2 || location.length < 2}
+                      disabled={isLoading || name.trim().length < 2 || location.trim().length < 2}
                       className="w-full h-16 rounded-2xl bg-[#205E98] hover:bg-[#1a4f82] text-white font-black text-lg shadow-[0_12px_24px_-8px_rgba(32,94,152,0.3)] transition-all flex items-center justify-center gap-3"
                     >
-                      Next Step <ArrowRight className="w-5 h-5" />
+                      {isLoading ? (
+                        <RefreshCw className="w-5 h-5 animate-spin" />
+                      ) : (
+                        <>Continue <ArrowRight className="w-5 h-5" /></>
+                      )}
                     </Button>
                   </form>
                 </motion.div>

@@ -50,9 +50,16 @@ export async function createPhoneSessionResponse(input: CreatePhoneSessionInput)
     ...(user.doctor?.id ? { doctorId: user.doctor.id } : {}),
   });
 
+  const needsProfile =
+    isNewUser ||
+    !user.name?.trim() ||
+    user.name.trim().toLowerCase() === "patient" ||
+    !user.location?.trim();
+
   const response = NextResponse.json({
     message: "Phone verified successfully",
     userExists: !isNewUser,
+    needsProfile,
     user: {
       id: user.id,
       phone: user.phone,
