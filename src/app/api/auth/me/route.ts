@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/jwt';
 import prisma from '@/lib/prisma';
+import { logger } from '@/lib/logger';
 
 /**
  * GET /api/auth/me
@@ -78,7 +79,11 @@ export async function GET() {
       },
     });
   } catch (error) {
-    console.error('GET /api/auth/me error:', error);
+    logger.error({
+      category: 'AUTH',
+      message: 'GET /api/auth/me failed',
+      error,
+    });
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

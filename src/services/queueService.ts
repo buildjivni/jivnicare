@@ -1,5 +1,5 @@
 import prisma from "@/lib/prisma";
-import { getStartOfDay } from "@/lib/clinic-utils";
+import { getStartOfDay, getUnifiedQueueCapacity } from "@/lib/clinic-utils";
 
 export class QueueService {
   /**
@@ -73,7 +73,7 @@ export class QueueService {
 
       if (!dailyQueue) {
         // Unified Capacity: Combine walkIn and online limit
-        const maxCapacity = clinicOps ? (clinicOps.onlineLimit + clinicOps.walkInLimit) : 40;
+        const maxCapacity = getUnifiedQueueCapacity(clinicOps);
 
         dailyQueue = await tx.dailyQueue.create({
           data: { 

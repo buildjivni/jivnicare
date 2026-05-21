@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/useAuthStore";
 import { PublicGuard } from "@/components/shared";
+import { ImageUploadField } from "@/components/shared/ImageUploadField";
 
 const STANDARD_SPECIALTIES = [
   "General Medicine", "Pediatrics", "Gynecology & Obstetrics", "Dermatology",
@@ -154,6 +155,8 @@ function OnboardingContent() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to submit.");
+      const { updateUser } = useAuthStore.getState();
+      updateUser({ verified: false });
       setStep(3);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err: any) {
@@ -494,15 +497,18 @@ function OnboardingContent() {
                         <textarea rows={5} placeholder="I am a dedicated physician with over..." value={formData.bio} onChange={(e) => setFormData({...formData, bio: e.target.value})} className="w-full rounded-xl bg-slate-50 border border-slate-200 p-4 text-sm focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all resize-none" />
                       </div>
 
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-700">Profile Photo URL</label>
-                        <Input placeholder="https://image-url..." value={formData.profilePhotoUrl} onChange={(e) => setFormData({...formData, profilePhotoUrl: e.target.value})} className="h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all" />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-700">Clinic Photo URL</label>
-                        <Input placeholder="https://image-url..." value={formData.clinicPhotoUrl} onChange={(e) => setFormData({...formData, clinicPhotoUrl: e.target.value})} className="h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all" />
-                      </div>
+                      <ImageUploadField
+                        label="Profile Photo"
+                        value={formData.profilePhotoUrl}
+                        onChange={(url) => setFormData({ ...formData, profilePhotoUrl: url })}
+                        filenamePrefix="doctor-profile"
+                      />
+                      <ImageUploadField
+                        label="Clinic Photo"
+                        value={formData.clinicPhotoUrl}
+                        onChange={(url) => setFormData({ ...formData, clinicPhotoUrl: url })}
+                        filenamePrefix="clinic-photo"
+                      />
 
                       <div className="space-y-3 md:col-span-2 pt-4 border-t border-slate-100">
                         <label className="text-xs font-bold text-slate-700 flex items-center justify-between">

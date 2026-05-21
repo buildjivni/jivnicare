@@ -1,110 +1,90 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
-import jwt from 'jsonwebtoken';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
+import { isTestOtpAllowed, isFirebaseConfigured } from '@/lib/env';
+import { verifyFirebaseIdToken, normalizeIndianPhone } from '@/lib/firebase/admin';
+import { createPhoneSessionResponse } from '@/lib/auth/phone-session';
+import { isTransientDbError, dbUnavailableResponse } from '@/lib/db-errors';
 
 export async function POST(request: Request) {
   try {
     const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
-    
-    // Rate Limiting: 5 attempts per 10 minutes per IP
+
     const rateLimit = await checkRateLimit({
       identifier: `otp_verify_${ip}`,
       limit: 5,
       windowMs: 10 * 60 * 1000,
     });
-    
+
     if (!rateLimit.success) {
       logger.warn({ category: 'OTP', message: 'Rate limit exceeded for OTP verification', metadata: { ip } });
       return NextResponse.json({ error: 'Too many attempts, please try again later.' }, { status: 429 });
     }
 
     const body = await request.json();
-    const { phone, otp, name, location } = body;
+    const { phone, otp, firebaseIdToken, name, location } = body;
 
-    if (!phone || !otp) {
-      return NextResponse.json(
-        { error: 'Phone and OTP are required' },
-        { status: 400 }
-      );
+    if (!phone) {
+      return NextResponse.json({ error: 'Phone number is required' }, { status: 400 });
     }
 
-    // ── TEST AUTH MODE ──────────────────────────────────────────────
-    // Accept "123456" for ALL users. 
-    // Assign DOCTOR role to specific test numbers, PATIENT to others.
-    if (otp !== "123456") {
-      return NextResponse.json(
-        { error: 'Invalid OTP. Use 123456 for test mode.' },
-        { status: 401 }
-      );
+    let phone10: string;
+    try {
+      phone10 = normalizeIndianPhone(phone);
+    } catch {
+      return NextResponse.json({ error: 'Invalid phone number format' }, { status: 400 });
     }
 
-    // Determine Role
-    const isDoctorNumber = phone === "2222222222" || phone === "9430067927";
-    const role = isDoctorNumber ? 'DOCTOR' : 'PATIENT';
+    // ── Firebase Phone Auth (production path) ─────────────────────
+    if (firebaseIdToken) {
+      if (!isFirebaseConfigured()) {
+        return NextResponse.json(
+          { error: 'Phone verification service is not configured.' },
+          { status: 503 }
+        );
+      }
 
-    // Find or create user
-    let user = await prisma.user.findUnique({
-      where: { phone },
-      include: { doctor: true }
-    });
+      try {
+        const verified = await verifyFirebaseIdToken(firebaseIdToken);
+        if (verified.phone10 !== phone10) {
+          return NextResponse.json(
+            { error: 'Phone number does not match verified identity.' },
+            { status: 400 }
+          );
+        }
 
-    if (!user) {
-      user = await prisma.user.create({
-        data: {
-          phone,
-          name: name?.trim() || (isDoctorNumber ? "Test Doctor" : "Test Patient"),
-          location: location?.trim() || "Test Location",
-          isVerified: true,
-          role,
-        },
-        include: { doctor: true }
-      });
-    } else {
-      // Returning user patch
-      const needsUpdate = !user.isVerified || (name?.trim() && !user.name) || (location?.trim() && !user.location);
-      if (needsUpdate) {
-        user = await prisma.user.update({
-          where: { id: user.id },
-          data: {
-            isVerified: true,
-            ...(name?.trim() && !user.name ? { name: name.trim() } : {}),
-            ...(location?.trim() && !user.location ? { location: location.trim() } : {}),
-          },
-          include: { doctor: true }
+        return createPhoneSessionResponse({
+          phone10,
+          firebaseUid: verified.uid,
+          name,
+          location,
         });
+      } catch (err) {
+        logger.error({ category: 'OTP', message: 'Firebase token verification failed', error: err });
+        return NextResponse.json({ error: 'Invalid or expired verification. Please try again.' }, { status: 401 });
       }
     }
 
-    // Generate JWT
-    const jwtSecret = process.env.JWT_SECRET || 'fallback-secret';
-    const payload = { id: user.id, role: user.role };
-    const token = jwt.sign(payload, jwtSecret, { expiresIn: '7d' });
+    // ── Dev-only test OTP (never in production) ───────────────────
+    if (isTestOtpAllowed() && otp === '123456') {
+      return createPhoneSessionResponse({
+        phone10,
+        firebaseUid: `test_${phone10}`,
+        name,
+        location,
+      });
+    }
 
-    const response = NextResponse.json({
-      message: 'OTP verified successfully (TEST MODE)',
-      token,
-      user: {
-        id: user.id,
-        phone: user.phone,
-        name: user.name,
-        role: user.role,
-        doctorId: user.doctor?.id || null,
-        isReturning: !!user.createdAt && (Date.now() - user.createdAt.getTime()) > 60_000,
-      },
-    });
-
-    response.cookies.set('auth-token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60, // 7 days
-      path: '/',
-    });
-
-    return response;
+    return NextResponse.json(
+      { error: 'Verification required. Please complete OTP via Firebase.' },
+      { status: 401 }
+    );
   } catch (error) {
+    if (isTransientDbError(error)) {
+      logger.warn({ category: 'OTP', message: 'Transient DB error during OTP verify', error });
+      const { error: msg, status } = dbUnavailableResponse();
+      return NextResponse.json({ error: msg }, { status });
+    }
     logger.error({ category: 'API_EXCEPTION', message: 'Internal server error while verifying OTP', error });
     return NextResponse.json(
       { error: 'Internal server error while verifying OTP' },

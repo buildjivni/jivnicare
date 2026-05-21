@@ -1,4 +1,5 @@
 import { PrismaClient, Doctor, ClinicOperations, WeeklySchedule, DailyQueue } from '@prisma/client';
+import { getUnifiedQueueCapacity } from '@/lib/clinic-utils';
 
 export type DynamicStatus = 
   | 'AVAILABLE_NOW'
@@ -76,7 +77,7 @@ export function calculateDynamicStatus({ doctor, todayQueue }: StatusInput): Sta
   // 3. Queue Calculations
   let activeToken = 0;
   let issuedTokens = 0;
-  let maxCapacity = todaySchedule.maxPatients || operations?.onlineLimit + operations?.walkInLimit || 50;
+  let maxCapacity = todaySchedule.maxPatients || getUnifiedQueueCapacity(operations) || 50;
 
   if (todayQueue) {
     activeToken = todayQueue.currentActiveToken;

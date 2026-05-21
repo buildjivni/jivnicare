@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   Star, MapPin, Clock, ShieldCheck,
@@ -120,6 +121,7 @@ function displayName(name: string): string {
 // ── Component ──────────────────────────────────────────────────────────────────
 
 export function DoctorCard({ doctor, className }: DoctorCardProps) {
+  const router = useRouter();
   const url = getDoctorUrl(doctor);
   const avail = getAvailabilityConfig(doctor);
   const consultCount = formatConsultations(doctor.totalConsultations ?? 0);
@@ -320,6 +322,7 @@ export function DoctorCard({ doctor, className }: DoctorCardProps) {
 
             <div className="flex-1 max-w-[170px] relative z-40">
               <button
+                onClick={() => router.push(url)}
                 className={cn(
                   "w-full h-[40px] rounded-[12px] font-bold text-[13px] tracking-wide",
                   "flex items-center justify-center gap-1.5",

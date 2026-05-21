@@ -12,10 +12,14 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { useAuthStore, getRoleRedirect } from "@/store/useAuthStore";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { PublicGuard } from "@/components/shared";
+import { useFirebasePhoneAuth } from "@/hooks/useFirebasePhoneAuth";
+import { isFirebaseClientConfigured } from "@/lib/firebase/config";
+import { parseResponseJson } from "@/lib/safe-json";
 
 function PatientLoginContent() {
   const router = useRouter();
@@ -34,6 +38,9 @@ function PatientLoginContent() {
   const [canResend, setCanResend] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [userExists, setUserExists] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const { sendOtp: sendFirebaseOtp, verifyOtpCode, isSending: isSendingFirebase, resetConfirmation } =
+    useFirebasePhoneAuth("firebase-recaptcha-login");
 
   // Already-logged-in guard
   useEffect(() => {
@@ -86,14 +93,12 @@ function PatientLoginContent() {
       }
 
       setUserExists(data.userExists);
-      // If new user → ask for name first; else go straight to OTP
       if (!data.userExists) {
         setStep("name");
       } else {
         setStep("otp");
+        await requestFirebaseOtp();
       }
-      setResendTimer(30);
-      setCanResend(false);
     } catch (err: any) {
       setError(err.message || "Failed to send OTP. Please try again.");
     } finally {
@@ -101,11 +106,38 @@ function PatientLoginContent() {
     }
   };
 
+  const requestFirebaseOtp = async () => {
+    setError(null);
+    if (!isFirebaseClientConfigured()) {
+      setOtpSent(true);
+      setResendTimer(30);
+      setCanResend(false);
+      return;
+    }
+    resetConfirmation();
+    await sendFirebaseOtp(phone);
+    setOtpSent(true);
+    setResendTimer(30);
+    setCanResend(false);
+  };
+
   // ── Step 1b: Name collected → go to OTP ─────────────────────────
-  const handleNameSubmit = (e: React.FormEvent) => {
+  const handleNameSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!/^[a-zA-Z\s]+$/.test(name.trim())) {
+      setError("Please enter a valid name (letters only).");
+      return;
+    }
     if (name.length < 2 || location.length < 2) return;
     setStep("otp");
+    setIsLoading(true);
+    try {
+      await requestFirebaseOtp();
+    } catch (err: any) {
+      setError(err.message || "Failed to send OTP.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // ── Step 2: Verify OTP ──────────────────────────────────────────
@@ -116,16 +148,38 @@ function PatientLoginContent() {
     setError(null);
 
     try {
+      const payload: Record<string, string | undefined> = {
+        phone,
+        name: name.trim() || undefined,
+        location: location.trim() || undefined,
+      };
+      if (isFirebaseClientConfigured()) {
+        payload.firebaseIdToken = await verifyOtpCode(otp);
+      } else {
+        payload.otp = otp;
+      }
       const res = await fetch("/api/auth/verify-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone, otp, name: name.trim() || undefined, location: location.trim() || undefined }),
+        body: JSON.stringify(payload),
       });
 
-      const data = await res.json();
+      const data = await parseResponseJson<{
+        error?: string;
+        user?: Parameters<typeof login>[0];
+        userExists?: boolean;
+      }>(res);
+
+      if (!data) {
+        throw new Error("Invalid server response. Please try again.");
+      }
 
       if (!res.ok) {
         throw new Error(data.error || "OTP verification failed.");
+      }
+
+      if (!data.user) {
+        throw new Error("Invalid server response. Please try again.");
       }
 
       // Clear persisted state
@@ -134,6 +188,36 @@ function PatientLoginContent() {
 
       // Update Zustand store
       login(data.user);
+
+      // Request geolocation for new users (userExists is false after OTP verification)
+      if (!data.userExists) {
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            async (position) => {
+              try {
+                await fetch("/api/auth/update-location", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
+                  }),
+                });
+                // Show success toast
+                toast.success("Location saved successfully");
+              } catch (e) {
+                toast.error("Failed to save location.");
+              }
+            },
+            () => {
+              // Permission denied or error
+              toast.info("Location not granted — you can enable it later");
+            }
+          );
+        } else {
+          toast.info("Geolocation is not supported by this browser.");
+        }
+      }
 
       // Role-aware redirect
       const target = redirectUrl || getRoleRedirect(data.user.role);
@@ -327,7 +411,7 @@ function PatientLoginContent() {
                           required
                           placeholder="Your Name"
                           value={name}
-                          onChange={(e) => setName(e.target.value)}
+                          onChange={(e) => setName(e.target.value.replace(/[^a-zA-Z\s]/g, ""))}
                           className="h-16 pl-14 rounded-2xl bg-slate-50/50 border-slate-200/60 focus:bg-white focus:ring-4 focus:ring-primary/5 focus:border-primary font-black text-lg transition-all"
                         />
                       </div>
@@ -344,7 +428,7 @@ function PatientLoginContent() {
                           required
                           placeholder="e.g. Patna or Your Village"
                           value={location}
-                          onChange={(e) => setLocation(e.target.value)}
+                          onChange={(e) => setLocation(e.target.value.replace(/[^a-zA-Z\s]/g, ""))}
                           className="h-16 pl-14 rounded-2xl bg-slate-50/50 border-slate-200/60 focus:bg-white focus:ring-4 focus:ring-primary/5 focus:border-primary font-black text-lg transition-all"
                         />
                       </div>
@@ -373,7 +457,7 @@ function PatientLoginContent() {
                   <div className="mb-10 text-center relative flex flex-col items-center">
                     <div className="w-full flex justify-between items-center mb-6">
                       <button
-                        onClick={() => setStep(userExists ? "phone" : "name")}
+                        onClick={() => setStep("phone")}
                         className="flex items-center justify-center p-2 rounded-full bg-slate-50 text-slate-500 hover:text-primary hover:bg-slate-100 transition-all group"
                       >
                         <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
@@ -424,9 +508,38 @@ function PatientLoginContent() {
                   </form>
 
                   <div className="mt-8 text-center">
+                    {!otpSent && (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          setIsLoading(true);
+                          try {
+                            await requestFirebaseOtp();
+                          } catch (err: any) {
+                            setError(err.message);
+                          } finally {
+                            setIsLoading(false);
+                          }
+                        }}
+                        disabled={isLoading || isSendingFirebase}
+                        className="mb-4 text-xs font-bold text-primary"
+                      >
+                        Send OTP to +91 {phone}
+                      </button>
+                    )}
                     {canResend ? (
                       <button
-                        onClick={() => handleSendOtp()}
+                        type="button"
+                        onClick={async () => {
+                          setIsLoading(true);
+                          try {
+                            await requestFirebaseOtp();
+                          } catch (err: any) {
+                            setError(err.message);
+                          } finally {
+                            setIsLoading(false);
+                          }
+                        }}
                         className="inline-flex items-center gap-2 text-xs font-black text-primary hover:text-[#184a7a] transition-all"
                       >
                         <RefreshCw className="w-4 h-4" /> RESEND OTP
@@ -457,6 +570,7 @@ function PatientLoginContent() {
           </div>
         </div>
       </motion.div>
+      <div id="firebase-recaptcha-login" className="sr-only" aria-hidden />
     </div>
   );
 }

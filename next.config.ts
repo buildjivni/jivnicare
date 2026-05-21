@@ -1,9 +1,13 @@
 import type { NextConfig } from "next";
+import { assertProductionEnv } from "./src/lib/env";
 
-// ── Build-time Environment Validation ──
-if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
-  if (!process.env.JWT_SECRET) console.warn("⚠️ FATAL: JWT_SECRET is missing. Authentication will fail.");
-  if (!process.env.DATABASE_URL) console.warn("⚠️ FATAL: DATABASE_URL is missing. Database connection will fail.");
+try {
+  assertProductionEnv();
+} catch (e) {
+  if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
+    console.error(e instanceof Error ? e.message : e);
+    throw e;
+  }
 }
 
 const nextConfig: NextConfig = {
@@ -36,6 +40,11 @@ const nextConfig: NextConfig = {
         hostname: 'www.transparenttextures.com',
         pathname: '/patterns/**',
       },
+      {
+        protocol: 'https',
+        hostname: '*.public.blob.vercel-storage.com',
+        pathname: '/**',
+      },
     ],
     dangerouslyAllowSVG: true,
   },
@@ -67,21 +76,13 @@ const nextConfig: NextConfig = {
           },
         ],
       },
-      {
-        // Force revalidation of dev chunks to prevent stale Turbopack module factories
-        source: "/_next/dev/(.*)",
-        headers: [
-          { key: "Cache-Control", value: "no-cache, no-store, must-revalidate" },
-          { key: "Pragma", value: "no-cache" },
-        ],
-      },
       // NOTE: Do NOT set Cache-Control for /_next/static in dev — it breaks Turbopack HMR.
       // In production (Vercel/CDN), these are handled automatically with content-hashing.
     ];
   },
 
   // ── External Server Packages (Prisma, bcryptjs) ────────────────────────────
-  serverExternalPackages: ["@prisma/client", "bcryptjs"],
+  serverExternalPackages: ["@prisma/client", "bcryptjs", "firebase-admin"],
 };
 
 export default nextConfig;

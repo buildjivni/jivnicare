@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import jwt from "jsonwebtoken";
+import { verifyToken } from "@/lib/jwt";
 import { cookies } from "next/headers";
 import { approveUpdateSchema, formatZodError } from "@/lib/validations";
 
@@ -14,11 +14,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const jwtSecret = process.env.JWT_SECRET || "fallback-secret";
-    let decoded: any;
-    try {
-      decoded = jwt.verify(token, jwtSecret);
-    } catch (err) {
+    const decoded = verifyToken(token) as { role: string } | null;
+    if (!decoded) {
       return NextResponse.json({ error: "Invalid or expired session" }, { status: 401 });
     }
 

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import { signToken } from '@/lib/jwt';
 import { cookies } from 'next/headers';
 import { VerificationStatus } from '@prisma/client';
 import { step1OnboardSchema, formatZodError } from '@/lib/validations';
@@ -194,11 +194,9 @@ export async function POST(request: Request) {
     });
 
     // 7. Generate JWT
-    const jwtSecret = process.env.JWT_SECRET || 'fallback-secret';
-    const token = jwt.sign(
+    const token = signToken(
       { id: result.user.id, role: result.user.role, doctorId: result.doctor.id },
-      jwtSecret,
-      { expiresIn: '7d' }
+      '7d'
     );
 
     const response = NextResponse.json({

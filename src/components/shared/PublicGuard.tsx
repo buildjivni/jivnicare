@@ -1,34 +1,41 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useAuthStore, getRoleRedirect } from "@/store/useAuthStore";
 
 export function PublicGuard({ children }: { children: React.ReactNode }) {
   const { user, isAuthenticated, _hasHydrated } = useAuthStore();
   const router = useRouter();
-  
+  const pathname = usePathname();
+  const isOnboardingRoute = pathname.startsWith("/partners/onboard");
+
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     if (_hasHydrated) {
-       
       setMounted(true);
     }
   }, [_hasHydrated]);
 
   useEffect(() => {
     if (mounted && isAuthenticated && user) {
-      // Patients (role: 'PATIENT') can stay on public pages
-      // Doctors and Admins should be redirected to their dashboards
-      if (user.role === "DOCTOR" || user.role === "ADMIN") {
+      if (user.role === "ADMIN") {
+        router.replace(getRoleRedirect(user.role));
+        return;
+      }
+      // Allow doctors to complete or resume onboarding
+      if (user.role === "DOCTOR" && !isOnboardingRoute) {
         router.replace(getRoleRedirect(user.role));
       }
     }
-  }, [mounted, isAuthenticated, user, router]);
+  }, [mounted, isAuthenticated, user, router, isOnboardingRoute]);
 
-  // To prevent flickering/flash of content while redirecting
-  if (mounted && isAuthenticated && (user?.role === "DOCTOR" || user?.role === "ADMIN")) {
+  if (
+    mounted &&
+    isAuthenticated &&
+    (user?.role === "ADMIN" || (user?.role === "DOCTOR" && !isOnboardingRoute))
+  ) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="flex flex-col items-center gap-4">

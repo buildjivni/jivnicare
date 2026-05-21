@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import { signToken } from '@/lib/jwt';
 import { cookies } from 'next/headers';
 
 export async function POST(request: Request) {
@@ -42,15 +42,13 @@ export async function POST(request: Request) {
     }
 
     // Sign JWT Token
-    const jwtSecret = process.env.JWT_SECRET || 'fallback-secret';
-    const token = jwt.sign(
+    const token = signToken(
       {
         id: user.id,
         role: user.role,
         doctorId: user.doctor.id,
       },
-      jwtSecret,
-      { expiresIn: '7d' } // 7 day session
+      '7d'
     );
 
     // Set HttpOnly Cookie

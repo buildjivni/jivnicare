@@ -6,6 +6,7 @@ import { QueueService } from "@/services/queueService";
 import { bookAppointmentSchema, formatZodError } from "@/lib/validations";
 import { checkRateLimit } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
+import { isTransientDbError, dbUnavailableResponse } from '@/lib/db-errors';
 
 export async function POST(request: Request) {
   try {
@@ -56,9 +57,15 @@ export async function POST(request: Request) {
     );
 
     return NextResponse.json({ success: true, token: newQueueToken });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const err = error as { message?: string };
+    if (isTransientDbError(error)) {
+      logger.warn({ category: 'BOOKING', message: 'Transient DB error during booking', error });
+      const { error: msg, status } = dbUnavailableResponse();
+      return NextResponse.json({ error: msg }, { status });
+    }
     logger.error({ category: 'BOOKING', message: 'Booking error', error });
-    
+
     // Phase 2: Explicit Error Messages for Patients
     const errorMessages: Record<string, string> = {
       "DOCTOR_NOT_VERIFIED": "This doctor is not currently verified to accept online bookings.",
@@ -72,8 +79,8 @@ export async function POST(request: Request) {
       "EMERGENCY_FULL": "Emergency capacity is currently full. Please visit the clinic directly."
     };
 
-    const message = errorMessages[error.message] || "Failed to book appointment";
-    const status = errorMessages[error.message] ? 400 : 500;
+    const message = errorMessages[err.message ?? ""] || "Failed to book appointment";
+    const status = errorMessages[err.message ?? ""] ? 400 : 500;
 
     return NextResponse.json({ error: message }, { status });
   }
