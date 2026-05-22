@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { ArrowLeft, ShieldCheck, Activity } from "lucide-react";
-import { OrderSummary, PaymentForm } from "@/components/checkout";
-import { useBookingStore } from "@/store/useBookingStore";
-import { useAuthStore } from "@/store/useAuthStore";
+import { OrderSummary, PaymentForm } from "@/features/booking/components/checkout";
+import { useBookingStore } from "@/features/booking/store/useBookingStore";
+import { useAuthStore } from "@/features/auth/store/useAuthStore";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 

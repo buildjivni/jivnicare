@@ -13,13 +13,15 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { useAuthStore, getRoleRedirect } from "@/store/useAuthStore";
+import { useAuthStore, getRoleRedirect } from "@/features/auth/store/useAuthStore";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { PublicGuard } from "@/components/shared";
-import { useFirebasePhoneAuth } from "@/hooks/useFirebasePhoneAuth";
+import { PilotModeBadge } from "@/components/shared/PilotModeBadge";
+import { useFirebasePhoneAuth } from "@/features/auth/hooks/useFirebasePhoneAuth";
 import { isFirebaseClientConfigured } from "@/lib/firebase/config";
-import { parseResponseJson } from "@/lib/safe-json";
+import { isPilotOtpModeClient } from "@/lib/infrastructure/env";
+import { parseResponseJson } from "@/lib/utils/safe-json";
 import { logFirebaseOtp, maskConfigForLog } from "@/lib/firebase/otp-log";
 import { getPublicFirebaseConfig } from "@/lib/firebase/config";
 import { logOnboarding } from "@/lib/auth/onboarding-log";
@@ -45,11 +47,13 @@ function PatientLoginContent() {
   const [otpSent, setOtpSent] = useState(false);
   const [otpVerified, setOtpVerified] = useState(false);
   const [needsProfile, setNeedsProfile] = useState(false);
+  const [pilotMode, setPilotMode] = useState(isPilotOtpModeClient());
   const {
     sendOtp: sendFirebaseOtp,
     verifyOtpCode,
     isSending: isSendingFirebase,
     otpReady,
+    markOtpReady,
     resetConfirmation,
   } = useFirebasePhoneAuth("firebase-recaptcha-login");
 
@@ -120,13 +124,34 @@ function PatientLoginContent() {
         body: JSON.stringify({ phone }),
       });
 
-      const data = await parseResponseJson<{ error?: string; userExists?: boolean }>(res);
+      const data = await parseResponseJson<{
+        error?: string;
+        userExists?: boolean;
+        pilotMode?: boolean;
+        retryAfterSec?: number;
+      }>(res);
       if (!data) throw new Error("Invalid server response.");
-      if (!res.ok) throw new Error(data.error || "Failed to send OTP.");
+      if (!res.ok) {
+        const msg = data.retryAfterSec
+          ? `${data.error || "Failed to send OTP."} Retry in ${data.retryAfterSec}s.`
+          : data.error || "Failed to send OTP.";
+        throw new Error(msg);
+      }
 
+      const isPilot = Boolean(data.pilotMode);
+      setPilotMode(isPilot);
       setNeedsProfile(!data.userExists);
-      logOnboarding("otp_send_start", { isNewUser: !data.userExists });
-      await requestFirebaseOtp();
+      logOnboarding("otp_send_start", { isNewUser: !data.userExists, pilotMode: isPilot });
+
+      if (isPilot) {
+        resetConfirmation();
+        setOtpSent(true);
+        markOtpReady();
+        setResendTimer(30);
+        setCanResend(false);
+      } else {
+        await requestFirebaseOtp();
+      }
       setStep("otp");
       logOnboarding("otp_send_success", { step: "otp" });
     } catch (err: unknown) {
@@ -160,13 +185,15 @@ function PatientLoginContent() {
     setError(null);
 
     try {
-      logOnboarding("otp_verify_start", { otpReady });
-      if (isFirebaseClientConfigured() && !otpReady) {
+      logOnboarding("otp_verify_start", { otpReady, pilotMode });
+      if (!pilotMode && isFirebaseClientConfigured() && !otpReady) {
         throw new Error("Please request an OTP first.");
       }
 
       const payload: Record<string, string | undefined> = { phone };
-      if (isFirebaseClientConfigured()) {
+      if (pilotMode) {
+        payload.otp = otp;
+      } else if (isFirebaseClientConfigured()) {
         payload.firebaseIdToken = await verifyOtpCode(otp);
       } else {
         payload.otp = otp;
@@ -307,6 +334,7 @@ function PatientLoginContent() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-4 sm:p-6 relative overflow-hidden">
+      <PilotModeBadge />
       {/* ── Background Aesthetics ── */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
         <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] rounded-full bg-blue-100/40 blur-[120px]" />
@@ -590,7 +618,7 @@ function PatientLoginContent() {
                       disabled={
                         isLoading ||
                         otp.length < 6 ||
-                        (isFirebaseClientConfigured() && !otpReady)
+                        (!pilotMode && isFirebaseClientConfigured() && !otpReady)
                       }
                       className="w-full h-16 rounded-2xl bg-[#205E98] hover:bg-[#1a4f82] text-white font-black text-lg shadow-[0_12px_24px_-8px_rgba(32,94,152,0.3)] transition-all flex items-center justify-center gap-3"
                     >
@@ -611,9 +639,23 @@ function PatientLoginContent() {
                           setIsLoading(true);
                           setError(null);
                           try {
-                            await requestFirebaseOtp();
-                          } catch (err: any) {
-                            setError(err.message);
+                            if (pilotMode) {
+                              const res = await fetch("/api/auth/send-otp", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ phone }),
+                              });
+                              const d = await parseResponseJson<{ error?: string }>(res);
+                              if (!res.ok) throw new Error(d?.error || "Failed to resend.");
+                              setOtpSent(true);
+                              markOtpReady();
+                              setResendTimer(30);
+                              setCanResend(false);
+                            } else {
+                              await requestFirebaseOtp();
+                            }
+                          } catch (err: unknown) {
+                            setError(err instanceof Error ? err.message : "Failed to send OTP");
                           } finally {
                             setIsLoading(false);
                           }
@@ -624,9 +666,11 @@ function PatientLoginContent() {
                         {isSendingFirebase ? "Sending OTP…" : `Send OTP to +91 ${phone}`}
                       </button>
                     )}
-                    {otpReady && (
+                    {(otpReady || pilotMode) && (
                       <p className="mb-4 text-xs font-bold text-emerald-600">
-                        OTP sent to +91 {phone}
+                        {pilotMode
+                          ? "Pilot mode: enter your test OTP to continue"
+                          : `OTP sent to +91 ${phone}`}
                       </p>
                     )}
                     {canResend ? (
@@ -637,9 +681,22 @@ function PatientLoginContent() {
                           setIsLoading(true);
                           setError(null);
                           try {
-                            await requestFirebaseOtp();
-                          } catch (err: any) {
-                            setError(err.message);
+                            if (pilotMode) {
+                              const res = await fetch("/api/auth/send-otp", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ phone }),
+                              });
+                              const d = await parseResponseJson<{ error?: string }>(res);
+                              if (!res.ok) throw new Error(d?.error || "Failed to resend.");
+                              markOtpReady();
+                              setResendTimer(30);
+                              setCanResend(false);
+                            } else {
+                              await requestFirebaseOtp();
+                            }
+                          } catch (err: unknown) {
+                            setError(err instanceof Error ? err.message : "Failed to resend");
                           } finally {
                             setIsLoading(false);
                           }

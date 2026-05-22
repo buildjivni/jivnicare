@@ -17,7 +17,7 @@ import {
   Heart
 } from "lucide-react";
 
-import { useAuthStore } from "@/store/useAuthStore";
+import { useAuthStore } from "@/features/auth/store/useAuthStore";
 
 interface UserProfileDropdownProps {
   isOpen: boolean;

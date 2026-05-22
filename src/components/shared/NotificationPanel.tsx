@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Bell, BellDot, ShieldCheck, ShieldAlert, AlertTriangle, Info, X, CheckCheck } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 
 interface Notification {
   id: string;

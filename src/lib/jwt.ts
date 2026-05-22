@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import { getJwtSecret } from "@/lib/env";
+import { getJwtSecret } from "@/lib/infrastructure/env";
 
 export const signToken = (payload: object, expiresIn = "7d") => {
   return jwt.sign(payload, getJwtSecret(), { expiresIn: expiresIn as jwt.SignOptions["expiresIn"] });

@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import prisma from '@/lib/db/prisma';
 import bcrypt from 'bcryptjs';
 import { signToken } from '@/lib/jwt';
 import { cookies } from 'next/headers';
 import { VerificationStatus } from '@prisma/client';
-import { step1OnboardSchema, formatZodError } from '@/lib/validations';
-import { generateDoctorSlug, generateAlternateSlug, generateShortCode, generateSequentialDoctorCode } from '@/lib/slug';
-import { normalizeQualifications, normalizeSpecialty } from '@/lib/normalizers';
+import { step1OnboardSchema, formatZodError } from '@/lib/validators/validations';
+import { generateDoctorSlug, generateAlternateSlug, generateShortCode, generateSequentialDoctorCode } from '@/lib/utils/slug';
+import { normalizeQualifications, normalizeSpecialty } from '@/lib/utils/normalizers';
 
 async function geocodeAddress(addressString: string): Promise<{ lat: number, lng: number } | null> {
   try {

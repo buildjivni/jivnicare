@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import prisma from "@/lib/db/prisma";
 import { requireSession } from "@/lib/auth/session";
 import { mapDoctorWorkspace } from "@/lib/doctor-view";
 

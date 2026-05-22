@@ -5,8 +5,8 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
-import { getJwtSecret } from '@/lib/env';
-import { logger } from '@/lib/logger';
+import { getJwtSecret } from '@/lib/infrastructure/env';
+import { logger } from '@/lib/infrastructure/logger';
 
 // Define the paths that require authentication and specific roles
 const protectedPaths = [

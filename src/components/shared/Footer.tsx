@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { MapPin, Phone, Mail, ShieldCheck, Clock, Heart, Newspaper, Users, Briefcase } from "lucide-react";
 import { HEALTHCARE_SPECIALTIES } from "@/lib/seo/metadata";
-import { Logo } from "@/components/brand/Logo";
+import { Logo } from "@/features/marketing/components/brand/Logo";
 
 const FOOTER_SECTIONS = [
   {

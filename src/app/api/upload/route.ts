@@ -2,8 +2,8 @@ import { put } from '@vercel/blob';
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import * as jose from 'jose';
-import { getJwtSecret, isBlobConfigured } from '@/lib/env';
-import { logger } from '@/lib/logger';
+import { getJwtSecret, isBlobConfigured } from '@/lib/infrastructure/env';
+import { logger } from '@/lib/infrastructure/logger';
 
 export async function POST(request: Request): Promise<NextResponse> {
   const { searchParams } = new URL(request.url);

@@ -4,9 +4,9 @@ import { useState, Suspense, useEffect, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Lightbulb, AlertCircle, X, ArrowUpDown, Filter } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { DoctorFilters, DoctorList } from "@/components/doctors";
-import { trackSearch } from "@/lib/search-engine";
-import type { SearchResult } from "@/lib/search-engine";
+import { DoctorFilters, DoctorList } from "@/features/patient/components/doctors";
+import { trackSearch } from "@/lib/search/search-engine";
+import type { SearchResult } from "@/lib/search/search-engine";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 

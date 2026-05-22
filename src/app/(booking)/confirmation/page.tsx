@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useBookingStore } from "@/store/useBookingStore";
+import { useBookingStore } from "@/features/booking/store/useBookingStore";
 import { CheckCircle2, Calendar, MapPin, Download, ChevronRight, Activity, ShieldCheck, PhoneCall, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";

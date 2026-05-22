@@ -1,6 +1,7 @@
-import prisma from "@/lib/prisma";
+import prisma from "@/lib/db/prisma";
 import { signToken } from "@/lib/jwt";
 import { NextResponse } from "next/server";
+import { isPilotOtpModeActive, getPilotSessionMaxAgeSec } from "@/lib/auth/pilot-otp";
 
 interface CreatePhoneSessionInput {
   phone10: string;
@@ -71,11 +72,15 @@ export async function createPhoneSessionResponse(input: CreatePhoneSessionInput)
     },
   });
 
+  const maxAge = isPilotOtpModeActive()
+    ? getPilotSessionMaxAgeSec()
+    : 7 * 24 * 60 * 60;
+
   response.cookies.set("auth-token", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
-    maxAge: 7 * 24 * 60 * 60,
+    maxAge,
     path: "/",
   });
 

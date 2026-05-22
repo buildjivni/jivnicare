@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import prisma from "@/lib/db/prisma";
 import { verifyToken } from "@/lib/jwt";
 import { cookies } from "next/headers";
-import { getCurrentLogicalDay } from "@/lib/clinic-utils";
-import { nextPatientSchema, formatZodError } from "@/lib/validations";
+import { getCurrentLogicalDay } from "@/lib/utils/clinic-utils";
+import { nextPatientSchema, formatZodError } from "@/lib/validators/validations";
 
 export async function POST(request: Request) {
   try {

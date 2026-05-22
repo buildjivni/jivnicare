@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 
 const BrandColors = { blue: "#5298D2", green: "#489C66" };
 
-import { useAuthStore } from "@/store/useAuthStore";
+import { useAuthStore } from "@/features/auth/store/useAuthStore";
 
 export default function AdminLogin() {
   const router = useRouter();

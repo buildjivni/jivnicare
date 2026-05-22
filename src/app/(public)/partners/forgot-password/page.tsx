@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { useFirebasePhoneAuth } from "@/hooks/useFirebasePhoneAuth";
+import { useFirebasePhoneAuth } from "@/features/auth/hooks/useFirebasePhoneAuth";
 import { isFirebaseClientConfigured } from "@/lib/firebase/config";
 
 export default function ForgotPasswordPage() {

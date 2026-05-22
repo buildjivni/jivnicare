@@ -1,5 +1,5 @@
 import type { NextConfig } from "next";
-import { assertProductionEnv } from "./src/lib/env";
+import { assertProductionEnv } from "./src/lib/infrastructure/env";
 
 try {
   assertProductionEnv();

@@ -20,7 +20,7 @@ import { motion } from "framer-motion";
 import {
   isEmergencyToken,
   getRegularQueuePosition,
-} from "@/lib/clinic-utils";
+} from "@/lib/utils/clinic-utils";
 
 const TOKEN_STATUS_LABELS: Record<string, string> = {
   WAITING: "Waiting",
@@ -146,26 +146,41 @@ export default function MyBookingsPage() {
   }, []);
 
   useEffect(() => {
-    let pollTimeout: NodeJS.Timeout;
-    let countdownInterval: NodeJS.Timeout;
+  // Initialize Server‑Sent Events connection for real‑time bookings
+  const source = new EventSource('/api/patient/bookings/stream');
 
-    const poll = async () => {
-      if (document.visibilityState === "visible") {
-        await fetchBookings();
+  source.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      if (data.bookings) {
+        setBookings(data.bookings);
+        setIsLoading(false);
+        setFetchError(null);
+        setCountdown(60);
       }
-      pollTimeout = setTimeout(poll, 60000);
-    };
-    poll();
+    } catch (e) {
+      console.error('SSE parse error', e);
+    }
+  };
 
-    countdownInterval = setInterval(() => {
-      setCountdown((c) => (c <= 1 ? 60 : c - 1));
-    }, 1000);
+  source.onerror = () => {
+    console.warn('SSE connection error, falling back to manual refresh');
+    source.close();
+    setFetchError('Realtime connection lost. Use refresh button.');
+  };
 
-    return () => {
-      clearTimeout(pollTimeout);
-      clearInterval(countdownInterval);
-    };
-  }, [fetchBookings]);
+  return () => {
+    source.close();
+  };
+}, []);
+
+// Simple countdown timer for UI display (still updates every second)
+useEffect(() => {
+  const interval = setInterval(() => {
+    setCountdown((c) => (c <= 1 ? 60 : c - 1));
+  }, 1000);
+  return () => clearInterval(interval);
+}, []);
 
   const handleShareWhatsApp = (booking: Booking) => {
     const waitLine = booking.isEmergency

@@ -6,9 +6,9 @@ import {
   Search, X, TrendingUp, Zap, ChevronRight, MapPin, Clock,
   Stethoscope, User, Sparkles, Mic, Activity, Thermometer, HeartPulse, Baby, Brain, Siren
 } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { generateLocalSuggestions, getTopSearches } from "@/lib/search-engine";
-import type { LocalSuggestion } from "@/lib/search-engine";
+import { cn } from "@/lib/utils/utils";
+import { generateLocalSuggestions, getTopSearches } from "@/lib/search/search-engine";
+import type { LocalSuggestion } from "@/lib/search/search-engine";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface TrendingItem { query: string; count: number }

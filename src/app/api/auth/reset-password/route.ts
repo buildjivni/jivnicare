@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import prisma from '@/lib/db/prisma';
 import bcrypt from 'bcryptjs';
-import { isTestOtpAllowed, isFirebaseConfigured } from '@/lib/env';
+import { isTestOtpAllowed, isFirebaseConfigured } from '@/lib/infrastructure/env';
 import { verifyFirebaseIdToken, normalizeIndianPhone } from '@/lib/firebase/admin';
 
 export async function POST(request: Request) {
