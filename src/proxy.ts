@@ -23,7 +23,9 @@ export async function proxy(request: NextRequest) {
 
   // Check if the path is protected
   const isAuthPage = pathname.endsWith('/login') || pathname.endsWith('/register');
-  const protectedRoute = !isAuthPage ? protectedPaths.find((route) => pathname.startsWith(route.prefix)) : undefined;
+  const protectedRoute = !isAuthPage ? protectedPaths.find((route) => 
+    pathname === route.prefix || pathname.startsWith(route.prefix + '/')
+  ) : undefined;
 
   if (!protectedRoute) {
     return NextResponse.next();
