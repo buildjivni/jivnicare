@@ -4,7 +4,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { User, Settings, HeartPulse } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAuthStore, getRoleRedirect } from "@/store/useAuthStore";
+import { useAuthStore, getRoleRedirect } from "@/features/auth/store/useAuthStore";
 
 interface MobileNavProps {
   isOpen: boolean;

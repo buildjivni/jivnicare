@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import prisma from "@/lib/prisma";
-import { AuthService } from "@/services/authService";
+import prisma from "@/lib/db/prisma";
+import { AuthService } from "@/features/auth/services/authService";
 
 export async function POST(req: Request) {
   try {

@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/jwt';
-import prisma from '@/lib/prisma';
-import { logger } from '@/lib/logger';
+import prisma from '@/lib/db/prisma';
+import { logger } from '@/lib/infrastructure/logger';
 
 /**
  * GET /api/auth/me

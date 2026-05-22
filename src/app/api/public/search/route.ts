@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
-import { searchDoctors } from '@/lib/search-engine';
-import { getInferredSpecialties } from '@/lib/search-dictionary';
+import prisma from '@/lib/db/prisma';
+import { searchDoctors } from '@/lib/search/search-engine';
+import { getInferredSpecialties } from '@/lib/search/search-dictionary';
 import type { Doctor } from '@/types';
 
 // Helper: Haversine Formula for air distance calculation

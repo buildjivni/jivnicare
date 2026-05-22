@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-import { getCurrentLogicalDay } from "@/lib/clinic-utils";
-import { redis } from "@/lib/redis";
+import prisma from "@/lib/db/prisma";
+import { getCurrentLogicalDay } from "@/lib/utils/clinic-utils";
+import { redis } from "@/lib/db/redis";
 
 export async function GET(
   request: Request,
@@ -64,7 +64,7 @@ export async function GET(
     const totalInQueue = queue?._count.tokens || 0;
     
     // Import dynamically so it's isolated
-    const { calculateDynamicStatus } = require('@/lib/queue-operations');
+    const { calculateDynamicStatus } = require('@/lib/queue/queue-operations');
     
     const dynamicData = calculateDynamicStatus({ 
       doctor, 

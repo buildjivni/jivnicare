@@ -5,8 +5,8 @@ import { MapPin, Stethoscope, Building2, Zap, ChevronRight, Star, ArrowRight, Sh
 import { BIHAR_DISTRICTS, generateDistrictMetadata, capitalizeDistrict, HEALTHCARE_SPECIALTIES } from "@/lib/seo/metadata";
 import { districtHealthcareSchema, breadcrumbSchema, faqSchema } from "@/lib/seo/jsonld";
 import { JsonLd } from "@/components/seo/JsonLd";
-import prisma from "@/lib/prisma";
-import { mapPrismaDoctorToUI } from "@/lib/data-utils";
+import prisma from "@/lib/db/prisma";
+import { mapPrismaDoctorToUI } from "@/lib/utils/data-utils";
 import { Button } from "@/components/ui/button";
 
 interface PageProps {

@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import prisma from "@/lib/db/prisma";
 import { verifyToken } from "@/lib/jwt";
 import { cookies } from "next/headers";
-import { doctorSettingsSchema, formatZodError } from "@/lib/validations";
+import { doctorSettingsSchema, formatZodError } from "@/lib/validators/validations";
 import { VerificationStatus } from "@prisma/client";
-import { normalizeQualifications, normalizeLanguages } from "@/lib/normalizers";
-import { getCurrentLogicalDay, getUnifiedQueueCapacity } from "@/lib/clinic-utils";
+import { normalizeQualifications, normalizeLanguages } from "@/lib/utils/normalizers";
+import { getCurrentLogicalDay, getUnifiedQueueCapacity } from "@/lib/utils/clinic-utils";
 
 export async function PUT(request: Request) {
   try {

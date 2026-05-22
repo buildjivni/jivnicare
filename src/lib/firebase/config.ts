@@ -9,7 +9,7 @@ export function getPublicFirebaseConfig() {
   };
 }
 
-export { isFirebaseClientConfigured } from "@/lib/env";
+export { isFirebaseClientConfigured } from "@/lib/infrastructure/env";
 
 export function assertPublicFirebaseConfig(): void {
   const cfg = getPublicFirebaseConfig();

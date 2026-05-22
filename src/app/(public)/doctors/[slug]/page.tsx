@@ -3,14 +3,14 @@ import { notFound } from "next/navigation";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import prisma from "@/lib/prisma";
-import { DoctorProfileView } from "@/components/doctors/profile/DoctorProfileView";
-import { BookingWidgetClient } from "@/components/doctors/profile/BookingWidgetClient";
+import prisma from "@/lib/db/prisma";
+import { DoctorProfileView } from "@/features/patient/components/doctors/profile/DoctorProfileView";
+import { BookingWidgetClient } from "@/features/patient/components/doctors/profile/BookingWidgetClient";
 import { SITE_CONFIG, generateDoctorMetadata } from "@/lib/seo/metadata";
 import { physicianSchema, breadcrumbSchema } from "@/lib/seo/jsonld";
 import { JsonLd } from "@/components/seo/JsonLd";
 import type { Doctor } from "@/types";
-import { mapPrismaDoctorToUI } from "@/lib/data-utils";
+import { mapPrismaDoctorToUI } from "@/lib/utils/data-utils";
 
 interface PageProps {
   params: Promise<{ slug: string }>;

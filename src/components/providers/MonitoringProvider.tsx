@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { initMonitoring, trackPageview } from "@/lib/analytics";
+import { initMonitoring, trackPageview } from "@/lib/infrastructure/analytics";
 import { usePathname } from "next/navigation";
 
 export function MonitoringProvider() {

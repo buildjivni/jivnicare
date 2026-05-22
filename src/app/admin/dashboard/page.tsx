@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useAuthStore } from "@/store/useAuthStore";
+import { useAuthStore } from "@/features/auth/store/useAuthStore";
 
 type DoctorStatus = "DRAFT" | "PENDING" | "PENDING_VERIFICATION" | "VERIFIED" | "UPDATE_PENDING" | "REJECTED" | "SUSPENDED";
 

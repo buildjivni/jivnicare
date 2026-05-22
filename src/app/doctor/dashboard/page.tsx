@@ -7,19 +7,19 @@ import {
   LogOut, Wallet, CalendarX, AlertCircle, ShieldCheck, CheckCircle2,
   X, Menu, TrendingUp, RefreshCw, MapPin, Clock
 } from "lucide-react";
-import { Logo } from "@/components/brand/Logo";
-import { QueueStatCards } from "@/components/doctor/queue/QueueStatCards";
-import { NowCallingController } from "@/components/doctor/queue/NowCallingController";
-import { QueueOperationsMenu } from "@/components/doctor/queue/QueueOperationsMenu";
-import { PatientListTable, PatientListItem } from "@/components/doctor/queue/PatientListTable";
+import { Logo } from "@/features/marketing/components/brand/Logo";
+import { QueueStatCards } from "@/features/doctor/components/queue/QueueStatCards";
+import { NowCallingController } from "@/features/doctor/components/queue/NowCallingController";
+import { QueueOperationsMenu } from "@/features/doctor/components/queue/QueueOperationsMenu";
+import { PatientListTable, PatientListItem } from "@/features/doctor/components/queue/PatientListTable";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useAuthStore } from "@/store/useAuthStore";
-import { useDoctorWorkspace } from "@/hooks/useDoctorWorkspace";
-import { WeeklyScheduleEditor } from "@/components/doctor/settings/WeeklyScheduleEditor";
-import { ClinicOperationsForm } from "@/components/doctor/settings/ClinicOperationsForm";
+import { useAuthStore } from "@/features/auth/store/useAuthStore";
+import { useDoctorWorkspace } from "@/features/doctor/hooks/useDoctorWorkspace";
+import { WeeklyScheduleEditor } from "@/features/doctor/components/settings/WeeklyScheduleEditor";
+import { ClinicOperationsForm } from "@/features/doctor/components/settings/ClinicOperationsForm";
 import { ImageUploadField } from "@/components/shared/ImageUploadField";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 
 // ── BRAND COLORS (From Logo) ──────────────────────────────────────
 const BrandColors = {

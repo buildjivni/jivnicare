@@ -10,7 +10,7 @@ import {
   Globe, Video, GraduationCap
 } from "lucide-react";
 import type { Doctor } from "@/types";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 
 interface DoctorCardProps {
   doctor: Doctor;

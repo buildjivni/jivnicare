@@ -21,13 +21,13 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-import { Logo } from "@/components/brand/Logo";
+import { Logo } from "@/features/marketing/components/brand/Logo";
 import { MobileNav } from "./MobileNav";
 import { UserProfileDropdown } from "./UserProfileDropdown";
-import { useAuthStore } from "@/store/useAuthStore";
+import { useAuthStore } from "@/features/auth/store/useAuthStore";
 import { NotificationPanel } from "./NotificationPanel";
 import { SmartSearchBar } from "./SmartSearchBar";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 
 export function Header() {
   const [scrolled, setScrolled] = useState(false);

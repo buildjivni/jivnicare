@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import prisma from "@/lib/db/prisma";
 import { verifyToken } from "@/lib/jwt";
 import { cookies } from "next/headers";
-import { QueueService } from "@/services/queueService";
-import { bookAppointmentSchema, formatZodError } from "@/lib/validations";
-import { checkRateLimit } from '@/lib/rate-limit';
-import { logger } from '@/lib/logger';
-import { isTransientDbError, dbUnavailableResponse } from '@/lib/db-errors';
+import { QueueService } from "@/features/queue/services/queueService";
+import { bookAppointmentSchema, formatZodError } from "@/lib/validators/validations";
+import { checkRateLimit } from '@/lib/infrastructure/rate-limit';
+import { logger } from '@/lib/infrastructure/logger';
+import { isTransientDbError, dbUnavailableResponse } from '@/lib/db/db-errors';
 
 export async function POST(request: Request) {
   try {

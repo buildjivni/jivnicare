@@ -1,6 +1,6 @@
 "use client";
 
-import { UserRole } from "@/store/useAuthStore";
+import { UserRole } from "@/features/auth/store/useAuthStore";
 
 interface RoleGuardProps {
   children: React.ReactNode;

@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import prisma from '@/lib/prisma';
+import prisma from '@/lib/db/prisma';
 import { verifyToken } from '@/lib/jwt';
 import { cookies } from 'next/headers';
-import { verifyDoctorSchema, formatZodError } from '@/lib/validations';
-import { generateSequentialDoctorCode } from '@/lib/slug';
+import { verifyDoctorSchema, formatZodError } from '@/lib/validators/validations';
+import { generateSequentialDoctorCode } from '@/lib/utils/slug';
 
 export async function POST(request: Request) {
   try {

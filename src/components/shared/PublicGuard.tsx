@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { useAuthStore, getRoleRedirect } from "@/store/useAuthStore";
+import { useAuthStore, getRoleRedirect } from "@/features/auth/store/useAuthStore";
 
 export function PublicGuard({ children }: { children: React.ReactNode }) {
   const { user, isAuthenticated, _hasHydrated } = useAuthStore();

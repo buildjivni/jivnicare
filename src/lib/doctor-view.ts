@@ -2,7 +2,7 @@
  * Single canonical view-model for doctor profile data across dashboard, APIs, and admin.
  */
 
-import { getUnifiedQueueCapacity } from "@/lib/clinic-utils";
+import { getUnifiedQueueCapacity } from "@/lib/utils/clinic-utils";
 
 export interface DoctorProfileView {
   id: string;

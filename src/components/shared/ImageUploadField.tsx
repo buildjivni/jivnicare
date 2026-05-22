@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { Upload, RefreshCw, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 
 interface ImageUploadFieldProps {
   label: string;

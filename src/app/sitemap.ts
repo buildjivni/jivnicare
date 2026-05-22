@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { SITE_CONFIG, BIHAR_DISTRICTS, HEALTHCARE_SPECIALTIES } from "@/lib/seo/metadata";
-import prisma from "@/lib/prisma";
+import prisma from "@/lib/db/prisma";
 
 const BASE = SITE_CONFIG.baseUrl;
 

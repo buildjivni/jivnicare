@@ -1,6 +1,6 @@
 import { initializeApp, getApps, cert, type App } from "firebase-admin/app";
 import { getAuth, type Auth } from "firebase-admin/auth";
-import { isFirebaseConfigured } from "@/lib/env";
+import { isFirebaseConfigured } from "@/lib/infrastructure/env";
 
 let adminApp: App | undefined;
 

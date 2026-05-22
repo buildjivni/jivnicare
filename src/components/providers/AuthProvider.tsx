@@ -1,6 +1,6 @@
 "use client";
 
-import { useJivniAuth } from "@/hooks/useJivniAuth";
+import { useJivniAuth } from "@/features/auth/hooks/useJivniAuth";
 
 /**
  * JivniCare — Auth Provider

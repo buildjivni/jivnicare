@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useAuthStore } from "@/store/useAuthStore";
+import { useAuthStore } from "@/features/auth/store/useAuthStore";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { PublicGuard } from "@/components/shared";

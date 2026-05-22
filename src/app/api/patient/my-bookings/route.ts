@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import prisma from "@/lib/db/prisma";
 import { verifyToken } from "@/lib/jwt";
 import { cookies } from "next/headers";
-import { logger } from "@/lib/logger";
-import { isTransientDbError, dbUnavailableResponse } from "@/lib/db-errors";
+import { logger } from "@/lib/infrastructure/logger";
+import { isTransientDbError, dbUnavailableResponse } from "@/lib/db/db-errors";
 
 export async function GET(request: Request) {
   try {

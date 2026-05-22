@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import prisma from "@/lib/db/prisma";
 import { verifyToken } from "@/lib/jwt";
 import { cookies } from "next/headers";
-import { getCurrentLogicalDay } from "@/lib/clinic-utils";
+import { getCurrentLogicalDay } from "@/lib/utils/clinic-utils";
 
 export async function GET() {
   try {

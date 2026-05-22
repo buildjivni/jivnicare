@@ -169,6 +169,8 @@ export function mapFirebaseAuthError(err: unknown): string {
       return "This app is not authorized for phone sign-in. Contact support.";
     case "auth/operation-not-allowed":
       return "Phone sign-in is not enabled for this project. Contact support.";
+    case "auth/billing-not-enabled":
+      return "SMS verification is not active on this Firebase project. Enable Blaze billing and Phone Authentication in Firebase Console, then redeploy.";
     case "auth/internal-error":
       return "Verification service error. Please try again in a moment.";
     case "auth/popup-blocked":

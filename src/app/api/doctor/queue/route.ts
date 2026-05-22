@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import prisma from "@/lib/db/prisma";
 import { verifyToken } from "@/lib/jwt";
 import { cookies } from "next/headers";
 import {
@@ -7,7 +7,7 @@ import {
   getStartOfDay,
   getUnifiedQueueCapacity,
   isEmergencyToken,
-} from "@/lib/clinic-utils";
+} from "@/lib/utils/clinic-utils";
 
 export async function GET(request: Request) {
   try {

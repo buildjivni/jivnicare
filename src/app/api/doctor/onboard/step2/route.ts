@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import prisma from '@/lib/db/prisma';
 import { verifyToken } from '@/lib/jwt';
 import { cookies } from 'next/headers';
 import { VerificationStatus } from '@prisma/client';
-import { step2OnboardSchema, formatZodError } from '@/lib/validations';
-import { normalizeLanguages } from '@/lib/normalizers';
+import { step2OnboardSchema, formatZodError } from '@/lib/validators/validations';
+import { normalizeLanguages } from '@/lib/utils/normalizers';
 
 export async function POST(request: Request) {
   try {

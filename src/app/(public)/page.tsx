@@ -5,11 +5,11 @@ import {
   CtaBannerSection, 
   SpecialtiesSection, 
   VerifiedDoctorsSection
-} from "@/components/home";
-import { HelpEcosystem } from "@/components/trust/HelpEcosystem";
-import prisma from "@/lib/prisma";
+} from "@/features/marketing/components/home";
+import { HelpEcosystem } from "@/features/marketing/components/trust/HelpEcosystem";
+import prisma from "@/lib/db/prisma";
 import type { Doctor } from "@/types";
-import { mapPrismaDoctorToUI } from "@/lib/data-utils";
+import { mapPrismaDoctorToUI } from "@/lib/utils/data-utils";
 
 export default async function Home() {
   // Fetch Top 3 Verified Doctors
