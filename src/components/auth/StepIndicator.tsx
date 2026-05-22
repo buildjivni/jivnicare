@@ -34,25 +34,27 @@ export function StepIndicator({ currentStep, isNewUser = true }: StepIndicatorPr
               <motion.div
                 initial={false}
                 animate={{
-                  scale: isCurrent ? 1 : 0.9,
+                  scale: isCurrent ? 1 : 0.92,
                   backgroundColor: isCompleted
                     ? "rgb(34 197 94)"
                     : isCurrent
                     ? "rgb(32 94 152)"
                     : "rgb(241 245 249)",
                 }}
+                transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
                 className={cn(
-                  "relative flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-full transition-shadow",
-                  isCurrent && "shadow-lg shadow-primary/20 ring-4 ring-primary/10",
-                  isCompleted && "shadow-md shadow-green-500/20"
+                  "relative flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-full",
+                  "transition-shadow duration-300 ease-out",
+                  isCurrent && "shadow-lg shadow-primary/25 ring-4 ring-primary/10",
+                  isCompleted && "shadow-md shadow-green-500/25"
                 )}
                 aria-current={isCurrent ? "step" : undefined}
               >
                 {isCompleted ? (
                   <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                    initial={{ scale: 0, rotate: -45 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ type: "spring", stiffness: 500, damping: 25 }}
                   >
                     <Check className="h-5 w-5 text-white" aria-hidden="true" />
                   </motion.div>
@@ -68,7 +70,7 @@ export function StepIndicator({ currentStep, isNewUser = true }: StepIndicatorPr
               </motion.div>
               <span
                 className={cn(
-                  "text-[10px] sm:text-xs font-semibold tracking-wide transition-colors",
+                  "text-[10px] sm:text-xs font-semibold tracking-wide transition-colors duration-200",
                   isCurrent ? "text-primary" : isCompleted ? "text-green-600" : "text-slate-400"
                 )}
               >
@@ -78,11 +80,11 @@ export function StepIndicator({ currentStep, isNewUser = true }: StepIndicatorPr
 
             {/* Connector line */}
             {index < displayedSteps.length - 1 && (
-              <div className="mx-2 sm:mx-4 h-[2px] w-8 sm:w-12 overflow-hidden rounded-full bg-slate-200">
+              <div className="mx-2 sm:mx-4 h-[2px] w-8 sm:w-12 overflow-hidden rounded-full bg-slate-200/80">
                 <motion.div
                   initial={{ width: "0%" }}
                   animate={{ width: index < currentIndex ? "100%" : "0%" }}
-                  transition={{ duration: 0.4, ease: "easeOut" }}
+                  transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
                   className="h-full bg-green-500"
                 />
               </div>

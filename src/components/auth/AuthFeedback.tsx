@@ -70,9 +70,9 @@ export function StatusMessage({ type, message, className, onDismiss }: StatusMes
       initial={{ opacity: 0, y: -8, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: -8, scale: 0.98 }}
-      transition={{ duration: 0.2, ease: "easeOut" }}
+      transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
       className={cn(
-        "flex items-start gap-3 rounded-xl border p-4",
+        "flex items-start gap-3 rounded-xl border p-4 shadow-sm",
         bg,
         border,
         className
@@ -166,7 +166,7 @@ export function ResendTimer({ seconds, canResend, onResend, isLoading }: ResendT
           type="button"
           onClick={onResend}
           disabled={isLoading}
-          className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed touch-target"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary/80 active:text-primary/70 transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed touch-target focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 rounded-lg px-2 py-1"
         >
           {isLoading ? (
             <>
@@ -187,9 +187,10 @@ export function ResendTimer({ seconds, canResend, onResend, isLoading }: ResendT
           <span className="text-sm text-slate-500">Resend code in</span>
           <motion.span
             key={seconds}
-            initial={{ scale: 1.2, opacity: 0 }}
+            initial={{ scale: 1.15, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-sm font-bold text-slate-700"
+            transition={{ duration: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
+            className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-sm font-bold text-slate-700 tabular-nums"
           >
             {seconds}
           </motion.span>
@@ -206,15 +207,16 @@ interface SuccessCheckmarkProps {
 export function SuccessCheckmark({ message = "Success!" }: SuccessCheckmarkProps) {
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.8 }}
+      initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
       className="flex flex-col items-center gap-4 py-8"
     >
       <motion.div
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
-        transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.1 }}
-        className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100"
+        transition={{ type: "spring", stiffness: 400, damping: 20, delay: 0.1 }}
+        className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100 shadow-lg shadow-green-500/20"
       >
         <motion.div
           initial={{ pathLength: 0 }}

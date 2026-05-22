@@ -423,7 +423,7 @@ function PatientLoginContent() {
       </div>
 
       {/* ── Right Side - Interactive Form ── */}
-      <div className="flex-1 flex flex-col lg:justify-center p-4 pt-6 sm:p-6 sm:pt-8 lg:p-8">
+      <div className="flex-1 flex flex-col lg:justify-center p-4 pt-6 sm:p-6 sm:pt-8 lg:p-8 pb-safe">
         {/* Mobile Header - positioned at top with proper safe-area spacing */}
         <div className="lg:hidden mb-6 sm:mb-8">
           <AuthHeader className="pt-safe" />
@@ -440,8 +440,8 @@ function PatientLoginContent() {
             <StepIndicator currentStep={step} isNewUser={needsProfile || step === "phone"} />
           </div>
 
-          {/* Card container */}
-          <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 p-6 sm:p-8">
+          {/* Card container with premium shadow */}
+          <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xl shadow-slate-900/[0.04] border border-slate-100/80 p-6 sm:p-8 transition-shadow duration-300 hover:shadow-2xl hover:shadow-slate-900/[0.06]">
             <AnimatePresence mode="wait">
               {/* Success overlay */}
               {showSuccess && (
@@ -468,13 +468,18 @@ function PatientLoginContent() {
                   transition={{ duration: 0.25 }}
                 >
                   <div className="mb-8 text-center">
-                    <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <motion.div 
+                      initial={{ scale: 0.9, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+                      className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4"
+                    >
                       <Smartphone className="w-7 h-7 text-primary" aria-hidden="true" />
-                    </div>
-                    <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
+                    </motion.div>
+                    <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 text-balance">
                       Welcome
                     </h2>
-                    <p className="text-slate-500 mt-2 text-sm sm:text-base">
+                    <p className="text-slate-500 mt-2 text-sm sm:text-base text-balance">
                       Enter your mobile number to continue
                     </p>
                   </div>
@@ -512,7 +517,7 @@ function PatientLoginContent() {
                           placeholder="98765 43210"
                           value={phone}
                           onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
-                          className="h-14 pl-[72px] rounded-xl bg-slate-50 border-slate-200 focus:bg-white font-semibold text-lg tracking-wide"
+                          className="h-14 pl-[72px] rounded-xl bg-slate-50/80 border-slate-200 focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/15 font-semibold text-lg tracking-wide transition-all duration-200"
                           aria-describedby="phone-hint"
                           autoComplete="tel-national"
                         />
@@ -525,25 +530,25 @@ function PatientLoginContent() {
                     <Button
                       type="submit"
                       disabled={isLoading || isSendingFirebase || phone.length < 10}
-                      className="w-full h-14 rounded-xl bg-[#205E98] hover:bg-[#1a4f82] text-white font-semibold text-base shadow-lg shadow-primary/20 transition-all"
+                      className="w-full h-14 rounded-xl bg-[#205E98] hover:bg-[#1a4f82] active:bg-[#164270] text-white font-semibold text-base shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 disabled:shadow-none disabled:bg-slate-300 disabled:text-slate-500 transition-all duration-200"
                     >
                       {isLoading || isSendingFirebase ? (
                         <LoadingSpinner className="text-white" />
                       ) : (
                         <>
-                          Send OTP <ArrowRight className="w-5 h-5 ml-2" aria-hidden="true" />
+                          Send OTP <ArrowRight className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
                         </>
                       )}
                     </Button>
                   </form>
 
-                  <p className="text-center text-xs text-slate-400 mt-6">
+                  <p className="text-center text-xs text-slate-400 mt-6 leading-relaxed">
                     By continuing, you agree to our{" "}
-                    <Link href="/terms" className="text-primary hover:underline">
+                    <Link href="/terms" className="text-primary hover:text-primary/80 hover:underline underline-offset-2 transition-colors">
                       Terms
                     </Link>{" "}
                     and{" "}
-                    <Link href="/privacy" className="text-primary hover:underline">
+                    <Link href="/privacy" className="text-primary hover:text-primary/80 hover:underline underline-offset-2 transition-colors">
                       Privacy Policy
                     </Link>
                   </p>

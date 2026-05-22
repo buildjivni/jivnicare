@@ -119,12 +119,12 @@ export function OtpInput({
             initial={false}
             animate={{
               scale: hasValue ? 1.02 : 1,
-              y: error && hasValue ? [0, -4, 4, -4, 4, 0] : 0,
+              y: error && hasValue ? [0, -3, 3, -3, 3, 0] : 0,
             }}
             transition={
               error
-                ? { duration: 0.4, ease: "easeInOut" }
-                : { type: "spring", stiffness: 400, damping: 25 }
+                ? { duration: 0.35, ease: [0.36, 0.07, 0.19, 0.97] }
+                : { type: "spring", stiffness: 500, damping: 30 }
             }
           >
             <input
@@ -144,16 +144,22 @@ export function OtpInput({
               disabled={disabled}
               aria-label={`Digit ${index + 1} of ${length}`}
               className={cn(
-                "h-14 w-11 sm:h-16 sm:w-14 rounded-xl border-2 bg-white text-center text-2xl sm:text-3xl font-bold transition-all duration-200",
+                // Base styles with premium transitions
+                "h-14 w-11 sm:h-16 sm:w-14 rounded-xl border-2 bg-white text-center text-2xl sm:text-3xl font-bold",
+                "transition-[border-color,box-shadow,transform,background-color] duration-200 ease-out",
                 "focus:outline-none focus:ring-4",
-                disabled && "cursor-not-allowed bg-slate-50 opacity-60",
+                // Touch responsiveness
+                "active:scale-[0.98]",
+                // Disabled state with subtle fade
+                disabled && "cursor-not-allowed bg-slate-50/80 opacity-50 pointer-events-none",
+                // Error state with emphasis
                 error
-                  ? "border-red-400 text-red-600 focus:border-red-500 focus:ring-red-100"
+                  ? "border-red-400 text-red-600 bg-red-50/30 focus:border-red-500 focus:ring-red-100"
                   : hasValue
-                  ? "border-primary text-slate-900 focus:border-primary focus:ring-primary/20"
+                  ? "border-primary text-slate-900 shadow-sm shadow-primary/10 focus:border-primary focus:ring-primary/20"
                   : isFocused
-                  ? "border-primary/60 focus:border-primary focus:ring-primary/20"
-                  : "border-slate-200 text-slate-900 focus:border-primary focus:ring-primary/20"
+                  ? "border-primary/70 bg-primary/[0.02] focus:border-primary focus:ring-primary/20"
+                  : "border-slate-200 text-slate-900 hover:border-slate-300 focus:border-primary focus:ring-primary/20"
               )}
             />
           </motion.div>
