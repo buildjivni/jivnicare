@@ -1,21 +1,24 @@
 "use client";
 
-import { useState, Suspense, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft,
   ArrowRight,
   ShieldCheck,
-  RefreshCw,
+  Smartphone,
   User as UserIcon,
   MapPin,
+  Heart,
+  Building2,
 } from "lucide-react";
+
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useAuthStore, getRoleRedirect } from "@/store/useAuthStore";
-import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
 import { PublicGuard } from "@/components/shared";
 import { useFirebasePhoneAuth } from "@/hooks/useFirebasePhoneAuth";
 import { isFirebaseClientConfigured } from "@/lib/firebase/config";
@@ -24,7 +27,27 @@ import { logFirebaseOtp, maskConfigForLog } from "@/lib/firebase/otp-log";
 import { getPublicFirebaseConfig } from "@/lib/firebase/config";
 import { logOnboarding } from "@/lib/auth/onboarding-log";
 
-type LoginStep = "phone" | "otp" | "identity";
+import { StepIndicator, type OnboardingStep } from "@/components/auth/StepIndicator";
+import { OtpInput } from "@/components/auth/OtpInput";
+import {
+  StatusMessage,
+  LoadingSpinner,
+  ResendTimer,
+  SuccessCheckmark,
+  FormSkeleton,
+} from "@/components/auth/AuthFeedback";
+
+// Animation variants for consistent transitions
+const pageVariants = {
+  initial: { opacity: 0, x: 20 },
+  animate: { opacity: 1, x: 0 },
+  exit: { opacity: 0, x: -20 },
+};
+
+const containerVariants = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } },
+};
 
 function PatientLoginContent() {
   const router = useRouter();
@@ -33,11 +56,12 @@ function PatientLoginContent() {
 
   const { login, isAuthenticated, user } = useAuthStore();
 
+  // Form state
   const [name, setName] = useState("");
   const [location, setLocation] = useState("");
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
-  const [step, setStep] = useState<LoginStep>("phone");
+  const [step, setStep] = useState<OnboardingStep>("phone");
   const [isLoading, setIsLoading] = useState(false);
   const [resendTimer, setResendTimer] = useState(30);
   const [canResend, setCanResend] = useState(false);
@@ -45,6 +69,8 @@ function PatientLoginContent() {
   const [otpSent, setOtpSent] = useState(false);
   const [otpVerified, setOtpVerified] = useState(false);
   const [needsProfile, setNeedsProfile] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+
   const {
     sendOtp: sendFirebaseOtp,
     verifyOtpCode,
@@ -104,7 +130,7 @@ function PatientLoginContent() {
     }
   }, [step, resendTimer]);
 
-  // ── Step 1: Phone → send OTP (always before identity) ───────────
+  // ── Step 1: Phone → send OTP ───────────────────────────────────
   const handleSendOtp = async (e?: React.FormEvent) => {
     e?.preventDefault();
     if (phone.length < 10 || isLoading || isSendingFirebase) return;
@@ -152,7 +178,7 @@ function PatientLoginContent() {
     setCanResend(false);
   };
 
-  // ── Step 2: Verify OTP → session → identity or redirect ─────────
+  // ── Step 2: Verify OTP → session → identity or redirect ────────
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (otp.length < 6) return;
@@ -193,6 +219,11 @@ function PatientLoginContent() {
       setNeedsProfile(showIdentity);
       setOtpVerified(true);
 
+      // Show success animation briefly
+      setShowSuccess(true);
+      await new Promise((resolve) => setTimeout(resolve, 1200));
+      setShowSuccess(false);
+
       if (showIdentity) {
         setStep("identity");
         login(data.user);
@@ -217,7 +248,7 @@ function PatientLoginContent() {
     }
   };
 
-  // ── Step 3: Identity (only after OTP + session) ─────────────────
+  // ── Step 3: Identity (only after OTP + session) ────────────────
   const handleIdentitySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmedName = name.trim();
@@ -269,6 +300,10 @@ function PatientLoginContent() {
 
       logOnboarding("identity_success");
 
+      // Show success and redirect
+      setShowSuccess(true);
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           async (position) => {
@@ -305,283 +340,308 @@ function PatientLoginContent() {
     }
   };
 
+  const handleResendOtp = async () => {
+    if (isLoading || isSendingFirebase) return;
+    setIsLoading(true);
+    setError(null);
+    try {
+      await requestFirebaseOtp();
+      toast.success("OTP sent successfully!");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to resend OTP.";
+      setError(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const formatPhoneDisplay = (phoneNumber: string) => {
+    if (phoneNumber.length === 10) {
+      return `${phoneNumber.slice(0, 5)} ${phoneNumber.slice(5)}`;
+    }
+    return phoneNumber;
+  };
+
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-4 sm:p-6 relative overflow-hidden">
-      {/* ── Background Aesthetics ── */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
-        <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] rounded-full bg-blue-100/40 blur-[120px]" />
-        <div className="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] rounded-full bg-emerald-50/40 blur-[120px]" />
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30 flex flex-col lg:flex-row">
+      {/* ── Left Side - Premium Branding (Hidden on mobile) ── */}
+      <div className="hidden lg:flex lg:w-[45%] xl:w-[40%] bg-[#205E98] p-8 xl:p-12 flex-col justify-between relative overflow-hidden">
+        {/* Background pattern */}
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
+          <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" strokeWidth="1" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#grid)" />
+          </svg>
+        </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-[1000px] bg-white/80 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_32px_64px_-16px_rgba(32,94,152,0.1)] border border-white/50 flex overflow-hidden z-10 relative"
-      >
-        {/* Left Side - Premium Branding */}
-        <div className="w-[45%] bg-[#205E98] p-12 lg:p-16 flex flex-col justify-between relative overflow-hidden hidden md:flex">
-          <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
-            <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                  <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" strokeWidth="1" />
-                </pattern>
-              </defs>
-              <rect width="100%" height="100%" fill="url(#grid)" />
-            </svg>
-          </div>
-
-          <div className="relative z-10">
-            <Link href="/" className="flex items-center gap-3 mb-12 group">
-              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-xl group-hover:scale-105 transition-transform duration-300">
-                <img src="/logo.png" alt="JivniCare Logo" className="w-8 h-8 object-contain" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-2xl font-black text-white leading-none">JivniCare</span>
-                <span className="text-[10px] font-bold text-blue-200 uppercase tracking-widest mt-1">Unified Health</span>
-              </div>
-            </Link>
-
-            <div className="space-y-6">
-              <h1 className="text-[42px] font-black text-white leading-[1.1] tracking-tight">
-                Your Health, <br />
-                <span className="text-blue-200">Fully Protected.</span>
-              </h1>
-              <p className="text-blue-100 font-medium text-lg max-w-xs leading-relaxed opacity-90">
-                Securely access your medical history and book instant appointments across our nationwide network.
-              </p>
+        {/* Logo and content */}
+        <div className="relative z-10">
+          <Link href="/" className="flex items-center gap-3 mb-10 group">
+            <div className="w-11 h-11 bg-white rounded-xl flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
+              <img src="/logo.png" alt="" className="w-7 h-7 object-contain" />
             </div>
-          </div>
-
-          <div className="relative z-10 space-y-4">
-            <div className="flex items-center gap-4 bg-white/10 backdrop-blur-md p-5 rounded-3xl border border-white/20 shadow-lg">
-              <div className="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center shrink-0 shadow-inner">
-                <ShieldCheck className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <p className="text-white font-bold text-sm">OTP Verified Identity</p>
-                <p className="text-blue-200 text-[11px] font-medium">Secure SMS Authentication</p>
-              </div>
+            <div className="flex flex-col">
+              <span className="text-xl font-bold text-white leading-none">JivniCare</span>
+              <span className="text-[10px] font-medium text-blue-200 uppercase tracking-widest mt-0.5">
+                Unified Health
+              </span>
             </div>
-            <p className="text-[11px] text-blue-300/80 font-bold uppercase tracking-widest text-center">
-              Trusted by 5,000+ Doctors in Bihar
+          </Link>
+
+          <div className="space-y-5">
+            <h1 className="text-3xl xl:text-4xl font-bold text-white leading-tight">
+              Your Health,{" "}
+              <span className="text-blue-200">Fully Protected.</span>
+            </h1>
+            <p className="text-blue-100 text-base xl:text-lg max-w-sm leading-relaxed opacity-90">
+              Securely access your medical history and book instant appointments across our
+              statewide network.
             </p>
           </div>
         </div>
 
-        {/* Right Side - Interactive Form */}
-        <div className="flex-1 p-8 sm:p-12 lg:p-20 flex flex-col justify-center bg-white/40 relative">
-          <div className="max-w-[340px] w-full mx-auto">
+        {/* Trust indicators */}
+        <div className="relative z-10 space-y-4">
+          <div className="flex items-center gap-4 bg-white/10 backdrop-blur-sm p-4 rounded-2xl border border-white/20">
+            <div className="w-11 h-11 bg-green-500 rounded-xl flex items-center justify-center shrink-0">
+              <ShieldCheck className="w-5 h-5 text-white" aria-hidden="true" />
+            </div>
+            <div>
+              <p className="text-white font-semibold text-sm">OTP Verified Identity</p>
+              <p className="text-blue-200 text-xs">Secure SMS Authentication</p>
+            </div>
+          </div>
 
+          <div className="flex items-center justify-center gap-6 pt-2">
+            <div className="flex items-center gap-2 text-blue-200/80">
+              <Building2 className="w-4 h-4" aria-hidden="true" />
+              <span className="text-xs font-medium">5,000+ Doctors</span>
+            </div>
+            <div className="flex items-center gap-2 text-blue-200/80">
+              <Heart className="w-4 h-4" aria-hidden="true" />
+              <span className="text-xs font-medium">Trusted in Bihar</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Right Side - Interactive Form ── */}
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8">
+        <motion.div
+          variants={containerVariants}
+          initial="initial"
+          animate="animate"
+          className="w-full max-w-md"
+        >
+          {/* Mobile logo */}
+          <div className="lg:hidden flex justify-center mb-6">
+            <Link href="/" className="flex items-center gap-2">
+              <img src="/logo.png" alt="" className="h-10 w-auto" />
+              <span className="text-xl font-bold text-slate-900">JivniCare</span>
+            </Link>
+          </div>
+
+          {/* Step indicator */}
+          <div className="mb-8">
+            <StepIndicator currentStep={step} isNewUser={needsProfile || step === "phone"} />
+          </div>
+
+          {/* Card container */}
+          <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 p-6 sm:p-8">
             <AnimatePresence mode="wait">
+              {/* Success overlay */}
+              {showSuccess && (
+                <motion.div
+                  key="success"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                >
+                  <SuccessCheckmark
+                    message={step === "otp" ? "Phone Verified!" : "Profile Complete!"}
+                  />
+                </motion.div>
+              )}
 
               {/* Step 1: Phone Entry */}
-              {step === "phone" && (
+              {step === "phone" && !showSuccess && (
                 <motion.div
                   key="phone"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.3, ease: "easeOut" }}
+                  variants={pageVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  transition={{ duration: 0.25 }}
                 >
-                  <div className="mb-10 text-center relative flex flex-col items-center">
-                    <div className="w-full flex justify-between items-center mb-6">
-                      <Link
-                        href="/"
-                        className="flex items-center justify-center p-2 rounded-full bg-slate-50 text-slate-500 hover:text-primary hover:bg-slate-100 transition-all group"
-                      >
-                        <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-                      </Link>
+                  <div className="mb-8 text-center">
+                    <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                      <Smartphone className="w-7 h-7 text-primary" aria-hidden="true" />
                     </div>
-
-                    <img src="/logo.png" alt="JivniCare" className="h-16 w-auto object-contain mb-6" />
-                    <h2 className="text-4xl font-black text-slate-900 tracking-tight">Welcome</h2>
-                    <p className="text-slate-500 font-bold mt-3 text-base">Enter your mobile number to log in or sign up safely.</p>
+                    <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
+                      Welcome
+                    </h2>
+                    <p className="text-slate-500 mt-2 text-sm sm:text-base">
+                      Enter your mobile number to continue
+                    </p>
                   </div>
 
-                  {error && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      className="mb-8 p-5 bg-rose-50 border border-rose-100 rounded-3xl flex items-start gap-3 shadow-sm"
-                    >
-                      <div className="w-5 h-5 rounded-full bg-rose-500 flex items-center justify-center shrink-0 mt-0.5">
-                        <span className="text-[10px] font-black text-white">!</span>
+                  <AnimatePresence>
+                    {error && (
+                      <div className="mb-6">
+                        <StatusMessage
+                          type="error"
+                          message={error}
+                          onDismiss={() => setError(null)}
+                        />
                       </div>
-                      <p className="text-[13px] font-black text-rose-800 leading-relaxed">{error}</p>
-                    </motion.div>
-                  )}
+                    )}
+                  </AnimatePresence>
 
                   <form onSubmit={handleSendOtp} className="space-y-6">
-                    <div className="group">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2.5 block ml-1">
+                    <div>
+                      <label
+                        htmlFor="phone"
+                        className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 block"
+                      >
                         Mobile Number
                       </label>
                       <div className="relative">
-                        <div className="absolute left-5 top-1/2 -translate-y-1/2 flex items-center gap-2.5">
-                          <span className="text-slate-900 font-black text-lg">+91</span>
-                          <div className="w-px h-6 bg-slate-200" />
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none">
+                          <span className="text-slate-900 font-bold text-base">+91</span>
+                          <div className="w-px h-5 bg-slate-200" />
                         </div>
                         <Input
+                          id="phone"
                           type="tel"
                           required
                           maxLength={10}
                           placeholder="98765 43210"
                           value={phone}
                           onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
-                          className="h-16 pl-20 rounded-2xl bg-slate-50/50 border-slate-200/60 focus:bg-white focus:ring-4 focus:ring-primary/5 focus:border-primary font-black text-xl tracking-wide transition-all placeholder:text-slate-300"
+                          className="h-14 pl-[72px] rounded-xl bg-slate-50 border-slate-200 focus:bg-white font-semibold text-lg tracking-wide"
+                          aria-describedby="phone-hint"
+                          autoComplete="tel-national"
                         />
                       </div>
+                      <p id="phone-hint" className="sr-only">
+                        Enter your 10-digit mobile number without country code
+                      </p>
                     </div>
 
                     <Button
                       type="submit"
                       disabled={isLoading || isSendingFirebase || phone.length < 10}
-                      className="w-full h-16 rounded-2xl bg-[#205E98] hover:bg-[#1a4f82] text-white font-black text-lg shadow-[0_12px_24px_-8px_rgba(32,94,152,0.3)] hover:shadow-[0_20px_40px_-12px_rgba(32,94,152,0.4)] active:scale-[0.98] transition-all flex items-center justify-center gap-3"
+                      className="w-full h-14 rounded-xl bg-[#205E98] hover:bg-[#1a4f82] text-white font-semibold text-base shadow-lg shadow-primary/20 transition-all"
                     >
-                      {isLoading ? (
-                        <RefreshCw className="w-6 h-6 animate-spin" />
+                      {isLoading || isSendingFirebase ? (
+                        <LoadingSpinner className="text-white" />
                       ) : (
-                        <>Send Secure OTP <ArrowRight className="w-5 h-5" /></>
+                        <>
+                          Send OTP <ArrowRight className="w-5 h-5 ml-2" aria-hidden="true" />
+                        </>
                       )}
                     </Button>
                   </form>
-                </motion.div>
-              )}
 
-              {/* Step 3: Identity (after OTP verified + session created) */}
-              {step === "identity" && otpVerified && (
-                <motion.div
-                  key="identity"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <div className="mb-10 text-center relative flex flex-col items-center">
-                    <div className="w-full flex justify-between items-center mb-6">
-                      <button
-                        type="button"
-                        disabled={isLoading}
-                        onClick={() => {
-                          setError(null);
-                          setStep("otp");
-                        }}
-                        className="flex items-center justify-center p-2 rounded-full bg-slate-50 text-slate-500 hover:text-primary hover:bg-slate-100 transition-all group"
-                      >
-                        <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-                      </button>
-                    </div>
-
-                    <img src="/logo.png" alt="JivniCare" className="h-16 w-auto object-contain mb-6" />
-                    <h2 className="text-3xl font-black text-slate-900 tracking-tight">Complete Your Profile</h2>
-                    <p className="text-slate-500 font-bold mt-2 text-base italic">
-                      Verified <span className="text-primary">+91 {phone}</span> — add your details
-                    </p>
-                  </div>
-
-                  {error && (
-                    <div className="mb-6 p-4 bg-rose-50 border border-rose-100 rounded-2xl">
-                      <p className="text-xs font-bold text-rose-800 leading-relaxed">{error}</p>
-                    </div>
-                  )}
-
-                  <form onSubmit={handleIdentitySubmit} className="space-y-6">
-                    <div className="group">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2.5 block ml-1">
-                        Full Name
-                      </label>
-                      <div className="relative">
-                        <UserIcon className="absolute left-5 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-400" />
-                        <Input
-                          type="text"
-                          required
-                          placeholder="Your Name"
-                          value={name}
-                          onChange={(e) => setName(e.target.value.replace(/[^a-zA-Z\s]/g, ""))}
-                          className="h-16 pl-14 rounded-2xl bg-slate-50/50 border-slate-200/60 focus:bg-white focus:ring-4 focus:ring-primary/5 focus:border-primary font-black text-lg transition-all"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="group">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2.5 block ml-1">
-                        City / Village Name
-                      </label>
-                      <div className="relative">
-                        <MapPin className="absolute left-5 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-400" />
-                        <Input
-                          type="text"
-                          required
-                          placeholder="e.g. Patna or Your Village"
-                          value={location}
-                          onChange={(e) => setLocation(e.target.value.replace(/[^a-zA-Z0-9\s.,-]/g, ""))}
-                          className="h-16 pl-14 rounded-2xl bg-slate-50/50 border-slate-200/60 focus:bg-white focus:ring-4 focus:ring-primary/5 focus:border-primary font-black text-lg transition-all"
-                        />
-                      </div>
-                    </div>
-
-                    <Button
-                      type="submit"
-                      disabled={isLoading || name.trim().length < 2 || location.trim().length < 2}
-                      className="w-full h-16 rounded-2xl bg-[#205E98] hover:bg-[#1a4f82] text-white font-black text-lg shadow-[0_12px_24px_-8px_rgba(32,94,152,0.3)] transition-all flex items-center justify-center gap-3"
-                    >
-                      {isLoading ? (
-                        <RefreshCw className="w-5 h-5 animate-spin" />
-                      ) : (
-                        <>Continue <ArrowRight className="w-5 h-5" /></>
-                      )}
-                    </Button>
-                  </form>
+                  <p className="text-center text-xs text-slate-400 mt-6">
+                    By continuing, you agree to our{" "}
+                    <Link href="/terms" className="text-primary hover:underline">
+                      Terms
+                    </Link>{" "}
+                    and{" "}
+                    <Link href="/privacy" className="text-primary hover:underline">
+                      Privacy Policy
+                    </Link>
+                  </p>
                 </motion.div>
               )}
 
               {/* Step 2: OTP Verification */}
-              {step === "otp" && (
+              {step === "otp" && !showSuccess && (
                 <motion.div
                   key="otp"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.3 }}
+                  variants={pageVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  transition={{ duration: 0.25 }}
                 >
-                  <div className="mb-10 text-center relative flex flex-col items-center">
-                    <div className="w-full flex justify-between items-center mb-6">
-                      <button
-                        onClick={() => setStep("phone")}
-                        className="flex items-center justify-center p-2 rounded-full bg-slate-50 text-slate-500 hover:text-primary hover:bg-slate-100 transition-all group"
-                      >
-                        <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-                      </button>
-                    </div>
+                  <div className="mb-8">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setStep("phone");
+                        setOtp("");
+                        setError(null);
+                      }}
+                      className="flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-primary transition-colors mb-4"
+                      aria-label="Go back to phone entry"
+                    >
+                      <ArrowLeft className="w-4 h-4" aria-hidden="true" />
+                      <span>Change Number</span>
+                    </button>
 
-                    <img src="/logo.png" alt="JivniCare" className="h-16 w-auto object-contain mb-6" />
-                    <h2 className="text-4xl font-black text-slate-900 tracking-tight">Verify OTP</h2>
-                    <p className="text-slate-500 font-bold mt-2 text-base leading-relaxed">
-                      Enter the 6-digit code sent to{" "}
-                      <span className="text-slate-900 font-black">+91 {phone}</span>
-                    </p>
+                    <div className="text-center">
+                      <div className="w-14 h-14 bg-green-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <ShieldCheck className="w-7 h-7 text-green-600" aria-hidden="true" />
+                      </div>
+                      <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
+                        Verify OTP
+                      </h2>
+                      <p className="text-slate-500 mt-2 text-sm sm:text-base">
+                        Enter the 6-digit code sent to{" "}
+                        <span className="font-semibold text-slate-700">
+                          +91 {formatPhoneDisplay(phone)}
+                        </span>
+                      </p>
+                    </div>
                   </div>
 
-                  {error && (
-                    <div className="mb-8 p-4 bg-rose-50 border border-rose-100 rounded-2xl">
-                      <p className="text-xs font-bold text-rose-800 leading-relaxed">{error}</p>
+                  <AnimatePresence>
+                    {error && (
+                      <div className="mb-6">
+                        <StatusMessage
+                          type="error"
+                          message={error}
+                          onDismiss={() => setError(null)}
+                        />
+                      </div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* OTP status message */}
+                  {!otpSent && !otpReady && (
+                    <div className="mb-6">
+                      <StatusMessage
+                        type="info"
+                        message="Please wait while we send the OTP to your phone..."
+                      />
                     </div>
                   )}
 
-                  <form onSubmit={handleVerifyOtp} className="space-y-8">
+                  {otpReady && (
+                    <div className="mb-6">
+                      <StatusMessage
+                        type="success"
+                        message={`OTP sent to +91 ${formatPhoneDisplay(phone)}`}
+                      />
+                    </div>
+                  )}
+
+                  <form onSubmit={handleVerifyOtp} className="space-y-6">
                     <div>
-                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-4 block text-center">
-                        Verification Code
-                      </label>
-                      <Input
-                        type="text"
-                        required
-                        maxLength={6}
-                        placeholder="••••••"
+                      <label className="sr-only">Enter 6-digit verification code</label>
+                      <OtpInput
                         value={otp}
-                        onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
-                        className="h-20 text-center rounded-[1.5rem] bg-slate-50/50 border-slate-200 focus:bg-white focus:ring-8 focus:ring-primary/5 focus:border-primary font-black text-4xl tracking-[0.4em] transition-all placeholder:text-slate-200"
+                        onChange={setOtp}
+                        length={6}
+                        disabled={isLoading}
+                        error={!!error}
+                        autoFocus
                       />
                     </div>
 
@@ -592,89 +652,152 @@ function PatientLoginContent() {
                         otp.length < 6 ||
                         (isFirebaseClientConfigured() && !otpReady)
                       }
-                      className="w-full h-16 rounded-2xl bg-[#205E98] hover:bg-[#1a4f82] text-white font-black text-lg shadow-[0_12px_24px_-8px_rgba(32,94,152,0.3)] transition-all flex items-center justify-center gap-3"
+                      className="w-full h-14 rounded-xl bg-[#205E98] hover:bg-[#1a4f82] text-white font-semibold text-base shadow-lg shadow-primary/20 transition-all"
                     >
                       {isLoading ? (
-                        <RefreshCw className="w-6 h-6 animate-spin" />
+                        <LoadingSpinner className="text-white" />
                       ) : (
-                        <>Verify &amp; Log In <ShieldCheck className="w-5 h-5 text-emerald-400" /></>
+                        <>
+                          Verify & Continue
+                          <ShieldCheck className="w-5 h-5 ml-2 text-green-300" aria-hidden="true" />
+                        </>
                       )}
                     </Button>
                   </form>
 
-                  <div className="mt-8 text-center">
-                    {!otpSent && !otpReady && (
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          if (isLoading || isSendingFirebase) return;
-                          setIsLoading(true);
-                          setError(null);
-                          try {
-                            await requestFirebaseOtp();
-                          } catch (err: any) {
-                            setError(err.message);
-                          } finally {
-                            setIsLoading(false);
-                          }
-                        }}
-                        disabled={isLoading || isSendingFirebase}
-                        className="mb-4 text-xs font-bold text-primary disabled:opacity-50"
-                      >
-                        {isSendingFirebase ? "Sending OTP…" : `Send OTP to +91 ${phone}`}
-                      </button>
-                    )}
-                    {otpReady && (
-                      <p className="mb-4 text-xs font-bold text-emerald-600">
-                        OTP sent to +91 {phone}
-                      </p>
-                    )}
-                    {canResend ? (
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          if (isLoading || isSendingFirebase) return;
-                          setIsLoading(true);
-                          setError(null);
-                          try {
-                            await requestFirebaseOtp();
-                          } catch (err: any) {
-                            setError(err.message);
-                          } finally {
-                            setIsLoading(false);
-                          }
-                        }}
-                        disabled={isLoading || isSendingFirebase}
-                        className="inline-flex items-center gap-2 text-xs font-black text-primary hover:text-[#184a7a] transition-all disabled:opacity-50"
-                      >
-                        <RefreshCw className="w-4 h-4" /> RESEND OTP
-                      </button>
-                    ) : (
-                      <p className="text-[11px] font-bold text-slate-400 tracking-wider">
-                        RESEND IN <span className="text-slate-900 font-black">{resendTimer}s</span>
-                      </p>
-                    )}
+                  <div className="mt-6">
+                    <ResendTimer
+                      seconds={resendTimer}
+                      canResend={canResend}
+                      onResend={handleResendOtp}
+                      isLoading={isLoading || isSendingFirebase}
+                    />
                   </div>
                 </motion.div>
               )}
 
-            </AnimatePresence>
+              {/* Step 3: Identity (Profile Completion) */}
+              {step === "identity" && otpVerified && !showSuccess && (
+                <motion.div
+                  key="identity"
+                  variants={pageVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  transition={{ duration: 0.25 }}
+                >
+                  <div className="mb-8 text-center">
+                    <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                      <UserIcon className="w-7 h-7 text-primary" aria-hidden="true" />
+                    </div>
+                    <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
+                      Complete Your Profile
+                    </h2>
+                    <p className="text-slate-500 mt-2 text-sm sm:text-base">
+                      Verified{" "}
+                      <span className="font-semibold text-primary">
+                        +91 {formatPhoneDisplay(phone)}
+                      </span>
+                    </p>
+                  </div>
 
-            <div className="mt-16 pt-10 border-t border-slate-100 text-center">
-              <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest leading-loose">
-                Secure Portal &bull;{" "}
-                <Link href="/privacy" className="hover:text-slate-600">Privacy</Link>{" "}
-                &bull;{" "}
-                <Link href="/terms" className="hover:text-slate-600">Terms</Link>
-              </p>
-              <div className="mt-4 flex items-center justify-center gap-2 opacity-30 grayscale">
-                <img src="/logo.png" alt="Logo" className="h-4 w-auto" />
-                <span className="text-[10px] font-black text-slate-900">JivniCare Health System</span>
-              </div>
-            </div>
+                  <AnimatePresence>
+                    {error && (
+                      <div className="mb-6">
+                        <StatusMessage
+                          type="error"
+                          message={error}
+                          onDismiss={() => setError(null)}
+                        />
+                      </div>
+                    )}
+                  </AnimatePresence>
+
+                  <form onSubmit={handleIdentitySubmit} className="space-y-5">
+                    <div>
+                      <label
+                        htmlFor="name"
+                        className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 block"
+                      >
+                        Full Name
+                      </label>
+                      <div className="relative">
+                        <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
+                        <Input
+                          id="name"
+                          type="text"
+                          required
+                          placeholder="Your Name"
+                          value={name}
+                          onChange={(e) => setName(e.target.value.replace(/[^a-zA-Z\s.]/g, ""))}
+                          className="h-14 pl-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white font-medium text-base"
+                          autoComplete="name"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="location"
+                        className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 block"
+                      >
+                        City / Village
+                      </label>
+                      <div className="relative">
+                        <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
+                        <Input
+                          id="location"
+                          type="text"
+                          required
+                          placeholder="e.g. Patna or Your Village"
+                          value={location}
+                          onChange={(e) =>
+                            setLocation(e.target.value.replace(/[^a-zA-Z0-9\s.,-]/g, ""))
+                          }
+                          className="h-14 pl-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white font-medium text-base"
+                          autoComplete="address-level2"
+                        />
+                      </div>
+                    </div>
+
+                    <Button
+                      type="submit"
+                      disabled={
+                        isLoading || name.trim().length < 2 || location.trim().length < 2
+                      }
+                      className="w-full h-14 rounded-xl bg-[#205E98] hover:bg-[#1a4f82] text-white font-semibold text-base shadow-lg shadow-primary/20 transition-all"
+                    >
+                      {isLoading ? (
+                        <LoadingSpinner className="text-white" />
+                      ) : (
+                        <>
+                          Complete Setup <ArrowRight className="w-5 h-5 ml-2" aria-hidden="true" />
+                        </>
+                      )}
+                    </Button>
+                  </form>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
-        </div>
-      </motion.div>
+
+          {/* Footer */}
+          <div className="mt-8 text-center">
+            <p className="text-[11px] text-slate-400 font-medium">
+              Secure Portal &bull;{" "}
+              <Link href="/privacy" className="hover:text-slate-600 transition-colors">
+                Privacy
+              </Link>{" "}
+              &bull;{" "}
+              <Link href="/terms" className="hover:text-slate-600 transition-colors">
+                Terms
+              </Link>
+            </p>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Firebase reCAPTCHA container (invisible) */}
       <div
         id="firebase-recaptcha-login"
         className="fixed bottom-0 left-0 w-[1px] h-[1px] opacity-0 pointer-events-none overflow-hidden"
@@ -684,10 +807,20 @@ function PatientLoginContent() {
   );
 }
 
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30 flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8">
+        <FormSkeleton />
+      </div>
+    </div>
+  );
+}
+
 export default function PatientLoginPage() {
   return (
     <PublicGuard>
-      <Suspense fallback={<div className="min-h-screen bg-[#F8FAFC]" />}>
+      <Suspense fallback={<LoadingFallback />}>
         <PatientLoginContent />
       </Suspense>
     </PublicGuard>
