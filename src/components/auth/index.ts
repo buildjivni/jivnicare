@@ -9,3 +9,4 @@ export {
   ResendTimer,
   SuccessCheckmark,
 } from "./AuthFeedback";
+export { AuthHeader, AuthSidebarBrand } from "./AuthHeader";

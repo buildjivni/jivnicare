@@ -36,6 +36,7 @@ import {
   SuccessCheckmark,
   FormSkeleton,
 } from "@/components/auth/AuthFeedback";
+import { AuthHeader, AuthSidebarBrand } from "@/components/auth/AuthHeader";
 
 // Animation variants for consistent transitions
 const pageVariants = {
@@ -380,17 +381,9 @@ function PatientLoginContent() {
 
         {/* Logo and content */}
         <div className="relative z-10">
-          <Link href="/" className="flex items-center gap-3 mb-10 group">
-            <div className="w-11 h-11 bg-white rounded-xl flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
-              <img src="/logo.png" alt="" className="w-7 h-7 object-contain" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-xl font-bold text-white leading-none">JivniCare</span>
-              <span className="text-[10px] font-medium text-blue-200 uppercase tracking-widest mt-0.5">
-                Unified Health
-              </span>
-            </div>
-          </Link>
+          <div className="mb-10">
+            <AuthSidebarBrand />
+          </div>
 
           <div className="space-y-5">
             <h1 className="text-3xl xl:text-4xl font-bold text-white leading-tight">
@@ -430,23 +423,20 @@ function PatientLoginContent() {
       </div>
 
       {/* ── Right Side - Interactive Form ── */}
-      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8">
+      <div className="flex-1 flex flex-col lg:justify-center p-4 pt-6 sm:p-6 sm:pt-8 lg:p-8">
+        {/* Mobile Header - positioned at top with proper safe-area spacing */}
+        <div className="lg:hidden mb-6 sm:mb-8">
+          <AuthHeader className="pt-safe" />
+        </div>
+
         <motion.div
           variants={containerVariants}
           initial="initial"
           animate="animate"
-          className="w-full max-w-md"
+          className="w-full max-w-md mx-auto"
         >
-          {/* Mobile logo */}
-          <div className="lg:hidden flex justify-center mb-6">
-            <Link href="/" className="flex items-center gap-2">
-              <img src="/logo.png" alt="" className="h-10 w-auto" />
-              <span className="text-xl font-bold text-slate-900">JivniCare</span>
-            </Link>
-          </div>
-
           {/* Step indicator */}
-          <div className="mb-8">
+          <div className="mb-6 sm:mb-8">
             <StepIndicator currentStep={step} isNewUser={needsProfile || step === "phone"} />
           </div>
 
