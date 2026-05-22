@@ -1,14 +1,4 @@
 import type { NextConfig } from "next";
-import { assertProductionEnv } from "./src/lib/infrastructure/env";
-
-try {
-  assertProductionEnv();
-} catch (e) {
-  if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
-    console.error(e instanceof Error ? e.message : e);
-    throw e;
-  }
-}
 
 const nextConfig: NextConfig = {
   // ── Tech Stack Obfuscation ──────────────────────────────────────────────────
