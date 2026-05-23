@@ -21,7 +21,7 @@ export function BookingWidgetClient({ doctor, isMobileCTA = false, isClosedToday
   const [isNavigating, setIsNavigating] = useState(false);
 
   const { setDoctor, setService } = useBookingStore();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, _hasHydrated } = useAuthStore();
 
   const handleBook = () => {
     if (isNavigating) return;
@@ -38,7 +38,7 @@ export function BookingWidgetClient({ doctor, isMobileCTA = false, isClosedToday
   };
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined" && _hasHydrated) {
       const params = new URLSearchParams(window.location.search);
       if (params.get("autoBook") === "true") {
         // Strip parameter from history immediately
@@ -48,7 +48,7 @@ export function BookingWidgetClient({ doctor, isMobileCTA = false, isClosedToday
         handleBook();
       }
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, _hasHydrated]);
 
   if (isMobileCTA) {
     return (
