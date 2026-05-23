@@ -48,6 +48,7 @@ interface SmartSearchBarProps {
   innerClassName?: string;
   disableFocusStyles?: boolean;
   onSearch?: (q: string) => void;
+  autoFocus?: boolean;
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -59,6 +60,7 @@ export function SmartSearchBar({
   innerClassName,
   disableFocusStyles = false,
   onSearch,
+  autoFocus = false,
 }: SmartSearchBarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -264,6 +266,7 @@ export function SmartSearchBar({
             "flex-1 w-full min-w-0 h-full bg-transparent border-none outline-none focus:outline-none focus:ring-0 ring-0 focus:border-none shadow-none !outline-none !shadow-none text-slate-900 placeholder:text-slate-400 transition-colors px-1",
             compact ? "text-[13px] md:text-sm font-medium" : "text-base md:text-[15px] font-semibold"
           )}
+          autoFocus={autoFocus}
           autoComplete="off"
           spellCheck={false}
           aria-label="Search doctors, symptoms, or specialties"
