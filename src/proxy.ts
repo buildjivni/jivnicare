@@ -27,6 +27,11 @@ export async function proxy(request: NextRequest) {
     pathname === route.prefix || pathname.startsWith(route.prefix + '/')
   ) : undefined;
 
+  // Explicitly ignore public discovery routes even if matched accidentally
+  if (pathname === '/doctors' || pathname.startsWith('/doctors/')) {
+    return NextResponse.next();
+  }
+
   if (!protectedRoute) {
     return NextResponse.next();
   }
