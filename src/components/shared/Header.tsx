@@ -14,10 +14,12 @@ import {
   ShieldCheck, 
   ShieldAlert, 
   LayoutDashboard, 
-  Clipboard, 
+  Clipboard,
   AlertTriangle,
   Settings,
-  Clock
+  Clock,
+  ArrowLeft,
+  Search as SearchIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -33,6 +35,7 @@ export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [isMobileSearchExpanded, setIsMobileSearchExpanded] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const profileRef = useRef<HTMLDivElement>(null);
@@ -127,75 +130,102 @@ export function Header() {
       >
         <div className="container mx-auto px-4 md:px-6 h-full flex items-center justify-between gap-3 max-w-7xl w-full box-border">
 
-          {/* ── LEFT SIDE: Hamburger & Logo ── */}
-          <div className="flex items-center gap-2 md:gap-4 flex-1 lg:flex-none justify-start">
-            {/* Mobile Hamburger */}
-            <div className="flex lg:hidden items-center shrink-0">
+          {/* ── MOBILE EXPANDED SEARCH VIEW ── */}
+          {isMobileSearchExpanded && isDoctorsPage ? (
+            <div className="flex lg:hidden items-center w-full gap-2 animate-in fade-in slide-in-from-right-4 duration-200">
               <Button
-                aria-label="Toggle navigation menu"
                 variant="ghost"
                 size="icon"
-                className="rounded-xl w-11 h-11 text-slate-600 bg-slate-50 hover:bg-slate-100 border border-slate-100 transition-all duration-300 active:scale-95 animate-fade-in"
-                onClick={() => setMobileOpen((v) => !v)}
+                onClick={() => setIsMobileSearchExpanded(false)}
+                className="w-10 h-10 shrink-0 text-slate-500 rounded-full hover:bg-slate-100"
               >
-                {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                <ArrowLeft className="w-5 h-5" />
               </Button>
+              <div className="flex-1 min-w-0">
+                <SmartSearchBar compact district="Patna" autoFocus className="w-full" />
+              </div>
             </div>
-
-            {/* Logo and Brand Title */}
-            <div className={cn(
-              "flex items-center shrink-0 transition-all",
-              isDoctorsPage && pathname !== "/" ? "hidden lg:flex" : "flex"
-            )}>
-              <Link href="/" className="flex items-center gap-2.5 md:gap-3.5 group shrink min-w-0">
-                <Logo className="h-11 md:h-14 w-auto shrink-0 transition-transform duration-300 group-hover:scale-[1.01]" />
-                <div className="flex flex-col -space-y-0.5 md:-space-y-1 pt-0.5">
-                   <span className="text-[20px] md:text-2xl font-bold tracking-tight leading-none text-slate-800">
-                      <span className="text-[#5298D2]">Jivni</span><span className="text-[#489C66]">Care</span>
-                   </span>
-                   <span className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-[0.25em] pl-0.5 mt-0.5">Bihar</span>
-                </div>
-              </Link>
-            </div>
-          </div>
-
-          {/* ── DESKTOP NAV ───────────────────── */}
-          {navLinks.length > 0 && (
-            <nav className="hidden lg:flex items-center gap-2 bg-slate-50/60 p-1 rounded-full border border-slate-100/80">
-              {navLinks.map((link) => {
-                const isActive = pathname === link.href || (pathname.startsWith('/doctors') && link.href === '/doctors');
-                return (
-                  <Link
-                    key={link.label}
-                    href={link.href}
-                    className={cn(
-                      "px-5 py-2.5 text-[13px] font-bold rounded-full transition-all duration-200 active:scale-[0.98] flex items-center gap-1.5",
-                      link.highlight
-                        ? "text-rose-600 bg-rose-50 hover:bg-rose-100/80 border border-rose-100 animate-pulse shadow-sm"
-                        : isActive 
-                        ? "text-[#5298D2] bg-white shadow-sm ring-1 ring-slate-100" 
-                        : "text-slate-500 hover:text-slate-800 hover:bg-slate-100/50"
-                    )}
+          ) : (
+            <>
+              {/* ── LEFT SIDE: Hamburger & Logo (Normal View) ── */}
+              <div className="flex items-center gap-2 md:gap-4 flex-1 lg:flex-none justify-start">
+                {/* Mobile Hamburger */}
+                <div className="flex lg:hidden items-center shrink-0">
+                  <Button
+                    aria-label="Toggle navigation menu"
+                    variant="ghost"
+                    size="icon"
+                    className="rounded-xl w-11 h-11 text-slate-600 bg-slate-50 hover:bg-slate-100 border border-slate-100 transition-all duration-300 active:scale-95 animate-fade-in"
+                    onClick={() => setMobileOpen((v) => !v)}
                   >
-                    <span className={cn("shrink-0", link.highlight ? "text-rose-500 animate-pulse" : isActive ? "text-[#5298D2]" : "text-slate-400")}>
-                      {link.icon}
-                    </span>
-                    {link.label}
+                    {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                  </Button>
+                </div>
+
+                {/* Logo and Brand Title (Always visible unless search is expanded on mobile) */}
+                <div className="flex items-center shrink-0 transition-all">
+                  <Link href="/" className="flex items-center gap-2.5 md:gap-3.5 group shrink min-w-0">
+                    <Logo className="h-11 md:h-14 w-auto shrink-0 transition-transform duration-300 group-hover:scale-[1.01]" />
+                    <div className="flex flex-col -space-y-0.5 md:-space-y-1 pt-0.5">
+                       <span className="text-[20px] md:text-2xl font-bold tracking-tight leading-none text-slate-800">
+                          <span className="text-[#5298D2]">Jivni</span><span className="text-[#489C66]">Care</span>
+                       </span>
+                       <span className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-[0.25em] pl-0.5 mt-0.5">Bihar</span>
+                    </div>
                   </Link>
-                );
-              })}
-            </nav>
-          )}
+                </div>
+              </div>
 
-          {/* ── SEARCH (Contextual) ── */}
-          {isDoctorsPage && pathname !== "/" && (
-            <div className="flex flex-1 max-w-md mx-2 md:mx-4 lg:mx-8 min-w-0">
-              <SmartSearchBar compact district="Patna" className="w-full shadow-sm animate-fade-in" />
-            </div>
-          )}
+              {/* ── DESKTOP NAV ───────────────────── */}
+              {navLinks.length > 0 && (
+                <nav className="hidden lg:flex items-center gap-2 bg-slate-50/60 p-1 rounded-full border border-slate-100/80">
+                  {navLinks.map((link) => {
+                    const isActive = pathname === link.href || (pathname.startsWith('/doctors') && link.href === '/doctors');
+                    return (
+                      <Link
+                        key={link.label}
+                        href={link.href}
+                        className={cn(
+                          "px-5 py-2.5 text-[13px] font-bold rounded-full transition-all duration-200 active:scale-[0.98] flex items-center gap-1.5",
+                          link.highlight
+                            ? "text-rose-600 bg-rose-50 hover:bg-rose-100/80 border border-rose-100 animate-pulse shadow-sm"
+                            : isActive 
+                            ? "text-[#5298D2] bg-white shadow-sm ring-1 ring-slate-100" 
+                            : "text-slate-500 hover:text-slate-800 hover:bg-slate-100/50"
+                        )}
+                      >
+                        <span className={cn("shrink-0", link.highlight ? "text-rose-500 animate-pulse" : isActive ? "text-[#5298D2]" : "text-slate-400")}>
+                          {link.icon}
+                        </span>
+                        {link.label}
+                      </Link>
+                    );
+                  })}
+                </nav>
+              )}
 
-          {/* ── ACTIONS (Desktop & Mobile Right) ───────────────── */}
-          <div className="flex items-center justify-end gap-2 lg:gap-4 shrink-0">
+              {/* ── SEARCH (Contextual - Desktop Only) ── */}
+              {isDoctorsPage && pathname !== "/" && (
+                <div className="hidden lg:flex flex-1 max-w-md mx-2 md:mx-4 lg:mx-8 min-w-0">
+                  <SmartSearchBar compact district="Patna" className="w-full shadow-sm animate-fade-in" />
+                </div>
+              )}
+
+              {/* ── ACTIONS (Desktop & Mobile Right) ───────────────── */}
+              <div className="flex items-center justify-end gap-2 lg:gap-4 shrink-0">
+                
+                {/* Mobile Search Icon Trigger */}
+                {isDoctorsPage && pathname !== "/" && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="lg:hidden w-11 h-11 rounded-full bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-100 active:scale-95 transition-all"
+                    onClick={() => setIsMobileSearchExpanded(true)}
+                    aria-label="Expand search"
+                  >
+                    <SearchIcon className="w-5 h-5" />
+                  </Button>
+                )}
             {isLoggedIn && user?.role === "DOCTOR" && (
               <div className="hidden sm:flex items-center gap-2">
                 <Button 
@@ -260,6 +290,8 @@ export function Header() {
               </Link>
             )}
           </div>
+          </>
+          )}
         </div>
       </header>
 

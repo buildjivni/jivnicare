@@ -26,7 +26,7 @@ export async function GET(request: Request) {
     // If not array params, try comma-separated
     if (specialties.length === 0) {
       const specParam = searchParams.get('specialty');
-      if (specParam) specialties = specParam.split(',');
+      if (specParam) specialties = specParam.split(',').filter(Boolean);
     }
 
     // Phase 3: Search Intelligence Dictionary
@@ -53,42 +53,30 @@ export async function GET(request: Request) {
       };
     }
 
-    if (query) {
-      whereClause.OR = [
-        { name: { contains: query, mode: 'insensitive' } },
-        { hospitalName: { contains: query, mode: 'insensitive' } },
-        { clinicName: { contains: query, mode: 'insensitive' } },
-        { district: { contains: query, mode: 'insensitive' } },
-        { city: { contains: query, mode: 'insensitive' } },
-        { locality: { contains: query, mode: 'insensitive' } },
-        { fullAddress: { contains: query, mode: 'insensitive' } },
-        { qualifications: { contains: query, mode: 'insensitive' } },
-        { education: { contains: query, mode: 'insensitive' } },
-        { bio: { contains: query, mode: 'insensitive' } },
-        { keywords: { some: { term: { contains: query, mode: 'insensitive' } } } },
-        { specialties: { some: { name: { contains: query, mode: 'insensitive' } } } },
-      ];
-      
-      // Phase 3: Lead/Search Tracking (Fire and forget)
-      // We don't await this so it doesn't block the API response
-      const districtParam = searchParams.get('district') || 'Patna';
-      prisma.searchAnalytics.create({
-        data: {
-          query,
-          normalizedQuery: query.toLowerCase(),
-          district: districtParam,
-          resultsCount: 0 // Will update later or just track the query for now
-        }
-      }).catch(e => console.warn("Search Analytics Tracking Failed:", e));
-    }
-    
-    // ── Additional Filters ──────────────────────────────────────────────
+    // Geo Patient Location Data & Filters
     const district = searchParams.get('district') || 'Patna';
     const minExperience = parseInt(searchParams.get('minExperience') || '0', 10);
     const maxFee = parseInt(searchParams.get('maxFee') || '10000', 10);
     const availability = searchParams.get('availability'); // 'any', 'today'
     const sort = searchParams.get('sort') || 'recommended';
     const isEmergency = searchParams.get('isEmergency') === 'true';
+
+    // Strongly filter by district in Prisma to prevent cross-city pollution
+    whereClause.district = { equals: district, mode: 'insensitive' };
+
+    // Phase 3: Lead/Search Tracking (Fire and forget)
+    // We don't await this so it doesn't block the API response
+    if (query) {
+      prisma.searchAnalytics.create({
+        data: {
+          query,
+          normalizedQuery: query.toLowerCase(),
+          district,
+          resultsCount: 0 // Will update later or just track the query for now
+        }
+      }).catch(e => console.warn("Search Analytics Tracking Failed:", e));
+    }
+    
     
     // Geo Patient Location Data
     const patientLatParam = searchParams.get('lat');
@@ -150,7 +138,8 @@ export async function GET(request: Request) {
           },
           take: 1,
         }
-      }
+      },
+      take: 100 // Prevent crashing edge functions on massive datasets
     });
 
     // ── Pre-Filter for Emergency Discovery ──────────────────────────────
@@ -170,12 +159,23 @@ export async function GET(request: Request) {
       let isAvailableToday = false;
       let nextTime = "N/A";
       
-      if (doc.weeklySchedule) {
+      // Assume available unless explicitly marked closed
+      if (doc.clinicOperations?.isClosedToday) {
+        isAvailableToday = false;
+      } else if (doc.weeklySchedule) {
         const todaySchedule: any = doc.weeklySchedule[todayString as keyof typeof doc.weeklySchedule];
         if (todaySchedule && todaySchedule.isOpen) {
           isAvailableToday = true;
           nextTime = todaySchedule.start || "Available";
+        } else if (todaySchedule && todaySchedule.isOpen === false) {
+           isAvailableToday = false;
+        } else {
+           // Fallback to true if schedule is malformed but not explicitly closed
+           isAvailableToday = true;
         }
+      } else {
+         // If no schedule exists, default to available to prevent over-filtering
+         isAvailableToday = true;
       }
 
       const todayQueue = doc.dailyQueues?.[0];
