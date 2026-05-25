@@ -373,4 +373,4 @@ export const DoctorCard = React.memo(function DoctorCard({ doctor, className }: 
     </div>
   );
 }
-});
+);
