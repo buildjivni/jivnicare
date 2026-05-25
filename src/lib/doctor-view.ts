@@ -30,7 +30,6 @@ export interface DoctorSettingsView {
   fee: string;
   maxCapacity: string;
   averageConsultationTime: string;
-  pauseOnlineBooking: boolean;
   emergencySlots: string;
   leaveMode: boolean;
   clinicStatus: string;
@@ -88,7 +87,6 @@ export function mapDoctorWorkspace(
       fee: String(fee),
       maxCapacity: String(getUnifiedQueueCapacity(ops)),
       averageConsultationTime: String(doctor.averageConsultationTime ?? 15),
-      pauseOnlineBooking: Boolean(ops.pauseOnlineBooking),
       emergencySlots: String(ops.emergencySlots ?? 0),
       leaveMode: Boolean(ops.isClosedToday),
       clinicStatus: ops.status || "AVAILABLE",

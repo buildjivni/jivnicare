@@ -59,20 +59,31 @@ export async function GET(request: Request) {
     await writer.write(encoder.encode(`event: error\ndata: ${JSON.stringify({ error: "Failed to fetch bookings" })}\n\n`));
   }
 
-  // Periodic push every 30 seconds
+  // Use a heartbeat to keep connection alive and detect dropped connections early
+  let tick = 0;
   const interval = setInterval(async () => {
+    tick++;
     try {
-      const data = await fetchBookings();
-      await writer.write(encoder.encode(`data: ${JSON.stringify({ bookings: data })}\n\n`));
+      // Every 15 seconds, send a ping to keep connection alive (prevent 504 timeouts)
+      if (tick % 2 !== 0) {
+        await writer.write(encoder.encode(`event: ping\ndata: ${Date.now()}\n\n`));
+      } else {
+        // Every 30 seconds, push fresh data
+        const data = await fetchBookings();
+        await writer.write(encoder.encode(`data: ${JSON.stringify({ bookings: data })}\n\n`));
+      }
     } catch (e) {
-      logger.error({ category: "SYSTEM", message: "Periodic fetch failed", error: e });
+      // If write fails, the client disconnected ungracefully.
+      logger.warn({ category: "SYSTEM", message: "SSE Write failed, closing stream", error: e });
+      clearInterval(interval);
+      try { await writer.close(); } catch (err) {}
     }
-  }, 30_000);
+  }, 15_000);
 
-  // Close stream when client disconnects
-  request.signal.addEventListener("abort", async () => {
+  // Close stream when client disconnects gracefully via signal
+  request.signal.addEventListener("abort", () => {
     clearInterval(interval);
-    await writer.close();
+    try { writer.close(); } catch (err) {}
   });
 
   return new NextResponse(stream.readable, {

@@ -4,7 +4,7 @@ import { DoctorCard } from "@/components/shared/DoctorCard";
 import { Button } from "@/components/ui/button";
 import type { Doctor } from "@/types";
 import { Stethoscope, SearchX, MapPin, Sparkles, RefreshCcw } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 interface DoctorListProps {
   doctors: Doctor[];
@@ -59,20 +59,16 @@ export function DoctorList({ doctors, onClearFilters }: DoctorListProps) {
       ) : (
         /* ── Results Grid ────────────────────────────────────────────────────── */
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pb-24 md:pb-4">
-          <AnimatePresence mode="popLayout">
             {doctors.map((doctor, idx) => (
               <motion.div 
                 key={doctor.id}
-                layout
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.2, delay: Math.min(idx * 0.05, 0.3) }}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.18, delay: Math.min(idx * 0.04, 0.25) }}
               >
                 <DoctorCard doctor={doctor} />
               </motion.div>
             ))}
-          </AnimatePresence>
         </div>
       )}
     </div>

@@ -39,7 +39,7 @@ const STATS = [
   { value: "500+", label: "Verified Doctors" },
   { value: "38+", label: "Districts Covered" },
   { value: "10k+", label: "Appointments Facilitated" },
-  { value: "4.8★", label: "Average Patient Rating" },
+  { value: "100%", label: "Verified Doctors" },
 ];
 
 export default function AboutPage() {

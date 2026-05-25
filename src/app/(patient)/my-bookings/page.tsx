@@ -20,6 +20,7 @@ import { motion } from "framer-motion";
 import {
   isEmergencyToken,
   getRegularQueuePosition,
+  getApproximateWaitTime,
 } from "@/lib/utils/clinic-utils";
 
 const TOKEN_STATUS_LABELS: Record<string, string> = {
@@ -45,7 +46,7 @@ export default function MyBookingsPage() {
     doctorName: string;
     clinic: string;
     location: string;
-    estimatedWaitMinutes: number;
+    estimatedWaitTime: string;
     createdAt: string;
     isEmergency: boolean;
     currentServing: number;
@@ -102,7 +103,7 @@ export default function MyBookingsPage() {
 
           let queuePosition = 0;
           let positionLabel = "—";
-          let estimatedWaitMinutes = 0;
+          let estimatedWaitTime = "Next";
 
           if (emergency) {
             positionLabel = "Emergency priority";
@@ -113,7 +114,9 @@ export default function MyBookingsPage() {
               t.tokenNumber
             );
             positionLabel = String(queuePosition);
-            estimatedWaitMinutes = queuePosition * avgTime;
+            // Count how many emergency tokens are currently waiting ahead in the queue
+            const emergencyTokensWaiting = (t.queue.tokens ?? []).filter(qt => isEmergencyToken(qt)).length;
+            estimatedWaitTime = getApproximateWaitTime(queuePosition, avgTime, emergencyTokensWaiting);
           }
 
           return {
@@ -125,7 +128,7 @@ export default function MyBookingsPage() {
             doctorName: t.queue.doctor.user.name,
             clinic: t.queue.doctor.clinicName || "JivniCare Clinic",
             location: t.queue.doctor.district || "Local",
-            estimatedWaitMinutes,
+            estimatedWaitTime,
             createdAt: t.tokenIssuedAt,
             isEmergency: emergency,
             currentServing,
@@ -146,33 +149,77 @@ export default function MyBookingsPage() {
   }, []);
 
   useEffect(() => {
-  // Initialize Server‑Sent Events connection for real‑time bookings
-  const source = new EventSource('/api/patient/bookings/stream');
+    let source: EventSource | null = null;
+    let fallbackInterval: NodeJS.Timeout | null = null;
+    let heartbeatTimeout: NodeJS.Timeout | null = null;
+    
+    const resetHeartbeat = () => {
+      if (heartbeatTimeout) clearTimeout(heartbeatTimeout);
+      heartbeatTimeout = setTimeout(() => {
+        console.warn('SSE heartbeat missed, reconnecting...');
+        connectSSE();
+      }, 45000); // 45s timeout (expecting ping or data every 15s)
+    };
 
-  source.onmessage = (event) => {
-    try {
-      const data = JSON.parse(event.data);
-      if (data.bookings) {
-        setBookings(data.bookings);
-        setIsLoading(false);
-        setFetchError(null);
-        setCountdown(60);
+    const connectSSE = () => {
+      if (source) source.close();
+      if (fallbackInterval) { clearInterval(fallbackInterval); fallbackInterval = null; }
+      
+      source = new EventSource('/api/patient/bookings/stream');
+
+      source.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.bookings) {
+            setBookings(data.bookings);
+            setIsLoading(false);
+            setFetchError(null);
+            setCountdown(60);
+            resetHeartbeat();
+          }
+        } catch (e) {
+          console.error('SSE parse error', e);
+        }
+      };
+
+      source.addEventListener('ping', () => {
+        resetHeartbeat();
+      });
+
+      source.onerror = () => {
+        console.warn('SSE connection error, falling back to polling');
+        if (source) source.close();
+        if (heartbeatTimeout) clearTimeout(heartbeatTimeout);
+        
+        // Lightweight polling fallback (every 30s)
+        fallbackInterval = setInterval(() => {
+          if (document.visibilityState === 'visible') fetchBookings();
+        }, 30000);
+      };
+      
+      resetHeartbeat();
+    };
+
+    connectSSE();
+
+    // Mobile Recovery: instant sync when resuming app
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        fetchBookings();
+        if (!source || source.readyState === EventSource.CLOSED) {
+          connectSSE(); 
+        }
       }
-    } catch (e) {
-      console.error('SSE parse error', e);
-    }
-  };
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
 
-  source.onerror = () => {
-    console.warn('SSE connection error, falling back to manual refresh');
-    source.close();
-    setFetchError('Realtime connection lost. Use refresh button.');
-  };
-
-  return () => {
-    source.close();
-  };
-}, []);
+    return () => {
+      if (source) source.close();
+      if (fallbackInterval) clearInterval(fallbackInterval);
+      if (heartbeatTimeout) clearTimeout(heartbeatTimeout);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [fetchBookings]);
 
 // Simple countdown timer for UI display (still updates every second)
 useEffect(() => {
@@ -185,7 +232,7 @@ useEffect(() => {
   const handleShareWhatsApp = (booking: Booking) => {
     const waitLine = booking.isEmergency
       ? "Emergency priority"
-      : `~${booking.estimatedWaitMinutes}m`;
+      : `Wait: ${booking.estimatedWaitTime}`;
     const text =
       `*JivniCare Token Detail*\n\n` +
       `🩺 *Doctor:* ${booking.doctorName}\n` +
@@ -312,7 +359,7 @@ useEffect(() => {
                                   <b>
                                     {booking.isEmergency
                                       ? "Priority"
-                                      : `~${booking.estimatedWaitMinutes}m`}
+                                      : booking.estimatedWaitTime}
                                   </b>
                                 </span>
                               </div>

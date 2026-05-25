@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/db/prisma';
 import { searchDoctors } from '@/lib/search/search-engine';
 import { getInferredSpecialties } from '@/lib/search/search-dictionary';
+import { mapPrismaDoctorToUI } from '@/lib/utils/data-utils';
 import type { Doctor } from '@/types';
 
 // Helper: Haversine Formula for air distance calculation
@@ -42,27 +43,51 @@ export async function GET(request: Request) {
     const whereClause: any = {
       verificationStatus: 'VERIFIED'
     };
+    
+    const andClauses: any[] = [];
 
     if (specialties.length > 0) {
-      whereClause.specialties = {
-        some: {
-          OR: specialties.map(s => ({
-            name: { contains: s, mode: 'insensitive' }
-          }))
+      andClauses.push({
+        specialties: {
+          some: {
+            OR: specialties.map(s => ({
+              name: { contains: s, mode: 'insensitive' }
+            }))
+          }
         }
-      };
+      });
+    }
+
+    // Database-level text search for the query to ensure we fetch the right candidates
+    if (query) {
+      andClauses.push({
+        OR: [
+          { name: { contains: query, mode: 'insensitive' } },
+          { hospitalName: { contains: query, mode: 'insensitive' } },
+          { district: { contains: query, mode: 'insensitive' } },
+          { bio: { contains: query, mode: 'insensitive' } },
+          { keywords: { some: { term: { contains: query, mode: 'insensitive' } } } },
+          { specialties: { some: { name: { contains: query, mode: 'insensitive' } } } }
+        ]
+      });
+    }
+
+    if (andClauses.length > 0) {
+      whereClause.AND = andClauses;
     }
 
     // Geo Patient Location Data & Filters
-    const district = searchParams.get('district') || 'Patna';
+    const district = searchParams.get('district') || '';
     const minExperience = parseInt(searchParams.get('minExperience') || '0', 10);
     const maxFee = parseInt(searchParams.get('maxFee') || '10000', 10);
     const availability = searchParams.get('availability'); // 'any', 'today'
     const sort = searchParams.get('sort') || 'recommended';
     const isEmergency = searchParams.get('isEmergency') === 'true';
 
-    // Strongly filter by district in Prisma to prevent cross-city pollution
-    whereClause.district = { equals: district, mode: 'insensitive' };
+    // Filter by district only when explicitly provided by the UI
+    if (district) {
+      whereClause.district = { equals: district, mode: 'insensitive' };
+    }
 
     // Phase 3: Lead/Search Tracking (Fire and forget)
     // We don't await this so it doesn't block the API response
@@ -149,87 +174,19 @@ export async function GET(request: Request) {
       filteredDbDoctors = filteredDbDoctors.filter(d => d.latitude !== null && d.longitude !== null);
     }
 
-    const daysOfWeek = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-    const todayIndex = new Date().getDay();
-    const todayString = daysOfWeek[todayIndex];
-
-    // ── Map Prisma Doctor → Frontend Doctor type ─────────────────────────
-    let mappedDoctors: Doctor[] = filteredDbDoctors.map(doc => {
-      // ... same mapping logic as before ...
-      let isAvailableToday = false;
-      let nextTime = "N/A";
-      
-      // Assume available unless explicitly marked closed
-      if (doc.clinicOperations?.isClosedToday) {
-        isAvailableToday = false;
-      } else if (doc.weeklySchedule) {
-        const todaySchedule: any = doc.weeklySchedule[todayString as keyof typeof doc.weeklySchedule];
-        if (todaySchedule && todaySchedule.isOpen) {
-          isAvailableToday = true;
-          nextTime = todaySchedule.start || "Available";
-        } else if (todaySchedule && todaySchedule.isOpen === false) {
-           isAvailableToday = false;
-        } else {
-           // Fallback to true if schedule is malformed but not explicitly closed
-           isAvailableToday = true;
+    // Compute distance for geo-aware search and attach to doctor objects
+    if (patientLat && patientLng) {
+      filteredDbDoctors = filteredDbDoctors.map(d => {
+        if (d.latitude != null && d.longitude != null) {
+          const distanceKm = getDistanceKm(patientLat, patientLng, d.latitude, d.longitude);
+          const distanceStr = distanceKm < 1 ? `${Math.round(distanceKm * 1000)} m away` : `${distanceKm.toFixed(1)} km away`;
+          return { ...d, distanceKm, distance: distanceKm, distanceStr };
         }
-      } else {
-         // If no schedule exists, default to available to prevent over-filtering
-         isAvailableToday = true;
-      }
+        return d;
+      });
+    }
 
-      const todayQueue = doc.dailyQueues?.[0];
-      const isQueueActive = todayQueue
-        ? (todayQueue.status === 'ACTIVE' || todayQueue.status === 'NOT_STARTED')
-          && !(doc.clinicOperations?.isClosedToday ?? false)
-          && !(doc.clinicOperations?.pauseOnlineBooking ?? false)
-        : false;
-
-      const avgConsultTime = doc.averageConsultationTime || 15;
-      const waitingPatients = todayQueue
-        ? Math.max(0, (todayQueue.issuedTokensCount || 0) - (todayQueue.currentActiveToken || 0))
-        : 0;
-      const queueWaitMinutes = isQueueActive ? waitingPatients * avgConsultTime : undefined;
-
-      // Distance calculation
-      let distanceKm = undefined;
-      let distanceStr = undefined;
-      if (patientLat && patientLng && doc.latitude && doc.longitude) {
-        distanceKm = getDistanceKm(patientLat, patientLng, doc.latitude, doc.longitude);
-        distanceStr = distanceKm < 1 ? `${Math.round(distanceKm * 1000)} m away` : `${distanceKm.toFixed(1)} km away`;
-      }
-
-      return {
-        id: doc.id,
-        slug: doc.slug || doc.id,
-        name: doc.name,
-        specialty: doc.specialties.length > 0 ? doc.specialties[0].name : "General Physician",
-        qualifications: doc.education ? doc.education.split(',')[0] : 'MBBS',
-        clinic: doc.hospitalName,
-        location: doc.district,
-        rating: doc.rating || (doc.verificationStatus === 'VERIFIED' ? 4.5 : 0),
-        reviewCount: (doc as any).reviewCount || 0,
-        totalConsultations: (doc as any).totalConsultations || 0,
-        verifiedBadgeLabel: (doc as any).verifiedBadgeLabel || (doc.experience >= 15 ? 'Experienced' : 'Verified'),
-        experience: doc.experience,
-        experienceStr: `${doc.experience} Years`,
-        fee: doc.fee,
-        feeStr: `₹${doc.fee}`,
-        image: doc.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(doc.name)}&background=5298D2&color=fff&size=128`,
-        isAvailableToday,
-        available: isAvailableToday ? "Today" : "Check Schedule",
-        isQueueActive,
-        queueWaitMinutes,
-        patientsWaiting: waitingPatients,
-        hasEmergencySupport: (doc.clinicOperations?.emergencySlots ?? 0) > 0,
-        tags: [...doc.specialties.map(s => s.name), ...doc.keywords.map(k => k.term)],
-        about: doc.bio || "",
-        distanceKm,
-        distanceStr,
-        latitude: doc.latitude,
-        longitude: doc.longitude
-      } as any;
-    });
+let mappedDoctors: Doctor[] = filteredDbDoctors.map(mapPrismaDoctorToUI);
 
     // ── Availability Filtering ──────────────────────────────────────────
     if (availability === 'today') {

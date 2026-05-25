@@ -36,7 +36,6 @@ const EMPTY_SETTINGS: DoctorSettingsView = {
   fee: "0",
   maxCapacity: "40",
   averageConsultationTime: "15",
-  pauseOnlineBooking: false,
   emergencySlots: "0",
   leaveMode: false,
   clinicStatus: "AVAILABLE",
