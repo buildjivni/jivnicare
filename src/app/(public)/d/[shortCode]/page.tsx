@@ -37,7 +37,14 @@ export default async function QRRedirectPage({ params }: PageProps) {
 
   // Guard: reject clearly malformed inputs immediately
   if (!SHORT_CODE_REGEX.test(shortCode)) {
-    notFound();
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="max-w-md p-8 bg-white rounded-xl shadow-lg text-center">
+          <h1 className="text-2xl font-bold text-gray-800 mb-4">Invalid QR Code</h1>
+          <p className="text-gray-600">The QR code you scanned appears to be malformed. Please check the source or try again.</p>
+        </div>
+      </div>
+    );
   }
 
   // Resolve shortCode → doctor slug (case-insensitive lookup)
@@ -48,7 +55,14 @@ export default async function QRRedirectPage({ params }: PageProps) {
 
   // Not found or not a verified doctor
   if (!doctor || !doctor.slug) {
-    notFound();
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="max-w-md p-8 bg-white rounded-xl shadow-lg text-center">
+          <h1 className="text-2xl font-bold text-gray-800 mb-4">Doctor Unavailable</h1>
+          <p className="text-gray-600">We couldn't locate a verified doctor for this code. Please contact the clinic for assistance.</p>
+        </div>
+      </div>
+    );
   }
 
   // 308 Permanent Redirect → canonical SEO profile URL

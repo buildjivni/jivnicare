@@ -5,7 +5,6 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { HEALTHCARE_SPECIALTIES } from "@/lib/seo/metadata";
 import { ChevronDown, X, SlidersHorizontal, Check } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 
 interface DoctorFiltersProps {
   selectedSpecialties: string[];
@@ -205,43 +204,50 @@ export function DoctorFilters({
         </Button>
       </div>
 
-      {/* Mobile Filters Sheet */}
-      <AnimatePresence>
-        {showMobileFilters && (
-          <motion.div
-            key="mobile-filters"
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="md:hidden fixed inset-0 z-[60] flex flex-col justify-end"
-          >
-            <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowMobileFilters(false)} />
-            <motion.div
-              initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="relative bg-white rounded-t-[2.5rem] max-h-[90vh] overflow-hidden flex flex-col"
-            >
-              <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
-                <h2 className="font-black text-xl text-slate-900 uppercase tracking-tight">Filters</h2>
-                <button onClick={() => setShowMobileFilters(false)} className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center">
-                  <X className="w-5 h-5 text-slate-500" />
-                </button>
-              </div>
-              
-              <div className="overflow-y-auto p-6 pb-24">
-                {renderFilterContent()}
-              </div>
+      {/* Mobile Filters Sheet — CSS transition (no framer-motion for performance) */}
+      <div
+        className={[
+          "md:hidden fixed inset-0 z-[60] flex flex-col justify-end transition-all duration-300",
+          showMobileFilters ? "pointer-events-auto" : "pointer-events-none",
+        ].join(" ")}
+      >
+        {/* Backdrop */}
+        <div
+          onClick={() => setShowMobileFilters(false)}
+          className={[
+            "absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity duration-300",
+            showMobileFilters ? "opacity-100" : "opacity-0",
+          ].join(" ")}
+        />
+        {/* Sheet */}
+        <div
+          className={[
+            "relative bg-white rounded-t-[2.5rem] max-h-[90vh] overflow-hidden flex flex-col",
+            "transition-transform duration-300 ease-out",
+            showMobileFilters ? "translate-y-0" : "translate-y-full",
+          ].join(" ")}
+        >
+          <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
+            <h2 className="font-black text-xl text-slate-900 uppercase tracking-tight">Filters</h2>
+            <button onClick={() => setShowMobileFilters(false)} className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center">
+              <X className="w-5 h-5 text-slate-500" />
+            </button>
+          </div>
 
-              <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-white via-white to-transparent pt-12">
-                <Button
-                  className="w-full h-14 rounded-2xl bg-primary text-white font-black text-lg shadow-xl shadow-blue-900/20"
-                  onClick={() => setShowMobileFilters(false)}
-                >
-                  Show {totalResults} Doctors
-                </Button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          <div className="overflow-y-auto p-6 pb-24">
+            {renderFilterContent()}
+          </div>
+
+          <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-white via-white to-transparent pt-12">
+            <Button
+              className="w-full h-14 rounded-2xl bg-primary text-white font-black text-lg shadow-xl shadow-blue-900/20"
+              onClick={() => setShowMobileFilters(false)}
+            >
+              Show {totalResults} Doctors
+            </Button>
+          </div>
+        </div>
+      </div>
     </>
   );
 }

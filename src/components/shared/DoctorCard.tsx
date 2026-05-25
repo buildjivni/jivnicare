@@ -3,11 +3,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
 import {
   Star, MapPin, Clock, ShieldCheck,
   ChevronRight, Users, Zap, Activity, Shield,
-  Globe, Video, GraduationCap
+  Globe, GraduationCap
 } from "lucide-react";
 import type { Doctor } from "@/types";
 import { cn } from "@/lib/utils/utils";
@@ -126,21 +125,19 @@ export function DoctorCard({ doctor, className }: DoctorCardProps) {
   const avail = getAvailabilityConfig(doctor);
   const consultCount = formatConsultations(doctor.totalConsultations ?? 0);
   const badge = doctor.verifiedBadgeLabel ?? "JivniCare Verified";
-  const banner = doctor.clinicImage || doctor.bgImage;
+  // Only use clinicImage from DB — never fall back to bgImage (Unsplash placeholder)
+  const banner = doctor.clinicImage || undefined;
   const quals = doctor.qualifications
     || (doctor.education?.split(",").slice(0, 2).join(", "))
     || "";
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -4 }}
+    <div
       className={cn(
         "relative group flex flex-col bg-card rounded-2xl overflow-hidden",
         "border border-border shadow-soft",
-        "hover:shadow-premium hover:border-primary/30",
-        "transition-all duration-300 ease-out h-full",
+        "hover:shadow-premium hover:border-primary/30 hover:-translate-y-1",
+        "transition-all duration-300 ease-out h-full will-change-auto",
         className
       )}
     >
@@ -221,17 +218,28 @@ export function DoctorCard({ doctor, className }: DoctorCardProps) {
             )}
           </div>
 
-          {/* Rating Badge */}
-          <div className="flex items-center gap-1.5 bg-white border border-slate-100 shadow-sm rounded-xl px-2.5 py-1.5 transition-colors group-hover:border-amber-100">
-            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-            <span className="font-bold text-[13px] text-slate-900 tabular-nums">
-              {doctor.rating?.toFixed(1) || "4.8"}
-            </span>
-            <span className="w-px h-3 bg-slate-200 mx-0.5" />
-            <span className="text-[11px] text-slate-500 font-medium">
-              ({(doctor.reviewCount || doctor.reviews || 0).toLocaleString()})
-            </span>
-          </div>
+          {/* Rating Badge — only shown when real data exists */}
+          {doctor.rating && doctor.rating > 0 ? (
+            <div className="flex items-center gap-1.5 bg-white border border-slate-100 shadow-sm rounded-xl px-2.5 py-1.5 transition-colors group-hover:border-amber-100">
+              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+              <span className="font-bold text-[13px] text-slate-900 tabular-nums">
+                {doctor.rating.toFixed(1)}
+              </span>
+              {(doctor.reviewCount || doctor.reviews || 0) > 0 && (
+                <>
+                  <span className="w-px h-3 bg-slate-200 mx-0.5" />
+                  <span className="text-[11px] text-slate-500 font-medium">
+                    ({(doctor.reviewCount || doctor.reviews || 0).toLocaleString()})
+                  </span>
+                </>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-100 shadow-sm rounded-xl px-2.5 py-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+              <span className="font-bold text-[11px] text-emerald-700">Verified</span>
+            </div>
+          )}
         </div>
 
         {/* Name & Specialty Block */}
@@ -311,10 +319,7 @@ export function DoctorCard({ doctor, className }: DoctorCardProps) {
           {/* Pricing & CTA Block */}
           <div className="flex items-center justify-between gap-4 pt-1">
             <div className="flex flex-col">
-              <div className="flex items-baseline gap-1">
-                <span className="text-[18px] font-black text-slate-900 leading-none">{doctor.fee}</span>
-                <span className="text-[11px] text-slate-400 font-bold line-through opacity-50">₹500</span>
-              </div>
+              <span className="text-[18px] font-black text-slate-900 leading-none">{doctor.fee}</span>
               <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">
                 Consultation Fee
               </span>
@@ -362,7 +367,7 @@ export function DoctorCard({ doctor, className }: DoctorCardProps) {
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 

@@ -17,7 +17,6 @@ interface BookingWidgetClientProps {
 
 export function BookingWidgetClient({ doctor, isMobileCTA = false, isClosedToday = false }: BookingWidgetClientProps) {
   const router = useRouter();
-  const [selectedService, setSelectedService] = useState<"clinic" | "video">("clinic");
   const [isNavigating, setIsNavigating] = useState(false);
 
   const { setDoctor, setService } = useBookingStore();
@@ -25,10 +24,10 @@ export function BookingWidgetClient({ doctor, isMobileCTA = false, isClosedToday
 
   const handleBook = () => {
     if (isNavigating) return;
-    trackEvent("booking_initiated", { doctorId: doctor.id, service: selectedService, isMobile: isMobileCTA });
+    trackEvent("booking_initiated", { doctorId: doctor.id, service: "clinic", isMobile: isMobileCTA });
     setIsNavigating(true);
     setDoctor(doctor);
-    setService(selectedService);
+    setService("clinic");
     
     if (!isAuthenticated) {
       router.push("/login?redirect=/checkout");
@@ -51,6 +50,12 @@ export function BookingWidgetClient({ doctor, isMobileCTA = false, isClosedToday
   }, [isAuthenticated, _hasHydrated]);
 
   if (isMobileCTA) {
+    // Don't render until auth is hydrated — prevents CTA from flashing
+    if (!_hasHydrated) {
+      return (
+        <div className="flex-1 h-[52px] rounded-xl bg-slate-100 animate-pulse" />
+      );
+    }
     return (
       <Button
         onClick={handleBook}
@@ -77,8 +82,6 @@ export function BookingWidgetClient({ doctor, isMobileCTA = false, isClosedToday
   return (
     <BookingWidget
       doctor={doctor}
-      selectedService={selectedService}
-      onServiceChange={setSelectedService}
       onBook={handleBook}
       isNavigating={isNavigating}
     />

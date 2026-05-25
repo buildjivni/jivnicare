@@ -108,14 +108,31 @@ function DoctorDashboardContent() {
 
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
+    let isFetching = false;
+    
     const poll = async () => {
-      if (document.visibilityState === "visible") {
+      if (document.visibilityState === "visible" && !isFetching) {
+        isFetching = true;
         await fetchQueue();
+        isFetching = false;
       }
       timeoutId = setTimeout(poll, 30000);
     };
+    
     poll();
-    return () => clearTimeout(timeoutId);
+
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        clearTimeout(timeoutId);
+        poll();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      clearTimeout(timeoutId);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
   }, []);
 
   const handleNextPatient = async (skipCurrent: boolean = false) => {
@@ -132,8 +149,16 @@ function DoctorDashboardContent() {
         useAuthStore.getState().logout();
         return;
       }
+      // Handle race condition silently
+      if (res.status === 409) {
+        console.warn("Queue progressed concurrently by another device.");
+        await fetchQueue();
+        return;
+      }
       const data = await res.json();
-      if (data.success) await fetchQueue(); 
+      if (data.success || data.error) {
+         await fetchQueue(); 
+      }
     } catch (error) {
       console.error("Queue progression failed:", error);
     } finally {
@@ -569,11 +594,10 @@ function DoctorDashboardContent() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
           <NowCallingController currentPatient={currentPatient} onNext={() => handleNextPatient(false)} onSkip={() => handleNextPatient(true)} />
           <QueueOperationsMenu 
-            isPaused={settingsData.pauseOnlineBooking}
+            isPaused={clinicStatus === "SHORT_BREAK" || clinicStatus === "EMERGENCY_ONLY" || clinicStatus === "CLINIC_CLOSED"}
             onPauseToggle={async () => {
-              const newState = !settingsData.pauseOnlineBooking;
-              await handleUpdateSettings({ pauseOnlineBooking: newState });
-              setSettingsField("pauseOnlineBooking", newState);
+              const newStatus = (clinicStatus === "SHORT_BREAK" || clinicStatus === "EMERGENCY_ONLY") ? "AVAILABLE" : "SHORT_BREAK";
+              await handleUpdateStatus(newStatus);
             }}
             onEmergencyHalt={async () => {
               await handleUpdateSettings({ isClosedToday: true });

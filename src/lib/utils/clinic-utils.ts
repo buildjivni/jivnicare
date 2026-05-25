@@ -57,5 +57,28 @@ export function getRegularQueuePosition(
       t.tokenNumber > currentActive &&
       t.tokenNumber < myTokenNumber
   ).length;
-  return waitingAhead + 1;
+  return waitingAhead + 1; // +1 includes the current active consultation ideally
+}
+
+/** 
+ * Returns a trustworthy, approximate wait time bucket to avoid fake precision.
+ * Factors in the number of emergency tokens currently waiting.
+ */
+export function getApproximateWaitTime(
+  queuePosition: number, 
+  avgConsultationTime: number, 
+  emergencyTokensWaiting: number = 0
+): string {
+  if (queuePosition <= 0) return "Next";
+  
+  // Base time calculation + emergency penalty (assume each emergency adds avgConsultationTime)
+  const baseMinutes = (queuePosition * avgConsultationTime) + (emergencyTokensWaiting * avgConsultationTime);
+  
+  if (baseMinutes <= 15) return "~15 mins";
+  if (baseMinutes <= 30) return "15-30 mins";
+  if (baseMinutes <= 45) return "30-45 mins";
+  if (baseMinutes <= 60) return "45-60 mins";
+  if (baseMinutes <= 90) return "1-1.5 hours";
+  if (baseMinutes <= 120) return "1.5-2 hours";
+  return "> 2 hours";
 }

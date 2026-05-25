@@ -9,7 +9,6 @@ interface ClinicOperationsData {
   fee: string;
   maxCapacity: string;
   averageConsultationTime: string;
-  pauseOnlineBooking?: boolean;
   emergencySlots?: string;
 }
 
@@ -24,7 +23,6 @@ export function ClinicOperationsForm({ initialData, onSave, isSaving }: ClinicOp
     fee: "0",
     maxCapacity: "40",
     averageConsultationTime: "15",
-    pauseOnlineBooking: false,
     emergencySlots: "2"
   });
   const [savedSuccess, setSavedSuccess] = useState(false);
@@ -123,9 +121,8 @@ export function ClinicOperationsForm({ initialData, onSave, isSaving }: ClinicOp
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Emergency Slots Setting */}
-        <div className="bg-red-50/50 rounded-2xl p-5 border border-red-100 shadow-soft hover:shadow-premium transition-shadow">
+      {/* Emergency Slots Setting */}
+      <div className="bg-red-50/50 rounded-2xl p-5 border border-red-100 shadow-soft hover:shadow-premium transition-shadow">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center text-red-600">
               <span className="text-lg">🚨</span>
@@ -140,30 +137,6 @@ export function ClinicOperationsForm({ initialData, onSave, isSaving }: ClinicOp
           />
           <p className="text-[10px] text-red-600 mt-3 font-medium">Daily slots reserved to bypass full queues</p>
         </div>
-
-        {/* Pause Booking Toggle */}
-        <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200 shadow-soft flex flex-col justify-center">
-          <div className="flex items-center justify-between">
-            <div className="flex flex-col">
-              <label className="text-sm font-bold text-slate-900 mb-1">Pause Online Booking</label>
-              <p className="text-xs text-slate-500 font-medium">Temporarily stop accepting new online patients today.</p>
-            </div>
-            <button
-              onClick={() => setData({ ...data, pauseOnlineBooking: !data.pauseOnlineBooking })}
-              className={`relative inline-flex h-7 w-14 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
-                data.pauseOnlineBooking ? 'bg-amber-500' : 'bg-slate-300'
-              }`}
-            >
-              <span className="sr-only">Pause Booking</span>
-              <span
-                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                  data.pauseOnlineBooking ? 'translate-x-7' : 'translate-x-0'
-                }`}
-              />
-            </button>
-          </div>
-        </div>
-      </div>
 
       <div className="bg-primary/5 border border-primary/10 rounded-2xl p-4 flex gap-3">
         <Info className="w-5 h-5 text-primary shrink-0 mt-0.5" />

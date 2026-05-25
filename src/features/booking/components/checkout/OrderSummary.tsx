@@ -12,8 +12,7 @@ interface OrderSummaryProps {
 }
 
 export function OrderSummary({ doctor, type }: OrderSummaryProps) {
-  const isVideo = type === "video";
-  const consultationFee = isVideo ? doctor.videoFee : doctor.fee;
+  const consultationFee = doctor.fee;
 
   return (
     <div className="w-full lg:w-[400px] shrink-0 space-y-6">
@@ -52,7 +51,7 @@ export function OrderSummary({ doctor, type }: OrderSummaryProps) {
                 <MapPin className="w-4 h-4" /> Consultation Type
               </span>
               <span className="font-bold text-slate-900">
-                {isVideo ? "Video Call" : "In-Clinic (Walk-in Base)"}
+                In-Clinic Visit
               </span>
             </div>
           </div>
