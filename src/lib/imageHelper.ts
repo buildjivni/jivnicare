@@ -6,7 +6,9 @@
  * (if any) or the public folder path.
  * This centralizes image handling so that all components use the same source.
  */
-export function getCanonicalImageUrl(image: string | undefined): string | undefined {
+export function getCanonicalImageUrl(image: string): string;
+export function getCanonicalImageUrl(image: string | null | undefined): string | undefined;
+export function getCanonicalImageUrl(image: string | null | undefined): string | undefined {
   if (!image) return undefined;
   // If the string already looks like an absolute URL (http(s)://), return as is.
   if (/^https?:\/\//i.test(image)) return image;
