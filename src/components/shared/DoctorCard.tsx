@@ -10,7 +10,9 @@ import {
 } from "lucide-react";
 import type { Doctor } from "@/types";
 import { cn } from "@/lib/utils/utils";
-
+import React, { useMemo, useCallback } from 'react';
+import { getStableKey } from '@/lib/getStableKey';
+import { getCanonicalImageUrl } from '@/lib/imageHelper';
 interface DoctorCardProps {
   doctor: Doctor;
   className?: string;
@@ -119,10 +121,11 @@ function displayName(name: string): string {
 
 // ── Component ──────────────────────────────────────────────────────────────────
 
-export function DoctorCard({ doctor, className }: DoctorCardProps) {
+export const DoctorCard = React.memo(function DoctorCard({ doctor, className }: DoctorCardProps) {
   const router = useRouter();
   const url = getDoctorUrl(doctor);
-  const avail = getAvailabilityConfig(doctor);
+  const goToDoctor = useCallback(() => router.push(url), [router, url]);
+  const avail = useMemo(() => getAvailabilityConfig(doctor), [doctor]);
   const consultCount = formatConsultations(doctor.totalConsultations ?? 0);
   const badge = doctor.verifiedBadgeLabel ?? "JivniCare Verified";
   // Only use clinicImage from DB — never fall back to bgImage (Unsplash placeholder)
@@ -135,7 +138,7 @@ export function DoctorCard({ doctor, className }: DoctorCardProps) {
     <div
       className={cn(
         "relative group flex flex-col bg-card rounded-2xl overflow-hidden",
-        "border border-border shadow-soft",
+        "border border-border shadow-sm",
         "hover:shadow-premium hover:border-primary/30 hover:-translate-y-1",
         "transition-all duration-300 ease-out h-full will-change-auto",
         className
@@ -148,7 +151,7 @@ export function DoctorCard({ doctor, className }: DoctorCardProps) {
       <div className="relative h-[110px] w-full overflow-hidden bg-slate-100">
         {banner && (
           <Image
-            src={banner}
+            src={getCanonicalImageUrl(banner)}
             alt={doctor.clinic}
             fill
             className="object-cover transition-transform duration-700 group-hover:scale-105"
@@ -201,7 +204,7 @@ export function DoctorCard({ doctor, className }: DoctorCardProps) {
             <div className="w-16 h-16 rounded-2xl border-[3px] border-card shadow-premium bg-card overflow-hidden ring-1 ring-border">
               {doctor.image ? (
                 <Image
-                  src={doctor.image}
+                  src={getCanonicalImageUrl(doctor.image)}
                   alt={doctor.name}
                   width={64}
                   height={64}
@@ -327,7 +330,7 @@ export function DoctorCard({ doctor, className }: DoctorCardProps) {
 
             <div className="flex-1 max-w-[170px] relative z-40">
               <button
-                onClick={() => router.push(url)}
+                onClick={goToDoctor}
                 className={cn(
                   "w-full h-[40px] rounded-[12px] font-bold text-[13px] tracking-wide",
                   "flex items-center justify-center gap-1.5",
@@ -370,4 +373,4 @@ export function DoctorCard({ doctor, className }: DoctorCardProps) {
     </div>
   );
 }
-
+});
