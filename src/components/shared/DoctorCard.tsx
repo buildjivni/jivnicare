@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils/utils";
 import React, { useMemo, useCallback } from 'react';
 import { getStableKey } from '@/lib/getStableKey';
 import { getCanonicalImageUrl } from '@/lib/imageHelper';
+import DoctorMeta from '@/components/DoctorMeta';
 interface DoctorCardProps {
   doctor: Doctor;
   className?: string;
@@ -139,7 +140,7 @@ export const DoctorCard = React.memo(function DoctorCard({ doctor, className }: 
       className={cn(
         "relative group flex flex-col bg-card rounded-2xl overflow-hidden",
         "border border-border shadow-sm",
-        "hover:shadow-premium hover:border-primary/30 hover:-translate-y-1",
+        "hover:shadow-md hover:border-primary/20 hover:-translate-y-0.5",
         "transition-all duration-300 ease-out h-full will-change-auto",
         className
       )}
@@ -151,7 +152,7 @@ export const DoctorCard = React.memo(function DoctorCard({ doctor, className }: 
       <div className="relative h-[110px] w-full overflow-hidden bg-slate-100">
         {banner && (
           <Image
-            src={getCanonicalImageUrl(banner)}
+            src={getCanonicalImageUrl(banner, doctor.updatedAt) || ""}
             alt={doctor.clinic}
             fill
             className="object-cover transition-transform duration-700 group-hover:scale-105"
@@ -204,7 +205,7 @@ export const DoctorCard = React.memo(function DoctorCard({ doctor, className }: 
             <div className="w-16 h-16 rounded-2xl border-[3px] border-card shadow-premium bg-card overflow-hidden ring-1 ring-border">
               {doctor.image ? (
                 <Image
-                  src={getCanonicalImageUrl(doctor.image)}
+                  src={getCanonicalImageUrl(doctor.image, doctor.updatedAt) || ""}
                   alt={doctor.name}
                   width={64}
                   height={64}
@@ -288,36 +289,7 @@ export const DoctorCard = React.memo(function DoctorCard({ doctor, className }: 
 
         {/* Practice/Hospital Info */}
         <div className="mt-auto space-y-3">
-          <div className="flex items-start gap-2.5 p-3 rounded-2xl bg-slate-50/80 border border-slate-100/50 group-hover:bg-blue-50/30 group-hover:border-blue-100/50 transition-colors relative z-40">
-            <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center border border-slate-100 shrink-0">
-              <MapPin className="w-4 h-4 text-[#205E98]" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[13px] font-black text-slate-800 leading-tight line-clamp-1 mb-0.5">
-                {doctor.clinic}
-              </p>
-              <div className="flex items-center flex-wrap gap-1.5 text-[11.5px] text-slate-500 font-medium">
-                <span className="line-clamp-1">{doctor.locality || doctor.location}</span>
-                {((doctor as any).distanceStr || doctor.distance) && (
-                  <>
-                    <span className="w-1 h-1 rounded-full bg-emerald-400" />
-                    <span className="text-emerald-700 font-bold">{(doctor as any).distanceStr || doctor.distance}</span>
-                  </>
-                )}
-              </div>
-            </div>
-            {((doctor as any).latitude && (doctor as any).longitude) && (
-              <a 
-                href={`https://maps.google.com/?q=${(doctor as any).latitude},${(doctor as any).longitude}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="ml-auto mt-0.5 flex items-center justify-center p-2 rounded-xl bg-slate-200/50 hover:bg-[#205E98] text-slate-600 hover:text-white transition-colors pointer-events-auto shrink-0 shadow-sm"
-                title="Get Directions"
-              >
-                <MapPin className="w-3.5 h-3.5" />
-              </a>
-            )}
-          </div>
+          <DoctorMeta doctor={doctor} />
 
           {/* Pricing & CTA Block */}
           <div className="flex items-center justify-between gap-4 pt-1">
@@ -340,10 +312,10 @@ export const DoctorCard = React.memo(function DoctorCard({ doctor, className }: 
                     : avail.isPaused
                     ? "bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100"
                     : cn(
-                        "bg-gradient-to-b from-primary to-[#4382b5] text-white",
-                        "shadow-[0_4px_12px_rgba(82,152,210,0.25),inset_0_1px_1px_rgba(255,255,255,0.3)]",
-                        "border border-[#3c76a6]/80",
-                        "hover:brightness-105 hover:shadow-[0_6px_16px_rgba(82,152,210,0.35),inset_0_1px_1px_rgba(255,255,255,0.4)]"
+                        "bg-primary text-white",
+                        "shadow-sm shadow-primary/20",
+                        "border border-primary/80",
+                        "hover:bg-primary/90 hover:shadow-md hover:shadow-primary/30"
                       )
                 )}
               >

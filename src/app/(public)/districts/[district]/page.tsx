@@ -7,7 +7,9 @@ import { districtHealthcareSchema, breadcrumbSchema, faqSchema } from "@/lib/seo
 import { JsonLd } from "@/components/seo/JsonLd";
 import prisma from "@/lib/db/prisma";
 import { mapPrismaDoctorToUI } from "@/lib/utils/data-utils";
+import { getCanonicalImageUrl } from "@/lib/imageHelper";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
 
 interface PageProps {
   params: Promise<{ district: string }>;
@@ -195,8 +197,8 @@ export default async function DistrictPage({ params }: PageProps) {
               >
                 <div className="flex items-center gap-3 mb-3">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={doctor.image}
+                  <Image
+                    src={getCanonicalImageUrl(doctor.image, doctor.updatedAt) || ""}
                     alt={doctor.name}
                     width={48}
                     height={48}

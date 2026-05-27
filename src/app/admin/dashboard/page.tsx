@@ -41,7 +41,6 @@ interface DoctorEntry {
   updateLogs?: { id: string; field: string; oldValue: string | null; newValue: string; status: string; createdAt: string }[];
 }
 
-const MOCK_CLINICS_QUEUE: any[] = [];
 
 function AdminDashboardContent() {
   const searchParams = useSearchParams();

@@ -172,5 +172,6 @@ export function mapPrismaDoctorToUI(doc: any): UIDoctor {
       (doc.education ? doc.education.split(",")[0].trim() : ""),
     averageConsultationTime: avgConsultTime,
     languages,
+    updatedAt: doc.updatedAt,
   };
 }

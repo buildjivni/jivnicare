@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/db/prisma";
 import { verifyToken } from "@/lib/jwt";
 import { cookies } from "next/headers";
+import { revalidatePath } from "next/cache";
 import { doctorSettingsSchema, formatZodError } from "@/lib/validators/validations";
 import { VerificationStatus } from "@prisma/client";
 import { normalizeQualifications, normalizeLanguages } from "@/lib/utils/normalizers";
@@ -260,6 +261,14 @@ export async function PUT(request: Request) {
 
       return { doctor: updatedDoctor, clinicOps: updatedClinicOps, schedule: updatedSchedule };
     });
+
+    try {
+      revalidatePath(`/doctors/${result.doctor.slug || result.doctor.id}`);
+      revalidatePath("/");
+      revalidatePath("/doctors");
+    } catch (e) {
+      console.error("Revalidation failed", e);
+    }
 
     const msg = requiresReview && hasSensitiveChanges
       ? "Settings saved. Sensitive changes (Name, Registration Number, Clinic Name, District) require admin approval before they appear publicly."

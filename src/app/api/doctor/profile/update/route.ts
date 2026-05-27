@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/db/prisma';
 import { verifyToken } from '@/lib/jwt';
 import { cookies } from 'next/headers';
+import { revalidatePath } from 'next/cache';
 
 export async function POST(request: Request) {
   try {
@@ -81,6 +82,14 @@ export async function POST(request: Request) {
         });
       }
     });
+
+    try {
+      revalidatePath(`/doctors/${doctor.slug || doctor.id}`);
+      revalidatePath("/");
+      revalidatePath("/doctors");
+    } catch (e) {
+      console.error("Revalidation failed", e);
+    }
 
     return NextResponse.json({
       success: true,
