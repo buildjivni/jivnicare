@@ -12,6 +12,7 @@ import type { Doctor } from "@/types";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { getCanonicalImageUrl } from "@/lib/imageHelper";
 
 interface DoctorProfileViewProps {
   doctor: Doctor;
@@ -114,7 +115,7 @@ export function DoctorProfileView({ doctor, relatedDoctors }: DoctorProfileViewP
         <div className="relative h-[120px] md:h-[160px] bg-gradient-to-br from-[#205E98]/15 via-blue-50 to-slate-50 overflow-hidden">
           {clinicImage && (
             <Image
-              src={clinicImage}
+              src={getCanonicalImageUrl(clinicImage, doctor.updatedAt) || ""}
               alt={`${doctor.clinic} facility`}
               fill
               priority
@@ -154,7 +155,7 @@ export function DoctorProfileView({ doctor, relatedDoctors }: DoctorProfileViewP
               <div className="w-20 h-20 rounded-[18px] border-[3px] border-white shadow-xl bg-white ring-1 ring-slate-100 overflow-hidden">
                 {doctor.image ? (
                   <Image
-                    src={doctor.image}
+                    src={getCanonicalImageUrl(doctor.image, doctor.updatedAt) || ""}
                     alt={doctor.name}
                     width={80}
                     height={80}
@@ -418,11 +419,11 @@ export function DoctorProfileView({ doctor, relatedDoctors }: DoctorProfileViewP
               <ShieldCheck className="w-4 h-4 text-[#205E98]" />
               About the Doctor
             </h2>
-            <p className="text-[13.5px] text-slate-600 leading-[1.7] font-medium">
+            <div className="text-[13.5px] text-slate-600 leading-[1.7] font-medium">
               {doctor.about
                 ? doctor.about
                 : `${doctor.name} is a ${doctor.specialty} specialist${doctor.clinic ? ` at ${doctor.clinic}` : ""}${doctor.location ? ` in ${doctor.location}` : ""}${doctor.experience && doctor.experience !== "0" ? ` with ${doctor.experience} years of clinical experience` : ""}.`}
-            </p>
+            </div>
           </div>
 
           <div className="pt-1">
@@ -501,7 +502,7 @@ export function DoctorProfileView({ doctor, relatedDoctors }: DoctorProfileViewP
                       <div className="relative w-12 h-12 rounded-xl border border-slate-100 bg-slate-50 overflow-hidden shrink-0">
                         {relDoc.image ? (
                           <Image
-                            src={relDoc.image}
+                            src={getCanonicalImageUrl(relDoc.image, relDoc.updatedAt) || ""}
                             alt={relDoc.name}
                             width={48}
                             height={48}

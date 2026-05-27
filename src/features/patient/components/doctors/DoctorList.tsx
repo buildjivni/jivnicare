@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import type { Doctor } from "@/types";
 import { Stethoscope, SearchX, MapPin, Sparkles, RefreshCcw } from "lucide-react";
 import { motion } from "framer-motion";
+import { getStableKey } from "@/lib/getStableKey";
 
 interface DoctorListProps {
   doctors: Doctor[];
@@ -61,7 +62,7 @@ export function DoctorList({ doctors, onClearFilters }: DoctorListProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pb-24 md:pb-4">
             {doctors.map((doctor, idx) => (
               <motion.div 
-                key={doctor.id}
+                key={getStableKey(doctor, idx)}
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.18, delay: Math.min(idx * 0.04, 0.25) }}

@@ -2,7 +2,6 @@
 import React from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils/utils';
-import { getCanonicalImageUrl } from '@/lib/imageHelper';
 
 interface DoctorMetaProps {
   doctor: any; // Using any to avoid extra type imports; assumes doctor shape

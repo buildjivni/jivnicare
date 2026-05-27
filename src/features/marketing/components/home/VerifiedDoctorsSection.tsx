@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { DoctorCard } from "@/components/shared/DoctorCard";
 import { staggerContainer, itemVariants } from "@/animations/variants";
 import type { Doctor } from "@/types";
+import { getStableKey } from "@/lib/getStableKey";
 
 interface VerifiedDoctorsSectionProps {
   doctors: Doctor[];
@@ -40,9 +41,9 @@ export function VerifiedDoctorsSection({ doctors }: VerifiedDoctorsSectionProps)
           whileInView="show" viewport={{ once: true, amount: 0.1 }}
           className="flex overflow-x-auto gap-6 pb-6 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-8 md:pb-0"
         >
-          {doctors.map((doctor) => (
+          {doctors.map((doctor, idx) => (
             <motion.div 
-              key={doctor.id} 
+              key={getStableKey(doctor, idx)} 
               variants={itemVariants}
               className="shrink-0 snap-start w-[85%] sm:w-[350px] md:w-auto"
             >

@@ -23,6 +23,8 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12
  * Unified doctor profile route.
  */
 
+export const revalidate = 60; // 1 minute baseline revalidation
+
 // Fetch all verified doctor slugs + IDs for static generation
 export async function generateStaticParams() {
   try {

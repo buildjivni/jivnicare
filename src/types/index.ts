@@ -73,6 +73,7 @@ export interface Doctor {
   searchableKeywords?: string[];
   about: string;            // Bio / description
   averageConsultationTime?: number; // minutes
+  updatedAt?: string | Date; // Cache buster timestamp
 }
 
 export interface Specialty {

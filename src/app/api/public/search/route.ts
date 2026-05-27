@@ -140,6 +140,8 @@ export async function GET(request: Request) {
         experience: true,
         fee: true,
         profileImage: true,
+        clinicImage: true,
+        updatedAt: true,
         averageConsultationTime: true,
         latitude: true,
         longitude: true,
