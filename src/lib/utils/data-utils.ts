@@ -40,9 +40,18 @@ function getAvailability(
     .toLocaleDateString("en-US", { weekday: "long", timeZone: "Asia/Kolkata" })
     .toLowerCase(); // e.g. "monday"
 
-  const todaySchedule = weeklySchedule[todayKey] as
-    | { isOpen?: boolean; start?: string; end?: string }
-    | undefined;
+  let todaySchedule: { isOpen?: boolean; start?: string; end?: string } | undefined;
+
+  if (weeklySchedule && typeof weeklySchedule === "object") {
+    // Normalize keys to lowercase to ensure case-insensitive matching
+    const normalizedSchedule: Record<string, any> = {};
+    for (const key in weeklySchedule) {
+      if (Object.prototype.hasOwnProperty.call(weeklySchedule, key)) {
+        normalizedSchedule[key.toLowerCase()] = weeklySchedule[key];
+      }
+    }
+    todaySchedule = normalizedSchedule[todayKey];
+  }
 
   if (!todaySchedule) {
     // Key missing — treat as available (schedule not fully configured)

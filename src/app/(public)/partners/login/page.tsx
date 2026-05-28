@@ -68,6 +68,11 @@ function DoctorLoginContent() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-4 sm:p-6 relative overflow-hidden">
+      {process.env.NEXT_PUBLIC_ENABLE_TEST_OTP === "true" && (
+        <div className="absolute top-4 right-4 z-50 bg-slate-100/80 backdrop-blur-sm text-slate-500 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full border border-slate-200/50 shadow-sm pointer-events-none">
+          Test Mode
+        </div>
+      )}
       {/* ── Background Aesthetics ── */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
         <div className="absolute -top-[10%] -right-[10%] w-[40%] h-[40%] rounded-full bg-emerald-100/40 blur-[120px]" />
@@ -142,7 +147,11 @@ function DoctorLoginContent() {
               >
                 <div className="mb-10 text-center md:text-left">
                   <h2 className="text-3xl font-black text-slate-900 tracking-tight">Partner Login</h2>
-                  <p className="text-slate-500 font-bold mt-2 text-sm">Access your clinical dashboard.</p>
+                  <p className="text-slate-500 font-bold mt-2 text-sm">
+                    {process.env.NEXT_PUBLIC_ENABLE_TEST_OTP === "true" 
+                      ? "Test mode active: enter test code to bypass password." 
+                      : "Access your clinical dashboard."}
+                  </p>
                 </div>
 
                 {error && (

@@ -9,6 +9,7 @@ import { LocationSelector } from "./LocationSelector";
 import { TrustBadge } from "@/features/marketing/components/trust/TrustBadge";
 import { OperationalProof } from "@/features/marketing/components/trust/OperationalProof";
 import { useAuthStore } from "@/features/auth/store/useAuthStore";
+import { useLocationStore } from "@/features/location/store/useLocationStore";
 import { cn } from "@/lib/utils/utils";
 
 const SPECIALTIES_CARDS = [
@@ -58,6 +59,7 @@ const SPECIALTIES_CARDS = [
 
 export function HeroSection() {
   const { isAuthenticated, user } = useAuthStore();
+  const { district } = useLocationStore();
   const [mounted, setMounted] = useState(false);
   
   useEffect(() => setMounted(true), []);
@@ -122,7 +124,7 @@ export function HeroSection() {
 
             <div className="flex-1 w-full min-w-0 relative">
               <SmartSearchBar
-                district="Patna"
+                district={district || ""}
                 placeholder="Search doctors, symptoms..."
                 className="w-full"
                 innerClassName="border-transparent shadow-none hover:shadow-none hover:border-transparent bg-transparent md:h-[60px]"

@@ -42,7 +42,7 @@ function OnboardingContent() {
     fullName: "", gender: "", dateOfBirth: "", email: "", contactNumber: "", password: "",
     medicalRegistrationNumber: "", medicalCouncil: "Bihar Medical Council", registrationYear: "",
     specialization: "", experience: "", qualifications: "",
-    practiceType: "clinic", practiceName: "", practiceAddress: "", city: "Patna", state: "Bihar", district: "Patna", pincode: "", locality: "",
+    practiceType: "clinic", practiceName: "", practiceAddress: "", city: "", state: "Bihar", district: "", pincode: "", locality: "",
     bio: "", languages: "Hindi, English", fee: "",
     profilePhotoUrl: "", clinicPhotoUrl: "", emergencyAvailable: false,
     latitude: null as number | null, longitude: null as number | null
@@ -432,7 +432,7 @@ function OnboardingContent() {
                       </div>
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-700">City</label>
-                        <Input placeholder="Patna" value={formData.city} onChange={(e) => setFormData({...formData, city: e.target.value})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.city ? 'border-rose-500' : ''}`} />
+                        <Input placeholder="Enter city" value={formData.city} onChange={(e) => setFormData({...formData, city: e.target.value})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.city ? 'border-rose-500' : ''}`} />
                         {errors.city && <p className="text-[10px] font-bold text-rose-500">{errors.city}</p>}
                       </div>
                       <div className="space-y-2">

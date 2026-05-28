@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db/prisma";
-import { isFirebaseConfigured, isTestOtpAllowed } from "@/lib/infrastructure/env";
+import { isFirebaseConfigured, isTestOtpAllowed, isTestOtpModeEnabled, getTestOtpNumbers } from "@/lib/infrastructure/env";
 import { checkRateLimit } from "@/lib/infrastructure/rate-limit";
 import {
   isPilotOtpModeActive,
@@ -82,6 +82,21 @@ export async function POST(request: Request) {
         message: "Pilot test OTP ready. Use the code sent to your pilot device.",
         userExists: !!existingUser,
         pilotMode: true,
+      });
+    }
+
+    // ── Lightweight Test OTP Mode ──────────────────────────────────────
+    if (isTestOtpModeEnabled() && getTestOtpNumbers().includes(phone10)) {
+      const existingUser = await prisma.user.findUnique({
+        where: { phone: phone10 },
+        select: { id: true },
+      });
+
+      return NextResponse.json({
+        message: "Test OTP Mode active. Use configured test code.",
+        userExists: !!existingUser,
+        pilotMode: false,
+        isTestMode: true,
       });
     }
 

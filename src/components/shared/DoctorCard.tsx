@@ -17,6 +17,7 @@ import DoctorMeta from '@/components/DoctorMeta';
 interface DoctorCardProps {
   doctor: Doctor;
   className?: string;
+  priority?: boolean;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -122,7 +123,7 @@ function displayName(name: string): string {
 
 // ── Component ──────────────────────────────────────────────────────────────────
 
-export const DoctorCard = React.memo(function DoctorCard({ doctor, className }: DoctorCardProps) {
+export const DoctorCard = React.memo(function DoctorCard({ doctor, className, priority = false }: DoctorCardProps) {
   const router = useRouter();
   const url = getDoctorUrl(doctor);
   const goToDoctor = useCallback(() => router.push(url), [router, url]);
@@ -157,6 +158,7 @@ export const DoctorCard = React.memo(function DoctorCard({ doctor, className }: 
             fill
             className="object-cover transition-transform duration-700 group-hover:scale-105"
             sizes="(max-width: 768px) 100vw, 33vw"
+            priority={priority}
           />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/5 to-transparent" />

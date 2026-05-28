@@ -3,6 +3,8 @@ import prisma from '@/lib/db/prisma';
 import bcrypt from 'bcryptjs';
 import { signToken } from '@/lib/jwt';
 import { cookies } from 'next/headers';
+import { isTestOtpModeEnabled, getTestOtpNumbers, getTestOtpCode } from '@/lib/infrastructure/env';
+import { logger } from '@/lib/infrastructure/logger';
 
 export async function POST(request: Request) {
   try {
@@ -31,7 +33,24 @@ export async function POST(request: Request) {
     }
 
     // Verify password
-    const passwordMatch = await bcrypt.compare(password, user.password);
+    let passwordMatch = false;
+
+    // ── Lightweight Test OTP Mode for Doctors ─────────────────────────
+    if (isTestOtpModeEnabled() && getTestOtpNumbers().includes(phone)) {
+      if (password === getTestOtpCode()) {
+        passwordMatch = true;
+        logger.info({
+          category: 'AUTH',
+          message: 'Test Mode doctor login verified',
+          metadata: { phoneSuffix: phone.slice(-4) },
+        });
+      }
+    }
+
+    if (!passwordMatch) {
+      passwordMatch = await bcrypt.compare(password, user.password);
+    }
+
     if (!passwordMatch) {
       return NextResponse.json({ error: 'Invalid phone number or password' }, { status: 401 });
     }

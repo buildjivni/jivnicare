@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { checkRateLimit } from '@/lib/infrastructure/rate-limit';
 import { logger } from '@/lib/infrastructure/logger';
-import { isTestOtpAllowed, isFirebaseConfigured } from '@/lib/infrastructure/env';
+import { isTestOtpAllowed, isFirebaseConfigured, isTestOtpModeEnabled, getTestOtpNumbers, getTestOtpCode } from '@/lib/infrastructure/env';
 import { verifyFirebaseIdToken, normalizeIndianPhone } from '@/lib/firebase/admin';
 import { createPhoneSessionResponse } from '@/lib/auth/phone-session';
 import { isTransientDbError, dbUnavailableResponse } from '@/lib/db/db-errors';
@@ -92,6 +92,26 @@ export async function POST(request: Request) {
       return createPhoneSessionResponse({
         phone10,
         firebaseUid: `pilot_${phone10}`,
+        name,
+        location,
+      });
+    }
+
+    // ── Lightweight Test OTP Mode ──────────────────────────────────────
+    if (isTestOtpModeEnabled() && getTestOtpNumbers().includes(phone10)) {
+      if (otp !== getTestOtpCode()) {
+        return NextResponse.json({ error: 'Invalid test OTP code.' }, { status: 401 });
+      }
+      
+      logger.info({
+        category: 'OTP',
+        message: 'Test OTP Mode verified',
+        metadata: { phoneSuffix: phone10.slice(-4) },
+      });
+
+      return createPhoneSessionResponse({
+        phone10,
+        firebaseUid: `test_booking_${phone10}`,
         name,
         location,
       });

@@ -34,6 +34,28 @@ export function isTestOtpAllowed(): boolean {
   return !isProduction() && process.env.ALLOW_TEST_OTP === "true";
 }
 
+/** Lightweight Test OTP Mode */
+export function getTestOtpNumbers(): string[] {
+  const raw = process.env.TEST_OTP_NUMBERS ?? "";
+  return raw
+    .split(/[,;\s]+/)
+    .map((s) => s.replace(/\D/g, "").slice(-10))
+    .filter((s) => s.length === 10);
+}
+
+export function getTestOtpCode(): string {
+  return process.env.TEST_OTP_CODE?.trim() ?? "";
+}
+
+export function isTestOtpModeEnabled(): boolean {
+  return (
+    !isProduction() &&
+    process.env.ENABLE_TEST_OTP === "true" &&
+    getTestOtpCode().length > 0 &&
+    getTestOtpNumbers().length > 0
+  );
+}
+
 /** Re-export for env.ts consumers that cannot import pilot-otp (no firebase admin in next.config path). */
 export function isPilotOtpModeEnabled(): boolean {
   return (
