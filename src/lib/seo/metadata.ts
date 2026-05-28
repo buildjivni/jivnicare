@@ -11,7 +11,7 @@ export const SITE_CONFIG = {
     "Book top doctors and hospitals in Bihar instantly. Verified specialists in Patna, Gaya, Darbhanga and across Bihar. Same-day appointments available.",
   locale: "en_IN",
   twitterHandle: "@JivniCare",
-  ogImage: "/og-default.jpg",
+  ogImage: "/og-default.png",
   themeColor: "#205E98",
 };
 
