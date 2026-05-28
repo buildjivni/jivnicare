@@ -17,13 +17,7 @@ import { useAuthStore, getRoleRedirect } from "@/features/auth/store/useAuthStor
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { PublicGuard } from "@/components/shared";
-import { PilotModeBadge } from "@/components/shared/PilotModeBadge";
-import { useFirebasePhoneAuth } from "@/features/auth/hooks/useFirebasePhoneAuth";
-import { isFirebaseClientConfigured } from "@/lib/firebase/config";
-import { isPilotOtpModeClient } from "@/lib/infrastructure/env";
 import { parseResponseJson } from "@/lib/utils/safe-json";
-import { logFirebaseOtp, maskConfigForLog } from "@/lib/firebase/otp-log";
-import { getPublicFirebaseConfig } from "@/lib/firebase/config";
 import { logOnboarding } from "@/lib/auth/onboarding-log";
 
 type LoginStep = "phone" | "otp" | "identity";
@@ -47,24 +41,7 @@ function PatientLoginContent() {
   const [otpSent, setOtpSent] = useState(false);
   const [otpVerified, setOtpVerified] = useState(false);
   const [needsProfile, setNeedsProfile] = useState(false);
-  const [pilotMode, setPilotMode] = useState(isPilotOtpModeClient());
-  const [testMode, setTestMode] = useState(false);
-  const {
-    sendOtp: sendFirebaseOtp,
-    verifyOtpCode,
-    isSending: isSendingFirebase,
-    otpReady,
-    markOtpReady,
-    resetConfirmation,
-  } = useFirebasePhoneAuth("firebase-recaptcha-login");
-
-  useEffect(() => {
-    logFirebaseOtp("config_check", {
-      page: "login",
-      ...maskConfigForLog(getPublicFirebaseConfig()),
-      configured: isFirebaseClientConfigured(),
-    });
-  }, []);
+  const [sessionId, setSessionId] = useState<string | null>(null);
 
   const finishLoginRedirect = (role?: Parameters<typeof getRoleRedirect>[0]) => {
     const target = redirectUrl || getRoleRedirect(role ?? user?.role ?? "PATIENT");
@@ -112,7 +89,7 @@ function PatientLoginContent() {
   // ── Step 1: Phone → send OTP (always before identity) ───────────
   const handleSendOtp = async (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (phone.length < 10 || isLoading || isSendingFirebase) return;
+    if (phone.length < 10 || isLoading) return;
     setIsLoading(true);
     setError(null);
     setOtpVerified(false);
@@ -128,10 +105,10 @@ function PatientLoginContent() {
       const data = await parseResponseJson<{
         error?: string;
         userExists?: boolean;
-        pilotMode?: boolean;
-        isTestMode?: boolean;
+        sessionId?: string;
         retryAfterSec?: number;
       }>(res);
+      
       if (!data) throw new Error("Invalid server response.");
       if (!res.ok) {
         const msg = data.retryAfterSec
@@ -140,22 +117,14 @@ function PatientLoginContent() {
         throw new Error(msg);
       }
 
-      const isPilot = Boolean(data.pilotMode);
-      const isTest = Boolean(data.isTestMode);
-      setPilotMode(isPilot);
-      setTestMode(isTest);
       setNeedsProfile(!data.userExists);
-      logOnboarding("otp_send_start", { isNewUser: !data.userExists, pilotMode: isPilot, testMode: isTest });
+      if (data.sessionId) setSessionId(data.sessionId);
+      
+      logOnboarding("otp_send_start", { isNewUser: !data.userExists });
 
-      if (isPilot || isTest) {
-        resetConfirmation();
-        setOtpSent(true);
-        markOtpReady();
-        setResendTimer(30);
-        setCanResend(false);
-      } else {
-        await requestFirebaseOtp();
-      }
+      setOtpSent(true);
+      setResendTimer(30);
+      setCanResend(false);
       setStep("otp");
       logOnboarding("otp_send_success", { step: "otp" });
     } catch (err: unknown) {
@@ -167,20 +136,6 @@ function PatientLoginContent() {
     }
   };
 
-  const requestFirebaseOtp = async () => {
-    setError(null);
-    if (!isFirebaseClientConfigured()) {
-      throw new Error(
-        "Phone verification is not available. Firebase client configuration is missing on this build."
-      );
-    }
-    resetConfirmation();
-    await sendFirebaseOtp(phone);
-    setOtpSent(true);
-    setResendTimer(30);
-    setCanResend(false);
-  };
-
   // ── Step 2: Verify OTP → session → identity or redirect ─────────
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -189,19 +144,12 @@ function PatientLoginContent() {
     setError(null);
 
     try {
-      logOnboarding("otp_verify_start", { otpReady, pilotMode });
-      if (!pilotMode && isFirebaseClientConfigured() && !otpReady) {
+      logOnboarding("otp_verify_start", { sessionId: !!sessionId });
+      if (!sessionId) {
         throw new Error("Please request an OTP first.");
       }
 
-      const payload: Record<string, string | undefined> = { phone };
-      if (pilotMode || testMode) {
-        payload.otp = otp;
-      } else if (isFirebaseClientConfigured()) {
-        payload.firebaseIdToken = await verifyOtpCode(otp);
-      } else {
-        payload.otp = otp;
-      }
+      const payload = { phone, otp, sessionId };
 
       const res = await fetch("/api/auth/verify-otp", {
         method: "POST",
@@ -338,12 +286,6 @@ function PatientLoginContent() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-4 sm:p-6 relative overflow-hidden">
-      <PilotModeBadge />
-      {process.env.NEXT_PUBLIC_ENABLE_TEST_OTP === "true" && (
-        <div className="absolute top-4 right-4 z-50 bg-slate-100/80 backdrop-blur-sm text-slate-500 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full border border-slate-200/50 shadow-sm pointer-events-none">
-          Test Mode
-        </div>
-      )}
       {/* ── Background Aesthetics ── */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
         <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] rounded-full bg-blue-100/40 blur-[120px]" />
@@ -473,11 +415,11 @@ function PatientLoginContent() {
 
                     <Button
                       type="submit"
-                      disabled={isLoading || isSendingFirebase || phone.length < 10}
+                      disabled={isLoading || phone.length < 10}
                       className="w-full h-16 rounded-2xl bg-[#205E98] hover:bg-[#1a4f82] text-white font-black text-lg shadow-[0_12px_24px_-8px_rgba(32,94,152,0.3)] hover:shadow-[0_20px_40px_-12px_rgba(32,94,152,0.4)] active:scale-[0.98] transition-all flex items-center justify-center gap-3"
                     >
                       {isLoading ? (
-                        <RefreshCw className="w-6 h-6 animate-spin" />
+                        <>Sending OTP... <RefreshCw className="w-6 h-6 animate-spin" /></>
                       ) : (
                         <>Send Secure OTP <ArrowRight className="w-5 h-5" /></>
                       )}
@@ -627,12 +569,12 @@ function PatientLoginContent() {
                       disabled={
                         isLoading ||
                         otp.length < 6 ||
-                        (!pilotMode && !testMode && isFirebaseClientConfigured() && !otpReady)
+                        !sessionId
                       }
                       className="w-full h-16 rounded-2xl bg-[#205E98] hover:bg-[#1a4f82] text-white font-black text-lg shadow-[0_12px_24px_-8px_rgba(32,94,152,0.3)] transition-all flex items-center justify-center gap-3"
                     >
                       {isLoading ? (
-                        <RefreshCw className="w-6 h-6 animate-spin" />
+                        <>Verifying OTP... <RefreshCw className="w-6 h-6 animate-spin" /></>
                       ) : (
                         <>Verify &amp; Log In <ShieldCheck className="w-5 h-5 text-emerald-400" /></>
                       )}
@@ -640,77 +582,26 @@ function PatientLoginContent() {
                   </form>
 
                   <div className="mt-8 text-center">
-                    {!otpSent && !otpReady && (
+                    {!otpSent && (
                       <button
                         type="button"
-                        onClick={async () => {
-                          if (isLoading || isSendingFirebase) return;
-                          setIsLoading(true);
-                          setError(null);
-                          try {
-                            if (pilotMode || testMode) {
-                              const res = await fetch("/api/auth/send-otp", {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({ phone }),
-                              });
-                              const d = await parseResponseJson<{ error?: string }>(res);
-                              if (!res.ok) throw new Error(d?.error || "Failed to resend.");
-                              setOtpSent(true);
-                              markOtpReady();
-                              setResendTimer(30);
-                              setCanResend(false);
-                            } else {
-                              await requestFirebaseOtp();
-                            }
-                          } catch (err: unknown) {
-                            setError(err instanceof Error ? err.message : "Failed to send OTP");
-                          } finally {
-                            setIsLoading(false);
-                          }
-                        }}
-                        disabled={isLoading || isSendingFirebase}
+                        onClick={handleSendOtp}
+                        disabled={isLoading}
                         className="mb-4 text-xs font-bold text-primary disabled:opacity-50"
                       >
-                        {isSendingFirebase ? "Sending OTP…" : `Send OTP to +91 ${phone}`}
+                        {isLoading ? "Sending OTP…" : `Send OTP to +91 ${phone}`}
                       </button>
                     )}
-                    {(otpReady || pilotMode || testMode) && (
+                    {(otpSent) && (
                       <p className="mb-4 text-xs font-bold text-emerald-600">
-                        {pilotMode || testMode
-                          ? "Test mode active: enter your test OTP to continue"
-                          : `OTP sent to +91 ${phone}`}
+                        OTP sent to +91 {phone}
                       </p>
                     )}
                     {canResend ? (
                       <button
                         type="button"
-                        onClick={async () => {
-                          if (isLoading || isSendingFirebase) return;
-                          setIsLoading(true);
-                          setError(null);
-                          try {
-                            if (pilotMode || testMode) {
-                              const res = await fetch("/api/auth/send-otp", {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({ phone }),
-                              });
-                              const d = await parseResponseJson<{ error?: string }>(res);
-                              if (!res.ok) throw new Error(d?.error || "Failed to resend.");
-                              markOtpReady();
-                              setResendTimer(30);
-                              setCanResend(false);
-                            } else {
-                              await requestFirebaseOtp();
-                            }
-                          } catch (err: unknown) {
-                            setError(err instanceof Error ? err.message : "Failed to resend");
-                          } finally {
-                            setIsLoading(false);
-                          }
-                        }}
-                        disabled={isLoading || isSendingFirebase}
+                        onClick={handleSendOtp}
+                        disabled={isLoading}
                         className="inline-flex items-center gap-2 text-xs font-black text-primary hover:text-[#184a7a] transition-all disabled:opacity-50"
                       >
                         <RefreshCw className="w-4 h-4" /> RESEND OTP
@@ -741,11 +632,6 @@ function PatientLoginContent() {
           </div>
         </div>
       </motion.div>
-      <div
-        id="firebase-recaptcha-login"
-        className="fixed bottom-0 left-0 w-[1px] h-[1px] opacity-0 pointer-events-none overflow-hidden"
-        aria-hidden="true"
-      />
     </div>
   );
 }

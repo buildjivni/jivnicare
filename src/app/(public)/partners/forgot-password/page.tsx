@@ -16,8 +16,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { useFirebasePhoneAuth } from "@/features/auth/hooks/useFirebasePhoneAuth";
-import { isFirebaseClientConfigured } from "@/lib/firebase/config";
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
@@ -31,12 +29,7 @@ export default function ForgotPasswordPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
-  const {
-    sendOtp: sendFirebaseOtp,
-    verifyOtpCode,
-    isSending: isSendingFirebase,
-    otpReady,
-  } = useFirebasePhoneAuth("firebase-recaptcha-forgot");
+  const [sessionId, setSessionId] = useState<string | null>(null);
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,7 +38,6 @@ export default function ForgotPasswordPage() {
     setError(null);
 
     try {
-      // First, hit send-otp to check if doctor exists
       const res = await fetch("/api/auth/send-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -59,12 +51,7 @@ export default function ForgotPasswordPage() {
         throw new Error("This phone number is not registered as a doctor.");
       }
 
-      if (!isFirebaseClientConfigured()) {
-        throw new Error(
-          "Phone verification is not available. Firebase client configuration is missing."
-        );
-      }
-      await sendFirebaseOtp(phone);
+      setSessionId(data.sessionId);
       setStep(2);
     } catch (err: any) {
       setError(err.message || "Something went wrong.");
@@ -90,11 +77,10 @@ export default function ForgotPasswordPage() {
     setError(null);
 
     try {
-      if (!otpReady) {
+      if (!sessionId) {
         throw new Error("Please request an OTP first.");
       }
-      const body: Record<string, string> = { phone, password };
-      body.firebaseIdToken = await verifyOtpCode(otp);
+      const body: Record<string, string> = { phone, password, otp, sessionId };
       const res = await fetch("/api/auth/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -383,11 +369,6 @@ export default function ForgotPasswordPage() {
           </div>
         </div>
       </motion.div>
-      <div
-        id="firebase-recaptcha-forgot"
-        className="fixed bottom-0 left-0 w-[1px] h-[1px] opacity-0 pointer-events-none overflow-hidden"
-        aria-hidden="true"
-      />
     </div>
   );
 }

@@ -69,22 +69,15 @@ export function isPilotOtpModeClient(): boolean {
   return process.env.NEXT_PUBLIC_PILOT_OTP_MODE === "true";
 }
 
-export function isFirebaseConfigured(): boolean {
-  return !!(
-    process.env.FIREBASE_SERVICE_ACCOUNT_JSON ||
-    (process.env.FIREBASE_PROJECT_ID &&
-      process.env.FIREBASE_CLIENT_EMAIL &&
-      process.env.FIREBASE_PRIVATE_KEY)
-  );
-}
-
-export function isFirebaseClientConfigured(): boolean {
-  return !!(
-    process.env.NEXT_PUBLIC_FIREBASE_API_KEY?.trim() &&
-    process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN?.trim() &&
-    process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID?.trim() &&
-    process.env.NEXT_PUBLIC_FIREBASE_APP_ID?.trim()
-  );
+export function getTwoFactorApiKey(): string {
+  const key = process.env.TWOFACTOR_API_KEY?.trim();
+  if (!key) {
+    if (isProduction()) {
+      throw new Error("FATAL: TWOFACTOR_API_KEY is required in production");
+    }
+    return "";
+  }
+  return key;
 }
 
 export function isBlobConfigured(): boolean {
@@ -107,18 +100,8 @@ export function assertProductionEnv(): void {
     errors.push("FATAL: DATABASE_URL is required in production");
   }
 
-  if (!isPilotOtpModeEnabled()) {
-    if (!isFirebaseConfigured()) {
-      errors.push(
-        "FATAL: Firebase Admin credentials are required (FIREBASE_SERVICE_ACCOUNT_JSON or FIREBASE_PROJECT_ID + FIREBASE_CLIENT_EMAIL + FIREBASE_PRIVATE_KEY)"
-      );
-    }
-
-    if (!isFirebaseClientConfigured()) {
-      errors.push(
-        "FATAL: NEXT_PUBLIC_FIREBASE_API_KEY, NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN, NEXT_PUBLIC_FIREBASE_PROJECT_ID, and NEXT_PUBLIC_FIREBASE_APP_ID are required in production"
-      );
-    }
+  if (!getTwoFactorApiKey()) {
+    errors.push("FATAL: TWOFACTOR_API_KEY is required in production for SMS OTP");
   }
 
   if (!isBlobConfigured()) {
@@ -139,12 +122,7 @@ export function getProductionEnvStatus(): {
   const secret = process.env.JWT_SECRET?.trim();
   if (!secret || secret.length < 32) missing.push("JWT_SECRET (min 32 chars)");
   if (!process.env.DATABASE_URL?.trim()) missing.push("DATABASE_URL");
-  if (!isFirebaseConfigured()) missing.push("Firebase Admin credentials");
-  if (!isFirebaseClientConfigured()) {
-    missing.push(
-      "NEXT_PUBLIC_FIREBASE_API_KEY, NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN, NEXT_PUBLIC_FIREBASE_PROJECT_ID, NEXT_PUBLIC_FIREBASE_APP_ID"
-    );
-  }
+  if (!getTwoFactorApiKey()) missing.push("TWOFACTOR_API_KEY");
   if (!isBlobConfigured()) missing.push("BLOB_READ_WRITE_TOKEN");
   return { ok: missing.length === 0, missing };
 }
