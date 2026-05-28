@@ -31,7 +31,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { patientName, phoneNumber, symptoms, location } = validation.data;
+    const { patientName, phoneNumber, symptoms, location, age, gender, isEmergency } = validation.data;
 
     const doctor = await prisma.doctor.findUnique({
       where: { userId: payload.id }
@@ -50,14 +50,17 @@ export async function POST(request: Request) {
         const walkInEntry = await tx.walkInEntry.create({
           data: {
             patientName,
-            phoneNumber,
-            symptoms
+            phoneNumber: phoneNumber || null,
+            symptoms: symptoms || null,
+            age: age || null,
+            gender: gender || null,
+            isEmergency: isEmergency || false,
           }
         });
 
         // Use Service for sequential token issuing and capacity checks.
         // Pass `tx` to ensure mathematical safety and rollback WalkInEntry if queue is full.
-        const newQueueToken = await QueueService.issueToken(doctor.id, today, null, "WALK_IN", location || undefined, false, tx);
+        const newQueueToken = await QueueService.issueToken(doctor.id, today, null, "WALK_IN", location || undefined, isEmergency || false, tx);
         
         // Link the walk-in entry to the token (Service issues generic WALK_IN tokens)
         const updatedToken = await tx.queueToken.update({

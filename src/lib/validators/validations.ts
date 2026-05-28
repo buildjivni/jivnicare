@@ -27,9 +27,18 @@ export const nextPatientSchema = z.object({
 // 3. Walk-in Schema
 export const walkInSchema = z.object({
   patientName: z.string().min(2).max(100),
-  phoneNumber: z.string().min(10).max(15).optional().nullable(),
+  phoneNumber: z.string()
+    .max(15)
+    .optional()
+    .nullable()
+    .refine((val) => !val || val.trim().length === 0 || val.trim().length >= 10, {
+      message: "Phone number must be at least 10 digits",
+    }),
   symptoms: z.string().max(500).optional().nullable(),
   location: z.string().max(100).optional().nullable(),
+  age: z.number().int().min(0).max(150).optional().nullable(),
+  gender: z.enum(["MALE", "FEMALE", "OTHER"]).optional().nullable(),
+  isEmergency: z.boolean().optional(),
 });
 
 // 4. Doctor Onboarding Schema - Step 1 (Identity & Core)

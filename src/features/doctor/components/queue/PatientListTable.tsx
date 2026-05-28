@@ -94,7 +94,11 @@ export function PatientListTable({ patients }: PatientListTableProps) {
                   {getStatusBadge(patient.status)}
                 </td>
                 <td className="py-4 hidden sm:table-cell">
-                  <span className="text-sm text-slate-500 font-medium">{patient.visitType}</span>
+                  {patient.visitType === "Walk-in" ? (
+                    <span className="bg-blue-100 text-[#005da7] font-bold px-2 py-1 rounded-lg border border-blue-200 text-[10px] uppercase tracking-widest">Walk-in</span>
+                  ) : (
+                    <span className="bg-slate-100 text-slate-600 font-bold px-2 py-1 rounded-lg border border-slate-200 text-[10px] uppercase tracking-widest">Online</span>
+                  )}
                 </td>
                 <td className="py-4 text-right">
                   <div className="flex justify-end gap-1">
@@ -132,18 +136,30 @@ export function PatientListTable({ patients }: PatientListTableProps) {
                <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-700">{patient.initials}</div>
                   <div>
-                    <p className="font-bold text-slate-900">{patient.name}</p>
-                    <p className="text-xs text-slate-500 font-medium">{patient.visitType} • {patient.appointmentTime}</p>
+                    <p className="font-bold text-slate-900">
+                      {patient.name}
+                      {patient.priority === "Emergency" && (
+                        <span className="text-[10px] bg-red-100 text-red-700 font-bold px-2 py-0.5 rounded-md ml-2 border border-red-200 uppercase tracking-wider">Emergency</span>
+                      )}
+                    </p>
+                    <p className="text-xs text-slate-500 font-medium mt-1">
+                      {patient.visitType === "Walk-in" ? (
+                        <span className="bg-blue-100 text-[#005da7] font-bold px-2 py-0.5 rounded-md border border-blue-200">Walk-in</span>
+                      ) : (
+                        <span className="bg-slate-100 text-slate-600 font-bold px-2 py-0.5 rounded-md border border-slate-200">Online</span>
+                      )}
+                      {" "}• {patient.appointmentTime}
+                    </p>
                     {patient.location && (
-                      <p className="text-[10px] font-bold text-primary flex items-center gap-1 mt-0.5">
+                      <p className="text-[10px] font-bold text-primary flex items-center gap-1 mt-1">
                         <Filter className="w-2.5 h-2.5 rotate-90" /> {patient.location}
                       </p>
                     )}
                   </div>
-               </div>
-               <div className="text-right">
-                 <span className="font-black text-xl text-primary">#{patient.token}</span>
-               </div>
+                </div>
+                <div className="text-right">
+                  <span className="font-black text-xl text-primary">#{patient.token}</span>
+                </div>
              </div>
              <div className="flex justify-between items-center pt-3 border-t border-slate-200">
                <div>{getStatusBadge(patient.status)}</div>
