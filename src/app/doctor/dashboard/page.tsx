@@ -20,6 +20,7 @@ import { useDoctorWorkspace } from "@/features/doctor/hooks/useDoctorWorkspace";
 import { WeeklyScheduleEditor } from "@/features/doctor/components/settings/WeeklyScheduleEditor";
 import { ClinicOperationsForm } from "@/features/doctor/components/settings/ClinicOperationsForm";
 import { ImageUploadField } from "@/components/shared/ImageUploadField";
+import { WalkInModal } from "@/features/doctor/components/queue/WalkInModal";
 import { cn } from "@/lib/utils/utils";
 
 // ── BRAND COLORS (From Logo) ──────────────────────────────────────
@@ -47,6 +48,7 @@ function DoctorDashboardContent() {
 
   // Queue State
   const [isProcessingMutation, setIsProcessingMutation] = useState(false);
+  const [isWalkInModalOpen, setIsWalkInModalOpen] = useState(false);
 
   const fetcher = async (url: string) => {
     const res = await fetch(url);
@@ -564,23 +566,16 @@ function DoctorDashboardContent() {
               setSettingsField("leaveMode", true);
               alert("OPD has been halted for today. All digital queues are closed.");
             }}
-            onAddOffline={async () => {
-              const name = window.prompt("Enter Patient Name:", "Walk-in Patient");
-              if (!name) return;
-              const location = window.prompt("Enter City/Village (Optional):", "");
-              
-              const res = await fetch("/api/doctor/queue/walk-in", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ 
-                  patientName: name, 
-                  phoneNumber: "", 
-                  symptoms: "",
-                  location: location || undefined
-                })
-              });
-              if (res.ok) await mutateQueue();
+            onAddOffline={() => {
+              setIsWalkInModalOpen(true);
             }} 
+          />
+          <WalkInModal 
+            isOpen={isWalkInModalOpen}
+            onClose={() => setIsWalkInModalOpen(false)}
+            onSuccess={async () => {
+              await mutateQueue();
+            }}
           />
         </div>
         <PatientListTable patients={patients} />

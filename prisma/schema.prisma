@@ -429,6 +429,12 @@ enum TokenStatus {
   CANCELLED
 }
 
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
 model DailyQueue {
   id                 String      @id @default(uuid()) @map("_id")
   doctorId           String
@@ -476,6 +482,9 @@ model WalkInEntry {
   patientName String
   phoneNumber String?
   symptoms    String?
+  age         Int?
+  gender      Gender?
+  isEmergency Boolean  @default(false)
   createdAt   DateTime @default(now())
 
   token QueueToken[]
