@@ -39,20 +39,14 @@ export async function proxy(request: NextRequest) {
   // Get the auth-token cookie
   const token = request.cookies.get('auth-token')?.value;
 
-  console.log(`[proxy] Intercepted protected route: ${pathname}`);
-  console.log(`[proxy] Token present: ${!!token}`);
-
   if (!token) {
-    console.log(`[proxy] No token, redirecting to login from ${pathname}`);
     return redirectToLogin(request, pathname);
   }
 
   try {
     // Verify the JWT token using jose
     const secret = new TextEncoder().encode(getJwtSecret());
-    console.log(`[proxy] Verifying token for ${pathname} with secret length: ${secret.length}`);
     const { payload } = await jwtVerify(token, secret);
-    console.log(`[proxy] Token verified successfully. Role: ${payload.role}`);
 
     const userRole = payload.role as string;
 
