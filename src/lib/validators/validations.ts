@@ -62,7 +62,11 @@ export const step1OnboardSchema = z.object({
   registrationYear: z.number().int("Year must be a whole number").min(1960).max(new Date().getFullYear(), "Cannot be in the future"),
   specialization: z.string().min(2).max(100).regex(/^[a-zA-Z\s\-\/]+$/, "Letters, spaces, hyphens and slashes only"),
   experience: z.number().int().min(0).max(65),
-  qualifications: z.string().min(2).max(200).regex(/^[a-zA-Z0-9\s\.,\(\)\-\/\&]+$/, "Letters, numbers, spaces, commas, periods, hyphens, parentheses, slashes and ampersands only"),
+  qualifications: z.string()
+    .min(2, "Please enter valid medical qualifications.")
+    .max(200)
+    .regex(/^[a-zA-Z0-9\s\.,\(\)\-\/\&]+$/, "Contains invalid characters. Letters, numbers, spaces, commas, periods, hyphens, parentheses, slashes and ampersands only.")
+    .regex(/[a-zA-Z]/, "Please enter valid medical qualifications (must contain letters)."),
   
   practiceName: z.string().min(2, "Practice/Hospital name is too short").max(150),
   practiceAddress: z.string().min(5, "Address is too short").max(300),
@@ -106,7 +110,11 @@ export const doctorSettingsSchema = z.object({
   city: z.string().max(100).optional().nullable(),
   address: z.string().max(300).optional().nullable(),
   experience: z.number().int().min(0).max(65).optional().nullable(),
-  qualifications: z.string().max(300).optional().nullable(),
+  qualifications: z.string()
+    .max(300)
+    .regex(/[a-zA-Z]/, "Please enter valid medical qualifications (must contain letters).")
+    .optional()
+    .nullable(),
 });
 
 export const verifyDoctorSchema = z.object({
