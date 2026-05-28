@@ -374,7 +374,7 @@ function OnboardingContent() {
                       </div>
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-700">Qualifications</label>
-                        <Input placeholder="MBBS, MD" value={formData.qualifications} onChange={(e) => setFormData({...formData, qualifications: e.target.value.replace(/[^a-zA-Z\s.,()-]/g, '')})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.qualifications ? 'border-rose-500' : ''}`} />
+                        <Input placeholder="MBBS, MD" value={formData.qualifications} onChange={(e) => setFormData({...formData, qualifications: e.target.value.replace(/[^a-zA-Z0-9\s.,()&/-]/g, '')})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.qualifications ? 'border-rose-500' : ''}`} />
                         {errors.qualifications && <p className="text-[10px] font-bold text-rose-500">{errors.qualifications}</p>}
                       </div>
                     </div>
@@ -508,6 +508,7 @@ function OnboardingContent() {
                         value={formData.clinicPhotoUrl}
                         onChange={(url) => setFormData({ ...formData, clinicPhotoUrl: url })}
                         filenamePrefix="clinic-photo"
+                        aspectRatio={16/9}
                       />
 
                       <div className="space-y-3 md:col-span-2 pt-4 border-t border-slate-100">

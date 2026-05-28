@@ -638,6 +638,7 @@ function DoctorDashboardContent() {
             value={profileData.clinicImage}
             onChange={(url) => setProfileField("clinicImage", url)}
             filenamePrefix="doctor-clinic"
+            aspectRatio={16/9}
           />
         </div>
 
