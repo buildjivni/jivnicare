@@ -1,78 +1,62 @@
-import prisma from '@/lib/db/prisma';
+// src/lib/infrastructure/rate-limit.ts
 import { logger } from '@/lib/infrastructure/logger';
 
 export interface RateLimitConfig {
-  identifier: string; // usually IP address or phone number + route name
+  identifier: string; // e.g., IP or phone+route
   limit: number;
   windowMs: number;
 }
 
-/**
- * Lightweight DB-backed rate limiter.
- * Ideal for MVP and Serverless where memory limits don't persist across instances.
- * Not recommended for high-DDoS protection (use Upstash Redis for that), 
- * but excellent for basic business logic throttling (e.g. OTP spam).
- */
-export async function checkRateLimit({ identifier, limit, windowMs }: RateLimitConfig): Promise<{ success: boolean; remaining: number; resetTime: Date }> {
-  try {
-    const now = new Date();
+// In‑memory cache with simple LRU eviction based on reset time.
+type CacheEntry = { count: number; resetAt: number };
+const cache = new Map<string, CacheEntry>();
+const MAX_CACHE_SIZE = 5000; // safeguard memory usage
 
-    // Find existing rate limit record
-    let record = await prisma.rateLimit.findUnique({
-      where: { ip: identifier }
-    });
-
-    if (!record) {
-      // Create new record
-      record = await prisma.rateLimit.create({
-        data: {
-          ip: identifier,
-          count: 1,
-          resetTime: new Date(now.getTime() + windowMs)
-        }
-      });
-      return { success: true, remaining: Math.max(0, limit - 1), resetTime: record.resetTime };
+function cleanup() {
+  const now = Date.now();
+  for (const [key, entry] of cache) {
+    if (now > entry.resetAt) {
+      cache.delete(key);
     }
-
-    // If the reset time has passed, reset the count
-    if (now > record.resetTime) {
-      record = await prisma.rateLimit.update({
-        where: { ip: identifier },
-        data: {
-          count: 1,
-          resetTime: new Date(now.getTime() + windowMs)
-        }
-      });
-      return { success: true, remaining: Math.max(0, limit - 1), resetTime: record.resetTime };
-    }
-
-    // If we're within the window, check the count
-    if (record.count >= limit) {
-      logger.warn({
-        category: 'SYSTEM',
-        message: 'Rate limit exceeded',
-        metadata: { identifier, limit, resetTime: record.resetTime }
-      });
-      return { success: false, remaining: 0, resetTime: record.resetTime };
-    }
-
-    // Otherwise, increment the count
-    record = await prisma.rateLimit.update({
-      where: { ip: identifier },
-      data: {
-        count: { increment: 1 }
-      }
-    });
-
-    return { success: true, remaining: Math.max(0, limit - record.count), resetTime: record.resetTime };
-
-  } catch (error) {
-    logger.error({
-      category: 'SYSTEM',
-      message: 'Rate limit check failed (failing open for resilience)',
-      error
-    });
-    // Fail open if the database call fails, to prevent blocking legitimate traffic due to DB strain
-    return { success: true, remaining: 1, resetTime: new Date(Date.now() + windowMs) };
   }
+}
+
+export async function checkRateLimit({ identifier, limit, windowMs }: RateLimitConfig): Promise<{ success: boolean; remaining: number; resetTime: Date }> {
+  cleanup();
+  const now = Date.now();
+  let entry = cache.get(identifier);
+
+  if (!entry) {
+    entry = { count: 1, resetAt: now + windowMs };
+    cache.set(identifier, entry);
+    // Enforce max size
+    if (cache.size > MAX_CACHE_SIZE) {
+      // Remove the oldest entry (Map preserves insertion order)
+      const oldestKey = cache.keys().next().value;
+      cache.delete(oldestKey);
+    }
+    return { success: true, remaining: limit - 1, resetTime: new Date(entry.resetAt) };
+  }
+
+  // If window elapsed, reset counter
+  if (now > entry.resetAt) {
+    entry.count = 1;
+    entry.resetAt = now + windowMs;
+    cache.set(identifier, entry);
+    return { success: true, remaining: limit - 1, resetTime: new Date(entry.resetAt) };
+  }
+
+  // Within window, enforce limit
+  if (entry.count >= limit) {
+    logger.warn({
+      category: 'SYSTEM',
+      message: 'Rate limit exceeded',
+      metadata: { identifier, limit, resetTime: new Date(entry.resetAt) }
+    });
+    return { success: false, remaining: 0, resetTime: new Date(entry.resetAt) };
+  }
+
+  entry.count += 1;
+  cache.set(identifier, entry);
+  return { success: true, remaining: Math.max(0, limit - entry.count), resetTime: new Date(entry.resetAt) };
 }

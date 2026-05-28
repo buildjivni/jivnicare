@@ -87,3 +87,22 @@ class AppLogger {
 }
 
 export const logger = new AppLogger();
+
+// Operational counters for E2E validation
+interface OperationalCounters {
+  otpFailures: number;
+  bookingFailures: number;
+  authFailures: number;
+  uploadFailures: number;
+  sseDisconnects: number;
+}
+export const operationalCounters: OperationalCounters = {
+  otpFailures: 0,
+  bookingFailures: 0,
+  authFailures: 0,
+  uploadFailures: 0,
+  sseDisconnects: 0,
+};
+export function incrementCounter(counter: keyof OperationalCounters) {
+  operationalCounters[counter]++;
+}
