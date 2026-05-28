@@ -39,9 +39,37 @@ export async function POST(request: Request): Promise<NextResponse> {
     );
   }
 
+  // ---- Upload Validation ----
+  const allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+  const mime = request.headers.get('content-type')?.split(';')[0]?.trim();
+  if (!mime || !allowedMimes.includes(mime)) {
+    return NextResponse.json({ error: 'Unsupported file type' }, { status: 415 });
+  }
+
+  // Simple filename sanity checks
+  const parts = filename.split('.');
+  if (parts.length !== 2) {
+    return NextResponse.json({ error: 'Invalid filename format' }, { status: 400 });
+  }
+  const [name, ext] = parts;
+  const extLower = ext.toLowerCase();
+  if (['svg', 'gif', 'exe', 'bat'].includes(extLower)) {
+    return NextResponse.json({ error: 'File type not allowed' }, { status: 400 });
+  }
+  const mimeMap: Record<string, string> = {
+    'jpeg': 'image/jpeg',
+    'jpg': 'image/jpeg',
+    'png': 'image/png',
+    'webp': 'image/webp',
+    'pdf': 'application/pdf',
+  };
+  if (mimeMap[extLower] !== mime) {
+    return NextResponse.json({ error: 'Filename extension does not match MIME type' }, { status: 400 });
+  }
+
   try {
     const blob = await put(filename, request.body as any, {
-      access: 'public', // Required to be public so it can be viewed by admins and patients (if photo)
+      access: 'public',
     });
 
     return NextResponse.json(blob);

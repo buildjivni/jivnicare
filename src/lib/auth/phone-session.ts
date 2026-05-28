@@ -76,7 +76,7 @@ export async function createPhoneSessionResponse(input: CreatePhoneSessionInput)
   response.cookies.set("auth-token", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    sameSite: "lax",
     maxAge,
     path: "/",
   });

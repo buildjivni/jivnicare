@@ -30,44 +30,7 @@ export function getJwtSecret(): string {
   return secret;
 }
 
-export function isTestOtpAllowed(): boolean {
-  return !isProduction() && process.env.ALLOW_TEST_OTP === "true";
-}
 
-/** Lightweight Test OTP Mode */
-export function getTestOtpNumbers(): string[] {
-  const numbers = process.env.TEST_OTP_NUMBERS || '';
-  return numbers
-    .split(',')
-    .map(n => n.replace(/\D/g, '').slice(-10))
-    .filter(Boolean);
-}
-
-export function getTestOtpCode(): string {
-  return process.env.TEST_OTP_CODE?.trim() ?? "";
-}
-
-export function isTestOtpModeEnabled(): boolean {
-  const isEnabled = process.env.ENABLE_TEST_OTP === "true" || process.env.NEXT_PUBLIC_ENABLE_TEST_OTP === "true";
-  return (
-    isEnabled &&
-    getTestOtpCode().length > 0 &&
-    getTestOtpNumbers().length > 0
-  );
-}
-
-/** Re-export for env.ts consumers that cannot import pilot-otp (no firebase admin in next.config path). */
-export function isPilotOtpModeEnabled(): boolean {
-  return (
-    process.env.PILOT_OTP_MODE === "true" &&
-    Boolean(process.env.ALLOWED_TEST_NUMBERS?.trim())
-  );
-}
-
-/** Client UI flag — set NEXT_PUBLIC_PILOT_OTP_MODE=true when server pilot mode is on. */
-export function isPilotOtpModeClient(): boolean {
-  return process.env.NEXT_PUBLIC_PILOT_OTP_MODE === "true";
-}
 
 export function getTwoFactorApiKey(): string {
   const key = process.env.TWOFACTOR_API_KEY?.trim();
