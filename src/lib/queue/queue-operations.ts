@@ -99,7 +99,7 @@ export function calculateDynamicStatus({ doctor, todayQueue }: StatusInput): Sta
     };
   }
 
-  if (operations?.emergencySlots > 0 && issuedTokens >= maxCapacity) {
+  if (doctor.emergencyAvailable && operations?.emergencySlots > 0 && issuedTokens >= maxCapacity) {
     return {
       status: 'EMERGENCY_ONLY',
       message: 'Regular OPD is full. Only accepting emergency cases.',

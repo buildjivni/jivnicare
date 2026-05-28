@@ -82,3 +82,22 @@ export function getApproximateWaitTime(
   if (baseMinutes <= 120) return "1.5-2 hours";
   return "> 2 hours";
 }
+
+/**
+ * Normalizes emergency state across Doctor and ClinicOperations.
+ * If emergency is disabled by the doctor, slots MUST be 0.
+ * This ensures no cross-dashboard contradictions.
+ */
+export function normalizeEmergencyConfig(
+  emergencyAvailable: boolean | undefined | null,
+  emergencySlots: number | undefined | null
+): { emergencyAvailable: boolean; emergencySlots: number } {
+  const isAvailable = Boolean(emergencyAvailable);
+  const slots = Math.max(0, parseInt(String(emergencySlots)) || 0);
+
+  if (!isAvailable) {
+    return { emergencyAvailable: false, emergencySlots: 0 };
+  }
+  
+  return { emergencyAvailable: true, emergencySlots: slots };
+}
