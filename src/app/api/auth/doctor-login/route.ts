@@ -28,14 +28,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Account is not registered as a Doctor.' }, { status: 403 });
     }
 
-    if (!user.password) {
-      return NextResponse.json({ error: 'Password not set. Please contact Administrator for verification.' }, { status: 403 });
-    }
-
-    // Verify password
+    // ── Lightweight Test OTP Mode for Doctors ─────────────────────────
     let passwordMatch = false;
 
-    // ── Lightweight Test OTP Mode for Doctors ─────────────────────────
     if (isTestOtpModeEnabled() && getTestOtpNumbers().includes(phone)) {
       if (password === getTestOtpCode()) {
         passwordMatch = true;
@@ -47,7 +42,11 @@ export async function POST(request: Request) {
       }
     }
 
+    // ── Real Password Verification ────────────────────────────────────
     if (!passwordMatch) {
+      if (!user.password) {
+        return NextResponse.json({ error: 'Password not set. Please contact Administrator for verification.' }, { status: 403 });
+      }
       passwordMatch = await bcrypt.compare(password, user.password);
     }
 
