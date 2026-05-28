@@ -89,3 +89,15 @@ export function getProductionEnvStatus(): {
   if (!isBlobConfigured()) missing.push("BLOB_READ_WRITE_TOKEN");
   return { ok: missing.length === 0, missing };
 }
+export function isTestOtpModeEnabled(): boolean {
+  return process.env.NEXT_PUBLIC_ENABLE_TEST_OTP === 'true';
+}
+
+export function getTestOtpNumbers(): string[] {
+  const numbers = process.env.NEXT_PUBLIC_TEST_OTP_NUMBERS?.trim();
+  return numbers ? numbers.split(',').map((n) => n.trim()) : [];
+}
+
+export function getTestOtpCode(): string {
+  return process.env.NEXT_PUBLIC_TEST_OTP_CODE?.trim() || '123456';
+}

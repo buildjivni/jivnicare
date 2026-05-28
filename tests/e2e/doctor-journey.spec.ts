@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { getAuthToken } from '../utils/auth';
+import { getAuthToken } from './utils/auth';
 
 test('Doctor journey: full dashboard and queue lifecycle', async ({ page }) => {
   // 1. Obtain a doctor JWT via test helper (no real login UI)

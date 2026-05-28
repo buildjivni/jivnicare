@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { getAuthToken } from '../utils/auth';
+import { getAuthToken } from './utils/auth';
 
 test('Patient journey: booking flow with session continuity', async ({ page }) => {
   // 1. Landing page
