@@ -9,6 +9,7 @@ import { trackSearch } from "@/lib/search/search-engine";
 import type { SearchResult } from "@/lib/search/search-engine";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useLocationStore } from "@/features/location/store/useLocationStore";
 
 // ── Rich Skeleton Loading ────────────────────────────────────────────────────
 function PageSkeleton() {
@@ -34,7 +35,7 @@ function PageSkeleton() {
             <div className="h-10 w-44 skeleton-shimmer rounded-full" />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {[1, 2, 3, 4].map(i => (
-                <div key={i} className="h-48 skeleton-shimmer rounded-[2rem]" />
+                <div key={i} className="h-[340px] skeleton-shimmer rounded-[2rem]" />
               ))}
             </div>
           </div>
@@ -66,30 +67,13 @@ function DoctorListingContent() {
   const [isError, setIsError] = useState(false);
   
   // ── Geo-Location State ──────────────────────────────────────────────────────
-  const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
-  const [geoStatus, setGeoStatus] = useState<"pending" | "located" | "denied">("pending");
-
-  // Fetch geolocation once on mount politely
-  useEffect(() => {
-    if (typeof window !== "undefined" && "geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-          setGeoStatus("located");
-        },
-        (err) => {
-          console.warn("Geo error or denied:", err);
-          setGeoStatus("denied");
-        },
-        { timeout: 15000, maximumAge: 60000 }
-      );
-    } else {
-      setGeoStatus("denied");
-    }
-  }, []);
+  const { district: storeDistrict, latitude, longitude, hasHydrated } = useLocationStore();
+  const effectiveDistrict = searchParams.get("district") || storeDistrict || "";
 
   // ── Fetch from API ──────────────────────────────────────────────────────────
   useEffect(() => {
+    if (!hasHydrated) return; // Wait for store to hydrate
+
     let isMounted = true;
 
     const fetchResults = async () => {
@@ -97,9 +81,12 @@ function DoctorListingContent() {
       setIsError(false);
       try {
         const queryParams = new URLSearchParams(searchParams.toString());
-        if (userLocation) {
-          queryParams.set("lat", userLocation.lat.toString());
-          queryParams.set("lng", userLocation.lng.toString());
+        if (effectiveDistrict) {
+          queryParams.set("district", effectiveDistrict);
+        }
+        if (latitude && longitude) {
+          queryParams.set("lat", latitude.toString());
+          queryParams.set("lng", longitude.toString());
           // Auto-switch sort to distance if not explicitly set and location is known
           if (!searchParams.get("sort")) queryParams.set("sort", "distance");
         }
@@ -125,7 +112,7 @@ function DoctorListingContent() {
 
     fetchResults();
     return () => { isMounted = false; };
-  }, [searchParams, userLocation]);
+  }, [searchParams, latitude, longitude, effectiveDistrict, hasHydrated]);
 
   // ── Handlers (Update URL only) ──────────────────────────────────────────────
   const updateParams = (updates: Record<string, string | null>) => {
@@ -202,7 +189,7 @@ function DoctorListingContent() {
               <div className="flex items-center justify-between">
                 <div>
                   <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-                    {query ? `Search results for "${query}"` : district ? `Doctors in ${district}` : 'Top Verified Doctors'}
+                    {query ? `Search results for "${query}"` : effectiveDistrict ? `Doctors in ${effectiveDistrict}` : 'Showing doctors across Bihar'}
                   </h1>
                   <p className="text-sm font-medium text-slate-500 mt-0.5" aria-live="polite" aria-atomic="true">
                     {isLoading ? 'Searching...' : isError ? 'Search unavailable' : `${searchResult?.results.length || 0} specialists found`}
@@ -266,12 +253,12 @@ function DoctorListingContent() {
                       <p className="text-xs text-red-600 font-medium mt-0.5">These facilities have emergency slots available or accept urgent walk-ins.</p>
                     </div>
                   </div>
-                  {geoStatus === "denied" && (
+                  {!effectiveDistrict && !latitude && (
                     <div className="md:ml-auto mt-2 md:mt-0 text-[11px] font-bold text-red-700 bg-red-100/50 px-2 py-1 rounded-md border border-red-200/50">
-                      Location denied: Showing default emergency facilities.
+                      Location not set: Showing all emergency facilities in Bihar.
                     </div>
                   )}
-                  {geoStatus === "located" && (
+                  {latitude && longitude && (
                     <div className="md:ml-auto mt-2 md:mt-0 text-[11px] font-bold text-emerald-700 bg-emerald-100/50 px-2 py-1 rounded-md border border-emerald-200/50">
                       Showing nearest to you.
                     </div>
@@ -316,7 +303,7 @@ function DoctorListingContent() {
             {isLoading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {[1, 2, 3, 4].map(i => (
-                  <div key={i} className="h-48 skeleton-shimmer rounded-[2rem] bg-white border border-slate-100" />
+                  <div key={i} className="h-[340px] skeleton-shimmer rounded-[2rem] bg-white border border-slate-100" />
                 ))}
               </div>
             ) : isError ? (

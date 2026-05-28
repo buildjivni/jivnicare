@@ -48,6 +48,7 @@ function PatientLoginContent() {
   const [otpVerified, setOtpVerified] = useState(false);
   const [needsProfile, setNeedsProfile] = useState(false);
   const [pilotMode, setPilotMode] = useState(isPilotOtpModeClient());
+  const [testMode, setTestMode] = useState(false);
   const {
     sendOtp: sendFirebaseOtp,
     verifyOtpCode,
@@ -128,6 +129,7 @@ function PatientLoginContent() {
         error?: string;
         userExists?: boolean;
         pilotMode?: boolean;
+        isTestMode?: boolean;
         retryAfterSec?: number;
       }>(res);
       if (!data) throw new Error("Invalid server response.");
@@ -139,11 +141,13 @@ function PatientLoginContent() {
       }
 
       const isPilot = Boolean(data.pilotMode);
+      const isTest = Boolean(data.isTestMode);
       setPilotMode(isPilot);
+      setTestMode(isTest);
       setNeedsProfile(!data.userExists);
-      logOnboarding("otp_send_start", { isNewUser: !data.userExists, pilotMode: isPilot });
+      logOnboarding("otp_send_start", { isNewUser: !data.userExists, pilotMode: isPilot, testMode: isTest });
 
-      if (isPilot) {
+      if (isPilot || isTest) {
         resetConfirmation();
         setOtpSent(true);
         markOtpReady();
@@ -191,7 +195,7 @@ function PatientLoginContent() {
       }
 
       const payload: Record<string, string | undefined> = { phone };
-      if (pilotMode) {
+      if (pilotMode || testMode) {
         payload.otp = otp;
       } else if (isFirebaseClientConfigured()) {
         payload.firebaseIdToken = await verifyOtpCode(otp);
@@ -335,6 +339,11 @@ function PatientLoginContent() {
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-4 sm:p-6 relative overflow-hidden">
       <PilotModeBadge />
+      {process.env.NEXT_PUBLIC_ENABLE_TEST_OTP === "true" && (
+        <div className="absolute top-4 right-4 z-50 bg-slate-100/80 backdrop-blur-sm text-slate-500 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full border border-slate-200/50 shadow-sm pointer-events-none">
+          Test Mode
+        </div>
+      )}
       {/* ── Background Aesthetics ── */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
         <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] rounded-full bg-blue-100/40 blur-[120px]" />
@@ -618,7 +627,7 @@ function PatientLoginContent() {
                       disabled={
                         isLoading ||
                         otp.length < 6 ||
-                        (!pilotMode && isFirebaseClientConfigured() && !otpReady)
+                        (!pilotMode && !testMode && isFirebaseClientConfigured() && !otpReady)
                       }
                       className="w-full h-16 rounded-2xl bg-[#205E98] hover:bg-[#1a4f82] text-white font-black text-lg shadow-[0_12px_24px_-8px_rgba(32,94,152,0.3)] transition-all flex items-center justify-center gap-3"
                     >
@@ -639,7 +648,7 @@ function PatientLoginContent() {
                           setIsLoading(true);
                           setError(null);
                           try {
-                            if (pilotMode) {
+                            if (pilotMode || testMode) {
                               const res = await fetch("/api/auth/send-otp", {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json" },
@@ -666,10 +675,10 @@ function PatientLoginContent() {
                         {isSendingFirebase ? "Sending OTP…" : `Send OTP to +91 ${phone}`}
                       </button>
                     )}
-                    {(otpReady || pilotMode) && (
+                    {(otpReady || pilotMode || testMode) && (
                       <p className="mb-4 text-xs font-bold text-emerald-600">
-                        {pilotMode
-                          ? "Pilot mode: enter your test OTP to continue"
+                        {pilotMode || testMode
+                          ? "Test mode active: enter your test OTP to continue"
                           : `OTP sent to +91 ${phone}`}
                       </p>
                     )}
@@ -681,7 +690,7 @@ function PatientLoginContent() {
                           setIsLoading(true);
                           setError(null);
                           try {
-                            if (pilotMode) {
+                            if (pilotMode || testMode) {
                               const res = await fetch("/api/auth/send-otp", {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json" },

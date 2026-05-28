@@ -30,6 +30,7 @@ import { useAuthStore } from "@/features/auth/store/useAuthStore";
 import { NotificationPanel } from "./NotificationPanel";
 import { SmartSearchBar } from "./SmartSearchBar";
 import { cn } from "@/lib/utils/utils";
+import { useLocationStore } from "@/features/location/store/useLocationStore";
 
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
@@ -40,6 +41,7 @@ export function Header() {
   const router = useRouter();
   const profileRef = useRef<HTMLDivElement>(null);
   const { isAuthenticated, logout, token, user } = useAuthStore();
+  const { district } = useLocationStore();
   const [mounted, setMounted] = useState(false);
   
   useEffect(() => setMounted(true), []);
@@ -142,13 +144,13 @@ export function Header() {
                 <ArrowLeft className="w-5 h-5" />
               </Button>
               <div className="flex-1 min-w-0">
-                <SmartSearchBar compact district="Patna" autoFocus className="w-full" />
+                <SmartSearchBar compact district={district || ""} autoFocus className="w-full" />
               </div>
             </div>
           ) : (
             <>
               {/* ── LEFT SIDE: Hamburger & Logo (Normal View) ── */}
-              <div className="flex items-center gap-2 md:gap-4 flex-1 lg:flex-none justify-start">
+              <div className="flex items-center gap-2 md:gap-4 shrink-0">
                 {/* Mobile Hamburger */}
                 <div className="flex lg:hidden items-center shrink-0">
                   <Button
@@ -178,41 +180,43 @@ export function Header() {
 
               {/* ── DESKTOP NAV ───────────────────── */}
               {navLinks.length > 0 && (
-                <nav className="hidden lg:flex items-center gap-2 bg-slate-50/60 p-1 rounded-full border border-slate-100/80">
-                  {navLinks.map((link) => {
-                    const isActive = pathname === link.href || (pathname.startsWith('/doctors') && link.href === '/doctors');
-                    return (
-                      <Link
-                        key={link.label}
-                        href={link.href}
-                        className={cn(
-                          "px-5 py-2.5 text-[13px] font-bold rounded-full transition-all duration-200 active:scale-[0.98] flex items-center gap-1.5",
-                          link.highlight
-                            ? "text-rose-600 bg-rose-50 hover:bg-rose-100/80 border border-rose-100 animate-pulse shadow-sm"
-                            : isActive 
-                            ? "text-[#5298D2] bg-white shadow-sm ring-1 ring-slate-100" 
-                            : "text-slate-500 hover:text-slate-800 hover:bg-slate-100/50"
-                        )}
-                      >
-                        <span className={cn("shrink-0", link.highlight ? "text-rose-500 animate-pulse" : isActive ? "text-[#5298D2]" : "text-slate-400")}>
-                          {link.icon}
-                        </span>
-                        {link.label}
-                      </Link>
-                    );
-                  })}
-                </nav>
+                <div className="hidden lg:flex flex-1 min-w-0 justify-center">
+                  <nav className="flex items-center gap-1 xl:gap-2 bg-slate-50/60 p-1 rounded-full border border-slate-100/80 overflow-x-auto scrollbar-hide max-w-full">
+                    {navLinks.map((link) => {
+                      const isActive = pathname === link.href || (pathname.startsWith('/doctors') && link.href === '/doctors');
+                      return (
+                        <Link
+                          key={link.label}
+                          href={link.href}
+                          className={cn(
+                            "px-4 xl:px-5 py-2 xl:py-2.5 text-[12px] xl:text-[13px] font-bold rounded-full transition-all duration-200 active:scale-[0.98] flex items-center gap-1.5 whitespace-nowrap shrink-0",
+                            link.highlight
+                              ? "text-rose-600 bg-rose-50 hover:bg-rose-100/80 border border-rose-100 animate-pulse shadow-sm"
+                              : isActive 
+                              ? "text-[#5298D2] bg-white shadow-sm ring-1 ring-slate-100" 
+                              : "text-slate-500 hover:text-slate-800 hover:bg-slate-100/50"
+                          )}
+                        >
+                          <span className={cn("shrink-0", link.highlight ? "text-rose-500 animate-pulse" : isActive ? "text-[#5298D2]" : "text-slate-400")}>
+                            {link.icon}
+                          </span>
+                          {link.label}
+                        </Link>
+                      );
+                    })}
+                  </nav>
+                </div>
               )}
 
               {/* ── SEARCH (Contextual - Desktop Only) ── */}
               {isDoctorsPage && pathname !== "/" && (
                 <div className="hidden lg:flex flex-1 max-w-md mx-2 md:mx-4 lg:mx-8 min-w-0">
-                  <SmartSearchBar compact district="Patna" className="w-full shadow-sm animate-fade-in" />
+                  <SmartSearchBar compact district={district || ""} className="w-full shadow-sm animate-fade-in" />
                 </div>
               )}
 
               {/* ── ACTIONS (Desktop & Mobile Right) ───────────────── */}
-              <div className="flex items-center justify-end gap-2 lg:gap-4 shrink-0">
+              <div className="flex items-center justify-end gap-2 lg:gap-3 xl:gap-4 shrink-0">
                 
                 {/* Mobile Search Icon Trigger */}
                 {isDoctorsPage && pathname !== "/" && (
@@ -227,15 +231,16 @@ export function Header() {
                   </Button>
                 )}
             {isLoggedIn && user?.role === "DOCTOR" && (
-              <div className="hidden sm:flex items-center gap-2">
+              <div className="hidden sm:flex items-center gap-2 shrink-0">
                 <Button 
                   variant="outline" 
                   size="sm"
-                  className="h-10 text-xs bg-red-50 hover:bg-red-100 border-red-200 text-red-700 font-bold rounded-xl flex items-center gap-1.5 active:scale-95 shadow-sm"
+                  className="h-9 xl:h-10 text-[11px] xl:text-xs px-3 xl:px-4 bg-red-50 hover:bg-red-100 border-red-200 text-red-700 font-bold rounded-xl flex items-center gap-1.5 active:scale-95 shadow-sm whitespace-nowrap shrink-0"
                   onClick={() => alert("OPD emergency state locked. Displaying alert banner to waiting patients.")}
                 >
-                  <AlertTriangle className="w-3.5 h-3.5 animate-pulse text-red-600" />
-                  OPD Emergency Mode
+                  <AlertTriangle className="w-3.5 h-3.5 animate-pulse text-red-600 shrink-0" />
+                  <span className="hidden md:inline">OPD Emergency Mode</span>
+                  <span className="md:hidden">Emergency Mode</span>
                 </Button>
               </div>
             )}
@@ -254,7 +259,7 @@ export function Header() {
                     <div className="w-7.5 h-7.5 rounded-full bg-[#5298D2]/10 text-[#5298D2] font-black text-sm flex items-center justify-center border border-[#5298D2]/20">
                       {user?.name ? user.name[0].toUpperCase() : "U"}
                     </div>
-                    <span className="text-sm font-bold text-slate-700 hidden sm:block truncate max-w-[120px]">
+                    <span className="text-sm font-bold text-slate-700 hidden sm:block truncate max-w-[90px] xl:max-w-[120px]">
                       {user?.name || "Patient"}
                     </span>
                     <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -275,17 +280,17 @@ export function Header() {
             )}
 
             {isLoggedIn && user?.role === "DOCTOR" && (
-              <Link href="/doctor/dashboard?tab=queue" className="hidden lg:block">
-                <Button className="bg-primary hover:bg-primary/90 text-white font-bold rounded-full shadow-md h-11 px-5 active:scale-95 flex items-center gap-1.5">
-                  <Activity className="w-4 h-4" /> OPD Queue
+              <Link href="/doctor/dashboard?tab=queue" className="hidden xl:block shrink-0">
+                <Button className="bg-primary hover:bg-primary/90 text-white font-bold rounded-full shadow-md h-9 xl:h-11 px-4 xl:px-5 active:scale-95 flex items-center gap-1.5 whitespace-nowrap">
+                  <Activity className="w-3.5 h-3.5 xl:w-4 xl:h-4 shrink-0" /> OPD Queue
                 </Button>
               </Link>
             )}
             
             {isLoggedIn && user?.role === "ADMIN" && (
-              <Link href="/admin/dashboard?tab=trust-safety" className="hidden lg:block">
-                <Button className="bg-slate-700 hover:bg-slate-800 text-white font-bold rounded-full shadow-md h-11 px-5 active:scale-95 flex items-center gap-1.5">
-                  <ShieldAlert className="w-4 h-4" /> Moderation Log
+              <Link href="/admin/dashboard?tab=trust-safety" className="hidden xl:block shrink-0">
+                <Button className="bg-slate-700 hover:bg-slate-800 text-white font-bold rounded-full shadow-md h-9 xl:h-11 px-4 xl:px-5 active:scale-95 flex items-center gap-1.5 whitespace-nowrap">
+                  <ShieldAlert className="w-3.5 h-3.5 xl:w-4 xl:h-4 shrink-0" /> Moderation Log
                 </Button>
               </Link>
             )}

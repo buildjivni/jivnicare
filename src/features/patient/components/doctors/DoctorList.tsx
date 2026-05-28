@@ -67,7 +67,7 @@ export function DoctorList({ doctors, onClearFilters }: DoctorListProps) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.18, delay: Math.min(idx * 0.04, 0.25) }}
               >
-                <DoctorCard doctor={doctor} />
+                <DoctorCard doctor={doctor} priority={idx < 4} />
               </motion.div>
             ))}
         </div>

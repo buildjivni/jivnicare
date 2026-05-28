@@ -3,7 +3,10 @@ import prisma from '@/lib/db/prisma';
 import { searchDoctors } from '@/lib/search/search-engine';
 import { getInferredSpecialties } from '@/lib/search/search-dictionary';
 import { mapPrismaDoctorToUI } from '@/lib/utils/data-utils';
+import { normalizeDistrict } from '@/lib/constants/districts';
 import type { Doctor } from '@/types';
+
+export const dynamic = 'force-dynamic';
 
 // Helper: Haversine Formula for air distance calculation
 function getDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -77,7 +80,8 @@ export async function GET(request: Request) {
     }
 
     // Geo Patient Location Data & Filters
-    const district = searchParams.get('district') || '';
+    const districtRaw = searchParams.get('district') || '';
+    const district = normalizeDistrict(districtRaw);
     const minExperience = parseInt(searchParams.get('minExperience') || '0', 10);
     const maxFee = parseInt(searchParams.get('maxFee') || '10000', 10);
     const availability = searchParams.get('availability'); // 'any', 'today'
