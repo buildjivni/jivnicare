@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { doctorSettingsSchema, formatZodError } from "@/lib/validators/validations";
 import { VerificationStatus } from "@prisma/client";
 import { normalizeQualifications, normalizeLanguages } from "@/lib/utils/normalizers";
-import { getCurrentLogicalDay, getUnifiedQueueCapacity } from "@/lib/utils/clinic-utils";
+import { getCurrentLogicalDay, getUnifiedQueueCapacity, normalizeEmergencyConfig } from "@/lib/utils/clinic-utils";
 
 export async function PUT(request: Request) {
   try {
@@ -182,7 +182,19 @@ export async function PUT(request: Request) {
         const opsUpdate: any = {};
         if (body.isClosedToday !== undefined) opsUpdate.isClosedToday = body.isClosedToday;
         if (body.pauseOnlineBooking !== undefined) opsUpdate.pauseOnlineBooking = body.pauseOnlineBooking;
-        if (body.emergencySlots !== undefined) opsUpdate.emergencySlots = body.emergencySlots;
+        
+        // ── Phase 1: Canonical Emergency Normalization ──
+        const finalEmergencyAvailable = instantData.emergencyAvailable !== undefined 
+          ? instantData.emergencyAvailable 
+          : doctor.emergencyAvailable;
+          
+        if (body.emergencySlots !== undefined || !finalEmergencyAvailable) {
+          const { emergencySlots } = normalizeEmergencyConfig(
+            finalEmergencyAvailable, 
+            body.emergencySlots !== undefined ? body.emergencySlots : null
+          );
+          opsUpdate.emergencySlots = emergencySlots;
+        }
         
         if (body.maxCapacity !== undefined) {
           opsUpdate.walkInLimit = body.maxCapacity;

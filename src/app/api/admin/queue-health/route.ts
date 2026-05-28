@@ -29,8 +29,10 @@ export async function GET() {
           select: {
             name: true,
             hospitalName: true,
+            clinicName: true,
             district: true,
             averageConsultationTime: true,
+            verificationStatus: true,
             user: {
                select: { name: true }
             }
@@ -56,8 +58,9 @@ export async function GET() {
       
       return {
         id: q.id,
-        clinicName: q.doctor.hospitalName || "General Clinic",
+        clinicName: q.doctor.clinicName || q.doctor.hospitalName || "N/A",
         doctorName: q.doctor.name,
+        verificationStatus: q.doctor.verificationStatus,
         servingToken: q.currentActiveToken,
         waitingCount: waiting,
         estimatedWait: estWait,
