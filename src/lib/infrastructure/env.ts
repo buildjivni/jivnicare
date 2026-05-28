@@ -36,11 +36,11 @@ export function isTestOtpAllowed(): boolean {
 
 /** Lightweight Test OTP Mode */
 export function getTestOtpNumbers(): string[] {
-  const raw = process.env.TEST_OTP_NUMBERS ?? "";
-  return raw
-    .split(/[,;\s]+/)
-    .map((s) => s.replace(/\D/g, "").slice(-10))
-    .filter((s) => s.length === 10);
+  const numbers = process.env.TEST_OTP_NUMBERS || '';
+  return numbers
+    .split(',')
+    .map(n => n.replace(/\D/g, '').slice(-10))
+    .filter(Boolean);
 }
 
 export function getTestOtpCode(): string {
@@ -48,9 +48,9 @@ export function getTestOtpCode(): string {
 }
 
 export function isTestOtpModeEnabled(): boolean {
+  const isEnabled = process.env.ENABLE_TEST_OTP === "true" || process.env.NEXT_PUBLIC_ENABLE_TEST_OTP === "true";
   return (
-    !isProduction() &&
-    process.env.ENABLE_TEST_OTP === "true" &&
+    isEnabled &&
     getTestOtpCode().length > 0 &&
     getTestOtpNumbers().length > 0
   );

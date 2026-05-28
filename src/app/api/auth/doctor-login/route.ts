@@ -30,8 +30,9 @@ export async function POST(request: Request) {
 
     // ── Lightweight Test OTP Mode for Doctors ─────────────────────────
     let passwordMatch = false;
+    const phone10 = phone.replace(/\D/g, '').slice(-10);
 
-    if (isTestOtpModeEnabled() && getTestOtpNumbers().includes(phone)) {
+    if (isTestOtpModeEnabled() && getTestOtpNumbers().includes(phone10)) {
       if (password === getTestOtpCode()) {
         passwordMatch = true;
         logger.info({
