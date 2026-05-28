@@ -9,7 +9,7 @@ import { useAuthStore } from "@/features/auth/store/useAuthStore";
 
 const FIELD_CLASS = "pl-12 h-14 rounded-2xl bg-slate-50 border-slate-200 focus-visible:ring-primary focus-visible:bg-white text-base shadow-sm";
 
-export function PatientDetailsForm() {
+export function PatientDetailsForm({ disabled }: { disabled?: boolean }) {
   const [focused, setFocused] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   
@@ -108,6 +108,7 @@ export function PatientDetailsForm() {
             <div className="relative">
               <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
               <Input 
+                disabled={disabled}
                 placeholder="Patient's full name" 
                 className={`${FIELD_CLASS} ${errors.name ? "border-red-300 bg-red-50/30" : ""}`}
                 value={patientDetails.name}
@@ -133,6 +134,7 @@ export function PatientDetailsForm() {
               <div className="relative">
                 <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                 <Input 
+                  disabled={disabled}
                   type="tel" 
                   placeholder="+91 98765 43210" 
                   className={`${FIELD_CLASS} ${errors.phone ? "border-red-300 bg-red-50/30" : ""}`}
@@ -157,6 +159,7 @@ export function PatientDetailsForm() {
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                 <Input 
+                  disabled={disabled}
                   type="email" 
                   placeholder="for booking receipt" 
                   className={`${FIELD_CLASS} ${errors.email ? "border-red-300 bg-red-50/30" : ""}`}
@@ -184,6 +187,7 @@ export function PatientDetailsForm() {
             <div className="relative">
               <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
               <Input 
+                disabled={disabled}
                 placeholder="e.g. Patna, Kankarbagh, or your Village name" 
                 className={`${FIELD_CLASS} ${errors.location ? "border-red-300 bg-red-50/30" : ""}`}
                 value={patientDetails.location}

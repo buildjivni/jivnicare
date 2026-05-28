@@ -51,6 +51,7 @@ function DoctorLoginContent() {
       const res = await fetch("/api/auth/doctor-login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ phone, password }),
       });
 

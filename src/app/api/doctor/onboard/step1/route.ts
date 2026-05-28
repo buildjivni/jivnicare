@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/db/prisma';
+import { isTestOtpModeEnabled } from '@/lib/config/test-mode';
 import bcrypt from 'bcryptjs';
 import { signToken } from '@/lib/jwt';
 import { cookies } from 'next/headers';
@@ -207,7 +208,7 @@ export async function POST(request: Request) {
 
     const cookieStore = await cookies();
     cookieStore.set('auth-token', token, {
-      httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 7 * 24 * 60 * 60
+      httpOnly: true, secure: process.env.NODE_ENV === 'production' && !isTestOtpModeEnabled(), sameSite: 'lax', path: '/', maxAge: 7 * 24 * 60 * 60
     });
 
     return response;

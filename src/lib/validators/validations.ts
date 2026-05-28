@@ -15,6 +15,7 @@ export const bookAppointmentSchema = z.object({
   date: z.string().datetime().or(z.date()), // Next.js API parses it as a string usually
   location: z.string().min(2).max(100).optional(),
   isEmergency: z.boolean().optional().default(false),
+  requestId: z.string().uuid().optional(),
 });
 
 // 2. Doctor Next Patient Schema

@@ -4,6 +4,8 @@ import { getTwoFactorApiKey } from "@/lib/infrastructure/env";
 import { checkRateLimit } from "@/lib/infrastructure/rate-limit";
 import { logger } from "@/lib/infrastructure/logger";
 
+import { isTestOtpModeEnabled, getTestOtpNumbers } from "@/lib/config/test-mode";
+
 const SEND_LIMIT = 5;
 const SEND_WINDOW_MS = 15 * 60 * 1000;
 
@@ -57,6 +59,18 @@ export async function POST(request: Request) {
         { error: "Phone verification service is not configured on the server." },
         { status: 503 }
       );
+    }
+
+    if (isTestOtpModeEnabled() && getTestOtpNumbers().includes(phone10)) {
+      const existingUser = await prisma.user.findUnique({
+        where: { phone: phone10 },
+        select: { id: true },
+      });
+      return NextResponse.json({
+        message: "Test OTP generated",
+        sessionId: `test_session_${phone10}`,
+        userExists: !!existingUser,
+      });
     }
 
     // Call 2Factor AUTOGEN API

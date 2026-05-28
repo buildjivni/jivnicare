@@ -4,7 +4,7 @@ import { operationalCounters } from '@/lib/infrastructure/logger';
 
 export async function GET(req: Request) {
   // Simple admin JWT check – assume getSession returns { role }
-  const session = await getSession(req);
+  const session = await getSession();
   if (!session || session.role !== 'admin') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

@@ -1,7 +1,8 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState, useEffect, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import useSWR from "swr";
 import { 
   LayoutDashboard, Users, UserCircle, Settings,
   LogOut, Wallet, CalendarX, AlertCircle, ShieldCheck, CheckCircle2,
@@ -32,11 +33,6 @@ function DoctorDashboardContent() {
   const router = useRouter();
   const activeTab = searchParams.get("tab") || "overview";
 
-  // Queue State
-  const [patients, setPatients] = useState<any[]>([]);
-  const [queueStats, setQueueStats] = useState<any>({
-    total: 0, waiting: 0, completed: 0, currentActive: 0, avgWaitTime: 0
-  });
   const {
     profile: profileData,
     settings: settingsData,
@@ -48,92 +44,56 @@ function DoctorDashboardContent() {
     setProfileField,
     setSettingsField,
   } = useDoctorWorkspace();
-  const [isLoadingQueue, setIsLoadingQueue] = useState(true);
+
+  // Queue State
   const [isProcessingMutation, setIsProcessingMutation] = useState(false);
 
-  const fetchQueue = async () => {
-    try {
-      const res = await fetch("/api/doctor/queue");
-      if (res.status === 401) {
-        useAuthStore.getState().logout();
-        return;
-      }
-      let data: {
-        success?: boolean;
-        tokens?: unknown[];
-        stats?: { currentActive?: number };
-        doctor?: { averageConsultationTime?: number };
-      } | null = null;
-      try {
-        data = await res.json();
-      } catch {
-        return;
-      }
-      if (data?.success && data.tokens) {
-        const avgTime = data.doctor?.averageConsultationTime || 15;
-        const currentActive = data.stats?.currentActive || 0;
-        const formatted = data.tokens.map((t: any) => {
-          const isEmergency =
-            t.isEmergency || t.tokenNumber >= 9000;
-          const waitTokens = isEmergency
-            ? 0
-            : Math.max(0, t.tokenNumber - currentActive - 1);
-          const waitTime =
-            t.status === "WAITING" && !isEmergency
-              ? waitTokens * avgTime
-              : 0;
-          return {
-            id: t.id,
-            name: t.user?.name || t.walkInEntry?.patientName || "Unknown",
-            initials: (t.user?.name || t.walkInEntry?.patientName || "U").substring(0,2).toUpperCase(),
-            token: t.tokenNumber,
-            condition: t.walkInEntry?.symptoms || "General",
-            visitType: t.source === "ONLINE" ? "Online" : "Walk-in",
-            waitTime: waitTime,
-            priority: t.isEmergency ? "Emergency" : "Standard",
-            location: t.patientLocation || "N/A",
-            status: t.status === "WAITING" ? "Waiting" : t.status === "COMPLETED" ? "Served" : t.status === "IN_CONSULTATION" ? "In-Person" : t.status,
-            appointmentTime: new Date(t.tokenIssuedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-          };
-        });
-        setPatients(formatted);
-        if (data.stats) setQueueStats(data.stats);
-      }
-    } catch {
-      // Queue poll failure is non-fatal; next interval retries
-    } finally {
-      setIsLoadingQueue(false);
+  const fetcher = async (url: string) => {
+    const res = await fetch(url);
+    if (res.status === 401) {
+      useAuthStore.getState().logout();
+      throw new Error("Unauthorized");
     }
+    const data = await res.json();
+    return data;
   };
 
-  useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
-    let isFetching = false;
-    
-    const poll = async () => {
-      if (document.visibilityState === "visible" && !isFetching) {
-        isFetching = true;
-        await fetchQueue();
-        isFetching = false;
-      }
-      timeoutId = setTimeout(poll, 30000);
-    };
-    
-    poll();
+  const { data: queueData, isLoading: isLoadingQueue, mutate: mutateQueue } = useSWR("/api/doctor/queue", fetcher, {
+    refreshInterval: 15000,
+    revalidateOnFocus: true,
+    revalidateOnReconnect: true,
+  });
 
-    const handleVisibility = () => {
-      if (document.visibilityState === "visible") {
-        clearTimeout(timeoutId);
-        poll();
-      }
-    };
-    document.addEventListener("visibilitychange", handleVisibility);
-
-    return () => {
-      clearTimeout(timeoutId);
-      document.removeEventListener("visibilitychange", handleVisibility);
-    };
-  }, []);
+  const { patients, queueStats } = useMemo(() => {
+    let formattedPatients: any[] = [];
+    let stats = { total: 0, waiting: 0, completed: 0, currentActive: 0, avgWaitTime: 0 };
+    
+    if (queueData?.success && queueData.tokens) {
+      const avgTime = queueData.doctor?.averageConsultationTime || 15;
+      const currentActive = queueData.stats?.currentActive || 0;
+      
+      formattedPatients = queueData.tokens.map((t: any) => {
+        const isEmergency = t.isEmergency || t.tokenNumber >= 9000;
+        const waitTokens = isEmergency ? 0 : Math.max(0, t.tokenNumber - currentActive - 1);
+        const waitTime = t.status === "WAITING" && !isEmergency ? waitTokens * avgTime : 0;
+        return {
+          id: t.id,
+          name: t.user?.name || t.walkInEntry?.patientName || "Unknown",
+          initials: (t.user?.name || t.walkInEntry?.patientName || "U").substring(0,2).toUpperCase(),
+          token: t.tokenNumber,
+          condition: t.walkInEntry?.symptoms || "General",
+          visitType: t.source === "ONLINE" ? "Online" : "Walk-in",
+          waitTime: waitTime,
+          priority: t.isEmergency ? "Emergency" : "Standard",
+          location: t.patientLocation || "N/A",
+          status: t.status === "WAITING" ? "Waiting" : t.status === "COMPLETED" ? "Served" : t.status === "IN_CONSULTATION" ? "In-Person" : t.status,
+          appointmentTime: new Date(t.tokenIssuedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+        };
+      });
+      if (queueData.stats) stats = queueData.stats;
+    }
+    return { patients: formattedPatients, queueStats: stats };
+  }, [queueData]);
 
   const handleNextPatient = async (skipCurrent: boolean = false) => {
     if (isProcessingMutation) return;
@@ -152,12 +112,12 @@ function DoctorDashboardContent() {
       // Handle race condition silently
       if (res.status === 409) {
         console.warn("Queue progressed concurrently by another device.");
-        await fetchQueue();
+        await mutateQueue();
         return;
       }
       const data = await res.json();
       if (data.success || data.error) {
-         await fetchQueue(); 
+         await mutateQueue(); 
       }
     } catch (error) {
       console.error("Queue progression failed:", error);
@@ -619,7 +579,7 @@ function DoctorDashboardContent() {
                   location: location || undefined
                 })
               });
-              if (res.ok) await fetchQueue();
+              if (res.ok) await mutateQueue();
             }} 
           />
         </div>

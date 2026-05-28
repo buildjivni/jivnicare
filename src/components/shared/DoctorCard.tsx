@@ -159,6 +159,7 @@ export const DoctorCard = React.memo(function DoctorCard({ doctor, className, pr
             className="object-cover transition-transform duration-700 group-hover:scale-105"
             sizes="(max-width: 768px) 100vw, 33vw"
             priority={priority}
+            quality={60}
           />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/5 to-transparent" />
@@ -212,6 +213,7 @@ export const DoctorCard = React.memo(function DoctorCard({ doctor, className, pr
                   width={64}
                   height={64}
                   className="object-cover w-full h-full"
+                  quality={60}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-blue-50 text-[#205E98] font-bold text-xl">

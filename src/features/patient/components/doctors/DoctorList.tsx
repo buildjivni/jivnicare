@@ -10,9 +10,12 @@ import { getStableKey } from "@/lib/getStableKey";
 interface DoctorListProps {
   doctors: Doctor[];
   onClearFilters: () => void;
+  hasMore?: boolean;
+  isLoadingMore?: boolean;
+  onLoadMore?: () => void;
 }
 
-export function DoctorList({ doctors, onClearFilters }: DoctorListProps) {
+export function DoctorList({ doctors, onClearFilters, hasMore, isLoadingMore, onLoadMore }: DoctorListProps) {
   return (
     <div className="flex-1 w-full min-w-0">
       {/* ── Empty State ────────────────────────────────────────────────────────── */}
@@ -59,17 +62,40 @@ export function DoctorList({ doctors, onClearFilters }: DoctorListProps) {
         </div>
       ) : (
         /* ── Results Grid ────────────────────────────────────────────────────── */
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pb-24 md:pb-4">
-            {doctors.map((doctor, idx) => (
-              <motion.div 
-                key={getStableKey(doctor, idx)}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.18, delay: Math.min(idx * 0.04, 0.25) }}
+        <div className="flex flex-col">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pb-8">
+              {doctors.map((doctor, idx) => (
+                <motion.div 
+                  key={getStableKey(doctor, idx)}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.18, delay: Math.min(idx * 0.04, 0.25) }}
+                >
+                  <DoctorCard doctor={doctor} priority={idx < 4} />
+                </motion.div>
+              ))}
+          </div>
+          
+          {/* Load More Pagination */}
+          {hasMore && (
+            <div className="flex justify-center pb-24 md:pb-12">
+              <Button
+                onClick={onLoadMore}
+                disabled={isLoadingMore}
+                variant="outline"
+                className="h-12 px-8 rounded-full border-2 border-primary/20 text-primary font-bold hover:bg-primary/5 transition-all shadow-sm"
               >
-                <DoctorCard doctor={doctor} priority={idx < 4} />
-              </motion.div>
-            ))}
+                {isLoadingMore ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-primary/40 border-t-primary rounded-full animate-spin" />
+                    Loading...
+                  </div>
+                ) : (
+                  "Load More Doctors"
+                )}
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </div>
