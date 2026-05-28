@@ -62,8 +62,9 @@ function DoctorListingContent() {
     return s ? s.split(",") : [];
   }, [searchParams]);
 
-  const [searchResult, setSearchResult] = useState<SearchResult | null>(null);
+  const [searchResult, setSearchResult] = useState<(SearchResult & { hasMore?: boolean; page?: number }) | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isError, setIsError] = useState(false);
   
   // ── Geo-Location State ──────────────────────────────────────────────────────
@@ -81,6 +82,9 @@ function DoctorListingContent() {
       setIsError(false);
       try {
         const queryParams = new URLSearchParams(searchParams.toString());
+        queryParams.set("page", "1");
+        queryParams.set("limit", "15");
+
         if (effectiveDistrict) {
           queryParams.set("district", effectiveDistrict);
         }
@@ -94,7 +98,7 @@ function DoctorListingContent() {
         const res = await fetch(`/api/public/search?${queryParams.toString()}`);
         if (!res.ok) throw new Error("Search failed");
 
-        const data: SearchResult = await res.json();
+        const data = await res.json();
 
         if (isMounted) {
           setSearchResult(data);
@@ -113,6 +117,37 @@ function DoctorListingContent() {
     fetchResults();
     return () => { isMounted = false; };
   }, [searchParams, latitude, longitude, effectiveDistrict, hasHydrated]);
+
+  const loadMore = async () => {
+    if (!searchResult || !searchResult.hasMore || isLoadingMore) return;
+    setIsLoadingMore(true);
+    try {
+      const nextPage = (searchResult.page || 1) + 1;
+      const queryParams = new URLSearchParams(searchParams.toString());
+      queryParams.set("page", nextPage.toString());
+      queryParams.set("limit", "15");
+
+      if (effectiveDistrict) queryParams.set("district", effectiveDistrict);
+      if (latitude && longitude) {
+        queryParams.set("lat", latitude.toString());
+        queryParams.set("lng", longitude.toString());
+        if (!searchParams.get("sort")) queryParams.set("sort", "distance");
+      }
+
+      const res = await fetch(`/api/public/search?${queryParams.toString()}`);
+      if (!res.ok) throw new Error("Load more failed");
+
+      const data = await res.json();
+      setSearchResult(prev => prev ? {
+        ...data,
+        results: [...prev.results, ...data.results],
+      } : data);
+    } catch (error) {
+      console.error("Failed to load more:", error);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
 
   // ── Handlers (Update URL only) ──────────────────────────────────────────────
   const updateParams = (updates: Record<string, string | null>) => {
@@ -326,6 +361,9 @@ function DoctorListingContent() {
               <DoctorList
                 doctors={searchResult?.results || []}
                 onClearFilters={handleClearFilters}
+                hasMore={searchResult?.hasMore}
+                isLoadingMore={isLoadingMore}
+                onLoadMore={loadMore}
               />
             )}
           </div>

@@ -90,6 +90,7 @@ export const viewport: Viewport = {
 
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { MonitoringProvider } from "@/components/providers/MonitoringProvider";
+import { OperationalErrorBoundary } from "@/components/providers/OperationalErrorBoundary";
 
 export default function RootLayout({
   children,
@@ -114,11 +115,13 @@ export default function RootLayout({
       >
         <MonitoringProvider />
         <GoogleAnalytics ga_id={process.env.NEXT_PUBLIC_GA_ID || ""} />
-        <AuthProvider>
-          <div className="flex-1 flex flex-col">
-            {children}
-          </div>
-        </AuthProvider>
+        <OperationalErrorBoundary>
+          <AuthProvider>
+            <div className="flex-1 flex flex-col">
+              {children}
+            </div>
+          </AuthProvider>
+        </OperationalErrorBoundary>
       </body>
     </html>
   );

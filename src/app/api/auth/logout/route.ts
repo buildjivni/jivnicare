@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isTestOtpModeEnabled } from "@/lib/config/test-mode";
 
 /**
  * JivniCare Auth — Logout
@@ -13,7 +14,7 @@ export async function POST(request: NextRequest) {
     maxAge: 0,
     path: "/",
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: process.env.NODE_ENV === 'production' && !isTestOtpModeEnabled(),
     sameSite: 'strict',
   });
 

@@ -33,7 +33,9 @@ export async function checkRateLimit({ identifier, limit, windowMs }: RateLimitC
     if (cache.size > MAX_CACHE_SIZE) {
       // Remove the oldest entry (Map preserves insertion order)
       const oldestKey = cache.keys().next().value;
-      cache.delete(oldestKey);
+      if (oldestKey !== undefined) {
+        cache.delete(oldestKey);
+      }
     }
     return { success: true, remaining: limit - 1, resetTime: new Date(entry.resetAt) };
   }

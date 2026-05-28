@@ -22,6 +22,7 @@ import {
   getRegularQueuePosition,
   getApproximateWaitTime,
 } from "@/lib/utils/clinic-utils";
+import { trackOperationalEvent } from "@/lib/telemetry/client";
 
 const TOKEN_STATUS_LABELS: Record<string, string> = {
   WAITING: "Waiting",
@@ -188,6 +189,8 @@ export default function MyBookingsPage() {
 
       source.onerror = () => {
         console.warn('SSE connection error, falling back to polling');
+        trackOperationalEvent({ metric: 'sseDisconnects' });
+        
         if (source) source.close();
         if (heartbeatTimeout) clearTimeout(heartbeatTimeout);
         
@@ -207,6 +210,7 @@ export default function MyBookingsPage() {
       if (document.visibilityState === 'visible') {
         fetchBookings();
         if (!source || source.readyState === EventSource.CLOSED) {
+          trackOperationalEvent({ metric: 'queueReconnects' });
           connectSSE(); 
         }
       }

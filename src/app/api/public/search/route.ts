@@ -247,10 +247,24 @@ let mappedDoctors: Doctor[] = filteredDbDoctors.map(mapPrismaDoctorToUI);
       return 0;
     });
 
+    const page = parseInt(searchParams.get('page') || '1', 10);
+    const limit = parseInt(searchParams.get('limit') || '15', 10);
+
     // Run the fuzzy search algorithm for final scoring if query exists
     const searchResult = searchDoctors(query, mappedDoctors, district);
 
-    return NextResponse.json(searchResult);
+    // Apply pagination AFTER all sorting and fuzzy matching to preserve relevance
+    const skip = (page - 1) * limit;
+    const paginatedResults = searchResult.results.slice(skip, skip + limit);
+
+    return NextResponse.json({
+      ...searchResult,
+      results: paginatedResults,
+      page,
+      limit,
+      totalPages: Math.ceil(searchResult.total / limit),
+      hasMore: skip + paginatedResults.length < searchResult.total
+    });
 
   } catch (error) {
     console.error("Search API Error:", error);

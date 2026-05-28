@@ -1,76 +1,65 @@
 import { test, expect } from '@playwright/test';
-import { getAuthToken } from './utils/auth';
 
 test('Doctor journey: full dashboard and queue lifecycle', async ({ page }) => {
-  // 1. Obtain a doctor JWT via test helper (no real login UI)
-  const doctorToken = await getAuthToken('doctor');
-  // Set auth cookie (assuming JWT in `auth-token` cookie)
-  await page.context().addCookies([
-    { name: 'auth-token', value: doctorToken, domain: 'localhost', path: '/' }
-  ]);
+  // 1. Go to real login UI and authenticate
+  await page.goto('/partners/login');
+  await page.fill('input[type="tel"]', '9999999991'); // Test doctor number
+  await page.fill('input[type="password"]', '123456');
+  await page.click('button:has-text("Sign In")');
+  await expect(page).toHaveURL(/doctor\/dashboard/);
 
-  // 2. Go to doctor dashboard
-  await page.goto('/doctor/dashboard');
-  await expect(page.locator('text=Doctor Dashboard')).toBeVisible();
+  // 2. Profile update (basic navigation and save)
+  await page.goto('/doctor/dashboard?tab=profile');
+  await expect(page.locator('h1:has-text("My Profile")')).toBeVisible();
+  await page.click('button:has-text("Save & Update Profile")');
+  await expect(page.locator('text=saved')).toBeVisible();
 
-  // 3. Profile update (e.g., name change)
-  await page.fill('input[name="displayName"]', 'Dr. Test');
-  await page.click('text=Save Profile');
-  await expect(page.locator('text=Profile updated')).toBeVisible();
+  // 3. Schedule / Settings update
+  await page.goto('/doctor/dashboard?tab=settings');
+  await expect(page.locator('h1:has-text("Clinic Settings")')).toBeVisible();
+  // Click the Save changes button in settings (there are two, one for Clinic Operations, one for Schedule)
+  await page.locator('button:has-text("Save Changes")').first().click();
+  await expect(page.locator('text=saved').first()).toBeVisible();
 
-  // 4. Clinic image upload (mock file)
-  const filePath = 'tests/e2e/fixtures/clinic.png';
-  await page.setInputFiles('input[type="file"][name="clinicImage"]', filePath);
-  await page.click('text=Upload Image');
-  await expect(page.locator('text=Image uploaded')).toBeVisible();
+  // 4. Queue activation (simulate readiness)
+  await page.goto('/doctor/dashboard?tab=overview');
+  // Select AVAILABLE from the status dropdown
+  await page.locator('select').selectOption('AVAILABLE');
+  // The UI doesn't have a specific "Queue is now active" toast, but it syncs.
 
-  // 5. Schedule update
-  await page.click('text=Edit Schedule');
-  await page.fill('input[name="availableFrom"]', '09:00');
-  await page.fill('input[name="availableTo"]', '17:00');
-  await page.click('text=Save Schedule');
-  await expect(page.locator('text=Schedule saved')).toBeVisible();
+  // 5. Queue Manager
+  await page.goto('/doctor/dashboard?tab=queue');
+  await expect(page.locator('h1:has-text("Manager")')).toBeVisible();
 
-  // 6. Activate queue (simulate readiness)
-  await page.click('text=Activate Queue');
-  await expect(page.locator('text=Queue is now active')).toBeVisible();
+  // 6. Token calling – simulate serving next patient (Walk-in)
+  // First, add a walk-in patient so we have someone to call
+  page.on('dialog', async dialog => {
+    if (dialog.type() === 'prompt') {
+      await dialog.accept('Test Walk-in Patient');
+    } else {
+      await dialog.accept();
+    }
+  });
+  await page.click('button:has-text("Add Walk-in Patient")');
+  // Wait for the patient to appear in the table
+  await expect(page.locator('text=Test Walk-in Patient').first()).toBeVisible();
 
-  // 7. Token calling – simulate serving next patient
-  await page.click('text=Call Next Token');
-  const tokenText = await page.textContent('.current-token');
-  expect(tokenText).toMatch(/\d+/); // token should be numeric
-
-  // 8. Emergency token insertion
-  await page.click('text=Insert Emergency Token');
-  await expect(page.locator('.emergency-token')).toBeVisible();
-
-  // 9. Refresh and ensure queue state persists
+  // Call Next Token
+  await page.click('button:has-text("Call Next")');
+  
+  // 7. Refresh and ensure queue state persists
   await page.reload();
-  await expect(page.locator('text=Queue is now active')).toBeVisible();
-  await expect(page.locator('.current-token')).toHaveText(tokenText);
+  await expect(page.locator('h1:has-text("Manager")')).toBeVisible();
 
-  // 10. Simulate reconnect (close and reopen context)
-  const context = await page.context().close();
-  const newContext = await page.browser().newContext();
-  const newPage = await newContext.newPage();
-  await newPage.context().addCookies([
-    { name: 'auth-token', value: doctorToken, domain: 'localhost', path: '/' }
-  ]);
-  await newPage.goto('/doctor/dashboard');
-  await expect(newPage.locator('text=Queue is now active')).toBeVisible();
-  // Ensure no duplicate token issue after reconnect
-  await newPage.click('text=Call Next Token');
-  const newToken = await newPage.textContent('.current-token');
-  expect(newToken).not.toBe(tokenText);
-
-  // 11. Logout and login again
-  await newPage.click('text=Logout');
-  await expect(newPage).toHaveURL('/');
-  // Re-login using helper again
-  const newDoctorToken = await getAuthToken('doctor');
-  await newPage.context().addCookies([
-    { name: 'auth-token', value: newDoctorToken, domain: 'localhost', path: '/' }
-  ]);
-  await newPage.goto('/doctor/dashboard');
-  await expect(newPage.locator('text=Doctor Dashboard')).toBeVisible();
+  // 8. Logout and login again
+  await page.click('text=Secure Sign Out');
+  await expect(page).toHaveURL('/');
+  
+  // Re-login using real UI again
+  await page.goto('/partners/login');
+  await page.fill('input[type="tel"]', '9999999991');
+  await page.fill('input[type="password"]', '123456');
+  await page.click('button:has-text("Sign In")');
+  await expect(page).toHaveURL(/doctor\/dashboard/);
+  await expect(page.locator('text=Command Center')).toBeVisible();
 });

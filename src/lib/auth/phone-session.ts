@@ -1,6 +1,7 @@
 import prisma from "@/lib/db/prisma";
 import { signToken } from "@/lib/jwt";
 import { NextResponse } from "next/server";
+import { isTestOtpModeEnabled } from "@/lib/config/test-mode";
 
 interface CreatePhoneSessionInput {
   phone10: string;
@@ -75,7 +76,7 @@ export async function createPhoneSessionResponse(input: CreatePhoneSessionInput)
 
   response.cookies.set("auth-token", token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: process.env.NODE_ENV === "production" && !isTestOtpModeEnabled(),
     sameSite: "lax",
     maxAge,
     path: "/",

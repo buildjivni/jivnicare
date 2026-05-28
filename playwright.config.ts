@@ -18,6 +18,18 @@ export default defineConfig({
       headless: true,
     },
   },
+  webServer: {
+    command: 'npm run start',
+    url: 'http://localhost:3000',
+    env: { 
+      IS_PLAYWRIGHT: 'true',
+      NEXT_PUBLIC_ENABLE_TEST_OTP: 'true',
+      NEXT_PUBLIC_TEST_OTP_NUMBERS: '9999999999,9999999991,9999999992',
+      NEXT_PUBLIC_TEST_OTP_CODE: '123456'
+    },
+    reuseExistingServer: true,
+    timeout: 120000,
+  },
   projects: [
     {
       name: 'Chromium',

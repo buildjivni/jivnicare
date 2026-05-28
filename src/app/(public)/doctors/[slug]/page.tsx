@@ -196,20 +196,14 @@ export default async function DoctorProfilePage({ params }: PageProps) {
           <div className="flex-1 min-w-0">
             <DoctorProfileView doctor={doctor} relatedDoctors={relatedDoctors} />
 
-            {/* Mobile booking widget (inline, above fixed CTA) */}
-            <div className="block lg:hidden mt-4" id="mobile-booking-widget">
-              <div className="mb-2">
-                <p className="text-[10.5px] font-bold text-slate-400 uppercase tracking-widest px-1">Book Appointment</p>
-              </div>
-              <BookingWidgetClient doctor={doctor} />
-            </div>
+            {/* Removed inline mobile widget to prevent duplicate mounting and state conflict. Mobile relies exclusively on the sticky bottom CTA. */}
           </div>
 
           {/* Right: Sticky booking sidebar (desktop only) */}
           <div className="lg:w-[340px] xl:w-[360px] shrink-0 hidden lg:block">
             <div className="sticky top-20">
               <div className="mb-2.5">
-                <p className="text-[10.5px] font-bold text-slate-400 uppercase tracking-widest">Book Appointment</p>
+                <p className="text-[10.5px] font-bold text-slate-400 uppercase tracking-widest">Schedule Appointment</p>
               </div>
               <BookingWidgetClient doctor={doctor} />
             </div>

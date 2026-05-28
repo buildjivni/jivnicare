@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, ShieldCheck, Activity } from "lucide-react";
+import { ArrowRight, ShieldCheck, Activity, CheckCircle2 } from "lucide-react";
 import { PatientDetailsForm } from "./PatientDetailsForm";
+import { trackOperationalEvent } from "@/lib/telemetry/client";
 
 import { useBookingStore } from "@/features/booking/store/useBookingStore";
 import { useAuthStore } from "@/features/auth/store/useAuthStore";
@@ -12,14 +13,39 @@ import { Button } from "@/components/ui/button";
 export function PaymentForm() {
   const router = useRouter();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
   const [errors, setErrors] = useState<{ submit?: string }>({});
   const setGeneratedToken = useBookingStore(state => state.setGeneratedToken);
   const patientDetails = useBookingStore(state => state.patientDetails);
   const selectedDoctor = useBookingStore(state => state.selectedDoctor);
 
+  const hasIntentRef = useRef(false);
+  const isSuccessRef = useRef(false);
+  const requestIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    // Generate an idempotency key on mount
+    if (typeof window !== "undefined" && !requestIdRef.current) {
+      requestIdRef.current = crypto.randomUUID();
+    }
+    
+    const timer = setTimeout(() => {
+      hasIntentRef.current = true;
+    }, 3000); // 3 seconds on page implies intent
+
+    return () => {
+      clearTimeout(timer);
+      if (hasIntentRef.current && !isSuccessRef.current) {
+        trackOperationalEvent({ metric: 'bookingAbandons' });
+      }
+    };
+  }, []);
+
   const handleJoinQueue = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isProcessing) return;
+    if (isProcessing || isSuccess) return;
+
+    setErrors({});
 
     // Validate patient details before proceeding
     if (!patientDetails.name.trim()) {
@@ -50,6 +76,7 @@ export function PaymentForm() {
           doctorId: selectedDoctor?.id,
           date: today,
           location: patientDetails.location,
+          requestId: requestIdRef.current,
         }),
       });
 
@@ -96,12 +123,31 @@ export function PaymentForm() {
         }
       } catch { /* ignore local storage errors */ }
       
-      router.push("/confirmation");
+      isSuccessRef.current = true;
+      setIsProcessing(false);
+      setIsSuccess(true); // Safe optimistic UX: show success ONLY after backend confirmation
+      
+      trackOperationalEvent({ metric: 'bookingSuccess' });
+      
+      // Small delay before redirecting to allow user to see the success state
+      setTimeout(() => {
+        router.push("/confirmation");
+      }, 500);
+      
     } catch (err: any) {
+      // Regenerate requestId for a clean retry if it was a server error
+      requestIdRef.current = crypto.randomUUID();
+      
       // Premium medical-grade error handling
       const errorMessage = err.message || "Something went wrong. Please try again.";
       setErrors({ submit: errorMessage });
       setIsProcessing(false);
+      setIsSuccess(false);
+      
+      trackOperationalEvent({
+        metric: 'bookingFailures',
+        metadata: { type: errorMessage, category: 'API_ERROR' }
+      });
       
       // Scroll to error
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -112,7 +158,7 @@ export function PaymentForm() {
 
   return (
     <div className="flex-1 space-y-8">
-      <PatientDetailsForm />
+      <PatientDetailsForm disabled={isProcessing || isSuccess} />
       
       <section>
         {submitError && (
@@ -133,13 +179,22 @@ export function PaymentForm() {
           <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-slate-100 z-50 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] md:static md:p-0 md:bg-transparent md:border-none md:shadow-none">
             <Button
               type="submit"
-              disabled={isProcessing}
-              className="w-full h-14 md:h-16 rounded-2xl bg-primary hover:bg-primary/90 hover:brightness-105 hover:shadow-xl shadow-xl shadow-primary/20 transition-all text-lg font-bold group disabled:opacity-70 disabled:cursor-not-allowed overflow-hidden relative min-h-[44px]"
+              disabled={isProcessing || isSuccess}
+              className={`w-full h-14 md:h-16 rounded-2xl transition-all text-lg font-bold group disabled:opacity-90 disabled:cursor-not-allowed overflow-hidden relative min-h-[44px] shadow-xl ${
+                isSuccess 
+                  ? "bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20 text-white" 
+                  : "bg-primary hover:bg-primary/90 hover:brightness-105 shadow-primary/20 text-white"
+              }`}
             >
-              {isProcessing ? (
+              {isSuccess ? (
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-6 h-6" />
+                  Booking Confirmed!
+                </div>
+              ) : isProcessing ? (
                 <div className="flex items-center gap-2">
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Generating Token...
+                  Processing booking...
                 </div>
               ) : (
                 <div className="flex items-center gap-2">

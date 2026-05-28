@@ -1,9 +1,9 @@
 "use client";
 
-import { isPilotOtpModeClient } from "@/lib/infrastructure/env";
+import { isTestOtpModeEnabled } from "@/lib/config/test-mode";
 
 export function PilotModeBadge() {
-  if (!isPilotOtpModeClient()) return null;
+  if (!isTestOtpModeEnabled()) return null;
 
   return (
     <div

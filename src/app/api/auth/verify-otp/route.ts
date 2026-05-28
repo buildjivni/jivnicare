@@ -4,6 +4,8 @@ import { logger } from '@/lib/infrastructure/logger';
 import { getTwoFactorApiKey } from '@/lib/infrastructure/env';
 import { createPhoneSessionResponse } from '@/lib/auth/phone-session';
 import { isTransientDbError, dbUnavailableResponse } from '@/lib/db/db-errors';
+import { isTestOtpModeEnabled, getTestOtpNumbers, getTestOtpCode } from '@/lib/config/test-mode';
+import { incrementTelemetryCounter } from '@/lib/telemetry/redis';
 
 const VERIFY_LIMIT = 5;
 const VERIFY_WINDOW_MS = 10 * 60 * 1000;
@@ -75,6 +77,22 @@ export async function POST(request: Request) {
       );
     }
 
+    if (isTestOtpModeEnabled() && getTestOtpNumbers().includes(phone10)) {
+      if (otp !== getTestOtpCode()) {
+        await incrementTelemetryCounter('otpFailures');
+        return NextResponse.json(
+          { error: 'Invalid or expired OTP. Please try again.' },
+          { status: 401 }
+        );
+      }
+      return createPhoneSessionResponse({
+        phone10,
+        firebaseUid: `test_user_${phone10}`,
+        name,
+        location,
+      });
+    }
+
     try {
       // Call 2Factor VERIFY API
       const res = await fetch(`https://2factor.in/API/V1/${apiKey}/SMS/VERIFY/${sessionId}/${otp}`, {
@@ -90,6 +108,7 @@ export async function POST(request: Request) {
       
       if (data.Status !== 'Success' || data.Details !== 'OTP Matched') {
         logger.info({ category: 'OTP', message: 'Invalid OTP entered', metadata: { phoneSuffix: phone10.slice(-4) } });
+        await incrementTelemetryCounter('otpFailures');
         return NextResponse.json(
           { error: 'Invalid or expired OTP. Please try again.' },
           { status: 401 }
@@ -104,6 +123,7 @@ export async function POST(request: Request) {
       });
     } catch (err) {
       logger.error({ category: 'OTP', message: '2Factor token verification failed', error: err });
+      await incrementTelemetryCounter('otpFailures');
       return NextResponse.json({ error: 'Invalid or expired verification. Please try again.' }, { status: 401 });
     }
 
