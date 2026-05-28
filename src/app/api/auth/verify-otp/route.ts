@@ -1,15 +1,9 @@
 import { NextResponse } from 'next/server';
 import { checkRateLimit } from '@/lib/infrastructure/rate-limit';
 import { logger } from '@/lib/infrastructure/logger';
-import { isTestOtpAllowed, isFirebaseConfigured, isTestOtpModeEnabled, getTestOtpNumbers, getTestOtpCode } from '@/lib/infrastructure/env';
-import { verifyFirebaseIdToken, normalizeIndianPhone } from '@/lib/firebase/admin';
+import { getTwoFactorApiKey } from '@/lib/infrastructure/env';
 import { createPhoneSessionResponse } from '@/lib/auth/phone-session';
 import { isTransientDbError, dbUnavailableResponse } from '@/lib/db/db-errors';
-import {
-  isPilotOtpModeActive,
-  isPhoneWhitelisted,
-  PILOT_TEST_OTP,
-} from '@/lib/auth/pilot-otp';
 
 const VERIFY_LIMIT = 5;
 const VERIFY_WINDOW_MS = 10 * 60 * 1000;
@@ -19,16 +13,18 @@ export async function POST(request: Request) {
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || '127.0.0.1';
 
     const body = await request.json();
-    const { phone, otp, firebaseIdToken, name, location } = body;
+    const { phone, otp, sessionId, name, location } = body;
 
     if (!phone) {
       return NextResponse.json({ error: 'Phone number is required' }, { status: 400 });
     }
 
-    let phone10: string;
-    try {
-      phone10 = normalizeIndianPhone(phone);
-    } catch {
+    if (!otp || !sessionId) {
+      return NextResponse.json({ error: 'OTP and Session ID are required' }, { status: 400 });
+    }
+
+    const phone10 = phone.replace(/\D/g, '').slice(-10);
+    if (phone10.length !== 10) {
       return NextResponse.json({ error: 'Invalid phone number format' }, { status: 400 });
     }
 
@@ -71,96 +67,46 @@ export async function POST(request: Request) {
       );
     }
 
-    // ── Pilot test OTP (whitelist + fixed code) ───────────────────
-    if (isPilotOtpModeActive()) {
-      if (!isPhoneWhitelisted(phone10)) {
-        return NextResponse.json(
-          { error: 'This number is not enabled for the pilot.' },
-          { status: 403 }
-        );
-      }
-      if (otp !== PILOT_TEST_OTP) {
-        return NextResponse.json({ error: 'Invalid OTP. Please try again.' }, { status: 401 });
-      }
-
-      logger.info({
-        category: 'OTP',
-        message: 'Pilot OTP verified',
-        metadata: { phoneSuffix: phone10.slice(-4) },
-      });
-
-      return createPhoneSessionResponse({
-        phone10,
-        firebaseUid: `pilot_${phone10}`,
-        name,
-        location,
-      });
+    const apiKey = getTwoFactorApiKey();
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: 'Phone verification service is not configured.' },
+        { status: 503 }
+      );
     }
 
-    // ── Lightweight Test OTP Mode ──────────────────────────────────────
-    if (isTestOtpModeEnabled() && getTestOtpNumbers().includes(phone10)) {
-      if (otp !== getTestOtpCode()) {
-        return NextResponse.json({ error: 'Invalid test OTP code.' }, { status: 401 });
+    try {
+      // Call 2Factor VERIFY API
+      const res = await fetch(`https://2factor.in/API/V1/${apiKey}/SMS/VERIFY/${sessionId}/${otp}`, {
+        method: 'GET',
+      });
+
+      if (!res.ok) {
+        logger.error({ category: 'OTP', message: '2Factor verify HTTP error', error: `status ${res.status}` });
+        return NextResponse.json({ error: 'Verification service unavailable. Please try again.' }, { status: 503 });
       }
+
+      const data = await res.json();
       
-      logger.info({
-        category: 'OTP',
-        message: 'Test OTP Mode verified',
-        metadata: { phoneSuffix: phone10.slice(-4) },
-      });
-
-      return createPhoneSessionResponse({
-        phone10,
-        firebaseUid: `test_booking_${phone10}`,
-        name,
-        location,
-      });
-    }
-
-    // ── Firebase Phone Auth (production path) ─────────────────────
-    if (firebaseIdToken) {
-      if (!isFirebaseConfigured()) {
+      if (data.Status !== 'Success' || data.Details !== 'OTP Matched') {
+        logger.info({ category: 'OTP', message: 'Invalid OTP entered', metadata: { phoneSuffix: phone10.slice(-4) } });
         return NextResponse.json(
-          { error: 'Phone verification service is not configured.' },
-          { status: 503 }
+          { error: 'Invalid or expired OTP. Please try again.' },
+          { status: 401 }
         );
       }
 
-      try {
-        const verified = await verifyFirebaseIdToken(firebaseIdToken);
-        if (verified.phone10 !== phone10) {
-          return NextResponse.json(
-            { error: 'Phone number does not match verified identity.' },
-            { status: 400 }
-          );
-        }
-
-        return createPhoneSessionResponse({
-          phone10,
-          firebaseUid: verified.uid,
-          name,
-          location,
-        });
-      } catch (err) {
-        logger.error({ category: 'OTP', message: 'Firebase token verification failed', error: err });
-        return NextResponse.json({ error: 'Invalid or expired verification. Please try again.' }, { status: 401 });
-      }
-    }
-
-    // ── Dev-only test OTP (local ALLOW_TEST_OTP) ──────────────────
-    if (isTestOtpAllowed() && otp === PILOT_TEST_OTP) {
       return createPhoneSessionResponse({
         phone10,
-        firebaseUid: `test_${phone10}`,
+        firebaseUid: `2factor_${phone10}`,
         name,
         location,
       });
+    } catch (err) {
+      logger.error({ category: 'OTP', message: '2Factor token verification failed', error: err });
+      return NextResponse.json({ error: 'Invalid or expired verification. Please try again.' }, { status: 401 });
     }
 
-    return NextResponse.json(
-      { error: 'Verification required. Please complete OTP via Firebase.' },
-      { status: 401 }
-    );
   } catch (error) {
     if (isTransientDbError(error)) {
       logger.warn({ category: 'OTP', message: 'Transient DB error during OTP verify', error });
