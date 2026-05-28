@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/db/prisma";
 import { signToken } from "@/lib/jwt";
-import { isTestOtpAllowed } from "@/lib/infrastructure/env";
+import { isTestOtpModeEnabled } from '@/lib/infrastructure/env';
 
 export class AuthService {
   static async login(identifier: string, password: string, role: "DOCTOR" | "ADMIN") {

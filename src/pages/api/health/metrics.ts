@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth'; // adjust path as needed
+import { getSession } from '@/lib/auth/session'; // correct path
 import { operationalCounters } from '@/lib/infrastructure/logger';
 
 export async function GET(req: Request) {
