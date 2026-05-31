@@ -1,4 +1,5 @@
 "use client";
+import { Logo } from "@/features/marketing/components/brand/Logo";
 
 import { useState, Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -313,7 +314,7 @@ function PatientLoginContent() {
           <div className="relative z-10">
             <Link href="/" className="flex items-center gap-3 mb-12 group">
               <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-xl group-hover:scale-105 transition-transform duration-300">
-                <img src="/logo.png" alt="JivniCare Logo" className="w-8 h-8 object-contain" />
+                <Logo className="w-8 h-8 object-contain" />
               </div>
               <div className="flex flex-col">
                 <span className="text-2xl font-black text-white leading-none">JivniCare</span>
@@ -373,7 +374,7 @@ function PatientLoginContent() {
                       </Link>
                     </div>
 
-                    <img src="/logo.png" alt="JivniCare" className="h-16 w-auto object-contain mb-6" />
+                    <Logo className="h-16 w-auto object-contain mb-6" />
                     <h2 className="text-4xl font-black text-slate-900 tracking-tight">Welcome</h2>
                     <p className="text-slate-500 font-bold mt-3 text-base">Enter your mobile number to log in or sign up safely.</p>
                   </div>
@@ -452,7 +453,7 @@ function PatientLoginContent() {
                       </button>
                     </div>
 
-                    <img src="/logo.png" alt="JivniCare" className="h-16 w-auto object-contain mb-6" />
+                    <Logo className="h-16 w-auto object-contain mb-6" />
                     <h2 className="text-3xl font-black text-slate-900 tracking-tight">Complete Your Profile</h2>
                     <p className="text-slate-500 font-bold mt-2 text-base italic">
                       Verified <span className="text-primary">+91 {phone}</span> — add your details
@@ -534,7 +535,7 @@ function PatientLoginContent() {
                       </button>
                     </div>
 
-                    <img src="/logo.png" alt="JivniCare" className="h-16 w-auto object-contain mb-6" />
+                    <Logo className="h-16 w-auto object-contain mb-6" />
                     <h2 className="text-4xl font-black text-slate-900 tracking-tight">Verify OTP</h2>
                     <p className="text-slate-500 font-bold mt-2 text-base leading-relaxed">
                       Enter the 6-digit code sent to{" "}
@@ -625,7 +626,7 @@ function PatientLoginContent() {
                 <Link href="/terms" className="hover:text-slate-600">Terms</Link>
               </p>
               <div className="mt-4 flex items-center justify-center gap-2 opacity-30 grayscale">
-                <img src="/logo.png" alt="Logo" className="h-4 w-auto" />
+                <Logo className="h-4 w-auto" />
                 <span className="text-[10px] font-black text-slate-900">JivniCare Health System</span>
               </div>
             </div>

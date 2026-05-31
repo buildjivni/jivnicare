@@ -1,4 +1,5 @@
 "use client";
+import { Logo } from "@/features/marketing/components/brand/Logo";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -127,7 +128,7 @@ export default function ForgotPasswordPage() {
           <div className="relative z-10">
             <Link href="/" className="flex items-center gap-3 mb-12 group">
               <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-xl group-hover:scale-105 transition-transform duration-300">
-                <img src="/logo.png" alt="JivniCare Logo" className="h-8 w-auto object-contain" />
+                <Logo className="h-8 w-auto object-contain" />
               </div>
               <div className="flex flex-col">
                 <span className="text-2xl font-bold tracking-tight text-white leading-none">

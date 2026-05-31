@@ -167,7 +167,7 @@ export function Header() {
                 {/* Logo and Brand Title (Always visible unless search is expanded on mobile) */}
                 <div className="flex items-center shrink-0 transition-all">
                   <Link href="/" className="flex items-center gap-2.5 md:gap-3.5 group shrink min-w-0">
-                    <Logo className="h-11 md:h-14 w-auto shrink-0 transition-transform duration-300 group-hover:scale-[1.01]" />
+                    <Logo className="h-11 w-11 md:h-14 md:w-14 shrink-0 transition-transform duration-300 group-hover:scale-[1.01]" />
                     <div className="flex flex-col -space-y-0.5 md:-space-y-1 pt-0.5">
                        <span className="text-[20px] md:text-2xl font-bold tracking-tight leading-none text-slate-800">
                           <span className="text-[#205E98]">Jivni</span><span className="text-[#166534]">Care</span>
