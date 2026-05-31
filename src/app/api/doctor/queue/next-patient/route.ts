@@ -70,7 +70,10 @@ export async function POST(request: Request) {
           queueId: dailyQueue.id, 
           status: "WAITING" 
         },
-        orderBy: { tokenNumber: "asc" }
+        orderBy: [
+          { isEmergency: "desc" },
+          { tokenNumber: "asc" }
+        ]
       });
 
       // 3. Atomically lock and mark the next patient as IN_CONSULTATION
@@ -105,11 +108,13 @@ export async function POST(request: Request) {
   } catch (error: any) {
     console.error("Next patient operation error:", error);
     if (error.message === "CONCURRENCY_CONFLICT_RETRY") {
+      import('@/lib/telemetry/redis').then(m => m.incrementTelemetryCounter('queueConflicts').catch(() => {}));
       return NextResponse.json({ error: "Queue was updated concurrently, please refresh" }, { status: 409 });
     }
     if (error.message === "QUEUE_NOT_FOUND") {
       return NextResponse.json({ error: "Queue has not been started for today" }, { status: 400 });
     }
+    import('@/lib/telemetry/redis').then(m => m.incrementTelemetryCounter('api500Errors').catch(() => {}));
     return NextResponse.json({ error: "An unexpected error occurred while progressing the queue" }, { status: 500 });
   }
 }

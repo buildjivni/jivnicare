@@ -76,7 +76,7 @@ export function BookingWidget({
           </div>
           <div className="ml-auto">
             <p className="font-black text-[20px] text-[#205E98] leading-none tabular-nums">{doctor.fee}</p>
-            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wide text-right mt-0.5">Per Visit</p>
+            <p className="text-[9px] text-slate-600 font-bold uppercase tracking-wide text-right mt-0.5">Per Visit</p>
           </div>
         </div>
 
@@ -105,7 +105,7 @@ export function BookingWidget({
             <>
               {/* Queue header */}
               <div className="flex items-center gap-2">
-                <Activity className={`w-3.5 h-3.5 shrink-0 ${queueActive ? "text-emerald-500" : "text-slate-400"}`} />
+                <Activity className={`w-3.5 h-3.5 shrink-0 ${queueActive ? "text-emerald-500" : "text-slate-600"}`} />
                 <span className="text-[12px] font-bold text-slate-700">Live Queue</span>
                 <div className={`ml-auto text-[9.5px] font-bold px-2 py-0.5 rounded-full border ${
                   isClosedToday
@@ -217,7 +217,7 @@ export function BookingWidget({
                 )}
                 {!isLoading && hasQueueData && queue.avgTime > 0 && (
                   <div className="flex items-center gap-1.5 p-2 rounded-xl bg-slate-50 border border-slate-100">
-                    <Clock className="w-3 h-3 text-slate-400 shrink-0" />
+                    <Clock className="w-3 h-3 text-slate-600 shrink-0" />
                     <span className="text-[10px] text-slate-600 font-bold leading-tight">~{queue.avgTime}m avg</span>
                   </div>
                 )}

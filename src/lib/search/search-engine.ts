@@ -9,7 +9,7 @@ import type { Doctor } from "@/types";
 
 // ── 1. TEXT NORMALIZATION ────────────────────────────────────────────────────
 
-export function normalize(text: string | null | undefined): string {
+function normalize(text: string | null | undefined): string {
   if (!text) return "";
   return text
     .toLowerCase()
@@ -23,7 +23,7 @@ export function normalize(text: string | null | undefined): string {
 
 // ── 2. LEVENSHTEIN DISTANCE (pure JS, O(m*n)) ────────────────────────────────
 
-export function levenshtein(a: string, b: string): number {
+function levenshtein(a: string, b: string): number {
   const m = a.length, n = b.length;
   if (m === 0) return n;
   if (n === 0) return m;
@@ -41,14 +41,14 @@ export function levenshtein(a: string, b: string): number {
 }
 
 // Normalized similarity: 1.0 = identical, 0.0 = totally different
-export function similarity(a: string, b: string): number {
+function similarity(a: string, b: string): number {
   const maxLen = Math.max(a.length, b.length);
   if (maxLen === 0) return 1;
   return 1 - levenshtein(a, b) / maxLen;
 }
 
 // Is "query" a fuzzy match for "target"? (tolerates up to 2-3 edits)
-export function fuzzyMatch(query: string, target: string): boolean {
+function fuzzyMatch(query: string, target: string): boolean {
   if (!query || !target) return false;
   // Direct substring (fastest path)
   if (target.includes(query) || query.includes(target)) return true;
@@ -86,7 +86,7 @@ const PHONETIC_RULES: [RegExp, string][] = [
   [/x/g,   "ks"],
 ];
 
-export function phonetize(word: string): string {
+function phonetize(word: string): string {
   let result = word.toLowerCase();
   for (const [pattern, replacement] of PHONETIC_RULES) {
     result = result.replace(pattern, replacement);
@@ -228,7 +228,7 @@ const SYNONYM_MAP: Record<string, SynonymEntry> = {
 
 // ── 5. QUERY EXPANSION ENGINE ────────────────────────────────────────────────
 
-export interface ExpandedQuery {
+interface ExpandedQuery {
   original: string;
   normalized: string;
   terms: string[];              // all terms to search
@@ -249,7 +249,7 @@ const KNOWN_TERMS = [
   ...Object.keys(SYNONYM_MAP),
 ];
 
-export function expandQuery(raw: string): ExpandedQuery {
+function expandQuery(raw: string): ExpandedQuery {
   const norm = normalize(raw);
   const words = norm.split(" ").filter(Boolean);
   const terms = new Set<string>([norm, ...words]);
@@ -320,13 +320,13 @@ export function expandQuery(raw: string): ExpandedQuery {
 
 // ── 6. SCORE-BASED DOCTOR RANKER ─────────────────────────────────────────────
 
-export interface ScoredDoctor {
+interface ScoredDoctor {
   doctor: Doctor;
   score: number;
   matchReason?: string; // for debug/analytics
 }
 
-export function scoreDoctor(doctor: Doctor, eq: ExpandedQuery): number {
+function scoreDoctor(doctor: Doctor, eq: ExpandedQuery): number {
   let score = 0;
   const norm = eq.normalized;
   const d = {
@@ -528,7 +528,7 @@ export function generateLocalSuggestions(query: string, doctors: Doctor[]): Loca
 
 const ANALYTICS_KEY = "jc_search_analytics";
 
-export interface SearchAnalyticsEntry {
+interface SearchAnalyticsEntry {
   query: string;
   resultCount: number;
   timestamp: number;
@@ -546,7 +546,7 @@ export function trackSearch(query: string, resultCount: number, isFuzzy = false)
   } catch { /* ignore */ }
 }
 
-export function getSearchAnalytics(): SearchAnalyticsEntry[] {
+function getSearchAnalytics(): SearchAnalyticsEntry[] {
   if (typeof window === "undefined") return [];
   try {
     return JSON.parse(localStorage.getItem(ANALYTICS_KEY) ?? "[]");

@@ -15,7 +15,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized. Please complete step 1 first.' }, { status: 401 });
     }
 
-    const decoded = verifyToken(token) as { id: string; doctorId?: string } | null;
+    const decoded = await verifyToken(token) as { id: string; doctorId?: string } | null;
     if (!decoded?.id) {
       return NextResponse.json({ error: 'Invalid or expired session. Please log in again.' }, { status: 401 });
     }

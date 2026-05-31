@@ -87,7 +87,7 @@ model Media {
   publicId  String    @unique
   type      MediaType
   userId    String
-  user      User      @relation(fields: [userId], references: [id])
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime  @default(now())
 }
 
@@ -167,7 +167,7 @@ model ProfileUpdateLog {
 model Doctor {
   id                 String             @id @default(uuid()) @map("_id")
   userId             String             @unique
-  user               User               @relation(fields: [userId], references: [id])
+  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   name               String
   slug               String             @unique
   doctorCode         String?            @unique
@@ -335,7 +335,7 @@ model ProfileAnalytics {
 model Report {
   id          String       @id @default(uuid()) @map("_id")
   reporterId  String
-  reporter    User         @relation(fields: [reporterId], references: [id])
+  reporter    User         @relation(fields: [reporterId], references: [id], onDelete: Cascade)
   targetType  TargetType
   targetId    String // ID of Doctor, Hospital, or User
   reason      String

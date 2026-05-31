@@ -64,12 +64,8 @@ export async function GET(
     const totalInQueue = queue?._count.tokens || 0;
     
     // Import dynamically so it's isolated
-    const { calculateDynamicStatus } = require('@/lib/queue/queue-operations');
-    
-    const dynamicData = calculateDynamicStatus({ 
-      doctor, 
-      todayQueue: queue 
-    });
+    const { QueueService } = require('@/features/queue/services/queueService');
+    const dynamicData = QueueService.calculateDynamicStatus({ doctor, todayQueue: queue });
 
     const currentDayName = today.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
     const daySchedule: any = (doctor.weeklySchedule as any)?.[currentDayName] || { isOpen: true };
@@ -90,7 +86,7 @@ export async function GET(
 
     try {
       // Cache the result in Redis for 10 seconds to protect MongoDB
-      await redis.setex(cacheKey, 10, JSON.stringify(queueData));
+      await redis.set(cacheKey, JSON.stringify(queueData), { ex: 10 });
     } catch (redisError) {
       console.warn("⚠️ Redis caching failed in queue-stats, continuing without cache:", redisError);
     }

@@ -100,20 +100,27 @@ export class QueueService {
       let actualEmergency = isEmergency;
 
       if (isEmergency) {
-        // Check emergency capacity
-        const emergencyCount = await tx.queueToken.count({
+        // Phase 2 Fix: Atomic Sequence Generation via Redis
+        const emergencyCountKey = `queue:${dailyQueue.id}:emergency`;
+        const currentEmergencyCount = await tx.queueToken.count({
           where: { queueId: dailyQueue.id, isEmergency: true }
         });
         
-        if (emergencyCount >= (clinicOps?.emergencySlots || 2)) {
+        if (currentEmergencyCount >= (clinicOps?.emergencySlots || 2)) {
            throw new Error("EMERGENCY_FULL");
         }
         
-        // Emergency tokens get a special number like 9991, 9992 to bypass regular sequence visually,
-        // or we just mark them. Let's use negative numbers or offset for now, 
-        // actually just mark `isEmergency=true` and keep tokenNumber = 0 or max + 1.
-        // Let's just use the counter but it doesn't increment the regular issuedTokensCount.
-        tokenNumber = 9000 + emergencyCount + 1; // E.g., 9001
+        try {
+          const redis = (await import('@/lib/db/redis')).redis;
+          const seq = await redis.incr(emergencyCountKey);
+          if (seq === 1) await redis.expire(emergencyCountKey, 86400); // 24h TTL
+          tokenNumber = 9000 + seq; 
+          import('@/lib/telemetry/redis').then(m => m.incrementTelemetryCounter('emergencyQueueInsertions').catch(() => {}));
+        } catch (error) {
+          // Fallback if Redis is down (degraded mode, uses count + 1 which has race condition but keeps system alive)
+          import('@/lib/telemetry/redis').then(m => m.incrementTelemetryCounter('emergencyQueueConflicts').catch(() => {}));
+          tokenNumber = 9000 + currentEmergencyCount + 1;
+        }
       } else {
         const updatedQueue = await tx.dailyQueue.update({
           where: { id: dailyQueue.id },
@@ -149,5 +156,126 @@ export class QueueService {
     } else {
       return await prisma.$transaction(coreLogic);
     }
+  }
+
+  static calculateDynamicStatus({ doctor, todayQueue }: { doctor: any, todayQueue: any | null }): {
+    status: 'AVAILABLE_NOW' | 'FAST_FILLING' | 'BREAK_ACTIVE' | 'OPD_FULL' | 'EMERGENCY_ONLY' | 'CLOSED_FOR_TODAY' | 'NEXT_AVAILABLE_TOMORROW' | 'UNKNOWN';
+    message: string;
+    isBookableOnline: boolean;
+    estimatedWaitMinutes: number | null;
+    activeTokenNumber: number | null;
+  } {
+    const operations = doctor.clinicOperations;
+    const schedule = doctor.weeklySchedule;
+    const avgTime = doctor.averageConsultationTime || 15; // minutes
+
+    // 1. Is it closed entirely?
+    if (operations?.isClosedToday) {
+      return {
+        status: 'CLOSED_FOR_TODAY',
+        message: 'Clinic is closed today.',
+        isBookableOnline: false,
+        estimatedWaitMinutes: null,
+        activeTokenNumber: null
+      };
+    }
+
+    // 2. Schedule Checks
+    const currentDayName = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+    const todaySchedule: any = schedule ? schedule[currentDayName] : null;
+
+    if (!todaySchedule || !todaySchedule.isOpen) {
+      return {
+        status: 'CLOSED_FOR_TODAY',
+        message: 'Doctor does not consult on this day.',
+        isBookableOnline: false,
+        estimatedWaitMinutes: null,
+        activeTokenNumber: null
+      };
+    }
+
+    const now = new Date();
+    const [startHour, startMin] = todaySchedule.start.split(':').map(Number);
+    const [endHour, endMin] = todaySchedule.end.split(':').map(Number);
+    
+    const startTime = new Date();
+    startTime.setHours(startHour, startMin, 0, 0);
+    
+    const endTime = new Date();
+    endTime.setHours(endHour, endMin, 0, 0);
+
+    if (now > endTime) {
+      return {
+        status: 'NEXT_AVAILABLE_TOMORROW',
+        message: 'OPD hours have ended for today.',
+        isBookableOnline: false,
+        estimatedWaitMinutes: null,
+        activeTokenNumber: null
+      };
+    }
+
+    // 3. Queue Calculations
+    let activeToken = 0;
+    let issuedTokens = 0;
+    let maxCapacity = todaySchedule.maxPatients || getUnifiedQueueCapacity(operations) || 50;
+
+    if (todayQueue) {
+      activeToken = todayQueue.currentActiveToken;
+      issuedTokens = todayQueue.issuedTokensCount;
+      maxCapacity = todayQueue.maxCapacity;
+    }
+
+    const waitingPatients = Math.max(0, issuedTokens - activeToken);
+    const estimatedWaitMinutes = waitingPatients * avgTime;
+
+    // 4. Live Control Overrides
+    if (operations?.pauseOnlineBooking) {
+      return {
+        status: 'BREAK_ACTIVE',
+        message: 'Online booking is temporarily paused.',
+        isBookableOnline: false,
+        estimatedWaitMinutes,
+        activeTokenNumber: activeToken
+      };
+    }
+
+    if (doctor.emergencyAvailable && operations?.emergencySlots > 0 && issuedTokens >= maxCapacity) {
+      return {
+        status: 'EMERGENCY_ONLY',
+        message: 'Regular OPD is full. Only accepting emergency cases.',
+        isBookableOnline: false,
+        estimatedWaitMinutes,
+        activeTokenNumber: activeToken
+      };
+    }
+
+    // 5. Capacity Checks
+    if (issuedTokens >= maxCapacity) {
+      return {
+        status: 'OPD_FULL',
+        message: 'Tokens are full for today.',
+        isBookableOnline: false,
+        estimatedWaitMinutes,
+        activeTokenNumber: activeToken
+      };
+    }
+
+    if (issuedTokens >= maxCapacity * 0.8) {
+      return {
+        status: 'FAST_FILLING',
+        message: 'Few slots remaining.',
+        isBookableOnline: true,
+        estimatedWaitMinutes,
+        activeTokenNumber: activeToken
+      };
+    }
+
+    return {
+      status: 'AVAILABLE_NOW',
+      message: 'Accepting appointments.',
+      isBookableOnline: true,
+      estimatedWaitMinutes,
+      activeTokenNumber: activeToken
+    };
   }
 }

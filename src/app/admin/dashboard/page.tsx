@@ -12,6 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/features/auth/store/useAuthStore";
+import { OperationalDashboard } from "@/features/admin/components/OperationalDashboard";
 
 type DoctorStatus = "DRAFT" | "PENDING" | "PENDING_VERIFICATION" | "VERIFIED" | "UPDATE_PENDING" | "REJECTED" | "SUSPENDED";
 
@@ -310,6 +311,7 @@ function AdminDashboardContent() {
       { id: "queue-monitor", label: "Live Queue Monitor", icon: Activity },
       { id: "lead-management", label: "Lead Management", icon: Clipboard },
       { id: "trust-safety", label: "Trust & Safety", icon: ShieldAlert },
+      { id: "observability", label: "System Observability", icon: Zap },
     ];
 
     return (
@@ -1236,6 +1238,7 @@ function AdminDashboardContent() {
           {activeTab === "queue-monitor" && renderQueueMonitor()}
           {activeTab === "lead-management" && renderLeadManagement()}
           {activeTab === "trust-safety" && renderTrustSafety()}
+          {activeTab === "observability" && <OperationalDashboard />}
         </div>
 
         {/* ── Moderation Modal ────────────────────────────────────── */}

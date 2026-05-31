@@ -4,7 +4,8 @@ import { useState } from "react";
 import {
   ShieldCheck, Star, Award, MapPin,
   GraduationCap, Clock, Users, Activity,
-  CalendarCheck, Share2, CheckCircle2, Zap
+  CalendarCheck, Share2, CheckCircle2, Zap,
+  ChevronDown, ChevronUp
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,7 +20,6 @@ interface DoctorProfileViewProps {
   relatedDoctors?: Doctor[];
 }
 
-// ── Format 24h → 12h ───────────────────────────────────────────
 const fmtTime = (t: string) => {
   if (!t) return "—";
   const [h, m] = t.split(":");
@@ -27,15 +27,13 @@ const fmtTime = (t: string) => {
   return `${hh % 12 || 12}:${m} ${hh >= 12 ? "PM" : "AM"}`;
 };
 
-// ── Format consultation count ─────────────────────────────────
 function fmtCount(n: number): string {
   if (n >= 10000) return `${Math.floor(n / 1000)}k+`;
   if (n >= 1000) return `${(n / 1000).toFixed(1)}k+`;
   if (n > 0) return `${n}+`;
-  return "500+"; // sensible verified default
+  return "500+";
 }
 
-// ── Days of week ──────────────────────────────────────────────
 const DAYS = [
   { id: "monday",    label: "Mon" },
   { id: "tuesday",   label: "Tue" },
@@ -46,7 +44,6 @@ const DAYS = [
   { id: "sunday",    label: "Sun" },
 ];
 
-/** Returns display name — never double-prefixes with Dr. */
 function displayName(name: string): string {
   if (!name) return "";
   const trimmed = name.trim();
@@ -55,15 +52,17 @@ function displayName(name: string): string {
 
 export function DoctorProfileView({ doctor, relatedDoctors }: DoctorProfileViewProps) {
   const [showToast, setShowToast] = useState(false);
+  const [isBioExpanded, setIsBioExpanded] = useState(false);
+  const [imgLoaded, setImgLoaded] = useState(false);
+  const [clinicImgLoaded, setClinicImgLoaded] = useState(false);
+
   const availableToday = doctor.available?.toLowerCase() === "available today";
   const isClosedToday = doctor.available?.toLowerCase().includes("closed");
   const isBookingPaused = doctor.availabilityStatus?.toLowerCase().includes("paused");
   const badge = doctor.verifiedBadgeLabel ?? "Verified Doctor";
   const consultCount = fmtCount(doctor.totalConsultations ?? 0);
-  const reviewCount = doctor.reviewCount ?? doctor.reviews ?? 0;
   const clinicImage = doctor.clinicImage || doctor.bgImage;
 
-  // Filter meaningful tags (specialty + keywords, deduplicated, max 8)
   const expertiseTags = Array.from(
     new Set([
       doctor.specialty,
@@ -77,307 +76,228 @@ export function DoctorProfileView({ doctor, relatedDoctors }: DoctorProfileViewP
       text: `Check out Dr. ${doctor.name}, ${doctor.specialty} at ${doctor.clinic}.`,
       url: window.location.href,
     };
-
     try {
-      if (navigator.share) {
-        await navigator.share(shareData);
-      } else {
+      if (navigator.share) await navigator.share(shareData);
+      else {
         await navigator.clipboard.writeText(window.location.href);
         setShowToast(true);
         setTimeout(() => setShowToast(false), 3000);
       }
-    } catch (err) {
-      console.error("Error sharing:", err);
-    }
+    } catch (err) {}
   };
 
+  const bioText = doctor.about || `${doctor.name} is a ${doctor.specialty} specialist${doctor.clinic ? ` at ${doctor.clinic}` : ""}${doctor.location ? ` in ${doctor.location}` : ""}${doctor.experience && doctor.experience !== "0" ? ` with ${doctor.experience} years of clinical experience` : ""}.`;
+  const isLongBio = bioText.length > 150;
+
   return (
-    <div className="space-y-4">
-      {/* Share toast — CSS fade, no framer-motion */}
+    <div className="space-y-6">
       <div
         aria-live="polite"
         className={[
-          "fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] bg-slate-900 text-white text-[12px] font-bold px-4 py-2 rounded-full shadow-2xl flex items-center gap-2",
-          "transition-all duration-300",
+          "fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] bg-slate-900 text-white text-sm font-bold px-5 py-2.5 rounded-full shadow-2xl flex items-center gap-2 transition-all duration-300",
           showToast ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 translate-y-4 pointer-events-none",
         ].join(" ")}
       >
-        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
         Link copied to clipboard
       </div>
 
-      {/* ════════════════════════════════════════════════════════
-          HERO CARD — Identity, Trust, Stats
-          ════════════════════════════════════════════════════════ */}
-      <div className="bg-white rounded-[22px] border border-slate-100 shadow-[0_2px_20px_rgba(0,0,0,0.06)] overflow-hidden">
-
-        {/* ── Clinic Banner ── */}
-        <div className="relative h-[120px] md:h-[160px] bg-gradient-to-br from-[#205E98]/15 via-blue-50 to-slate-50 overflow-hidden">
+      {/* HERO CARD */}
+      <div className="bg-white rounded-3xl border border-slate-100 shadow-premium overflow-hidden">
+        {/* Banner */}
+        <div className="relative h-[160px] md:h-[200px] bg-gradient-to-br from-[#205E98]/10 via-blue-50/50 to-slate-50 overflow-hidden">
+          {!clinicImgLoaded && clinicImage && <div className="absolute inset-0 skeleton-shimmer" />}
           {clinicImage && (
             <Image
               src={getCanonicalImageUrl(clinicImage, doctor.updatedAt) || ""}
               alt={`${doctor.clinic} facility`}
-              fill
+              width={800}
+              height={200}
               priority
-              sizes="(max-width: 768px) 100vw, 800px"
-              className="object-cover opacity-55"
+              onLoad={() => setClinicImgLoaded(true)}
+              className={`w-full h-full object-cover transition-opacity duration-500 ${clinicImgLoaded ? "opacity-60" : "opacity-0"}`}
             />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-white/80 via-white/10 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#205E98]/10 to-transparent" />
-
-          {/* Share action */}
+          <div className="absolute inset-0 bg-gradient-to-t from-white via-white/20 to-transparent" />
+          
           <button
             onClick={handleShare}
-            className="absolute top-3 right-3 p-2 rounded-full bg-white/80 backdrop-blur-sm border border-white/60 shadow-sm hover:bg-white active:scale-90 transition-all z-20"
+            className="absolute top-4 right-4 p-2.5 rounded-full bg-white/90 backdrop-blur-md shadow-sm hover:bg-white active:scale-95 transition-all z-20"
             aria-label="Share profile"
           >
-            <Share2 className="w-3.5 h-3.5 text-slate-500" />
+            <Share2 className="w-4 h-4 text-slate-600" />
           </button>
-
-          {/* Availability chip — on banner */}
-          <div className={`absolute bottom-3 right-3 flex items-center gap-1.5 text-[10.5px] font-bold px-2.5 py-1 rounded-full border backdrop-blur-md ${
-            availableToday
-              ? "bg-emerald-50 border-emerald-200 text-emerald-700"
-              : "bg-white/80 border-slate-200 text-slate-600"
-          }`}>
-            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${availableToday ? "bg-emerald-500 animate-pulse" : "bg-slate-400"}`} />
-            {availableToday ? "Available Today" : doctor.available}
-          </div>
         </div>
 
-        {/* ── Identity block ── */}
-        <div className="px-4 md:px-6 pb-5">
-
-          {/* Avatar row — overlaps banner */}
-          <div className="flex items-end justify-between -mt-10 mb-3 relative z-10">
-            <div className="relative">
-              <div className="w-20 h-20 rounded-[18px] border-[3px] border-white shadow-xl bg-white ring-1 ring-slate-100 overflow-hidden">
-                {doctor.image ? (
-                  <Image
-                    src={getCanonicalImageUrl(doctor.image, doctor.updatedAt) || ""}
-                    alt={doctor.name}
-                    width={80}
-                    height={80}
-                    className="object-cover w-full h-full"
-                    priority
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-[#205E98]/10 text-[#205E98] font-black text-2xl">
-                    {doctor.name.charAt(0)}
-                  </div>
+        {/* Identity block */}
+        <div className="px-5 md:px-8 pb-6">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between -mt-12 mb-4 relative z-10">
+            <div className="flex justify-between items-end">
+              <div className="relative">
+                <div className={`w-24 h-24 md:w-28 md:h-28 rounded-2xl border-4 border-white shadow-lg bg-white overflow-hidden relative ${!imgLoaded ? 'skeleton-shimmer' : ''}`}>
+                  {doctor.image ? (
+                    <Image
+                      src={getCanonicalImageUrl(doctor.image, doctor.updatedAt) || ""}
+                      alt={doctor.name}
+                      width={112}
+                      height={112}
+                      className={`w-full h-full object-cover transition-opacity duration-300 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
+                      onLoad={() => setImgLoaded(true)}
+                      priority
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-[#205E98]/10 text-[#205E98] font-black text-3xl">
+                      {doctor.name.charAt(0)}
+                    </div>
+                  )}
+                </div>
+                {availableToday && (
+                  <span className="absolute bottom-1 right-1 w-5 h-5 rounded-full bg-emerald-500 border-4 border-white shadow-sm" />
                 )}
               </div>
-              {availableToday && (
-                <span className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-emerald-500 border-[2.5px] border-white shadow-sm" />
-              )}
+              
+              {/* Mobile Rating Badge */}
+              <div className="md:hidden flex items-center gap-1.5 bg-slate-900 px-3 py-1.5 rounded-xl shadow-md mb-2 ml-4">
+                <Star className="w-4 h-4 fill-amber-400 text-amber-400 shrink-0" />
+                <span className="font-black text-white text-sm tabular-nums">
+                  {doctor.rating ? doctor.rating.toFixed(1) : "New"}
+                </span>
+              </div>
             </div>
 
-            {/* Rating / Verified badge row */}
-            <div className="flex items-center gap-2 bg-slate-900 px-3 py-1.5 rounded-xl shadow-lg mb-1">
-              {doctor.rating && doctor.rating > 0 ? (
-                <>
-                  <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400 shrink-0" />
-                  <span className="font-black text-white text-[15px] tabular-nums leading-none">
-                    {doctor.rating.toFixed(1)}
-                  </span>
-                  {(doctor.reviewCount ?? doctor.reviews ?? 0) > 0 && (
-                    <span className="text-[10px] text-slate-400 font-medium leading-none">
-                      · {(doctor.reviewCount ?? doctor.reviews ?? 0).toLocaleString("en-IN")} reviews
-                    </span>
-                  )}
-                </>
-              ) : (
-                <>
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                  <span className="text-[11px] font-bold text-emerald-300">New Doctor</span>
-                </>
-              )}
-            </div>
-          </div>
-
-          <div className="mb-3">
-            <div className="flex items-start gap-2 flex-wrap">
-              <h1 className="font-black text-[22px] md:text-[26px] text-slate-900 leading-tight tracking-tight">
-                {doctor.name}
-              </h1>
-              <span title={badge} className="shrink-0 mt-1.5 flex items-center">
-                <ShieldCheck className="w-5 h-5 text-[#205E98]" />
+            {/* Desktop Rating Badge */}
+            <div className="hidden md:flex items-center gap-2 bg-slate-900 px-4 py-2 rounded-xl shadow-md mb-2">
+              <Star className="w-4 h-4 fill-amber-400 text-amber-400 shrink-0" />
+              <span className="font-black text-white text-base tabular-nums">
+                {doctor.rating ? doctor.rating.toFixed(1) : "New"}
               </span>
-            </div>
-
-            <div className="flex items-center gap-2 mt-1 flex-wrap">
-              <span className="text-[13px] font-bold text-[#205E98]">{doctor.specialty}</span>
-              {(doctor.qualifications || doctor.education) && (
-                <>
-                  <span className="text-slate-300 text-xs">·</span>
-                  <span className="text-[12px] text-slate-500 font-medium">
-                    {doctor.qualifications || doctor.education?.split(",").slice(0, 2).join(", ")}
-                  </span>
-                </>
-              )}
-            </div>
-
-            <div className="flex flex-wrap items-center gap-3 mt-2.5 text-[12px] text-slate-500">
-              {doctor.experience && (
-                <div className="flex items-center gap-1">
-                  <Award className="w-3.5 h-3.5 text-[#205E98] shrink-0" />
-                  <span className="font-semibold text-slate-700">{doctor.experience}</span>
-                  <span>experience</span>
-                </div>
-              )}
-              {doctor.education && (
-                <div className="flex items-center gap-1">
-                  <GraduationCap className="w-3.5 h-3.5 text-[#205E98] shrink-0" />
-                  <span className="font-medium text-slate-600 line-clamp-1">{doctor.education?.split(",")[0]?.trim()}</span>
-                </div>
+              {(doctor.reviewCount ?? doctor.reviews ?? 0) > 0 && (
+                <span className="text-xs text-slate-500 font-medium">
+                  · {(doctor.reviewCount ?? doctor.reviews ?? 0).toLocaleString("en-IN")} reviews
+                </span>
               )}
             </div>
           </div>
 
-          <div className="inline-flex items-center gap-2 bg-white border border-slate-100 shadow-sm text-[11px] font-black px-4 py-2 rounded-xl mb-4">
-            <img src="/logo.png" alt="" className="w-4 h-4 object-contain shrink-0" />
-            <span className="uppercase tracking-widest text-slate-400">
-               {badge} · <span className="text-primary">Jivni</span><span className="text-secondary">Care</span> Verified
-            </span>
+          <div className="mb-4">
+            <h1 className="font-black text-2xl md:text-3xl text-slate-900 tracking-tight flex items-center gap-2">
+              {doctor.name}
+              <ShieldCheck className="w-6 h-6 text-[#205E98] shrink-0" />
+            </h1>
+            <p className="text-base font-bold text-[#205E98] mt-1">{doctor.specialty}</p>
           </div>
 
-          {/* ── Operational Status Banner ── */}
+          {/* Trust Block */}
+          <div className="grid grid-cols-2 md:flex md:flex-wrap items-center gap-4 text-sm text-slate-600 mb-6 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+             <div className="flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span className="font-bold text-emerald-700">{badge}</span>
+             </div>
+             {doctor.experience && (
+               <div className="flex items-center gap-2">
+                 <Award className="w-4 h-4 text-slate-500 shrink-0" />
+                 <span className="font-medium">{doctor.experience} Experience</span>
+               </div>
+             )}
+             {doctor.languages && doctor.languages.length > 0 && (
+               <div className="flex items-center gap-2">
+                 <span className="w-4 h-4 flex items-center justify-center text-slate-500 shrink-0">🗣️</span>
+                 <span className="font-medium">{doctor.languages.slice(0, 3).join(", ")}</span>
+               </div>
+             )}
+          </div>
+
           {(isClosedToday || isBookingPaused) && (
-            <div className={`mb-4 rounded-[14px] px-4 py-3 flex items-start gap-3 border ${
-              isClosedToday
-                ? "bg-red-50 border-red-200"
-                : "bg-amber-50 border-amber-200"
+            <div className={`mb-6 rounded-2xl px-5 py-4 flex items-start gap-3 border ${
+              isClosedToday ? "bg-red-50 border-red-200" : "bg-amber-50 border-amber-200"
             }`}>
-              <span className="text-base leading-none mt-0.5">{isClosedToday ? "🔴" : "⏸️"}</span>
+              <span className="text-xl leading-none">{isClosedToday ? "🔴" : "⏸️"}</span>
               <div>
-                <p className={`text-[12.5px] font-black ${isClosedToday ? "text-red-800" : "text-amber-800"}`}>
+                <p className={`text-sm font-black ${isClosedToday ? "text-red-800" : "text-amber-800"}`}>
                   {isClosedToday ? "Clinic Closed Today" : "Online Booking Paused"}
                 </p>
-                <p className={`text-[11.5px] font-medium mt-0.5 leading-snug ${isClosedToday ? "text-red-700/80" : "text-amber-700/80"}`}>
+                <p className={`text-xs md:text-sm font-medium mt-1 leading-relaxed ${isClosedToday ? "text-red-700/80" : "text-amber-700/80"}`}>
                   {isClosedToday
                     ? "This clinic is not accepting appointments today. Please check back tomorrow."
-                    : "Online booking is temporarily paused by the doctor. Walk-in visits may still be available — please call the clinic."}
+                    : "Online booking is temporarily paused. Walk-in visits may still be available."}
                 </p>
               </div>
             </div>
           )}
 
-            {/* Stats grid — no fake fallbacks */}
-            <div className="grid grid-cols-4 gap-2 mt-1">
-              {/* Rating */}
-              <div className="flex flex-col items-center text-center p-2.5 bg-amber-50/60 border border-amber-100/60 rounded-[14px]">
-                {doctor.rating && doctor.rating > 0 ? (
-                  <>
-                    <Star className="w-4 h-4 fill-amber-400 text-amber-400 mb-1" />
-                    <span className="font-black text-[15px] text-slate-900 leading-none tabular-nums">
-                      {doctor.rating.toFixed(1)}
-                    </span>
-                    <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wide mt-1">Rating</span>
-                  </>
-                ) : (
-                  <>
-                    <ShieldCheck className="w-4 h-4 text-emerald-500 mb-1" />
-                    <span className="font-black text-[11px] text-emerald-700 leading-none">New</span>
-                    <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wide mt-1">Doctor</span>
-                  </>
-                )}
-              </div>
-
-              <div className="flex flex-col items-center text-center p-2.5 bg-blue-50/60 border border-blue-100/60 rounded-[14px]">
-                <Users className="w-4 h-4 text-[#205E98] mb-1" />
-                <span className="font-black text-[15px] text-slate-900 leading-none">{consultCount}</span>
-                <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wide mt-1">Patients</span>
-              </div>
-
-              <div className={`flex flex-col items-center text-center p-2.5 rounded-[14px] ${
-                availableToday
-                  ? "bg-emerald-50/60 border border-emerald-100/60"
-                  : "bg-slate-50 border border-slate-100"
-              }`}>
-                {doctor.isQueueActive ? (
-                  <Zap className="w-4 h-4 text-[#205E98] mb-1" />
-                ) : (
-                  <Activity className="w-4 h-4 text-emerald-600 mb-1" />
-                )}
-                <span className="font-black text-[11px] text-slate-900 leading-tight">
-                  {doctor.isQueueActive ? "Live" : (availableToday ? "Open" : "Check")}
-                </span>
-                <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wide mt-1">
-                  {doctor.isQueueActive ? "Queue" : "OPD"}
-                </span>
-              </div>
-
-              <div className="flex flex-col items-center text-center p-2.5 bg-slate-50 border border-slate-100 rounded-[14px]">
-                <span className="text-[11px] font-black text-[#205E98] mb-0.5">₹</span>
-                <span className="font-black text-[15px] text-slate-900 leading-none tabular-nums">
-                  {doctor.fee.replace("₹", "")}
-                </span>
-                <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wide mt-1">Consult</span>
-              </div>
+          {/* Stats grid */}
+          <div className="grid grid-cols-3 gap-3 mt-2">
+            <div className="flex flex-col items-center justify-center text-center p-3 md:p-4 bg-blue-50/50 border border-blue-100/60 rounded-2xl">
+              <Users className="w-5 h-5 text-[#205E98] mb-1.5" />
+              <span className="font-black text-lg md:text-xl text-slate-900">{consultCount}</span>
+              <span className="text-[10px] md:text-xs text-slate-500 font-bold uppercase tracking-wide mt-1">Patients</span>
             </div>
+
+            <div className={`flex flex-col items-center justify-center text-center p-3 md:p-4 rounded-2xl ${
+              availableToday ? "bg-emerald-50/50 border border-emerald-100/60" : "bg-slate-50 border border-slate-100"
+            }`}>
+              {doctor.isQueueActive ? (
+                <Zap className="w-5 h-5 text-emerald-600 mb-1.5" />
+              ) : (
+                <Activity className="w-5 h-5 text-slate-500 mb-1.5" />
+              )}
+              <span className="font-black text-lg md:text-xl text-slate-900">
+                {doctor.isQueueActive ? "Live" : (availableToday ? "Open" : "Closed")}
+              </span>
+              <span className="text-[10px] md:text-xs text-slate-500 font-bold uppercase tracking-wide mt-1">Queue</span>
+            </div>
+
+            <div className="flex flex-col items-center justify-center text-center p-3 md:p-4 bg-slate-50 border border-slate-100 rounded-2xl">
+              <span className="text-sm font-black text-[#205E98] mb-1">₹</span>
+              <span className="font-black text-lg md:text-xl text-slate-900 tabular-nums">
+                {doctor.fee.replace("₹", "")}
+              </span>
+              <span className="text-[10px] md:text-xs text-slate-500 font-bold uppercase tracking-wide mt-1">Consult</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* ── OPD Schedule & Clinic Info Card ── */}
-      <Card className="rounded-[22px] border-slate-100 shadow-[0_2px_16px_rgba(0,0,0,0.05)]">
-        <CardContent className="p-4 space-y-4">
-          {/* Availability row */}
-          <div className={`flex items-center gap-3 p-3 rounded-[14px] ${
-            availableToday
-              ? "bg-emerald-50 border border-emerald-100"
-              : "bg-slate-50 border border-slate-100"
+      {/* OPD SCHEDULE */}
+      <Card className="rounded-3xl border-slate-100 shadow-soft">
+        <CardContent className="p-5 md:p-6 space-y-5">
+          <div className={`flex items-center gap-4 p-4 rounded-2xl ${
+            availableToday ? "bg-emerald-50/50 border border-emerald-100" : "bg-slate-50 border border-slate-100"
           }`}>
-            <div className={`p-2 rounded-xl ${availableToday ? "bg-emerald-100" : "bg-slate-100"}`}>
-              <CalendarCheck className={`w-4 h-4 ${availableToday ? "text-emerald-600" : "text-slate-400"}`} />
+            <div className={`p-3 rounded-xl ${availableToday ? "bg-emerald-100 text-emerald-600" : "bg-slate-200 text-slate-500"}`}>
+              <CalendarCheck className="w-5 h-5" />
             </div>
             <div>
-              <p className={`text-[12px] font-black ${availableToday ? "text-emerald-700" : "text-slate-600"}`}>
+              <p className={`text-sm md:text-base font-black ${availableToday ? "text-emerald-800" : "text-slate-700"}`}>
                 {availableToday ? "OPD Open Today" : "Check Schedule"}
               </p>
               {doctor.nextAvailable && doctor.nextAvailable !== "N/A" && doctor.nextAvailable !== "Today" && (
-                <p className="text-[11px] text-slate-500 mt-0.5">
+                <p className="text-xs md:text-sm text-slate-500 font-medium mt-0.5">
                   First slot at {doctor.nextAvailable}
                 </p>
               )}
             </div>
-            {doctor.isQueueActive && (
-              <div className="ml-auto flex items-center gap-1 text-[10px] font-bold text-[#205E98] bg-[#205E98]/8 border border-[#205E98]/20 px-2 py-1 rounded-lg">
-                <Zap className="w-2.5 h-2.5 fill-[#205E98]" />
-                Live Queue
-                {doctor.queueWaitMinutes && doctor.queueWaitMinutes > 0 && (
-                  <span className="text-slate-500 font-normal ml-0.5">· ~{doctor.queueWaitMinutes}m</span>
-                )}
-              </div>
-            )}
           </div>
 
-          {/* OPD Weekly Schedule */}
           <div>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2.5">
-              OPD Schedule
-            </p>
-            <div className="grid grid-cols-1 gap-0.5">
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">OPD Schedule</p>
+            <div className="space-y-1">
               {DAYS.map((d) => {
                 const sched = (doctor as any).weeklySchedule?.[d.id] || { isOpen: false };
                 const isTodayStr = new Date().toLocaleDateString("en-US", { weekday: "long", timeZone: "Asia/Kolkata" }).toLowerCase() === d.id;
                 return (
-                  <div
-                    key={d.id}
-                    className={`flex items-center justify-between px-3 py-2 rounded-xl transition-colors ${
-                      isTodayStr ? "bg-[#205E98]/6 border border-[#205E98]/15" : "hover:bg-slate-50"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      {isTodayStr && <span className="w-1 h-3 rounded-full bg-[#205E98] shrink-0" />}
-                      <span className={`text-[12px] font-bold ${isTodayStr ? "text-[#205E98]" : "text-slate-600"}`}>
-                        {d.label}
-                        {isTodayStr && <span className="text-[9px] font-bold ml-1 text-[#205E98]/70">Today</span>}
+                  <div key={d.id} className={`flex items-center justify-between px-4 py-3 rounded-xl ${
+                    isTodayStr ? "bg-[#205E98]/5 border border-[#205E98]/10" : "hover:bg-slate-50"
+                  }`}>
+                    <div className="flex items-center gap-3">
+                      {isTodayStr && <span className="w-1.5 h-4 rounded-full bg-[#205E98] shrink-0" />}
+                      <span className={`text-sm font-bold ${isTodayStr ? "text-[#205E98]" : "text-slate-600"}`}>
+                        {d.label} {isTodayStr && <span className="text-[10px] font-black ml-1 text-[#205E98]">TODAY</span>}
                       </span>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${sched.isOpen ? "bg-emerald-500" : "bg-slate-200"}`} />
-                      <span className={`text-[11.5px] font-bold tabular-nums ${sched.isOpen ? "text-slate-800" : "text-slate-300"}`}>
+                    <div className="flex items-center gap-2">
+                      <span className={`w-2 h-2 rounded-full shrink-0 ${sched.isOpen ? "bg-emerald-500" : "bg-slate-300"}`} />
+                      <span className={`text-sm font-bold tabular-nums ${sched.isOpen ? "text-slate-800" : "text-slate-600"}`}>
                         {sched.isOpen ? `${fmtTime(sched.start)} – ${fmtTime(sched.end)}` : "Closed"}
                       </span>
                     </div>
@@ -387,187 +307,79 @@ export function DoctorProfileView({ doctor, relatedDoctors }: DoctorProfileViewP
             </div>
           </div>
 
-          {/* Languages & Clinic location row */}
-          <div className="flex flex-wrap gap-2 pt-1">
-            {doctor.languages && doctor.languages.length > 0 && (
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-[#205E98] text-[11px] font-bold">
-                🗣️ {doctor.languages.slice(0, 3).join(" · ")}
-              </div>
-            )}
-            {doctor.location && (
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-100 text-slate-600 text-[11px] font-bold">
-                <MapPin className="w-3 h-3 text-[#205E98]" />
-                {doctor.locality ? `${doctor.locality}, ${doctor.location}` : doctor.location}
-              </div>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2 p-3 rounded-[14px] bg-[#205E98]/5 border border-[#205E98]/10">
-            <ShieldCheck className="w-3.5 h-3.5 text-[#205E98] shrink-0" />
-            <p className="text-[11px] font-bold text-[#205E98]">
-              Verified contact provided through JivniCare platform
-            </p>
+          <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-blue-50/50 border border-blue-100 text-sm font-medium text-slate-700">
+            <MapPin className="w-4 h-4 text-[#205E98] shrink-0" />
+            <span className="line-clamp-2">{doctor.clinic}, {doctor.location}</span>
           </div>
         </CardContent>
       </Card>
 
-      {/* ── About Card ── */}
-      <Card className="rounded-[22px] border-slate-100 shadow-[0_2px_16px_rgba(0,0,0,0.05)]">
-        <CardContent className="p-4 md:p-5 space-y-4">
+      {/* ABOUT CARD */}
+      <Card className="rounded-3xl border-slate-100 shadow-soft">
+        <CardContent className="p-5 md:p-6 space-y-5">
           <div>
-            <h2 className="text-[13px] font-black text-slate-900 flex items-center gap-1.5 mb-2.5 uppercase tracking-wide">
-              <ShieldCheck className="w-4 h-4 text-[#205E98]" />
+            <h2 className="text-sm font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2 mb-3">
               About the Doctor
             </h2>
-            <div className="text-[13.5px] text-slate-600 leading-[1.7] font-medium">
-              {doctor.about
-                ? doctor.about
-                : `${doctor.name} is a ${doctor.specialty} specialist${doctor.clinic ? ` at ${doctor.clinic}` : ""}${doctor.location ? ` in ${doctor.location}` : ""}${doctor.experience && doctor.experience !== "0" ? ` with ${doctor.experience} years of clinical experience` : ""}.`}
+            <div className={`text-sm md:text-base text-slate-600 leading-relaxed font-medium transition-all ${isBioExpanded ? "" : "line-clamp-3"}`}>
+              {bioText}
             </div>
+            {isLongBio && (
+              <button 
+                onClick={() => setIsBioExpanded(!isBioExpanded)}
+                className="text-[#205E98] text-sm font-bold mt-2 flex items-center gap-1 hover:underline focus:outline-none"
+              >
+                {isBioExpanded ? "Show less" : "Read more"}
+                {isBioExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              </button>
+            )}
           </div>
 
-          <div className="pt-1">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2.5">
-              Expertise & Treatments
-            </p>
-            <div className="flex flex-wrap gap-1.5">
+          <div className="pt-2">
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Expertise & Tags</p>
+            <div className="flex flex-wrap gap-2">
               {expertiseTags.map((tag) => (
                 <Badge
                   key={tag}
                   variant="outline"
-                  className="text-[11px] font-semibold text-slate-600 border-slate-200 bg-slate-50 hover:border-[#205E98]/30 hover:bg-[#205E98]/4 hover:text-[#205E98] transition-all rounded-lg px-2.5 py-1 cursor-default"
+                  className="text-xs font-semibold text-slate-600 border-slate-200 bg-slate-50 hover:bg-slate-100 rounded-xl px-3 py-1.5"
                 >
                   {tag}
                 </Badge>
               ))}
             </div>
           </div>
-
-          <div className="pt-3">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">
-              JivniCare Trust Guarantees
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="flex items-start gap-2.5 p-3 rounded-xl bg-emerald-50/50 border border-emerald-100/50">
-                <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="text-[12px] font-bold text-emerald-900 leading-tight">100% Verified Medical License</h4>
-                  <p className="text-[11px] text-emerald-700/80 font-medium leading-snug mt-0.5">Credentials strictly verified by our medical compliance team.</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-2.5 p-3 rounded-xl bg-blue-50/50 border border-blue-100/50">
-                <Zap className="w-5 h-5 text-[#205E98] shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="text-[12px] font-bold text-[#205E98] leading-tight">Real-Time Queue Transparency</h4>
-                  <p className="text-[11px] text-[#205E98]/80 font-medium leading-snug mt-0.5">Live tracking means zero unexpected waiting room delays.</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-2.5 p-3 rounded-xl bg-slate-50 border border-slate-100">
-                <ShieldCheck className="w-5 h-5 text-slate-600 shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="text-[12px] font-bold text-slate-700 leading-tight">Secure Booking & Privacy</h4>
-                  <p className="text-[11px] text-slate-500 font-medium leading-snug mt-0.5">End-to-end encryption for your health data and appointments.</p>
-                </div>
-              </div>
-            </div>
-          </div>
         </CardContent>
       </Card>
 
-      {/* ── Related Doctors Discovery ── */}
+      {/* RELATED DOCTORS */}
       {relatedDoctors && relatedDoctors.length > 0 && (
-        <div className="pt-6">
-          <div className="flex items-center justify-between mb-4 px-1">
-            <div>
-              <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">
-                Similar Specialists Nearby
-              </h3>
-              <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-                Verified alternative doctors for your health concern.
-              </p>
-            </div>
+        <div className="pt-4">
+          <div className="mb-4">
+            <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest">Similar Specialists</h3>
           </div>
-          
-          <div className="flex overflow-x-auto gap-4 pb-4 md:pb-0 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-3 md:gap-4">
-            {relatedDoctors.map((relDoc) => {
-              const relAvailable = relDoc.available?.toLowerCase() === "today" || relDoc.available?.toLowerCase().includes("available today");
-              return (
-                <div
-                  key={relDoc.id}
-                  className="shrink-0 snap-start w-[85%] sm:w-[320px] md:w-auto bg-white rounded-[22px] border border-slate-100 p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between"
-                >
-                  <div>
-                    {/* Header: Photo + Info */}
-                    <div className="flex items-start gap-3">
-                      <div className="relative w-12 h-12 rounded-xl border border-slate-100 bg-slate-50 overflow-hidden shrink-0">
-                        {relDoc.image ? (
-                          <Image
-                            src={getCanonicalImageUrl(relDoc.image, relDoc.updatedAt) || ""}
-                            alt={relDoc.name}
-                            width={48}
-                            height={48}
-                            className="object-cover w-full h-full"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-[#205E98]/10 text-[#205E98] font-bold text-lg">
-                            {relDoc.name.charAt(0)}
-                          </div>
-                        )}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <h4 className="font-black text-sm text-slate-900 leading-snug line-clamp-1 hover:text-[#205E98] transition-colors">
-                          <Link href={`/doctors/${relDoc.slug}`}>
-                            {displayName(relDoc.name)}
-                          </Link>
-                        </h4>
-                        <p className="text-[11px] font-bold text-[#205E98] mt-0.5">{relDoc.specialty}</p>
-                        <p className="text-[10px] text-slate-500 font-medium mt-0.5">{relDoc.experience} Years Experience</p>
-                      </div>
-                    </div>
-
-                    {/* Clinic details */}
-                    <div className="mt-3.5 space-y-1.5 border-t border-slate-50 pt-3">
-                      <p className="text-[11.5px] font-bold text-slate-700 line-clamp-1">
-                        🏢 {relDoc.clinic}
-                      </p>
-                      <p className="text-[10.5px] text-slate-500 font-medium flex items-center gap-1">
-                        📍 {relDoc.location}
-                      </p>
-                    </div>
-
-                    {/* Status & Fee */}
-                    <div className="mt-3.5 flex items-center justify-between bg-slate-50/50 p-2.5 rounded-xl border border-slate-100">
-                      <div>
-                        <p className="text-[8.5px] text-slate-400 font-bold uppercase tracking-wider">Fee</p>
-                        <p className="text-[13px] font-black text-slate-900 mt-0.5">{relDoc.fee}</p>
-                      </div>
-                      <div className="text-right">
-                        <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                          relAvailable 
-                            ? "bg-emerald-50 text-emerald-700 border border-emerald-100" 
-                            : "bg-slate-100 text-slate-600"
-                        }`}>
-                          <span className={`w-1 h-1 rounded-full ${relAvailable ? "bg-emerald-500 animate-pulse" : "bg-slate-400"}`} />
-                          {relAvailable ? "Open Today" : "Check Schedule"}
-                        </span>
-                      </div>
-                    </div>
+          <div className="flex overflow-x-auto gap-4 pb-4 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-3">
+            {relatedDoctors.map((relDoc) => (
+              <Link 
+                href={`/doctors/${relDoc.slug}`} 
+                key={relDoc.id}
+                className="shrink-0 snap-start w-[85%] sm:w-[320px] md:w-auto bg-white rounded-3xl border border-slate-100 p-5 shadow-soft hover:shadow-premium hover:-translate-y-1 transition-all flex flex-col group"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="relative w-14 h-14 rounded-2xl bg-slate-50 overflow-hidden shrink-0 border border-slate-100">
+                    {relDoc.image ? (
+                      <Image src={getCanonicalImageUrl(relDoc.image, relDoc.updatedAt) || ""} alt={relDoc.name} width={400} height={300} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-[#205E98] font-bold text-xl">{relDoc.name.charAt(0)}</div>
+                    )}
                   </div>
-
-                  {/* Actions */}
-                  <div className="mt-4 flex items-center gap-2">
-                    <Link href={`/doctors/${relDoc.slug}`} className="w-full">
-                      <Button
-                        variant="outline"
-                        className="w-full h-9 rounded-xl text-[11.5px] font-bold border-slate-200 text-slate-700 hover:bg-[#205E98]/5 hover:text-[#205E98] hover:border-[#205E98]/30 transition-all"
-                      >
-                        View Profile
-                      </Button>
-                    </Link>
+                  <div>
+                    <h4 className="font-black text-base text-slate-900 group-hover:text-[#205E98] transition-colors">{displayName(relDoc.name)}</h4>
+                    <p className="text-sm font-bold text-[#205E98]">{relDoc.specialty}</p>
                   </div>
                 </div>
-              );
-            })}
+              </Link>
+            ))}
           </div>
         </div>
       )}

@@ -3,13 +3,14 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useBookingStore } from "@/features/booking/store/useBookingStore";
-import { CheckCircle2, Calendar, MapPin, Download, ChevronRight, Activity, ShieldCheck, PhoneCall, Info } from "lucide-react";
+import { CheckCircle2, MapPin, ChevronRight, Activity, ShieldCheck, PhoneCall, Info, Navigation, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 export default function ConfirmationPage() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
+  const [eta, setEta] = useState("");
   const [queueStats, setQueueStats] = useState<{ currentToken: number; totalInQueue: number; estimatedWait: number } | null>(null);
   
   const token = useBookingStore(state => state.generatedToken);
@@ -18,17 +19,13 @@ export default function ConfirmationPage() {
   const resetBooking = useBookingStore(state => state.resetBooking);
 
   useEffect(() => {
-     
     setMounted(true);
-    
-    // Hydrate from localStorage if store is empty (e.g. after hard refresh)
     if (!token) {
       try {
         const savedToken = localStorage.getItem("jc_active_token");
         if (savedToken) {
           const parsed = JSON.parse(savedToken);
           setGeneratedToken(parsed);
-          // If we have a token, we should have a doctor context too (usually in history or just from API later)
         }
       } catch (e) { console.error("Hydration failed", e); }
     }
@@ -36,18 +33,15 @@ export default function ConfirmationPage() {
 
   useEffect(() => {
     if (!mounted) return;
-    // Only redirect if hydration also failed
     if (!token && !localStorage.getItem("jc_active_token")) {
       router.replace("/");
     }
   }, [mounted, router, token]);
 
-  // Poll real queue stats every 30 seconds
+  // Poll real queue stats every 15 seconds
   useEffect(() => {
     if (!mounted || !token?.doctorId) return;
-
     let timeoutId: NodeJS.Timeout;
-
     const fetchStats = async () => {
       try {
         if (document.visibilityState === "visible") {
@@ -55,31 +49,36 @@ export default function ConfirmationPage() {
           const data = await res.json();
           if (data.success) setQueueStats(data.queue);
         }
-      } catch { /* ignore polling errors */ }
-      finally {
-        timeoutId = setTimeout(fetchStats, 30000);
+      } catch {} finally {
+        timeoutId = setTimeout(fetchStats, 15000);
       }
     };
-
     fetchStats();
     return () => clearTimeout(timeoutId);
   }, [mounted, token]);
 
+  const currentServing = queueStats?.currentToken ?? Math.max(1, (token?.tokenNumber || 1) - 1);
+  const currentWait = queueStats?.estimatedWait ?? token?.estimatedWaitMinutes ?? 45;
+  const myToken = token?.tokenNumber || 1;
+  
+  // Calculate progress for the visual timeline
+  const tokensAhead = Math.max(0, myToken - currentServing);
+  const progressPercent = myToken === 1 ? 100 : Math.min(100, Math.max(5, (currentServing / myToken) * 100));
+
+  useEffect(() => {
+    if (mounted) {
+      setEta(new Date(Date.now() + currentWait * 60000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
+    }
+  }, [mounted, currentWait]);
+
   if (!mounted || !token || !doctor) return (
-    <div className="bg-[#f7f9fc] min-h-screen">
-      <div className="absolute top-0 left-0 w-full h-[400px] bg-gradient-to-b from-emerald-500 to-[#14532d]" />
-      <div className="container mx-auto px-4 max-w-2xl relative z-10 pt-12 animate-pulse">
-        <div className="text-center mb-8">
-          <div className="w-20 h-20 bg-white/20 rounded-full mx-auto mb-4" />
-          <div className="h-8 w-48 bg-white/20 rounded-full mx-auto" />
-          <div className="h-4 w-40 bg-white/10 rounded-full mx-auto mt-2" />
-        </div>
-        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
-          <div className="bg-primary/30 h-48" />
+    <div className="bg-slate-50 min-h-screen pt-12">
+      <div className="container mx-auto px-4 max-w-lg relative z-10 animate-pulse">
+        <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+          <div className="h-64 bg-slate-100" />
           <div className="p-8 space-y-4">
             <div className="h-6 w-48 bg-slate-200 rounded-full" />
             <div className="h-4 w-full bg-slate-100 rounded-full" />
-            <div className="h-4 w-2/3 bg-slate-100 rounded-full" />
             <div className="h-4 w-3/4 bg-slate-100 rounded-full" />
           </div>
         </div>
@@ -87,134 +86,130 @@ export default function ConfirmationPage() {
     </div>
   );
 
-  const currentServing = queueStats?.currentToken ?? Math.max(1, (token.tokenNumber || 1) - 1);
-  const currentWait = queueStats?.estimatedWait ?? token.estimatedWaitMinutes ?? 45;
-
   return (
-    <div className="bg-[#f7f9fc] min-h-screen pt-6 md:pt-12 pb-20 relative">
-
-      <div className="absolute top-0 left-0 w-full h-[400px] bg-gradient-to-b from-emerald-500 to-[#14532d] z-0" />
-      <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/clean-gray-paper.png')] opacity-[0.03] pointer-events-none z-0" />
-
-      <div className="container mx-auto px-4 max-w-2xl relative z-10 fade-in-up">
+    <div className="bg-slate-50 min-h-screen pt-6 md:pt-12 pb-24 relative">
+      
+      {/* Calm Header */}
+      <div className="container mx-auto px-4 max-w-lg relative z-10 fade-in-up">
         
         <div className="text-center mb-8">
-          <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-xl shadow-emerald-900/20">
-            <CheckCircle2 className="w-10 h-10 text-emerald-500" />
+          <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <CheckCircle2 className="w-8 h-8 text-emerald-500" />
           </div>
-          <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">Booking Confirmed!</h1>
-          <p className="text-emerald-100 font-medium mt-2">Your appointment token is confirmed.</p>
+          <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">Booking Confirmed</h1>
+          <p className="text-slate-500 font-medium mt-1.5">Your place in the queue is secured.</p>
         </div>
 
-        {/* Digital Ticket */}
-        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden ticket-cutout border border-white relative">
+        {/* Live Tracking Card */}
+        <div className="bg-white rounded-[32px] shadow-premium border border-slate-100 relative overflow-hidden mb-6">
           
-          {/* Ticket Header (Token) */}
-          <div className="bg-gradient-to-br from-primary to-primary/80 p-8 text-center text-white relative">
-            <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10" />
-            <p className="text-sm font-bold text-blue-200 uppercase tracking-widest mb-2 relative z-10">Your Live Token</p>
-            <h2 className="text-6xl font-black relative z-10">#{token.tokenNumber}</h2>
+          <div className="absolute top-5 right-5 flex items-center gap-1.5 bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full border border-emerald-100">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[10px] font-bold uppercase tracking-wide">Live</span>
+          </div>
+
+          <div className="p-6 md:p-8 text-center border-b border-slate-50">
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Your Token</p>
+            <h2 className="text-7xl font-black text-slate-900 tracking-tighter leading-none mb-4">#{myToken}</h2>
             
-            <div className="mt-6 inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 px-4 py-2 rounded-full relative z-10">
-              <Activity className="w-4 h-4 text-emerald-400" />
-              <p className="text-sm font-bold">Doctor is currently seeing: <span className="text-emerald-400">#{currentServing}</span></p>
+            <div className="inline-flex items-center gap-2 bg-[#205E98]/5 border border-[#205E98]/10 px-4 py-2 rounded-xl">
+              <Activity className="w-4 h-4 text-[#205E98]" />
+              <p className="text-sm font-bold text-slate-700">Currently Serving: <span className="text-[#205E98] text-base">#{currentServing}</span></p>
             </div>
           </div>
 
-          {/* Dotted Line Divider */}
-          <div className="h-0 border-t-2 border-dashed border-slate-200 w-[90%] mx-auto relative z-10" />
-
-          {/* Ticket Body (Details) */}
-          <div className="p-8">
-            <h3 className="text-2xl font-black text-slate-900 mb-6">{doctor.name}</h3>
-            
-            <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <Calendar className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-0.5">Date & Time</p>
-                  <p className="font-bold text-slate-900">Today, {new Date().toLocaleDateString("en-IN", { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <p className="text-sm text-slate-500">Est. Wait: <span className="font-bold text-slate-700">~{currentWait} mins</span></p>
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <MapPin className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-0.5">Clinic Location</p>
-                  <p className="font-bold text-slate-900">{doctor.clinic}</p>
-                  <p className="text-sm text-slate-500 leading-snug">{doctor.location}</p>
-                </div>
-              </div>
+          {/* Visual Timeline Bar */}
+          <div className="px-6 md:px-8 py-6 bg-slate-50/50">
+            <div className="flex justify-between text-xs font-bold text-slate-500 mb-3">
+              <span>Token #1</span>
+              <span>Your Turn</span>
             </div>
+            
+            <div className="h-3 w-full bg-slate-200 rounded-full overflow-hidden relative">
+              <div 
+                className="absolute top-0 left-0 h-full bg-[#205E98] rounded-full transition-all duration-1000 ease-out"
+                style={{ width: `${progressPercent}%` }}
+              />
+              {/* Pulse effect on the leading edge */}
+              <div 
+                className="absolute top-0 h-full w-4 bg-white/40 blur-[2px] animate-pulse transition-all duration-1000 ease-out"
+                style={{ left: `calc(${progressPercent}% - 8px)` }}
+              />
+            </div>
+            
+            <div className="mt-4 flex items-center justify-center gap-2 text-sm text-slate-600 font-medium">
+              <span className="font-bold text-slate-900">{tokensAhead}</span> {tokensAhead === 1 ? 'person' : 'people'} ahead of you
+            </div>
+          </div>
 
-            <div className="mt-8 pt-6 border-t border-slate-100 flex items-center justify-between">
-              <div>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Status</p>
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse" />
-                  <span className="text-sm font-black text-emerald-600 uppercase">Confirmed</span>
-                </div>
+          {/* Arrival Window */}
+          <div className="p-6 md:p-8 border-t border-slate-50">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center shrink-0 border border-amber-100">
+                <Clock className="w-6 h-6 text-amber-500" />
               </div>
-              <Button variant="outline" className="rounded-xl font-bold border-slate-200 text-primary hover:bg-primary/10">
-                <Download className="w-4 h-4 mr-2" /> Save Ticket
-              </Button>
+              <div>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Estimated Arrival</p>
+                <p className="font-black text-xl text-slate-900">In ~{currentWait} mins</p>
+                <p className="text-sm text-slate-500 font-medium leading-snug mt-1">
+                  Please aim to reach the clinic by <strong className="text-slate-700">{eta}</strong>
+                </p>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* ── Patient Confidence & Trust Layer ── */}
-        <div className="mt-6 space-y-4">
-          <div className="bg-white rounded-2xl p-5 shadow-lg border border-slate-100 flex items-start gap-4">
-            <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center shrink-0 mt-0.5">
-              <ShieldCheck className="w-5 h-5 text-[#205E98]" />
-            </div>
+        {/* Clinic Info & Directions */}
+        <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <MapPin className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
             <div>
-              <h4 className="text-[15px] font-black text-slate-900 mb-1">What Happens Next?</h4>
-              <p className="text-[13px] text-slate-600 font-medium leading-relaxed">
-                Your slot is locked. Please reach the clinic 10 minutes before your estimated time. If you miss your exact turn, your token will be pushed down slightly, so you don't lose your booking.
+              <p className="font-bold text-slate-900">{doctor.clinic || "Clinic"}</p>
+              <p className="text-sm text-slate-500 line-clamp-2">{doctor.location}</p>
+            </div>
+          </div>
+          <a 
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${doctor.clinic} ${doctor.location}`)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full sm:w-auto shrink-0"
+          >
+            <Button variant="outline" className="w-full rounded-xl font-bold border-slate-200 text-[#205E98] hover:bg-[#205E98]/5">
+              <Navigation className="w-4 h-4 mr-2" /> Get Directions
+            </Button>
+          </a>
+        </div>
+
+        {/* Guidance Blocks */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex items-start gap-3">
+            <Info className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
+            <div>
+              <h4 className="text-[13px] font-bold text-slate-900 mb-1">Missing your turn?</h4>
+              <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                If you arrive late, your token will be pushed down slightly so you don't lose your booking entirely.
               </p>
             </div>
           </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="bg-white rounded-2xl p-5 shadow-lg border border-slate-100 flex items-start gap-3">
-              <Info className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-              <div>
-                <h4 className="text-[13px] font-black text-slate-900 mb-1">Cancellation Policy</h4>
-                <p className="text-[12px] text-slate-600 font-medium leading-relaxed">
-                  You can cancel anytime before the consultation begins directly from the "Track Your Wait Time" page.
-                </p>
-              </div>
-            </div>
-            
-            <div className="bg-white rounded-2xl p-5 shadow-lg border border-slate-100 flex items-start gap-3">
-              <PhoneCall className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-              <div>
-                <h4 className="text-[13px] font-black text-slate-900 mb-1">Need Assistance?</h4>
-                <p className="text-[12px] text-slate-600 font-medium leading-relaxed mb-2">
-                  Our dedicated operational support team is available to help you.
-                </p>
-                <a href="tel:+918000000000" className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md inline-block">
-                  Call Support Team
-                </a>
-              </div>
+          
+          <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex items-start gap-3">
+            <PhoneCall className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
+            <div>
+              <h4 className="text-[13px] font-bold text-slate-900 mb-1">Need to cancel?</h4>
+              <p className="text-xs text-slate-500 font-medium leading-relaxed mb-2">
+                Release your token so another patient can take the slot.
+              </p>
+              <Link href="/my-bookings" className="text-[11px] font-bold text-red-600 hover:underline">
+                Cancel Booking
+              </Link>
             </div>
           </div>
         </div>
 
-        {/* Actions */}
-        <div className="mt-8 flex flex-col sm:flex-row gap-4 items-center justify-center">
-          <Link href="/my-bookings" className="w-full sm:w-auto" onClick={resetBooking}>
-            <Button className="w-full h-14 px-8 rounded-xl bg-primary hover:bg-primary/90 text-white font-black shadow-xl shadow-blue-900/20 text-lg">
-              Track Your Wait Time <ChevronRight className="w-5 h-5 ml-1" />
-            </Button>
-          </Link>
-          <Link href="/" className="w-full sm:w-auto" onClick={resetBooking}>
-            <Button variant="ghost" className="w-full h-14 px-8 rounded-xl font-bold text-slate-500 hover:text-slate-900 hover:bg-white/50">
-              Return Home
+        <div className="mt-8 text-center">
+          <Link href="/" onClick={resetBooking}>
+            <Button variant="ghost" className="h-14 px-8 rounded-xl font-bold text-slate-500 hover:text-slate-900">
+              Return to Home
             </Button>
           </Link>
         </div>

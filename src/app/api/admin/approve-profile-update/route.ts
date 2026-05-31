@@ -14,7 +14,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const decoded = verifyToken(token) as { role: string } | null;
+    const decoded = await verifyToken(token) as { role: string } | null;
     if (!decoded) {
       return NextResponse.json({ error: "Invalid or expired session" }, { status: 401 });
     }

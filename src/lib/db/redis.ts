@@ -24,6 +24,13 @@ const createRedisClient = () => {
         store.delete(key); 
         return 1; 
       },
+      hincrby: async (key: string, field: string, incr: number) => { return 1; },
+      hgetall: async (key: string) => ({}),
+      pipeline: () => ({
+        lpush: () => {},
+        ltrim: () => {},
+        exec: async () => []
+      })
     } as unknown as Redis;
   }
 

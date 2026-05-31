@@ -1,5 +1,6 @@
 // src/lib/infrastructure/rate-limit.ts
 import { logger } from '@/lib/infrastructure/logger';
+import { redis } from '@/lib/db/redis';
 
 export interface RateLimitConfig {
   identifier: string; // e.g., IP or phone+route
@@ -7,58 +8,38 @@ export interface RateLimitConfig {
   windowMs: number;
 }
 
-// In‑memory cache with simple LRU eviction based on reset time.
-type CacheEntry = { count: number; resetAt: number };
-const cache = new Map<string, CacheEntry>();
-const MAX_CACHE_SIZE = 5000; // safeguard memory usage
-
-function cleanup() {
-  const now = Date.now();
-  for (const [key, entry] of cache) {
-    if (now > entry.resetAt) {
-      cache.delete(key);
-    }
-  }
-}
-
 export async function checkRateLimit({ identifier, limit, windowMs }: RateLimitConfig): Promise<{ success: boolean; remaining: number; resetTime: Date }> {
-  cleanup();
-  const now = Date.now();
-  let entry = cache.get(identifier);
-
-  if (!entry) {
-    entry = { count: 1, resetAt: now + windowMs };
-    cache.set(identifier, entry);
-    // Enforce max size
-    if (cache.size > MAX_CACHE_SIZE) {
-      // Remove the oldest entry (Map preserves insertion order)
-      const oldestKey = cache.keys().next().value;
-      if (oldestKey !== undefined) {
-        cache.delete(oldestKey);
-      }
+  try {
+    const key = `rate_limit:${identifier}`;
+    
+    // Attempt to increment the count
+    const current = await redis.incr(key);
+    
+    if (current === 1) {
+      // First request in the window, set expiry
+      await redis.pexpire(key, windowMs);
     }
-    return { success: true, remaining: limit - 1, resetTime: new Date(entry.resetAt) };
-  }
+    
+    // Get time to live for reset calculation
+    let ttl = await redis.pttl(key);
+    if (ttl < 0) ttl = windowMs; // Fallback
+    
+    const resetTime = new Date(Date.now() + ttl);
+    const remaining = Math.max(0, limit - current);
 
-  // If window elapsed, reset counter
-  if (now > entry.resetAt) {
-    entry.count = 1;
-    entry.resetAt = now + windowMs;
-    cache.set(identifier, entry);
-    return { success: true, remaining: limit - 1, resetTime: new Date(entry.resetAt) };
-  }
+    if (current > limit) {
+      logger.warn({
+        category: 'SYSTEM',
+        message: 'Rate limit exceeded',
+        metadata: { identifier, limit, resetTime }
+      });
+      return { success: false, remaining: 0, resetTime };
+    }
 
-  // Within window, enforce limit
-  if (entry.count >= limit) {
-    logger.warn({
-      category: 'SYSTEM',
-      message: 'Rate limit exceeded',
-      metadata: { identifier, limit, resetTime: new Date(entry.resetAt) }
-    });
-    return { success: false, remaining: 0, resetTime: new Date(entry.resetAt) };
+    return { success: true, remaining, resetTime };
+  } catch (error) {
+    // If Redis fails, log error but allow request (fail open to prevent total outage)
+    logger.error({ category: 'SYSTEM', message: 'Redis rate limit failure, failing open', error });
+    return { success: true, remaining: 1, resetTime: new Date(Date.now() + windowMs) };
   }
-
-  entry.count += 1;
-  cache.set(identifier, entry);
-  return { success: true, remaining: Math.max(0, limit - entry.count), resetTime: new Date(entry.resetAt) };
 }

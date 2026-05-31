@@ -16,7 +16,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
-    const payload = verifyToken(token) as { id: string } | null;
+    const payload = await verifyToken(token) as { id: string } | null;
     if (!payload?.id) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }

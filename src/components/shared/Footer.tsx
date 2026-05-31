@@ -62,23 +62,23 @@ export function Footer() {
                 <Logo className="h-8 w-auto" />
               </div>
               <div className="flex flex-col -space-y-1">
-                 <span className="text-xl font-black tracking-tight leading-none text-white">
-                    <span className="text-primary">Jivni</span><span className="text-secondary">Care</span>
+                 <span className="text-xl font-black tracking-tight leading-none text-slate-800">
+                    <span className="text-[#205E98]">Jivni</span><span className="text-[#166534]">Care</span>
                  </span>
                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] pl-0.5">Bihar</span>
               </div>
             </Link>
 
-            <p className="text-slate-400 text-[13px] font-bold leading-relaxed max-w-xs">
+            <p className="text-slate-500 text-[13px] font-bold leading-relaxed max-w-xs">
               Making quality healthcare simple, safe, and accessible for everyone in Bihar. Book verified doctors instantly.
             </p>
 
             {/* Trust Badges */}
             <div className="flex flex-wrap gap-2">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-400 bg-emerald-400/10 px-3 py-1.5 rounded-full border border-emerald-400/20">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200">
                 <ShieldCheck className="w-3.5 h-3.5" /> Verified Doctors Only
               </div>
-              <div className="flex items-center gap-1.5 text-xs font-bold text-blue-400 bg-blue-400/10 px-3 py-1.5 rounded-full border border-blue-400/20">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-blue-700 bg-blue-50 px-3 py-1.5 rounded-full border border-blue-200">
                 <Heart className="w-3.5 h-3.5" /> Patient-First
               </div>
             </div>
@@ -112,7 +112,7 @@ export function Footer() {
           <div className="lg:col-span-8 grid grid-cols-2 md:grid-cols-4 gap-8">
             {FOOTER_SECTIONS.map((section) => (
               <div key={section.title} className="col-span-1">
-                <h4 className="text-slate-900 font-bold mb-6 text-sm uppercase tracking-wider">{section.title}</h4>
+                <h3 className="text-slate-900 font-bold mb-6 text-sm uppercase tracking-wider">{section.title}</h3>
                 <ul className="space-y-3">
                   {section.links.map((link) => {
                     const isExternal = link.href.startsWith("mailto:") || link.href.startsWith("http");
@@ -124,7 +124,7 @@ export function Footer() {
                           {...extraProps}
                           className={`text-sm hover:translate-x-1 inline-block transition-all duration-300 ${
                             "accent" in link && link.accent
-                              ? "text-emerald-500 font-semibold hover:text-emerald-600"
+                              ? "text-emerald-700 font-bold hover:text-emerald-800"
                               : "text-slate-500 hover:text-primary"
                           }`}
                         >
@@ -143,9 +143,9 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-14 pt-10 border-t border-slate-100">
           {/* Top Specialties */}
           <div>
-            <h4 className="text-slate-900 font-bold mb-6 text-sm uppercase tracking-wider flex items-center gap-2">
+            <h3 className="text-slate-900 font-bold mb-6 text-sm uppercase tracking-wider flex items-center gap-2">
               Top Specialties
-            </h4>
+            </h3>
             <ul className="grid grid-cols-2 gap-y-3 gap-x-4">
               {HEALTHCARE_SPECIALTIES.slice(0, 8).map((spec) => (
                 <li key={spec}>
@@ -162,11 +162,11 @@ export function Footer() {
 
           {/* Contact Card */}
           <div id="contact" className="bg-slate-50 p-6 rounded-2xl border border-slate-100 space-y-4 scroll-mt-24">
-            <h4 className="text-slate-900 font-bold text-sm uppercase tracking-wider">Get in Touch</h4>
+            <h3 className="text-slate-900 font-bold text-sm uppercase tracking-wider">Get in Touch</h3>
             <ul className="space-y-3">
               <li className="flex items-start gap-3">
                 <MapPin className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                <span className="text-sm text-slate-400 leading-relaxed">4th Floor, JivniCare Tech Hub<br />Boring Road, Patna, Bihar 800001</span>
+                <span className="text-sm text-slate-500 leading-relaxed">4th Floor, JivniCare Tech Hub<br />Boring Road, Patna, Bihar 800001</span>
               </li>
               <li className="flex items-center gap-3">
                 <Phone className="w-4 h-4 text-primary shrink-0" />
@@ -177,15 +177,15 @@ export function Footer() {
                 <a href="mailto:support@jivnicare.com" className="text-sm text-slate-500 hover:text-primary transition-colors font-medium">support@jivnicare.com</a>
               </li>
               <li className="flex items-center gap-3 pt-1">
-                <Clock className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span className="text-sm text-emerald-400 font-semibold">24/7 Support Available</span>
+                <Clock className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span className="text-sm text-emerald-700 font-semibold">24/7 Support Available</span>
               </li>
             </ul>
           </div>
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-8 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-6 text-xs text-slate-400 text-center md:text-left">
+        <div className="pt-8 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-6 text-xs text-slate-500 text-center md:text-left">
           <div className="flex flex-col md:flex-row items-center gap-3">
             <p>© {new Date().getFullYear()} JivniCare Technologies Pvt. Ltd. All rights reserved.</p>
             <p className="hidden md:block text-slate-700">•</p>
@@ -195,7 +195,7 @@ export function Footer() {
             <Link href="/privacy" className="text-slate-500 hover:text-primary transition-colors">Privacy Policy</Link>
             <Link href="/terms" className="text-slate-500 hover:text-primary transition-colors">Terms of Service</Link>
             <Link href="/about" className="text-slate-500 hover:text-primary transition-colors">About</Link>
-            <div className="flex items-center gap-1.5 text-emerald-400 font-bold bg-emerald-400/10 px-3 py-1 rounded-full border border-emerald-400/20">
+            <div className="flex items-center gap-1.5 text-emerald-700 font-bold bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
               <ShieldCheck className="w-3.5 h-3.5" /> Secure & Verified
             </div>
           </div>
