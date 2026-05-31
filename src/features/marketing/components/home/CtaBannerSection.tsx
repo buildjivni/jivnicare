@@ -26,7 +26,7 @@ export function CtaBannerSection() {
         className="container mx-auto px-4 max-w-4xl text-center relative z-10"
       >
         <div className="inline-block mb-6">
-          <Logo className="h-10 md:h-14 w-auto" />
+          <Logo className="h-10 w-10 md:h-14 md:w-14" />
         </div>
 
         {/* Social proof bar */}

@@ -1,4 +1,5 @@
 "use client";
+import { Logo } from "@/features/marketing/components/brand/Logo";
 
 import { useState, Suspense, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -322,7 +323,7 @@ function AdminDashboardContent() {
         <div className={`w-72 bg-white border-r border-slate-200 flex flex-col h-screen shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-50 fixed md:relative transition-transform duration-300 ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
           <div className="p-6 pb-6 border-b border-slate-100 bg-gradient-to-b from-slate-50 to-white flex items-center justify-between">
             <div className="flex items-center gap-3">
-               <img src="/logo.png" alt="JivniCare Logo" className="w-10 h-10 drop-shadow-md object-contain" />
+               <Logo className="w-10 h-10 drop-shadow-md object-contain" />
               <div>
                 <h2 className="text-2xl font-black tracking-tight text-slate-900">
                   <span className="text-primary">Jivni</span>
@@ -462,7 +463,7 @@ function AdminDashboardContent() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex items-center gap-4">
           <div className="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center text-[#5298D2]">
-            <img src="/logo.png" alt="JivniCare Logo" className="w-8 h-8 object-contain" />
+            <Logo className="w-8 h-8 object-contain" />
           </div>
           <div>
             <p className="text-sm font-bold text-slate-500">Active Queues Today</p>
