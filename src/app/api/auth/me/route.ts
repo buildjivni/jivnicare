@@ -37,13 +37,13 @@ export async function GET() {
     const token = cookieStore.get('auth-token')?.value;
 
     if (!token) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+      return NextResponse.json({ authenticated: false, user: null }, { status: 200 });
     }
 
     // 2. Verify JWT (returns null if expired/invalid — no throw)
-    const decoded = verifyToken(token) as { id: string; role: string } | null;
+    const decoded = await verifyToken(token) as { id: string; role: string } | null;
     if (!decoded?.id) {
-      return NextResponse.json({ error: 'Invalid or expired session' }, { status: 401 });
+      return NextResponse.json({ authenticated: false, user: null }, { status: 200 });
     }
 
     // 3. Minimal DB lookup — just what the client needs for identity
@@ -64,7 +64,7 @@ export async function GET() {
     });
 
     if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 401 });
+      return NextResponse.json({ authenticated: false, user: null }, { status: 200 });
     }
 
     return NextResponse.json({

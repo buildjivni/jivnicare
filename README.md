@@ -1,36 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# JivniCare V1 — Live Patient Queue Architecture
 
-## Getting Started
+## 1. Project Overview
+JivniCare is a highly scalable, real-time clinic queue management system. It digitizes the patient waiting room, providing real-time tracking for walk-in and online patients while empowering doctors with a frictionless, mobile-first command center. It aims to reduce clinic chaos and improve patient wait-time predictability.
 
-First, run the development server:
+## 2. Architecture Overview
+To understand JivniCare, you only need to understand three core pillars:
+1. **Authentication:** Phone Number + OTP verification via Msg91/Twilio, protected by Upstash Redis rate-limiting. Sessions are managed via secure, HttpOnly JWT cookies.
+2. **The Queue Engine:** Uses atomic database updates (`increment: 1`) in MongoDB to guarantee perfect, sequential token issuance. Emergency tokens bypass the standard queue using a separate atomic Redis counter.
+3. **Doctor Command Center:** Built explicitly for Mobile. Doctors progress the queue by pressing and holding the "Call Next" FAB for 500ms. Swiping logic manages Holding and Recalling patients.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## 3. Folder Structure
+The codebase strictly adheres to Next.js 14+ App Router conventions with a domain-driven design structure.
+
+```text
+/src
+├── app/                  # Next.js App Router (Pages, API Routes)
+│   ├── (booking)/        # Patient-facing flows (Search, Profile, Checkout)
+│   ├── (public)/         # Marketing, Auth, Onboarding
+│   ├── admin/            # Admin operations dashboard
+│   ├── api/              # Unified REST API 
+│   │   ├── auth/         # OTP and JWT generation
+│   │   ├── doctor/       # Queue state mutations
+│   │   ├── patient/      # Booking generation
+│   └── doctor/           # Doctor Command Center UI
+├── components/           # Generic UI building blocks (Shadcn + Tailwind)
+├── features/             # Domain-specific logic (auth, doctor, queue)
+├── lib/                  # Infrastructure (db, utils, analytics)
+└── types/                # Global TypeScript definitions
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 4. Environment Setup
+Create a `.env` file in the root directory based on `.env.example`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+**Required Keys:**
+*   `DATABASE_URL`: MongoDB Atlas connection string (ensure `?maxPoolSize=10` is appended).
+*   `UPSTASH_REDIS_REST_URL` & `TOKEN`: For rate limiting and fast-access queue states.
+*   `JWT_SECRET`: Secure string for signing auth tokens.
+*   `NEXT_PUBLIC_API_URL`: Set to `http://localhost:3000` for local dev.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 5. Local Development
+1. **Install Dependencies:** `npm install`
+2. **Generate Prisma Client:** `npx prisma generate`
+3. **Start Development Server:** `npm run dev`
+4. **Test Accounts:** Set `TEST_OTP_MODE=true` in your `.env`. You can then use `9999999999` to bypass SMS sending and automatically authenticate.
 
-## Learn More
+## 6. Production Deployment
+JivniCare is optimized for **Vercel** (Edge + Serverless).
+*   **Build Command:** `npm run build`
+*   **Install Command:** `npm install`
+*   **Database:** Ensure MongoDB IP Access List allows Vercel connections (or `0.0.0.0/0` if securely credentialed).
+*   **Environment:** Ensure all production environment variables are injected into Vercel. `VERCEL_URL` handles dynamic routing internally.
 
-To learn more about Next.js, take a look at the following resources:
+## 7. Troubleshooting
+*   **Queue Desyncs:** If the queue visual representation does not match the database, verify the Upstash Redis connection. The system falls back to DB polling if Redis fails, but UI updates might lag.
+*   **Build Fails (Prisma):** If `npm run build` fails on typechecks regarding `PrismaClient`, run `npx prisma generate` locally and ensure the schema is pushed.
+*   **OTP Not Arriving:** Check the API provider dashboard (Twilio/Msg91). If rate-limited, wait 15 minutes for the Upstash IP bucket to clear.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+*Built for scale. Designed for trust. Ready for production.*

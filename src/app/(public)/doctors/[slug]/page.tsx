@@ -5,7 +5,8 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import prisma from "@/lib/db/prisma";
 import { DoctorProfileView } from "@/features/patient/components/doctors/profile/DoctorProfileView";
-import { BookingWidgetClient } from "@/features/patient/components/doctors/profile/BookingWidgetClient";
+import dynamic from "next/dynamic";
+const BookingWidgetClient = dynamic(() => import("@/features/patient/components/doctors/profile/BookingWidgetClient").then(mod => mod.BookingWidgetClient));
 import { SITE_CONFIG, generateDoctorMetadata } from "@/lib/seo/metadata";
 import { physicianSchema, breadcrumbSchema } from "@/lib/seo/jsonld";
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -160,6 +161,7 @@ export default async function DoctorProfilePage({ params }: PageProps) {
         <div className="container mx-auto px-4 max-w-5xl h-14 flex items-center justify-between">
           <Link
             href="/doctors"
+            aria-label="Back to Doctors"
             className="flex items-center gap-2 text-slate-500 hover:text-[#205E98] transition-all font-bold text-sm group"
           >
             <div className="p-1.5 rounded-lg group-hover:bg-[#205E98]/6 transition-colors">
@@ -172,7 +174,7 @@ export default async function DoctorProfilePage({ params }: PageProps) {
           <div className="flex items-center gap-2 text-center">
             <div className="hidden sm:flex flex-col items-center">
               <p className="text-[11px] font-bold text-slate-900 leading-tight line-clamp-1">{doctor.name}</p>
-              <p className="text-[10px] text-slate-400">{doctor.specialty} · {district}</p>
+              <p className="text-[10px] text-slate-600">{doctor.specialty} · {district}</p>
             </div>
           </div>
 
@@ -203,7 +205,7 @@ export default async function DoctorProfilePage({ params }: PageProps) {
           <div className="lg:w-[340px] xl:w-[360px] shrink-0 hidden lg:block">
             <div className="sticky top-20">
               <div className="mb-2.5">
-                <p className="text-[10.5px] font-bold text-slate-400 uppercase tracking-widest">Schedule Appointment</p>
+                <p className="text-[10.5px] font-bold text-slate-600 uppercase tracking-widest">Schedule Appointment</p>
               </div>
               <BookingWidgetClient doctor={doctor} />
             </div>
@@ -217,13 +219,13 @@ export default async function DoctorProfilePage({ params }: PageProps) {
 
           {/* Fee + availability */}
           <div className="shrink-0">
-            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest leading-none">Consult Fee</p>
+            <p className="text-[9px] text-slate-600 font-bold uppercase tracking-widest leading-none">Consult Fee</p>
             <p className="font-black text-[20px] text-slate-900 leading-tight tabular-nums mt-0.5">
               {doctor.fee}
             </p>
             <div className="flex items-center gap-1 mt-0.5">
               <span className={`w-1.5 h-1.5 rounded-full ${availableToday ? "bg-emerald-500 animate-pulse" : "bg-slate-300"}`} />
-              <span className={`text-[9.5px] font-bold ${availableToday ? "text-emerald-600" : "text-slate-400"}`}>
+              <span className={`text-[9.5px] font-bold ${availableToday ? "text-emerald-600" : "text-slate-600"}`}>
                 {availableToday ? "OPD Open Today" : "Check Schedule"}
               </span>
             </div>

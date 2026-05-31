@@ -12,7 +12,12 @@ const ALLOWED_METRICS: Set<OperationalMetricName> = new Set([
   'sseDisconnects',
   'frontendCrashes',
   'api500Errors',
-  'emergencyQueueInsertions'
+  'emergencyQueueInsertions',
+  'emergencyQueueConflicts',
+  'duplicateTokenAttempts',
+  'queueConflicts',
+  'walkInFailures',
+  'queueRecoveryEvents'
 ]);
 
 export async function POST(req: Request) {

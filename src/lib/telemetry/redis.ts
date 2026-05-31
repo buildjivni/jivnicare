@@ -13,7 +13,12 @@ export type OperationalMetricName =
   | 'sseDisconnects'
   | 'frontendCrashes'
   | 'api500Errors'
-  | 'emergencyQueueInsertions';
+  | 'emergencyQueueInsertions'
+  | 'emergencyQueueConflicts'
+  | 'duplicateTokenAttempts'
+  | 'queueConflicts'
+  | 'walkInFailures'
+  | 'queueRecoveryEvents';
 
 /**
  * Atomically increments a lightweight operational counter.

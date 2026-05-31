@@ -117,9 +117,9 @@ export default function RootLayout({
         <GoogleAnalytics ga_id={process.env.NEXT_PUBLIC_GA_ID || ""} />
         <OperationalErrorBoundary>
           <AuthProvider>
-            <div className="flex-1 flex flex-col">
+            <main className="flex-1 flex flex-col">
               {children}
-            </div>
+            </main>
           </AuthProvider>
         </OperationalErrorBoundary>
       </body>

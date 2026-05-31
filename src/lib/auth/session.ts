@@ -14,7 +14,7 @@ export async function getSession(): Promise<SessionPayload | null> {
   if (!token) return null;
 
   try {
-    const decoded = verifyToken(token) as SessionPayload | null;
+    const decoded = (await verifyToken(token)) as SessionPayload | null;
     if (!decoded?.id) return null;
     return decoded;
   } catch {

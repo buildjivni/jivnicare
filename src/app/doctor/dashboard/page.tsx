@@ -6,11 +6,11 @@ import useSWR from "swr";
 import { 
   LayoutDashboard, Users, UserCircle, Settings,
   LogOut, Wallet, CalendarX, AlertCircle, ShieldCheck, CheckCircle2,
-  X, Menu, TrendingUp, RefreshCw, MapPin, Clock
+  X, Menu, TrendingUp, RefreshCw, MapPin, Clock, EyeOff, Eye, Loader2, ArrowRight
 } from "lucide-react";
 import { Logo } from "@/features/marketing/components/brand/Logo";
 import { QueueStatCards } from "@/features/doctor/components/queue/QueueStatCards";
-import { NowCallingController } from "@/features/doctor/components/queue/NowCallingController";
+import { NowCallingController, HoldToConfirmButton } from "@/features/doctor/components/queue/NowCallingController";
 import { QueueOperationsMenu } from "@/features/doctor/components/queue/QueueOperationsMenu";
 import { PatientListTable, PatientListItem } from "@/features/doctor/components/queue/PatientListTable";
 import { Input } from "@/components/ui/input";
@@ -49,6 +49,10 @@ function DoctorDashboardContent() {
   // Queue State
   const [isProcessingMutation, setIsProcessingMutation] = useState(false);
   const [isWalkInModalOpen, setIsWalkInModalOpen] = useState(false);
+  const [walkInEmergency, setWalkInEmergency] = useState(false);
+  const [showRevenue, setShowRevenue] = useState(false);
+  const [statusPromptMode, setStatusPromptMode] = useState<"NONE" | "SHORT_BREAK" | "CLINIC_CLOSED">("NONE");
+  const [promptData, setPromptData] = useState({ duration: "30", reason: "" });
 
   const fetcher = async (url: string) => {
     const res = await fetch(url);
@@ -68,16 +72,23 @@ function DoctorDashboardContent() {
 
   const { patients, queueStats } = useMemo(() => {
     let formattedPatients: any[] = [];
-    let stats = { total: 0, waiting: 0, completed: 0, currentActive: 0, avgWaitTime: 0 };
+    let stats = { total: 0, waiting: 0, completed: 0, currentActive: 0, avgWaitTime: 0, emergencyCount: 0, heldCount: 0 };
     
     if (queueData?.success && queueData.tokens) {
       const avgTime = queueData.doctor?.averageConsultationTime || 15;
       const currentActive = queueData.stats?.currentActive || 0;
       
+      let emergencyCount = 0;
+      let heldCount = 0;
+
       formattedPatients = queueData.tokens.map((t: any) => {
         const isEmergency = t.isEmergency || t.tokenNumber >= 9000;
         const waitTokens = isEmergency ? 0 : Math.max(0, t.tokenNumber - currentActive - 1);
         const waitTime = t.status === "WAITING" && !isEmergency ? waitTokens * avgTime : 0;
+
+        if (isEmergency && t.status !== "COMPLETED" && t.status !== "CANCELLED") emergencyCount++;
+        if (t.status === "SKIPPED") heldCount++;
+
         return {
           id: t.id,
           name: t.user?.name || t.walkInEntry?.patientName || "Unknown",
@@ -86,13 +97,17 @@ function DoctorDashboardContent() {
           condition: t.walkInEntry?.symptoms || "General",
           visitType: t.source === "ONLINE" ? "Online" : "Walk-in",
           waitTime: waitTime,
-          priority: t.isEmergency ? "Emergency" : "Standard",
+          priority: isEmergency ? "Emergency" : "Standard",
           location: t.patientLocation || "N/A",
-          status: t.status === "WAITING" ? "Waiting" : t.status === "COMPLETED" ? "Served" : t.status === "IN_CONSULTATION" ? "In-Person" : t.status,
+          status: t.status === "WAITING" ? "Waiting" : t.status === "COMPLETED" ? "Served" : t.status === "IN_CONSULTATION" ? "In-Person" : t.status === "SKIPPED" ? "Held" : t.status,
           appointmentTime: new Date(t.tokenIssuedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
         };
       });
-      if (queueData.stats) stats = queueData.stats;
+      if (queueData.stats) {
+        stats = { ...queueData.stats, emergencyCount, heldCount };
+      } else {
+        stats = { total: 0, waiting: 0, completed: 0, currentActive: 0, avgWaitTime: 0, emergencyCount, heldCount };
+      }
     }
     return { patients: formattedPatients, queueStats: stats };
   }, [queueData]);
@@ -127,6 +142,32 @@ function DoctorDashboardContent() {
       setIsProcessingMutation(false);
     }
   };
+
+  const updatePatientStatus = async (tokenId: string, status: string) => {
+    if (isProcessingMutation) return;
+    setIsProcessingMutation(true);
+    try {
+      const res = await fetch("/api/doctor/queue/update-status", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tokenId, status })
+      });
+      if (res.status === 401) {
+        useAuthStore.getState().logout();
+        return;
+      }
+      await mutateQueue();
+    } catch (error) {
+      console.error(`Failed to update status to ${status}:`, error);
+    } finally {
+      setIsProcessingMutation(false);
+    }
+  };
+
+  const handleHoldPatient = (id: string) => updatePatientStatus(id, "SKIPPED");
+  const handleRecallPatient = (id: string) => updatePatientStatus(id, "WAITING");
+  const handleServePatient = (id: string) => updatePatientStatus(id, "COMPLETED");
+  
   
   const [leaveMode, setLeaveMode] = useState(false);
   const [clinicStatus, setClinicStatus] = useState<string>("AVAILABLE");
@@ -357,13 +398,11 @@ function DoctorDashboardContent() {
               onChange={(e) => {
                 const val = e.target.value;
                 if (val === "SHORT_BREAK") {
-                  const minsStr = window.prompt("Enter break duration in minutes (e.g. 15, 30, 45, 60):", "30");
-                  const mins = parseInt(minsStr || "30") || 30;
-                  const reason = window.prompt("Enter status description / reason (optional):", "Doctor on short break");
-                  handleUpdateStatus(val, reason || "Short Break", mins);
+                  setPromptData({ duration: "30", reason: "Doctor on short break" });
+                  setStatusPromptMode("SHORT_BREAK");
                 } else if (val === "CLINIC_CLOSED") {
-                  const reason = window.prompt("Enter status description / reason (optional):", "Clinic Closed");
-                  handleUpdateStatus(val, reason || "Clinic Closed Today");
+                  setPromptData({ duration: "", reason: "Clinic Closed Today" });
+                  setStatusPromptMode("CLINIC_CLOSED");
                 } else {
                   handleUpdateStatus(val);
                 }
@@ -425,9 +464,20 @@ function DoctorDashboardContent() {
          </div>
           <div className="bg-emerald-600 rounded-2xl border border-emerald-500 shadow-premium p-6 text-white flex flex-col justify-between relative overflow-hidden">
             <div className="absolute top-0 right-0 p-4 opacity-10"><Wallet className="w-24 h-24 text-white" /></div>
-            <div className="relative z-10">
-              <span className="text-emerald-100 text-[10px] font-bold uppercase tracking-widest">Today's Revenue</span>
-              <h3 className="text-4xl font-black mt-2">₹{(queueStats.completed * parseInt(settingsData.fee || "0")).toLocaleString()}</h3>
+            <div className="relative z-10 flex justify-between items-start">
+              <div>
+                <span className="text-emerald-100 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1">Today's Revenue</span>
+                <h3 className="text-4xl font-black mt-2">
+                  {showRevenue ? `₹${(queueStats.completed * parseInt(settingsData.fee || "0")).toLocaleString()}` : "₹••••"}
+                </h3>
+              </div>
+              <button 
+                onClick={() => setShowRevenue(!showRevenue)} 
+                className="text-emerald-200 hover:text-white transition-colors"
+                title={showRevenue ? "Hide Revenue" : "Show Revenue"}
+              >
+                {showRevenue ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
             </div>
             <div className="relative z-10 mt-6 pt-4 border-t border-emerald-500/50 flex justify-between items-center">
                <span className="text-emerald-100 font-medium text-sm">Patients Served: <strong>{queueStats.completed}</strong></span>
@@ -517,13 +567,11 @@ function DoctorDashboardContent() {
                 onChange={(e) => {
                   const val = e.target.value;
                   if (val === "SHORT_BREAK") {
-                    const minsStr = window.prompt("Enter break duration in minutes (e.g. 15, 30, 45, 60):", "30");
-                    const mins = parseInt(minsStr || "30") || 30;
-                    const reason = window.prompt("Enter status description / reason (optional):", "Doctor on short break");
-                    handleUpdateStatus(val, reason || "Short Break", mins);
+                    setPromptData({ duration: "30", reason: "Doctor on short break" });
+                    setStatusPromptMode("SHORT_BREAK");
                   } else if (val === "CLINIC_CLOSED") {
-                    const reason = window.prompt("Enter status description / reason (optional):", "Clinic Closed");
-                    handleUpdateStatus(val, reason || "Clinic Closed Today");
+                    setPromptData({ duration: "", reason: "Clinic Closed Today" });
+                    setStatusPromptMode("CLINIC_CLOSED");
                   } else {
                     handleUpdateStatus(val);
                   }
@@ -552,7 +600,7 @@ function DoctorDashboardContent() {
             </div>
           </div>
         </div>
-        <QueueStatCards totalAppointments={queueStats.total} patientsServed={queueStats.completed} avgWaitTime={queueStats.avgWaitTime} currentQueue={queueStats.waiting} />
+        <QueueStatCards totalAppointments={queueStats.total} patientsServed={queueStats.completed} avgWaitTime={queueStats.avgWaitTime} currentQueue={queueStats.waiting} emergencyCount={queueStats.emergencyCount || 0} heldCount={queueStats.heldCount || 0} />
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
           <NowCallingController currentPatient={currentPatient} onNext={() => handleNextPatient(false)} onSkip={() => handleNextPatient(true)} />
           <QueueOperationsMenu 
@@ -566,19 +614,38 @@ function DoctorDashboardContent() {
               setSettingsField("leaveMode", true);
               alert("OPD has been halted for today. All digital queues are closed.");
             }}
-            onAddOffline={() => {
+            onAddOffline={(isEmergency) => {
+              setWalkInEmergency(!!isEmergency);
               setIsWalkInModalOpen(true);
             }} 
           />
           <WalkInModal 
             isOpen={isWalkInModalOpen}
+            initialIsEmergency={walkInEmergency}
             onClose={() => setIsWalkInModalOpen(false)}
             onSuccess={async () => {
               await mutateQueue();
             }}
           />
         </div>
-        <PatientListTable patients={patients} />
+        <PatientListTable 
+          patients={patients} 
+          onHold={handleHoldPatient}
+          onRecall={handleRecallPatient}
+          onServe={handleServePatient}
+        />
+        
+        {/* Mobile Sticky FAB */}
+        <div className="fixed bottom-[80px] left-0 right-0 p-4 sm:hidden z-40 bg-gradient-to-t from-white via-white to-transparent pt-10 pointer-events-none">
+          <HoldToConfirmButton 
+            onConfirm={() => handleNextPatient(false)} 
+            isLoading={isProcessingMutation} 
+            className="w-full h-14 rounded-2xl bg-[#005da7] hover:bg-[#004b87] text-white font-bold text-lg shadow-premium shadow-blue-500/30 transition-all active:scale-95 pointer-events-auto"
+          >
+            {isProcessingMutation ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <ArrowRight className="w-5 h-5 mr-2" />}
+            Call Next Patient
+          </HoldToConfirmButton>
+        </div>
       </div>
     );
   };
@@ -812,7 +879,73 @@ function DoctorDashboardContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] flex font-sans overflow-hidden">
+    <div className="min-h-screen bg-[#f8f9fa] flex font-sans">
+      
+      {/* ── Custom Status Prompt Modal ───────────────────────── */}
+      {statusPromptMode !== "NONE" && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+          <div className="bg-white rounded-[2rem] p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200">
+            <h3 className="text-xl font-black text-slate-900 mb-2">
+              {statusPromptMode === "SHORT_BREAK" ? "Set Short Break" : "Close Clinic"}
+            </h3>
+            <p className="text-slate-500 text-sm mb-6">
+              {statusPromptMode === "SHORT_BREAK" 
+                ? "Enter the break duration. Patients will be notified of the delay." 
+                : "Enter a reason for closing. This will be shown to patients."}
+            </p>
+            
+            <div className="space-y-4 mb-6">
+              {statusPromptMode === "SHORT_BREAK" && (
+                <div>
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wide block mb-1">Duration (minutes)</label>
+                  <select 
+                    value={promptData.duration}
+                    onChange={(e) => setPromptData(prev => ({...prev, duration: e.target.value}))}
+                    className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 focus:border-[#005da7] font-bold outline-none"
+                  >
+                    <option value="15">15 Minutes</option>
+                    <option value="30">30 Minutes</option>
+                    <option value="45">45 Minutes</option>
+                    <option value="60">1 Hour</option>
+                    <option value="120">2 Hours</option>
+                  </select>
+                </div>
+              )}
+              <div>
+                <label className="text-xs font-bold text-slate-700 uppercase tracking-wide block mb-1">Reason (Optional)</label>
+                <Input 
+                  value={promptData.reason}
+                  onChange={(e) => setPromptData(prev => ({...prev, reason: e.target.value}))}
+                  placeholder="E.g. Doctor on rounds"
+                  className="w-full border-2 border-slate-200 rounded-xl px-4 h-12 focus:border-[#005da7] font-medium"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <button 
+                onClick={() => { setStatusPromptMode("NONE"); setClinicStatus("AVAILABLE"); }} 
+                className="h-12 rounded-xl font-bold border border-slate-200 text-slate-600 hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={async () => {
+                  const val = statusPromptMode;
+                  const mins = parseInt(promptData.duration) || 30;
+                  const reason = promptData.reason || (val === "SHORT_BREAK" ? "Short Break" : "Clinic Closed");
+                  setStatusPromptMode("NONE");
+                  await handleUpdateStatus(val, reason, val === "SHORT_BREAK" ? mins : undefined);
+                }} 
+                className="h-12 rounded-xl font-bold bg-[#005da7] text-white hover:bg-[#004b87]"
+              >
+                Apply
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {renderSidebar()}
       <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
         <div className="md:hidden flex items-center justify-between p-4 bg-white border-b border-slate-200 sticky top-0 z-10">
