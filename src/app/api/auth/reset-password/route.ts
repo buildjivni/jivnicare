@@ -3,6 +3,7 @@ import prisma from '@/lib/db/prisma';
 import bcrypt from 'bcryptjs';
 import { getTwoFactorApiKey } from '@/lib/infrastructure/env';
 import { logger } from '@/lib/infrastructure/logger';
+import { isTestOtpModeEnabled, getTestOtpNumbers, getTestOtpCode } from '@/lib/config/test-mode';
 
 export async function POST(request: Request) {
   try {
@@ -34,37 +35,51 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Account is not registered as a Doctor.' }, { status: 403 });
     }
 
-    const apiKey = getTwoFactorApiKey();
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: 'Phone verification service is not configured.' },
-        { status: 503 }
-      );
+    let otpVerified = false;
+
+    // ── Test Mode OTP Bypass ─────────────────────────
+    if (isTestOtpModeEnabled() && getTestOtpNumbers().includes(phone10)) {
+      if (otp === getTestOtpCode()) {
+        otpVerified = true;
+        logger.info({ category: 'OTP', message: 'Test mode OTP matched for reset password', metadata: { phoneSuffix: phone10.slice(-4) } });
+      } else {
+        return NextResponse.json({ error: 'Invalid test OTP.' }, { status: 401 });
+      }
     }
 
-    // Call 2Factor VERIFY API
-    try {
-      const res = await fetch(`https://2factor.in/API/V1/${apiKey}/SMS/VERIFY/${sessionId}/${otp}`, {
-        method: 'GET',
-      });
-
-      if (!res.ok) {
-        logger.error({ category: 'OTP', message: '2Factor verify HTTP error in reset password', error: `status ${res.status}` });
-        return NextResponse.json({ error: 'Verification service unavailable. Please try again.' }, { status: 503 });
-      }
-
-      const data = await res.json();
-      
-      if (data.Status !== 'Success' || data.Details !== 'OTP Matched') {
-        logger.info({ category: 'OTP', message: 'Invalid OTP entered in password reset', metadata: { phoneSuffix: phone10.slice(-4) } });
+    if (!otpVerified) {
+      const apiKey = getTwoFactorApiKey();
+      if (!apiKey) {
         return NextResponse.json(
-          { error: 'Invalid or expired OTP. Please try again.' },
-          { status: 401 }
+          { error: 'Phone verification service is not configured.' },
+          { status: 503 }
         );
       }
-    } catch (err) {
-      logger.error({ category: 'OTP', message: '2Factor token verification failed', error: err });
-      return NextResponse.json({ error: 'Invalid or expired verification. Please try again.' }, { status: 401 });
+
+      // Call 2Factor VERIFY API
+      try {
+        const res = await fetch(`https://2factor.in/API/V1/${apiKey}/SMS/VERIFY/${sessionId}/${otp}`, {
+          method: 'GET',
+        });
+
+        if (!res.ok) {
+          logger.error({ category: 'OTP', message: '2Factor verify HTTP error in reset password', error: `status ${res.status}` });
+          return NextResponse.json({ error: 'Verification service unavailable. Please try again.' }, { status: 503 });
+        }
+
+        const data = await res.json();
+        
+        if (data.Status !== 'Success' || data.Details !== 'OTP Matched') {
+          logger.info({ category: 'OTP', message: 'Invalid OTP entered in password reset', metadata: { phoneSuffix: phone10.slice(-4) } });
+          return NextResponse.json(
+            { error: 'Invalid or expired OTP. Please try again.' },
+            { status: 401 }
+          );
+        }
+      } catch (err) {
+        logger.error({ category: 'OTP', message: '2Factor token verification failed', error: err });
+        return NextResponse.json({ error: 'Invalid or expired verification. Please try again.' }, { status: 401 });
+      }
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);

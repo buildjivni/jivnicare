@@ -197,7 +197,7 @@ export async function POST(request: Request) {
     // 7. Generate JWT
     const token = signToken(
       { id: result.user.id, role: result.user.role, doctorId: result.doctor.id },
-      '7d'
+      '30d'
     );
 
     const response = NextResponse.json({
@@ -208,7 +208,7 @@ export async function POST(request: Request) {
 
     const cookieStore = await cookies();
     cookieStore.set('auth-token', token, {
-      httpOnly: true, secure: process.env.NODE_ENV === 'production' && !isTestOtpModeEnabled(), sameSite: 'lax', path: '/', maxAge: 7 * 24 * 60 * 60
+      httpOnly: true, secure: process.env.NODE_ENV === 'production' && !isTestOtpModeEnabled(), sameSite: 'lax', path: '/', maxAge: 30 * 24 * 60 * 60
     });
 
     return response;

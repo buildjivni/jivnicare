@@ -67,7 +67,7 @@ export async function POST(request: Request) {
         role: user.role,
         doctorId: user.doctor.id,
       },
-      '7d'
+      '30d'
     );
 
     // Set HttpOnly Cookie
@@ -77,7 +77,7 @@ export async function POST(request: Request) {
       secure: process.env.NODE_ENV === 'production' && !isTestOtpModeEnabled(),
       sameSite: 'lax',
       path: '/',
-      maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
+      maxAge: 30 * 24 * 60 * 60, // 30 days in seconds
     });
 
     // Return User Data
