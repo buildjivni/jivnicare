@@ -32,13 +32,13 @@ export default async function PatientDashboardPage() {
   }
 
   // Fetch all tokens for this user
-  const queueTokens = await prisma.queueToken.findMany({
+  const rawQueueTokens = await prisma.queueToken.findMany({
     where: { userId: payload.id },
     include: {
       queue: {
         include: {
           doctor: {
-            select: { name: true, specialty: true, clinicName: true, image: true, updatedAt: true }
+            select: { name: true, specialties: { select: { name: true } }, clinicName: true, profileImage: true, updatedAt: true }
           }
         }
       }
@@ -46,18 +46,39 @@ export default async function PatientDashboardPage() {
     orderBy: { tokenIssuedAt: 'desc' }
   });
 
+  const queueTokens = rawQueueTokens.map(token => ({
+    ...token,
+    queue: {
+      ...token.queue,
+      doctor: {
+        ...token.queue.doctor,
+        image: token.queue.doctor.profileImage,
+        specialty: token.queue.doctor.specialties?.[0]?.name || "Doctor"
+      }
+    }
+  }));
+
   const upcomingTokens = queueTokens.filter(t => t.status === "WAITING" || t.status === "IN_CONSULTATION");
   const pastTokens = queueTokens.filter(t => t.status === "COMPLETED" || t.status === "CANCELLED" || t.status === "NO_SHOW");
 
   // Fetch saved doctors
-  const savedDocs = await prisma.savedDoctor.findMany({
+  const rawSavedDocs = await prisma.savedDoctor.findMany({
     where: { userId: payload.id },
     include: {
       doctor: {
-        select: { id: true, name: true, specialty: true, clinicName: true, image: true, updatedAt: true, slug: true }
+        select: { id: true, name: true, specialties: { select: { name: true } }, clinicName: true, profileImage: true, updatedAt: true, slug: true }
       }
     }
   });
+
+  const savedDocs = rawSavedDocs.map(sd => ({
+    ...sd,
+    doctor: {
+      ...sd.doctor,
+      image: sd.doctor.profileImage,
+      specialty: sd.doctor.specialties?.[0]?.name || "Doctor"
+    }
+  }));
 
   return (
     <PatientDashboard

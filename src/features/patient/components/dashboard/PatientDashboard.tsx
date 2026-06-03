@@ -2,14 +2,22 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { format } from "date-fns";
 import { User, Calendar, Clock, Heart, ChevronRight, Activity, CalendarCheck, HelpCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { getCanonicalImageUrl } from "@/lib/utils/image-utils";
-import { displayName } from "@/lib/utils/data-utils";
+import { getCanonicalImageUrl } from "@/lib/imageHelper";
 import Image from "next/image";
+
+function displayName(name: string): string {
+  if (!name) return "";
+  return name.toLowerCase().startsWith("dr.") ? name : `Dr. ${name}`;
+}
+
+function formatDate(dateStr: string | Date): string {
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
 
 interface PatientDashboardProps {
   user: any;
@@ -107,7 +115,7 @@ export function PatientDashboard({ user, upcomingTokens, pastTokens, savedDoctor
                             <h3 className="font-bold text-lg text-slate-900">{displayName(token.queue.doctor.name)}</h3>
                             <p className="text-sm font-medium text-slate-600 truncate">{token.queue.doctor.specialty} • {token.queue.doctor.clinicName}</p>
                             <div className="mt-2 flex items-center gap-4 text-xs font-bold text-slate-500">
-                              <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" /> {format(new Date(token.queue.date), 'MMM d, yyyy')}</span>
+                              <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" /> {formatDate(token.queue.date)}</span>
                               <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> Token: {token.tokenNumber}</span>
                             </div>
                           </div>
@@ -150,7 +158,7 @@ export function PatientDashboard({ user, upcomingTokens, pastTokens, savedDoctor
                         </div>
                         <div>
                           <h4 className="font-bold text-sm text-slate-900">{displayName(token.queue.doctor.name)}</h4>
-                          <p className="text-xs text-slate-500 font-medium">{format(new Date(token.queue.date), 'MMM d, yyyy')}</p>
+                          <p className="text-xs text-slate-500 font-medium">{formatDate(token.queue.date)}</p>
                         </div>
                       </div>
                       <Badge variant="outline" className={`font-bold self-start sm:self-auto ${getStatusColor(token.status)}`}>
