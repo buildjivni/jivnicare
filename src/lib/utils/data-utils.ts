@@ -83,7 +83,7 @@ export function mapPrismaDoctorToUI(doc: any): UIDoctor {
   const waitingCount = isQueueActive
     ? Math.max(
         0,
-        (todayQueue.issuedTokensCount || 0) - (todayQueue.currentActiveToken || 0)
+        ((todayQueue.issuedTokensCount || 0) - (todayQueue.cancelledCount || 0) - (todayQueue.noShowCount || 0)) - (todayQueue.currentActiveToken || 0)
       )
     : 0;
   const waitMinutes = isQueueActive ? waitingCount * avgConsultTime : 0;

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { Filter, History, MoreHorizontal, Search, PauseCircle, PlayCircle, CheckCircle2 } from "lucide-react";
+import { Filter, History, MoreHorizontal, Search, PauseCircle, PlayCircle, CheckCircle2, UserX } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { motion, useMotionValue, useTransform } from "framer-motion";
 
@@ -22,6 +22,7 @@ interface PatientListTableProps {
   onHold?: (id: string) => void;
   onRecall?: (id: string) => void;
   onServe?: (id: string) => void;
+  onNoShow?: (id: string) => void; // PR-1: Doctor-side no-show action
 }
 
 const getStatusBadge = (status: PatientListItem["status"]) => {
@@ -130,9 +131,11 @@ function ArrowLeftIcon() {
   );
 }
 
-export function PatientListTable({ patients, onHold, onRecall, onServe }: PatientListTableProps) {
+export function PatientListTable({ patients, onHold, onRecall, onServe, onNoShow }: PatientListTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState<"All" | "Waiting" | "Held" | "Emergency">("All");
+  // PR-1: No-Show confirmation state — tracks which patient is pending confirmation
+  const [noShowConfirmId, setNoShowConfirmId] = useState<string | null>(null);
 
   const filteredPatients = useMemo(() => {
     return patients.filter((p) => {
@@ -203,10 +206,13 @@ export function PatientListTable({ patients, onHold, onRecall, onServe }: Patien
                       {patient.initials}
                     </div>
                     <div className="min-w-0">
-                      <p className="font-bold text-slate-900 truncate max-w-[120px] sm:max-w-none">
-                        {patient.name}
+                      <p className="font-bold text-slate-900 truncate max-w-[120px] sm:max-w-none flex items-center flex-wrap gap-2">
+                        <span>{patient.condition?.includes("[SYSTEM_AUDIT: CLINIC_CLOSED_OVERRIDE]") ? patient.name.replace(" (Emergency Override)", "") : patient.name}</span>
                         {patient.priority === "Emergency" && (
-                           <span className="text-[10px] bg-red-100 text-red-700 font-bold px-2 py-0.5 rounded-md border border-red-200 uppercase tracking-wider ml-2">Emergency</span>
+                           <span className="text-[10px] bg-red-100 text-red-700 font-bold px-2 py-0.5 rounded-md border border-red-200 uppercase tracking-wider">Emergency</span>
+                        )}
+                        {patient.condition?.includes("[SYSTEM_AUDIT: CLINIC_CLOSED_OVERRIDE]") && (
+                           <span className="text-[10px] bg-red-600 text-white font-bold px-2 py-0.5 rounded-md border border-red-700 uppercase tracking-wider">OVERRIDE</span>
                         )}
                       </p>
                     </div>
@@ -231,7 +237,7 @@ export function PatientListTable({ patients, onHold, onRecall, onServe }: Patien
                   )}
                 </td>
                 <td className="py-4 text-right">
-                  <div className="flex justify-end gap-2">
+                  <div className="flex justify-end gap-2 flex-wrap">
                     {patient.status === "Held" && (
                       <button onClick={() => onRecall?.(patient.id)} className="px-3 py-1.5 bg-blue-50 text-[#005da7] hover:bg-blue-100 rounded-lg text-xs font-bold transition-colors">
                         Recall
@@ -246,6 +252,32 @@ export function PatientListTable({ patients, onHold, onRecall, onServe }: Patien
                       <button onClick={() => onServe?.(patient.id)} className="px-3 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg text-xs font-bold transition-colors">
                         Serve
                       </button>
+                    )}
+                    {/* PR-1: No-Show action — only for WAITING or Held patients */}
+                    {(patient.status === "Waiting" || patient.status === "Held") && onNoShow && (
+                      noShowConfirmId === patient.id ? (
+                        <div className="flex gap-1.5 items-center">
+                          <button
+                            onClick={() => { onNoShow(patient.id); setNoShowConfirmId(null); }}
+                            className="px-3 py-1.5 bg-red-600 text-white hover:bg-red-700 rounded-lg text-xs font-bold transition-colors"
+                          >
+                            Confirm No-Show
+                          </button>
+                          <button
+                            onClick={() => setNoShowConfirmId(null)}
+                            className="px-3 py-1.5 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-lg text-xs font-bold transition-colors"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setNoShowConfirmId(patient.id)}
+                          className="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg text-xs font-bold transition-colors flex items-center gap-1"
+                        >
+                          <UserX className="w-3 h-3" /> No-Show
+                        </button>
+                      )
                     )}
                     {patient.status === "Served" && (
                       <button aria-label="View history" className="p-2 text-slate-400 hover:text-slate-600 transition-colors flex items-center justify-center">

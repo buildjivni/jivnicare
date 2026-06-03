@@ -44,10 +44,7 @@ export function WalkInModal({ isOpen, onClose, onSuccess, initialIsEmergency = f
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.patientName.trim()) {
-      setErrorMsg("Patient Name is required.");
-      return;
-    }
+    // Removed mandatory patient name check to allow anonymous walk-ins
 
     if (formData.phoneNumber && formData.phoneNumber.trim().length !== 10) {
       setErrorMsg("Phone Number must be exactly 10 digits.");

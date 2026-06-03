@@ -51,11 +51,12 @@ export async function PUT(request: Request) {
       // Phase 5: Strict Transition Validation
       const currentStatus = queueToken.status;
       const allowedTransitions: Record<string, string[]> = {
-        "WAITING": ["IN_CONSULTATION", "SKIPPED", "CANCELLED"],
+        "WAITING": ["IN_CONSULTATION", "SKIPPED", "CANCELLED", "NO_SHOW"],
         "IN_CONSULTATION": ["COMPLETED", "SKIPPED", "WAITING"], // Allow reverting to WAITING if accidental
-        "SKIPPED": ["WAITING", "IN_CONSULTATION"],
+        "SKIPPED": ["WAITING", "IN_CONSULTATION", "NO_SHOW"],
         "COMPLETED": [], // Final state
-        "CANCELLED": []  // Final state
+        "CANCELLED": [],  // Final state
+        "NO_SHOW": [],    // PR-1: Final state — doctor confirmed patient did not arrive
       };
 
       if (!allowedTransitions[currentStatus]?.includes(status)) {

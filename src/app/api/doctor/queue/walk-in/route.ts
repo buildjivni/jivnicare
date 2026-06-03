@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/db/prisma";
 import { verifyToken } from "@/lib/jwt";
 import { cookies } from "next/headers";
-import { getCurrentLogicalDay } from "@/lib/utils/clinic-utils";
+import { resolveClinicLogicalDay } from "@/lib/utils/clinic-utils";
 import { QueueService } from "@/features/queue/services/queueService";
 import { walkInSchema, formatZodError } from "@/lib/validators/validations";
 import { withIdempotency } from "@/lib/infrastructure/idempotency";
@@ -46,14 +46,14 @@ export async function POST(request: Request) {
       }
 
       // Phase 1 & 7: Use Unified Service Logic
-      const today = getCurrentLogicalDay();
+      const today = resolveClinicLogicalDay();
 
       try {
         const result = await prisma.$transaction(async (tx) => {
-          // Create WalkInEntry first
+          // Create WalkInEntry first with placeholder if empty
           const walkInEntry = await tx.walkInEntry.create({
             data: {
-              patientName,
+              patientName: patientName || "Processing...",
               phoneNumber: phoneNumber || null,
               symptoms: symptoms || null,
               age: age || null,
@@ -63,10 +63,27 @@ export async function POST(request: Request) {
           });
 
           // Use Service for sequential token issuing and capacity checks.
-          // Pass `tx` to ensure mathematical safety and rollback WalkInEntry if queue is full.
-          const newQueueToken = await QueueService.issueToken(doctor.id, today, null, "WALK_IN", location || undefined, isEmergency || false, tx);
+          const { token: newQueueToken, isEmergencyOverride } = await QueueService.issueToken(doctor.id, today, null, "WALK_IN", location || undefined, isEmergency || false, tx);
           
-          // Link the walk-in entry to the token (Service issues generic WALK_IN tokens)
+          let finalPatientName = patientName;
+          let finalSymptoms = symptoms || null;
+
+          if (!finalPatientName) {
+            finalPatientName = isEmergency ? `Emergency #${newQueueToken.tokenNumber}` : `Walk-in #${newQueueToken.tokenNumber}`;
+          }
+
+          if (isEmergencyOverride) {
+            finalPatientName = patientName ? `${patientName} (Emergency Override)` : `Emergency Override #${newQueueToken.tokenNumber}`;
+            finalSymptoms = finalSymptoms ? `${finalSymptoms} [SYSTEM_AUDIT: CLINIC_CLOSED_OVERRIDE]` : `[SYSTEM_AUDIT: CLINIC_CLOSED_OVERRIDE]`;
+          }
+
+          // Update WalkInEntry with correct name and audit tags
+          await tx.walkInEntry.update({
+            where: { id: walkInEntry.id },
+            data: { patientName: finalPatientName, symptoms: finalSymptoms }
+          });
+
+          // Link the walk-in entry to the token
           const updatedToken = await tx.queueToken.update({
             where: { id: newQueueToken.id },
             data: { walkInEntryId: walkInEntry.id },

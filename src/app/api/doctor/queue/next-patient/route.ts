@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db/prisma";
-import { verifyToken } from "@/lib/jwt";
+import { verifyToken, signToken } from "@/lib/jwt";
 import { cookies } from "next/headers";
-import { getCurrentLogicalDay } from "@/lib/utils/clinic-utils";
+import { resolveClinicLogicalDay } from "@/lib/utils/clinic-utils";
 import { nextPatientSchema, formatZodError } from "@/lib/validators/validations";
 
 export async function POST(request: Request) {
@@ -55,7 +55,7 @@ export async function POST(request: Request) {
       }
 
       // 2. Find the next WAITING patient in strict sequential order
-      const today = getCurrentLogicalDay();
+      const today = resolveClinicLogicalDay();
 
       const dailyQueue = await tx.dailyQueue.findUnique({
         where: { doctorId_date: { doctorId: doctor.id, date: today } }
@@ -94,14 +94,27 @@ export async function POST(request: Request) {
             data: { currentActiveToken: nextPatient.tokenNumber }
           });
           
-          return { nextPatient: { ...nextPatient, status: "IN_CONSULTATION" } };
+          let undoToken = null;
+          if (currentTokenId) {
+            undoToken = signToken({
+              action: skipCurrent ? "SKIP_NEXT" : "CALL_NEXT",
+              queueId: dailyQueue.id,
+              fromTokenId: currentTokenId,
+              fromTokenNumber: dailyQueue.currentActiveToken, // from before the update
+              toTokenId: nextPatient.id,
+              toTokenNumber: nextPatient.tokenNumber,
+              timestamp: Date.now()
+            }, "30s");
+          }
+          
+          return { nextPatient: { ...nextPatient, status: "IN_CONSULTATION" }, undoToken };
         } else {
           // A concurrent request beat us to it, throw an error to retry or abort cleanly
           throw new Error("CONCURRENCY_CONFLICT_RETRY");
         }
       }
 
-      return { nextPatient: null };
+      return { nextPatient: null, undoToken: null };
     });
 
     return NextResponse.json({ success: true, data: result });
