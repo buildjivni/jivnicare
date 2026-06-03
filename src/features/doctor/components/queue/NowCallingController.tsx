@@ -19,6 +19,7 @@ interface NowCallingControllerProps {
   emergencyCount: number;
   onNext: () => void;
   onSkip: () => void; // Used for "Hold"
+  onNoShow?: () => void; // Used for "No-Show"
   isLoading?: boolean;
 }
 
@@ -74,7 +75,7 @@ export function HoldToConfirmButton({ onConfirm, children, className, disabled, 
   );
 }
 
-export function NowCallingController({ currentPatient, nextPatient, waitingCount, emergencyCount, onNext, onSkip, isLoading = false }: NowCallingControllerProps) {
+export function NowCallingController({ currentPatient, nextPatient, waitingCount, emergencyCount, onNext, onSkip, onNoShow, isLoading = false }: NowCallingControllerProps) {
   if (!currentPatient) {
     return (
       <div className="bg-card rounded-3xl p-8 border-2 border-dashed border-border flex flex-col items-center justify-center text-center h-full min-h-[320px]">
@@ -161,15 +162,30 @@ export function NowCallingController({ currentPatient, nextPatient, waitingCount
           {isLoading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <CheckCircle2 className="w-5 h-5 mr-2" />} 
           Mark Served & Call Next
         </HoldToConfirmButton>
-        <Button 
-          onClick={onSkip} 
-          disabled={isLoading} 
-          variant="outline" 
-          className="w-full h-12 rounded-xl border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-bold transition-all disabled:opacity-70"
-        >
-          {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <PauseCircle className="w-4 h-4 mr-2" />} 
-          Put on Hold (Skip)
-        </Button>
+        <div className="flex gap-3 w-full">
+          <Button 
+            onClick={onSkip} 
+            disabled={isLoading} 
+            variant="outline" 
+            className="flex-1 h-12 rounded-xl border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-bold transition-all disabled:opacity-70"
+          >
+            {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <PauseCircle className="w-4 h-4 mr-2" />} 
+            Hold (Skip)
+          </Button>
+          <Button 
+            onClick={() => {
+              if (confirm("Mark patient as No-Show? They will lose their queue position.")) {
+                if (onNoShow) onNoShow();
+              }
+            }} 
+            disabled={isLoading} 
+            variant="outline" 
+            className="flex-1 h-12 rounded-xl border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700 font-bold transition-all disabled:opacity-70"
+          >
+            {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <span className="font-bold mr-1">✕</span>} 
+            No-Show
+          </Button>
+        </div>
       </div>
     </div>
   );

@@ -109,7 +109,7 @@ function DoctorDashboardContent() {
 
   const { patients, queueStats } = useMemo(() => {
     let formattedPatients: any[] = [];
-    let stats = { total: 0, waiting: 0, completed: 0, currentActive: 0, avgWaitTime: 0, emergencyCount: 0, heldCount: 0 };
+    let stats = { total: 0, waiting: 0, completed: 0, currentActive: 0, avgWaitTime: 0, emergencyCount: 0, heldCount: 0, noShowCount: 0 };
     
     if (queueData?.success && queueData.tokens) {
       const avgTime = queueData.doctor?.averageConsultationTime || 15;
@@ -117,6 +117,7 @@ function DoctorDashboardContent() {
       
       let emergencyCount = 0;
       let heldCount = 0;
+      let noShowCount = 0;
 
       formattedPatients = queueData.tokens.map((t: any) => {
         const isEmergency = t.isEmergency || t.tokenNumber >= 9000;
@@ -125,6 +126,7 @@ function DoctorDashboardContent() {
 
         if (isEmergency && t.status !== "COMPLETED" && t.status !== "CANCELLED") emergencyCount++;
         if (t.status === "SKIPPED") heldCount++;
+        if (t.status === "NO_SHOW") noShowCount++;
 
         return {
           id: t.id,
@@ -141,9 +143,9 @@ function DoctorDashboardContent() {
         };
       });
       if (queueData.stats) {
-        stats = { ...queueData.stats, emergencyCount, heldCount };
+        stats = { ...queueData.stats, emergencyCount, heldCount, noShowCount };
       } else {
-        stats = { total: 0, waiting: 0, completed: 0, currentActive: 0, avgWaitTime: 0, emergencyCount, heldCount };
+        stats = { total: 0, waiting: 0, completed: 0, currentActive: 0, avgWaitTime: 0, emergencyCount, heldCount, noShowCount };
       }
     }
     return { patients: formattedPatients, queueStats: stats };
@@ -508,126 +510,7 @@ function DoctorDashboardContent() {
     );
   };
 
-  const renderOverview = () => {
-    const currentPatient = patients.find(p => p.status === "In-Person" || p.status === "Waiting") || null;
-    return (
-    <div className="max-w-5xl fade-in">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
-        <div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Command Center</h1>
-          <p className="text-slate-500 mt-1 font-medium">{profileData.name} • Active Operations</p>
-        </div>
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-          {/* Live Sync Badge */}
-          <div className="flex items-center gap-2 bg-emerald-50/60 border border-emerald-100/80 px-3.5 h-11 rounded-xl shrink-0 shadow-sm">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-            </span>
-            <span className="text-[10px] font-black text-emerald-800 uppercase tracking-widest">Live Sync</span>
-          </div>
-
-          {/* Operational Status Dropdown Select */}
-          <div className="relative shrink-0">
-            <select
-              value={clinicStatus}
-              onChange={(e) => {
-                const val = e.target.value;
-                if (val === "SHORT_BREAK") {
-                  setPromptData({ duration: "30", reason: "Doctor on short break" });
-                  setStatusPromptMode("SHORT_BREAK");
-                } else if (val === "CLINIC_CLOSED") {
-                  setPromptData({ duration: "", reason: "Clinic Closed Today" });
-                  setStatusPromptMode("CLINIC_CLOSED");
-                } else {
-                  handleUpdateStatus(val);
-                }
-              }}
-              className={cn(
-                "h-11 px-4 pr-10 rounded-xl font-bold text-xs uppercase tracking-wider border cursor-pointer appearance-none transition-all outline-none focus:ring-4 focus:ring-opacity-20 shadow-sm min-w-[170px]",
-                clinicStatus === "AVAILABLE" && "bg-emerald-50 border-emerald-200 text-emerald-700 focus:ring-emerald-500/20 focus:border-emerald-500",
-                clinicStatus === "SHORT_BREAK" && "bg-amber-50 border-amber-200 text-amber-700 focus:ring-amber-500/20 focus:border-amber-500",
-                clinicStatus === "LIMITED_SLOTS" && "bg-orange-50 border-orange-200 text-orange-700 focus:ring-orange-500/20 focus:border-orange-500",
-                clinicStatus === "EMERGENCY_ONLY" && "bg-rose-50 border-rose-200 text-rose-700 focus:ring-rose-500/20 focus:border-rose-500",
-                clinicStatus === "CLINIC_CLOSED" && "bg-slate-100 border-slate-300 text-slate-700 focus:ring-slate-500/20 focus:border-slate-500"
-              )}
-              style={{
-                backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`,
-                backgroundPosition: "right 0.75rem center",
-                backgroundSize: "1.25rem",
-                backgroundRepeat: "no-repeat"
-              }}
-            >
-              <option value="AVAILABLE" className="font-bold text-slate-800 bg-white">🟢 AVAILABLE (LIVE)</option>
-              <option value="SHORT_BREAK" className="font-bold text-slate-800 bg-white">🟡 SHORT BREAK</option>
-              <option value="LIMITED_SLOTS" className="font-bold text-slate-800 bg-white">🟠 LIMITED SLOTS</option>
-              <option value="EMERGENCY_ONLY" className="font-bold text-slate-800 bg-white">🔴 EMERGENCY ONLY</option>
-              <option value="CLINIC_CLOSED" className="font-bold text-slate-800 bg-white">⚫ CLOSED TODAY</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-6 mb-8">
-        <div className="bg-emerald-600 rounded-2xl border border-emerald-500 shadow-premium p-5 text-white flex items-center justify-between relative overflow-hidden">
-            <div className="absolute -top-4 -right-2 p-4 opacity-10 pointer-events-none"><Wallet className="w-24 h-24 text-white" /></div>
-            <div className="relative z-10 flex flex-col">
-              <span className="text-emerald-100 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1">Today's Revenue</span>
-              <h3 className="text-3xl font-black mt-1">
-                {showRevenue ? `₹${(queueStats.completed * parseInt(settingsData.fee || "0")).toLocaleString()}` : "₹••••"}
-              </h3>
-            </div>
-            <div className="relative z-10 flex items-center gap-4">
-              <div className="text-right hidden sm:block mr-4 border-r border-emerald-500/50 pr-4">
-                 <span className="text-emerald-100 font-medium text-xs block">Patients Served</span>
-                 <strong className="text-xl">{queueStats.completed}</strong>
-              </div>
-              <button 
-                onClick={() => setShowRevenue(!showRevenue)} 
-                className="text-emerald-200 hover:text-white transition-colors bg-emerald-700/50 p-2.5 rounded-xl"
-                title={showRevenue ? "Hide Revenue" : "Show Revenue"}
-              >
-                {showRevenue ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
-            </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <div className="bg-white rounded-2xl border border-border p-6 shadow-soft">
-          <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2 text-sm">
-            <MapPin className="w-4 h-4 text-primary" /> Patient Origins (Area Wise)
-          </h3>
-          <div className="space-y-3">
-            {Array.from(new Set(patients.map(p => p.location))).slice(0, 3).map(loc => {
-              const count = patients.filter(p => p.location === loc).length;
-              const percentage = Math.round((count / patients.length) * 100) || 0;
-              return (
-                <div key={loc} className="flex items-center gap-3">
-                  <div className="text-xs font-bold text-slate-600 w-24 truncate">{loc || "N/A"}</div>
-                  <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-primary rounded-full transition-all duration-1000" style={{ width: `${percentage}%` }} />
-                  </div>
-                  <div className="text-[10px] font-black text-slate-400 w-8 text-right">{count}</div>
-                </div>
-              );
-            })}
-            {patients.length === 0 && <p className="text-xs text-slate-400 italic">No data yet today</p>}
-          </div>
-        </div>
-        <div className="bg-white rounded-2xl border border-border p-6 shadow-soft flex flex-col justify-center">
-          <h3 className="font-bold text-slate-900 mb-2 flex items-center gap-2 text-sm">
-            <Clock className="w-4 h-4 text-emerald-600" /> Clinic Hours
-          </h3>
-          <p className="text-xs text-slate-500 font-medium">
-            Peak-hour analytics will appear here once enough patient visit data is collected.
-          </p>
-        </div>
-      </div>
-
-
-    </div>
-  )};
+  // ── renderOverview removed as part of Task 6 ──
 
   const renderQueue = () => {
     const currentPatient = patients.find(p => p.status === "In-Person") || null;
@@ -710,23 +593,13 @@ function DoctorDashboardContent() {
           </div>
         </div>
         
-        {/* Compact Queue Summary */}
-        <div className="flex items-center gap-6 bg-slate-50 border border-slate-100 rounded-xl px-5 py-3 mb-6 shadow-sm">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Total Served</span>
-            <span className="text-sm font-black text-slate-900">{queueStats.completed}</span>
-          </div>
-          <div className="w-px h-4 bg-slate-200" />
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Total Tokens</span>
-            <span className="text-sm font-black text-slate-900">{queueStats.total}</span>
-          </div>
-          <div className="w-px h-4 bg-slate-200" />
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Avg Wait</span>
-            <span className="text-sm font-black text-slate-900">{queueStats.avgWaitTime}m</span>
-          </div>
-        </div>
+        {/* Priority 6: Queue Stats Panel */}
+        <QueueStatCards 
+          patientsServed={queueStats.completed} 
+          currentQueue={queueStats.waiting} 
+          noShowCount={queueStats.noShowCount} 
+          avgWaitTime={queueStats.avgWaitTime} 
+        />
         <div className="grid grid-cols-1 gap-6 mt-2">
           <NowCallingController 
             currentPatient={currentPatient} 
@@ -734,7 +607,8 @@ function DoctorDashboardContent() {
             waitingCount={queueStats.waiting || 0}
             emergencyCount={queueStats.emergencyCount || 0}
             onNext={() => handleNextPatient(false)} 
-            onSkip={() => handleNextPatient(true)} 
+            onSkip={() => handleNextPatient(true)}
+            onNoShow={() => currentPatient && updatePatientStatus(currentPatient.id, "NO_SHOW")}
           />
           <WalkInModal 
             isOpen={isWalkInModalOpen}
@@ -1111,9 +985,8 @@ function DoctorDashboardContent() {
             verificationStatus={verificationStatus} 
             activeTab={activeTab} 
             allowedTabs={["profile"]}
-            onReturn={() => router.push('?tab=overview')}
+            onReturn={() => router.push('?tab=queue')}
           >
-            {activeTab === "overview" && renderOverview()}
             {activeTab === "queue" && renderQueue()}
             {activeTab === "profile" && renderProfile()}
             {activeTab === "settings" && renderSettings()}
@@ -1165,7 +1038,7 @@ const VerificationGuard = ({ children, allowedTabs, verificationStatus, activeTa
   const fullAccess =
     verificationStatus === "VERIFIED" || verificationStatus === "UPDATE_PENDING";
   const sandboxStatuses = ["DRAFT", "PENDING_VERIFICATION"];
-  const sandboxTabs = ["overview", "profile", "settings"];
+  const sandboxTabs = ["queue", "profile", "settings"];
 
   if (fullAccess) return <>{children}</>;
   if (sandboxStatuses.includes(verificationStatus) && sandboxTabs.includes(activeTab)) {

@@ -1,17 +1,15 @@
-import { CalendarCheck, CheckCircle2, Timer, Users, AlertCircle, PauseCircle, Activity } from "lucide-react";
+import { CheckCircle2, Timer, Users, UserX, Activity } from "lucide-react";
 
 interface QueueStatCardsProps {
-  totalAppointments: number;
   patientsServed: number;
-  avgWaitTime: number; // in mins
   currentQueue: number;
-  emergencyCount: number;
-  heldCount: number;
+  noShowCount: number;
+  avgWaitTime: number; // in mins
 }
 
-export function QueueStatCards({ totalAppointments, patientsServed, avgWaitTime, currentQueue, emergencyCount, heldCount }: QueueStatCardsProps) {
+export function QueueStatCards({ patientsServed, currentQueue, noShowCount, avgWaitTime }: QueueStatCardsProps) {
   // Calculate Queue Health Status
-  const isHealthy = avgWaitTime < 30 && emergencyCount < 3;
+  const isHealthy = avgWaitTime < 30;
   
   return (
     <div className="mb-6">
@@ -26,16 +24,16 @@ export function QueueStatCards({ totalAppointments, patientsServed, avgWaitTime,
               {isHealthy ? "Queue Operating Smoothly" : "Queue Experiencing Delays"}
             </h4>
             <p className={`text-xs font-medium mt-0.5 ${isHealthy ? 'text-emerald-700' : 'text-orange-700'}`}>
-              {isHealthy ? "Wait times and volumes are within normal limits." : "High patient volume or emergency cases are impacting wait times."}
+              {isHealthy ? "Wait times and volumes are within normal limits." : "High patient volume is impacting wait times."}
             </p>
           </div>
         </div>
       </div>
 
-      <div className="flex overflow-x-auto gap-4 pb-2 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-3 lg:grid-cols-6 sm:gap-4 sm:pb-0">
+      <div className="flex flex-wrap lg:flex-nowrap gap-4">
         
         {/* Waiting (Primary Focus) */}
-        <div className="shrink-0 snap-start w-[180px] sm:w-auto bg-[#005da7] rounded-2xl p-5 shadow-md flex flex-col justify-between hover:-translate-y-1 transition-transform border border-[#004b87]">
+        <div className="flex-1 min-w-[150px] bg-[#005da7] rounded-2xl p-5 shadow-md flex flex-col justify-between hover:-translate-y-1 transition-transform border border-[#004b87]">
           <div className="flex justify-between items-start">
             <p className="text-[10px] font-bold text-blue-100 uppercase tracking-widest">Waiting</p>
             <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center text-white backdrop-blur-sm border border-white/20">
@@ -44,54 +42,12 @@ export function QueueStatCards({ totalAppointments, patientsServed, avgWaitTime,
           </div>
           <div>
             <h3 className="text-3xl font-black text-white mt-3">{currentQueue}</h3>
-            <p className="text-[10px] font-bold text-blue-100 mt-1">In Waiting Room</p>
-          </div>
-        </div>
-
-        {/* Avg Wait Time */}
-        <div className="shrink-0 snap-start w-[180px] sm:w-auto bg-card rounded-2xl p-5 border border-border shadow-soft flex flex-col justify-between hover:shadow-premium transition-shadow">
-          <div className="flex justify-between items-start">
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Avg Wait</p>
-            <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600">
-              <Timer className="w-4 h-4" />
-            </div>
-          </div>
-          <div>
-            <h3 className="text-3xl font-black text-slate-900 mt-3">{avgWaitTime} <span className="text-sm text-slate-500 font-bold">min</span></h3>
-            <p className="text-[10px] font-bold text-amber-600 mt-1">Current average</p>
-          </div>
-        </div>
-
-        {/* Emergency Count */}
-        <div className="shrink-0 snap-start w-[180px] sm:w-auto bg-card rounded-2xl p-5 border border-border shadow-soft flex flex-col justify-between hover:shadow-premium transition-shadow">
-          <div className="flex justify-between items-start">
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Emergency</p>
-            <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center text-red-600">
-              <AlertCircle className="w-4 h-4" />
-            </div>
-          </div>
-          <div>
-            <h3 className="text-3xl font-black text-slate-900 mt-3">{emergencyCount}</h3>
-            <p className="text-[10px] font-bold text-red-600 mt-1">Active priority</p>
-          </div>
-        </div>
-
-        {/* Held Count */}
-        <div className="shrink-0 snap-start w-[180px] sm:w-auto bg-card rounded-2xl p-5 border border-border shadow-soft flex flex-col justify-between hover:shadow-premium transition-shadow">
-          <div className="flex justify-between items-start">
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Held</p>
-            <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600">
-              <PauseCircle className="w-4 h-4" />
-            </div>
-          </div>
-          <div>
-            <h3 className="text-3xl font-black text-slate-900 mt-3">{heldCount}</h3>
-            <p className="text-[10px] font-bold text-slate-500 mt-1">Delayed/Skipped</p>
+            <p className="text-[10px] font-bold text-blue-100 mt-1">In Queue</p>
           </div>
         </div>
 
         {/* Patients Served */}
-        <div className="shrink-0 snap-start w-[180px] sm:w-auto bg-card rounded-2xl p-5 border border-border shadow-soft flex flex-col justify-between hover:shadow-premium transition-shadow hidden sm:flex">
+        <div className="flex-1 min-w-[150px] bg-white rounded-2xl p-5 border border-slate-200 shadow-soft flex flex-col justify-between hover:shadow-md transition-shadow">
           <div className="flex justify-between items-start">
             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Served</p>
             <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
@@ -104,17 +60,31 @@ export function QueueStatCards({ totalAppointments, patientsServed, avgWaitTime,
           </div>
         </div>
 
-        {/* Total Appointments */}
-        <div className="shrink-0 snap-start w-[180px] sm:w-auto bg-card rounded-2xl p-5 border border-border shadow-soft flex flex-col justify-between hover:shadow-premium transition-shadow hidden lg:flex">
+        {/* No-show Count */}
+        <div className="flex-1 min-w-[150px] bg-white rounded-2xl p-5 border border-slate-200 shadow-soft flex flex-col justify-between hover:shadow-md transition-shadow">
           <div className="flex justify-between items-start">
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Total</p>
-            <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-600">
-              <CalendarCheck className="w-4 h-4" />
+            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">No-Show</p>
+            <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600">
+              <UserX className="w-4 h-4" />
             </div>
           </div>
           <div>
-            <h3 className="text-3xl font-black text-slate-900 mt-3">{totalAppointments}</h3>
-            <p className="text-[10px] font-bold text-slate-500 mt-1">Daily Capacity</p>
+            <h3 className="text-3xl font-black text-slate-900 mt-3">{noShowCount}</h3>
+            <p className="text-[10px] font-bold text-slate-500 mt-1">Missed turns</p>
+          </div>
+        </div>
+
+        {/* Avg Wait Time */}
+        <div className="flex-1 min-w-[150px] bg-white rounded-2xl p-5 border border-slate-200 shadow-soft flex flex-col justify-between hover:shadow-md transition-shadow">
+          <div className="flex justify-between items-start">
+            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Avg Wait</p>
+            <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600">
+              <Timer className="w-4 h-4" />
+            </div>
+          </div>
+          <div>
+            <h3 className="text-3xl font-black text-slate-900 mt-3">{avgWaitTime} <span className="text-sm text-slate-500 font-bold">min</span></h3>
+            <p className="text-[10px] font-bold text-amber-600 mt-1">Estimated Wait</p>
           </div>
         </div>
 

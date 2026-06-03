@@ -16,7 +16,10 @@ async function geocodeAddress(addressString: string): Promise<{ lat: number, lng
     const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=1`, {
       headers: { 'User-Agent': 'JivniCare-Geo-Sync/1.0' }
     });
-    const data = await res.json();
+    if (!res.ok) return null;
+    const text = await res.text();
+    if (!text) return null;
+    const data = JSON.parse(text);
     if (data && data.length > 0) {
       return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
     }
