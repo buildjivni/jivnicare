@@ -4,77 +4,104 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, ShieldCheck, Activity, CheckCircle2 } from "lucide-react";
 import { PatientDetailsForm } from "./PatientDetailsForm";
+import { InlineOTPWidget } from "./InlineOTPWidget";
 import { trackOperationalEvent } from "@/lib/telemetry/client";
 
 import { useBookingStore } from "@/features/booking/store/useBookingStore";
 import { useAuthStore } from "@/features/auth/store/useAuthStore";
 import { Button } from "@/components/ui/button";
 
+/**
+ * PR-1: PaymentForm with AuthGate State Machine
+ *
+ * States:
+ *   HYDRATING     → waiting for Zustand rehydration (avoids flash of auth gate to logged-in users)
+ *   AUTH_GATE     → unauthenticated patient; show InlineOTPWidget
+ *   AUTHED_FORM   → authenticated patient; show PatientDetailsForm + submit button
+ *   PROCESSING    → API call in-flight
+ *   SUCCESS       → redirect to /confirmation
+ */
+type FormState = "HYDRATING" | "AUTH_GATE" | "AUTHED_FORM" | "PROCESSING" | "SUCCESS";
+
 export function PaymentForm() {
   const router = useRouter();
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
+  const [formState, setFormState] = useState<FormState>("HYDRATING");
   const [errors, setErrors] = useState<{ submit?: string }>({});
-  const setGeneratedToken = useBookingStore(state => state.setGeneratedToken);
-  const patientDetails = useBookingStore(state => state.patientDetails);
-  const selectedDoctor = useBookingStore(state => state.selectedDoctor);
+  const setGeneratedToken = useBookingStore((state) => state.setGeneratedToken);
+  const patientDetails = useBookingStore((state) => state.patientDetails);
+  const selectedDoctor = useBookingStore((state) => state.selectedDoctor);
+  const { isAuthenticated, _hasHydrated } = useAuthStore();
 
   const hasIntentRef = useRef(false);
   const isSuccessRef = useRef(false);
   const requestIdRef = useRef<string | null>(null);
 
+  // Generate idempotency key once
   useEffect(() => {
-    // Generate an idempotency key on mount
     if (typeof window !== "undefined" && !requestIdRef.current) {
       requestIdRef.current = crypto.randomUUID();
     }
-    
-    const timer = setTimeout(() => {
-      hasIntentRef.current = true;
-    }, 3000); // 3 seconds on page implies intent
+  }, []);
 
+  // PR-1: AuthGate — wait for Zustand hydration before deciding state
+  // Prevents briefly flashing the OTP widget to already-authenticated users on slow connections
+  useEffect(() => {
+    if (!_hasHydrated) return; // Still rehydrating — stay in HYDRATING
+
+    if (isAuthenticated) {
+      setFormState("AUTHED_FORM");
+    } else {
+      setFormState("AUTH_GATE");
+    }
+  }, [_hasHydrated, isAuthenticated]);
+
+  // Track checkout started (once, after hydration resolves)
+  useEffect(() => {
+    if (formState === "AUTH_GATE" || formState === "AUTHED_FORM") {
+      trackOperationalEvent({ metric: "checkoutStarted" });
+    }
+  }, [formState]);
+
+  // Abandonment tracking on unmount
+  useEffect(() => {
+    const timer = setTimeout(() => { hasIntentRef.current = true; }, 3000);
     return () => {
       clearTimeout(timer);
       if (hasIntentRef.current && !isSuccessRef.current) {
-        trackOperationalEvent({ metric: 'bookingAbandons' });
+        trackOperationalEvent({ metric: "bookingAbandons" });
       }
     };
   }, []);
 
   const handleJoinQueue = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isProcessing || isSuccess) return;
+    if (formState !== "AUTHED_FORM") return;
 
     setErrors({});
 
-    // Validate patient details before proceeding
+    // Client-side validation before hitting API
     if (!patientDetails.name.trim()) {
-      document.querySelector('[placeholder="Patient\\\'s full name"]')?.scrollIntoView({ behavior: "smooth", block: "center" });
+      document.getElementById("name")?.focus();
       return;
     }
-    
     const phone = patientDetails.phone.replace(/\D/g, "");
     if (phone.length < 10) {
-      document.querySelector('[placeholder="+91 98765 43210"]')?.scrollIntoView({ behavior: "smooth", block: "center" });
+      document.getElementById("phone")?.focus();
       return;
     }
-    
     if (!patientDetails.location.trim()) {
-      document.querySelector('[placeholder="e.g. Patna, Kankarbagh, or your Village name"]')?.scrollIntoView({ behavior: "smooth", block: "center" });
+      document.getElementById("location")?.focus();
       return;
     }
 
-    setIsProcessing(true);
-    
+    setFormState("PROCESSING");
+
     try {
-      const today = new Date().toISOString().split('T')[0]; 
-      
       const response = await fetch("/api/patient/book-appointment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           doctorId: selectedDoctor?.id,
-          date: today,
           location: patientDetails.location,
           requestId: requestIdRef.current,
         }),
@@ -83,12 +110,21 @@ export function PaymentForm() {
       const data = await response.json();
 
       if (!response.ok) {
-        // Handle specific API errors gracefully
         if (response.status === 401) {
+          // Session expired mid-checkout — drop back to AUTH_GATE (no redirect)
           useAuthStore.getState().logout();
-          router.push(`/login?redirect=/checkout&error=session_expired`);
+          setFormState("AUTH_GATE");
+          setErrors({ submit: "Your session expired. Please verify your number again." });
           return;
         }
+        
+        if (data.error === "ALREADY_BOOKED") {
+          isSuccessRef.current = true;
+          setErrors({ submit: "You already have an active booking. Redirecting..." });
+          setTimeout(() => { router.replace("/my-bookings"); }, 2000);
+          return;
+        }
+
         throw new Error(data.error || "Failed to book appointment");
       }
 
@@ -109,57 +145,62 @@ export function PaymentForm() {
         patientPhone: patientDetails.phone,
         patientLocation: patientDetails.location,
       };
-      
+
       setGeneratedToken(token);
-      
-      // Mandatory Persistence for Recovery
+
+      // Mandatory persistence for recovery
       try {
         localStorage.setItem("jc_active_token", JSON.stringify(token));
         const history = JSON.parse(localStorage.getItem("jc_booking_history") || "[]");
-        // Prevent duplicates in history
         if (!history.find((h: any) => h.id === token.id)) {
           history.unshift(token);
           localStorage.setItem("jc_booking_history", JSON.stringify(history.slice(0, 20)));
         }
-      } catch { /* ignore local storage errors */ }
-      
+      } catch { /* ignore localStorage errors */ }
+
       isSuccessRef.current = true;
-      setIsProcessing(false);
-      setIsSuccess(true); // Safe optimistic UX: show success ONLY after backend confirmation
-      
-      trackOperationalEvent({ metric: 'bookingSuccess' });
-      
-      // Small delay before redirecting to allow user to see the success state
-      setTimeout(() => {
-        router.push("/confirmation");
-      }, 500);
-      
+      setFormState("SUCCESS");
+      trackOperationalEvent({ metric: "bookingSuccess" });
+
+      // Small delay before redirecting to allow user to see success state
+      setTimeout(() => { router.replace("/confirmation"); }, 500);
+
     } catch (err: any) {
-      // Regenerate requestId for a clean retry if it was a server error
-      requestIdRef.current = crypto.randomUUID();
-      
-      // Premium medical-grade error handling
-      const errorMessage = err.message || "Something went wrong. Please try again.";
-      setErrors({ submit: errorMessage });
-      setIsProcessing(false);
-      setIsSuccess(false);
-      
-      trackOperationalEvent({
-        metric: 'bookingFailures',
-        metadata: { type: errorMessage, category: 'API_ERROR' }
-      });
-      
-      // Scroll to error
+      // Do NOT regenerate requestId. Network drops require exact retry.
+      setErrors({ submit: err.message || "Something went wrong. Please try again." });
+      setFormState("AUTHED_FORM");
+      trackOperationalEvent({ metric: "bookingFailures", metadata: { type: err.message, category: "API_ERROR" } });
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
-  const submitError = (errors as any).submit;
+  const isSuccess = formState === "SUCCESS";
+  const isProcessing = formState === "PROCESSING";
+  const submitError = errors.submit;
 
+  // ── Render: Hydrating ────────────────────────────────────────────
+  if (formState === "HYDRATING") {
+    return (
+      <div className="flex-1 space-y-8">
+        <div className="bg-white rounded-3xl border border-slate-100 animate-pulse h-48" />
+      </div>
+    );
+  }
+
+  // ── Render: Auth Gate (unauthenticated patient) ──────────────────
+  if (formState === "AUTH_GATE") {
+    return (
+      <div className="flex-1 space-y-8">
+        <InlineOTPWidget onVerified={() => setFormState("AUTHED_FORM")} />
+      </div>
+    );
+  }
+
+  // ── Render: Authenticated Form ───────────────────────────────────
   return (
     <div className="flex-1 space-y-8">
       <PatientDetailsForm disabled={isProcessing || isSuccess} />
-      
+
       <section>
         {submitError && (
           <div className="mb-6 p-4 rounded-2xl bg-red-50 border border-red-100 flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
@@ -175,14 +216,13 @@ export function PaymentForm() {
         </div>
 
         <form onSubmit={handleJoinQueue}>
-          {/* Submit Button Container */}
           <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-slate-100 z-50 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] md:static md:p-0 md:bg-transparent md:border-none md:shadow-none">
             <Button
               type="submit"
               disabled={isProcessing || isSuccess}
               className={`w-full h-14 md:h-16 rounded-2xl transition-all text-lg font-bold group disabled:opacity-90 disabled:cursor-not-allowed overflow-hidden relative min-h-[44px] shadow-xl ${
-                isSuccess 
-                  ? "bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20 text-white" 
+                isSuccess
+                  ? "bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20 text-white"
                   : "bg-primary hover:bg-primary/90 hover:brightness-105 shadow-primary/20 text-white"
               }`}
             >
@@ -198,7 +238,7 @@ export function PaymentForm() {
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
-                  Confirm & Join Queue
+                  Confirm &amp; Join Queue
                   <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </div>
               )}

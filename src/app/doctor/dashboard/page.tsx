@@ -6,8 +6,9 @@ import useSWR from "swr";
 import { 
   LayoutDashboard, Users, UserCircle, Settings,
   LogOut, Wallet, CalendarX, AlertCircle, ShieldCheck, CheckCircle2,
-  X, Menu, TrendingUp, RefreshCw, MapPin, Clock, EyeOff, Eye, Loader2, ArrowRight
+  X, Menu, TrendingUp, RefreshCw, MapPin, Clock, EyeOff, Eye, Loader2, ArrowRight, AlertTriangle
 } from "lucide-react";
+import { toast } from "sonner";
 import { Logo } from "@/features/marketing/components/brand/Logo";
 import { QueueStatCards } from "@/features/doctor/components/queue/QueueStatCards";
 import { NowCallingController, HoldToConfirmButton } from "@/features/doctor/components/queue/NowCallingController";
@@ -32,7 +33,7 @@ const BrandColors = {
 function DoctorDashboardContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const activeTab = searchParams.get("tab") || "overview";
+  const activeTab = searchParams.get("tab") || "queue";
 
   const {
     profile: profileData,
@@ -53,21 +54,57 @@ function DoctorDashboardContent() {
   const [showRevenue, setShowRevenue] = useState(false);
   const [statusPromptMode, setStatusPromptMode] = useState<"NONE" | "SHORT_BREAK" | "CLINIC_CLOSED">("NONE");
   const [promptData, setPromptData] = useState({ duration: "30", reason: "" });
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   const fetcher = async (url: string) => {
-    const res = await fetch(url);
-    if (res.status === 401) {
-      useAuthStore.getState().logout();
-      throw new Error("Unauthorized");
+    try {
+      const res = await fetch(url);
+      if (res.status === 401) {
+        useAuthStore.getState().logout();
+        window.location.href = "/login?reason=session_expired";
+        throw new Error("Unauthorized");
+      }
+      if (res.status === 403) {
+        throw new Error("AccessDeniedError");
+      }
+      if (!res.ok && res.status >= 500) {
+        throw new Error("ServerError");
+      }
+      const data = await res.json();
+      return data;
+    } catch (error: any) {
+      if (error.name === "TypeError" || error.message === "Failed to fetch") {
+        throw new Error("OfflineError");
+      }
+      throw error;
     }
-    const data = await res.json();
-    return data;
   };
 
   const { data: queueData, isLoading: isLoadingQueue, mutate: mutateQueue } = useSWR("/api/doctor/queue", fetcher, {
     refreshInterval: 15000,
     revalidateOnFocus: true,
     revalidateOnReconnect: true,
+    onSuccess: () => setFetchError(null),
+    onErrorRetry: (error, key, config, revalidate, { retryCount }) => {
+      if (error.message === "Unauthorized") return;
+      if (error.message === "AccessDeniedError") {
+        setFetchError("AccessDeniedError");
+        return;
+      }
+      if (error.message === "OfflineError") {
+        setFetchError("OfflineError");
+      }
+      
+      // Stop retrying after 3 attempts
+      if (retryCount >= 3) {
+        setFetchError(error.message);
+        return;
+      }
+      
+      // Retry at 2s, 5s, 10s
+      const retryIntervals = [2000, 5000, 10000];
+      setTimeout(() => revalidate({ retryCount }), retryIntervals[retryCount] || 10000);
+    },
   });
 
   const { patients, queueStats } = useMemo(() => {
@@ -124,6 +161,15 @@ function DoctorDashboardContent() {
       });
       if (res.status === 401) {
         useAuthStore.getState().logout();
+        window.location.href = "/login?reason=session_expired";
+        return;
+      }
+      if (res.status === 403) {
+        toast.error("Access Denied.");
+        return;
+      }
+      if (!res.ok && res.status >= 500) {
+        toast.error("Server Error. Please try again.");
         return;
       }
       // Handle race condition silently
@@ -135,9 +181,49 @@ function DoctorDashboardContent() {
       const data = await res.json();
       if (data.success || data.error) {
          await mutateQueue(); 
+         if (data.data?.undoToken && currentPatient) {
+           toast(`Called Next Patient`, {
+             description: `Previous: ${currentPatient.name}`,
+             action: {
+               label: 'UNDO',
+               onClick: () => handleUndoNext(data.data.undoToken)
+             },
+             duration: 25000,
+           });
+         }
       }
-    } catch (error) {
-      console.error("Queue progression failed:", error);
+    } catch (error: any) {
+      if (error.name === "TypeError" || error.message === "Failed to fetch") {
+        toast.error("Connection lost. Please check your internet.");
+      } else {
+        toast.error("An unexpected error occurred.");
+      }
+    } finally {
+      setIsProcessingMutation(false);
+    }
+  };
+
+  const handleUndoNext = async (undoToken: string) => {
+    setIsProcessingMutation(true);
+    try {
+      const res = await fetch("/api/doctor/queue/undo-next", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ undoToken })
+      });
+      if (!res.ok) {
+        if (res.status === 409) {
+          toast.error("Undo failed: Queue has already progressed further.");
+        } else {
+          toast.error("Undo expired or invalid.");
+        }
+        await mutateQueue();
+        return;
+      }
+      toast.success("Successfully undone previous action.");
+      await mutateQueue();
+    } catch (err) {
+      toast.error("Error connecting to server.");
     } finally {
       setIsProcessingMutation(false);
     }
@@ -154,11 +240,24 @@ function DoctorDashboardContent() {
       });
       if (res.status === 401) {
         useAuthStore.getState().logout();
+        window.location.href = "/login?reason=session_expired";
+        return;
+      }
+      if (res.status === 403) {
+        toast.error("Access Denied.");
+        return;
+      }
+      if (!res.ok && res.status >= 500) {
+        toast.error("Server Error. Please try again.");
         return;
       }
       await mutateQueue();
-    } catch (error) {
-      console.error(`Failed to update status to ${status}:`, error);
+    } catch (error: any) {
+      if (error.name === "TypeError" || error.message === "Failed to fetch") {
+        toast.error("Connection lost. Please check your internet.");
+      } else {
+        toast.error(`Failed to update status to ${status}.`);
+      }
     } finally {
       setIsProcessingMutation(false);
     }
@@ -167,6 +266,30 @@ function DoctorDashboardContent() {
   const handleHoldPatient = (id: string) => updatePatientStatus(id, "SKIPPED");
   const handleRecallPatient = (id: string) => updatePatientStatus(id, "WAITING");
   const handleServePatient = (id: string) => updatePatientStatus(id, "COMPLETED");
+  
+  const handleQuickToken = async (isEmergency: boolean = false) => {
+    if (isProcessingMutation) return;
+    setIsProcessingMutation(true);
+    try {
+      const res = await fetch("/api/doctor/queue/walk-in", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ patientName: "", isEmergency }),
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        toast.error(errorData.error || "Failed to generate token");
+        return;
+      }
+      toast.success(isEmergency ? "Emergency token issued" : "Quick token issued");
+      await mutateQueue();
+    } catch (err) {
+      console.error(err);
+      toast.error("Error generating token");
+    } finally {
+      setIsProcessingMutation(false);
+    }
+  };
   
   
   const [leaveMode, setLeaveMode] = useState(false);
@@ -328,7 +451,20 @@ function DoctorDashboardContent() {
     const newMode = !leaveMode;
     setLeaveMode(newMode);
     setIsTogglingLeave(true);
-    await handleUpdateSettings({ isClosedToday: newMode });
+    
+    if (newMode) {
+      await handleUpdateSettings({ 
+        isClosedToday: true,
+        status: "CLINIC_CLOSED"
+      });
+    } else {
+      await handleUpdateSettings({ 
+        isClosedToday: false,
+        status: "AVAILABLE",
+        pauseOnlineBooking: false,
+        statusReason: ""
+      });
+    }
     setIsTogglingLeave(false);
   };
 
@@ -344,7 +480,7 @@ function DoctorDashboardContent() {
         {mobileMenuOpen && (
           <div className="fixed inset-0 bg-slate-900/50 z-40 md:hidden backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)} />
         )}
-        <div className={`w-64 bg-card border-r border-border flex flex-col h-screen shrink-0 z-50 fixed md:relative transition-transform duration-300 ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+        <div className={`w-64 bg-card border-r border-border flex flex-col h-screen shrink-0 z-50 fixed md:sticky md:top-0 transition-transform duration-300 ease-in-out ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
           <div className="p-6 border-b border-border flex items-center justify-between">
             <Logo className="h-8 w-auto" />
             <button className="md:hidden text-slate-500 hover:bg-slate-100 p-2 rounded-xl" onClick={() => setMobileMenuOpen(false)}>
@@ -432,57 +568,29 @@ function DoctorDashboardContent() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-         <div className="lg:col-span-2 bg-card rounded-2xl border border-border shadow-premium overflow-hidden flex flex-col">
-           <div className="p-5 border-b border-border bg-slate-50 flex justify-between items-center">
-             <h2 className="font-bold text-slate-900 flex items-center gap-2 text-sm"><Users className="w-4 h-4 text-primary"/> Active Queue</h2>
-             <button onClick={() => router.push('?tab=queue')} className="text-sm font-bold text-primary hover:text-primary/80">View All</button>
-           </div>
-           <div className="p-6 flex-1 flex flex-col justify-center">
-             {currentPatient ? (
-               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                 <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-full bg-primary/10 text-primary flex items-center justify-center font-black text-2xl border border-primary/20">{currentPatient.initials || 'U'}</div>
-                    <div>
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Current Patient</span>
-                      <h3 className="text-2xl font-black text-slate-900">{currentPatient.name}</h3>
-                      <p className="text-sm text-slate-500 font-medium">
-                        Token #{currentPatient.token} • {currentPatient.location || "N/A"} • Wait: {currentPatient.waitTime}m
-                      </p>
-                    </div>
-                 </div>
-                 <Button onClick={() => handleNextPatient(false)} disabled={isProcessingMutation} className="h-12 px-6 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-md w-full sm:w-auto">
-                   {isProcessingMutation ? <RefreshCw className="w-4 h-4 animate-spin" /> : "Call Next"}
-                 </Button>
-               </div>
-             ) : (
-               <div className="text-center text-slate-500 font-medium py-8">
-                 No active patients waiting.
-               </div>
-             )}
-           </div>
-         </div>
-          <div className="bg-emerald-600 rounded-2xl border border-emerald-500 shadow-premium p-6 text-white flex flex-col justify-between relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-4 opacity-10"><Wallet className="w-24 h-24 text-white" /></div>
-            <div className="relative z-10 flex justify-between items-start">
-              <div>
-                <span className="text-emerald-100 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1">Today's Revenue</span>
-                <h3 className="text-4xl font-black mt-2">
-                  {showRevenue ? `₹${(queueStats.completed * parseInt(settingsData.fee || "0")).toLocaleString()}` : "₹••••"}
-                </h3>
+      <div className="grid grid-cols-1 gap-6 mb-8">
+        <div className="bg-emerald-600 rounded-2xl border border-emerald-500 shadow-premium p-5 text-white flex items-center justify-between relative overflow-hidden">
+            <div className="absolute -top-4 -right-2 p-4 opacity-10 pointer-events-none"><Wallet className="w-24 h-24 text-white" /></div>
+            <div className="relative z-10 flex flex-col">
+              <span className="text-emerald-100 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1">Today's Revenue</span>
+              <h3 className="text-3xl font-black mt-1">
+                {showRevenue ? `₹${(queueStats.completed * parseInt(settingsData.fee || "0")).toLocaleString()}` : "₹••••"}
+              </h3>
+            </div>
+            <div className="relative z-10 flex items-center gap-4">
+              <div className="text-right hidden sm:block mr-4 border-r border-emerald-500/50 pr-4">
+                 <span className="text-emerald-100 font-medium text-xs block">Patients Served</span>
+                 <strong className="text-xl">{queueStats.completed}</strong>
               </div>
               <button 
                 onClick={() => setShowRevenue(!showRevenue)} 
-                className="text-emerald-200 hover:text-white transition-colors"
+                className="text-emerald-200 hover:text-white transition-colors bg-emerald-700/50 p-2.5 rounded-xl"
                 title={showRevenue ? "Hide Revenue" : "Show Revenue"}
               >
                 {showRevenue ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
-            <div className="relative z-10 mt-6 pt-4 border-t border-emerald-500/50 flex justify-between items-center">
-               <span className="text-emerald-100 font-medium text-sm">Patients Served: <strong>{queueStats.completed}</strong></span>
-            </div>
-          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -517,30 +625,13 @@ function DoctorDashboardContent() {
         </div>
       </div>
 
-      <h2 className="text-lg font-bold text-slate-900 mb-4 tracking-tight">Quick Actions</h2>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <button onClick={() => router.push('?tab=queue')} className="bg-card border border-border p-5 rounded-2xl text-left hover:shadow-premium hover:border-primary/30 transition-all group">
-          <Users className="w-6 h-6 mb-3 text-slate-400 group-hover:text-primary transition-colors" />
-          <p className="font-bold text-slate-900">Manage Queue</p>
-        </button>
-        <button onClick={() => router.push('?tab=settings')} className="bg-card border border-border p-5 rounded-2xl text-left hover:shadow-premium transition-all group">
-          <Settings className="w-6 h-6 mb-3 text-slate-400 group-hover:text-slate-900 transition-colors" />
-          <p className="font-bold text-slate-900">Clinic Settings</p>
-        </button>
-        <button onClick={() => router.push('?tab=profile')} className="bg-card border border-border p-5 rounded-2xl text-left hover:shadow-premium transition-all group">
-          <UserCircle className="w-6 h-6 mb-3 text-slate-400 group-hover:text-slate-900 transition-colors" />
-          <p className="font-bold text-slate-900">Edit Profile</p>
-        </button>
-        <button onClick={toggleLeaveMode} className={`p-5 rounded-2xl text-left border transition-all ${leaveMode ? 'bg-red-50 border-red-200 shadow-sm' : 'bg-card border-border hover:border-red-500 hover:shadow-premium'}`}>
-          <CalendarX className={`w-6 h-6 mb-3 ${leaveMode ? 'text-red-600' : 'text-slate-400'}`} />
-          <p className={`font-bold ${leaveMode ? 'text-red-700' : 'text-slate-900'}`}>{leaveMode ? 'Resume Bookings' : 'Mark Holiday Today'}</p>
-        </button>
-      </div>
+
     </div>
   )};
 
   const renderQueue = () => {
     const currentPatient = patients.find(p => p.status === "In-Person") || null;
+    const nextPatient = patients.find(p => p.status === "Waiting") || null;
     return (
       <div className="max-w-7xl fade-in">
         <div className="flex justify-between items-center mb-8">
@@ -548,11 +639,29 @@ function DoctorDashboardContent() {
             <h1 className="text-3xl font-black text-slate-900 flex items-center gap-2">
               <span className="text-primary">Queue</span> Manager
             </h1>
-            <p className="text-sm text-slate-500 mt-1">Sequential flow: Online & Walk-in integrated.</p>
           </div>
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+            {/* B1: Quick Token Button */}
+            <button
+              onClick={() => handleQuickToken(false)}
+              disabled={isProcessingMutation}
+              className="h-11 px-4 bg-primary text-white text-sm font-bold rounded-xl shadow-sm hover:bg-primary/90 transition-all shrink-0 active:scale-95 disabled:opacity-50"
+            >
+              Quick Token
+            </button>
+
+            {/* B2: Instant Emergency Button */}
+            <button
+              onClick={() => handleQuickToken(true)}
+              disabled={isProcessingMutation}
+              className="h-11 px-4 bg-rose-600 text-white text-sm font-bold rounded-xl shadow-sm hover:bg-rose-700 transition-all shrink-0 active:scale-95 disabled:opacity-50 flex items-center gap-2"
+            >
+              <AlertTriangle className="w-4 h-4" />
+              Emergency
+            </button>
+
             {/* Live Sync Badge */}
-            <div className="flex items-center gap-2 bg-emerald-50/60 border border-emerald-100/80 px-3.5 h-11 rounded-xl shrink-0 shadow-sm">
+            <div className="hidden sm:flex items-center gap-2 bg-emerald-50/60 border border-emerald-100/80 px-3.5 h-11 rounded-xl shrink-0 shadow-sm">
               <span className="relative flex h-2.5 w-2.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
@@ -600,24 +709,32 @@ function DoctorDashboardContent() {
             </div>
           </div>
         </div>
-        <QueueStatCards totalAppointments={queueStats.total} patientsServed={queueStats.completed} avgWaitTime={queueStats.avgWaitTime} currentQueue={queueStats.waiting} emergencyCount={queueStats.emergencyCount || 0} heldCount={queueStats.heldCount || 0} />
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-          <NowCallingController currentPatient={currentPatient} onNext={() => handleNextPatient(false)} onSkip={() => handleNextPatient(true)} />
-          <QueueOperationsMenu 
-            isPaused={clinicStatus === "SHORT_BREAK" || clinicStatus === "EMERGENCY_ONLY" || clinicStatus === "CLINIC_CLOSED"}
-            onPauseToggle={async () => {
-              const newStatus = (clinicStatus === "SHORT_BREAK" || clinicStatus === "EMERGENCY_ONLY") ? "AVAILABLE" : "SHORT_BREAK";
-              await handleUpdateStatus(newStatus);
-            }}
-            onEmergencyHalt={async () => {
-              await handleUpdateSettings({ isClosedToday: true });
-              setSettingsField("leaveMode", true);
-              alert("OPD has been halted for today. All digital queues are closed.");
-            }}
-            onAddOffline={(isEmergency) => {
-              setWalkInEmergency(!!isEmergency);
-              setIsWalkInModalOpen(true);
-            }} 
+        
+        {/* Compact Queue Summary */}
+        <div className="flex items-center gap-6 bg-slate-50 border border-slate-100 rounded-xl px-5 py-3 mb-6 shadow-sm">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Total Served</span>
+            <span className="text-sm font-black text-slate-900">{queueStats.completed}</span>
+          </div>
+          <div className="w-px h-4 bg-slate-200" />
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Total Tokens</span>
+            <span className="text-sm font-black text-slate-900">{queueStats.total}</span>
+          </div>
+          <div className="w-px h-4 bg-slate-200" />
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Avg Wait</span>
+            <span className="text-sm font-black text-slate-900">{queueStats.avgWaitTime}m</span>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 gap-6 mt-2">
+          <NowCallingController 
+            currentPatient={currentPatient} 
+            nextPatient={nextPatient}
+            waitingCount={queueStats.waiting || 0}
+            emergencyCount={queueStats.emergencyCount || 0}
+            onNext={() => handleNextPatient(false)} 
+            onSkip={() => handleNextPatient(true)} 
           />
           <WalkInModal 
             isOpen={isWalkInModalOpen}
@@ -633,6 +750,24 @@ function DoctorDashboardContent() {
           onHold={handleHoldPatient}
           onRecall={handleRecallPatient}
           onServe={handleServePatient}
+          onNoShow={async (tokenId: string) => {
+            try {
+              const res = await fetch("/api/doctor/queue/no-show", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ tokenId }),
+              });
+              const data = await res.json();
+              if (!res.ok) {
+                toast.error(data.error || "Failed to mark as No-Show.");
+                return;
+              }
+              toast.success(data.message || "Marked as No-Show. Slot released.");
+              await mutateQueue();
+            } catch {
+              toast.error("Connection error. Please try again.");
+            }
+          }}
         />
         
         {/* Mobile Sticky FAB */}
@@ -879,7 +1014,7 @@ function DoctorDashboardContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] flex font-sans">
+    <div className="min-h-screen bg-[#f8f9fa] flex font-sans overflow-x-hidden">
       
       {/* ── Custom Status Prompt Modal ───────────────────────── */}
       {statusPromptMode !== "NONE" && (
@@ -947,7 +1082,7 @@ function DoctorDashboardContent() {
       )}
 
       {renderSidebar()}
-      <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
+      <div className="flex-1 flex flex-col min-h-screen md:h-screen overflow-x-hidden md:overflow-hidden relative w-full">
         <div className="md:hidden flex items-center justify-between p-4 bg-white border-b border-slate-200 sticky top-0 z-10">
           <button className="p-2 rounded-xl text-slate-600 hover:bg-slate-100 active:scale-95 transition-all min-h-[44px] min-w-[44px] flex items-center justify-center" onClick={() => setMobileMenuOpen(true)}>
             <Menu className="w-6 h-6" />
@@ -956,6 +1091,22 @@ function DoctorDashboardContent() {
           <div className="w-10"></div>
         </div>
         <div className="flex-1 p-4 md:p-10 overflow-y-auto">
+          {fetchError === "OfflineError" && (
+            <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-center gap-3">
+              <RefreshCw className="w-5 h-5 text-amber-600 animate-spin" />
+              <p className="text-sm font-bold text-amber-900">Connection lost. Trying to reconnect...</p>
+            </div>
+          )}
+          {fetchError === "ServerError" && (
+            <div className="mb-6 p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-center gap-3">
+              <p className="text-sm font-bold text-rose-900">System Error. Please refresh the page.</p>
+            </div>
+          )}
+          {fetchError === "AccessDeniedError" && (
+            <div className="mb-6 p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-center gap-3">
+              <p className="text-sm font-bold text-rose-900">Access Denied. You do not have permission to view this data.</p>
+            </div>
+          )}
           <VerificationGuard 
             verificationStatus={verificationStatus} 
             activeTab={activeTab} 

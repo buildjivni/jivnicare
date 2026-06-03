@@ -12,6 +12,7 @@ import { physicianSchema, breadcrumbSchema } from "@/lib/seo/jsonld";
 import { JsonLd } from "@/components/seo/JsonLd";
 import type { Doctor } from "@/types";
 import { mapPrismaDoctorToUI } from "@/lib/utils/data-utils";
+import { resolveClinicLogicalDay } from "@/lib/utils/clinic-utils";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -119,14 +120,14 @@ export default async function DoctorProfilePage({ params }: PageProps) {
       clinicOperations: true,
       dailyQueues: {
         where: {
-          date: {
-            gte: new Date(new Date().setHours(0, 0, 0, 0)),
-            lt:  new Date(new Date().setHours(23, 59, 59, 999)),
-          }
-        },
+            // Use IST logical day — never UTC midnight
+            date: resolveClinicLogicalDay(),
+          },
         select: {
           status: true,
           issuedTokensCount: true,
+          cancelledCount: true,
+          noShowCount: true,
           currentActiveToken: true,
           maxCapacity: true,
         },
