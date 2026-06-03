@@ -2,6 +2,10 @@ export type TelemetryEventName =
   | 'bookingFailures'
   | 'bookingSuccess'
   | 'bookingAbandons'
+  | 'bookingCancelled'    // PR-1: Patient self-cancellation
+  | 'checkoutStarted'     // PR-1: Funnel entry — patient opens checkout
+  | 'otpSent'             // PR-1: Funnel step — OTP requested on checkout
+  | 'otpVerified'         // PR-1: Funnel step — OTP verified on checkout
   | 'otpFailures'
   | 'authFailures'
   | 'uploadFailures'

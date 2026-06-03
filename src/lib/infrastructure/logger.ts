@@ -7,7 +7,7 @@
 type LogLevel = 'INFO' | 'WARN' | 'ERROR' | 'CRITICAL';
 
 interface LogPayload {
-  category: 'AUTH' | 'BOOKING' | 'QUEUE' | 'OTP' | 'API_EXCEPTION' | 'SYSTEM' | 'SSE';
+  category: 'AUTH' | 'BOOKING' | 'QUEUE' | 'OTP' | 'API_EXCEPTION' | 'SYSTEM' | 'SSE' | 'CANCELLATION' | 'NO_SHOW';
   message: string;
   metadata?: Record<string, unknown>;
   error?: unknown;

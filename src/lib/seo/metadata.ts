@@ -96,7 +96,7 @@ export function generateDoctorMetadata(doctor: {
 }
 
 // ── Hospital Metadata ────────────────────────────────────────
-export function generateHospitalMetadata(hospital: {
+function generateHospitalMetadata(hospital: {
   name: string;
   type?: string;
   district: string;
@@ -203,7 +203,7 @@ export function generateDistrictMetadata(district: string) {
 }
 
 // ── Search Page Metadata ─────────────────────────────────────
-export function generateSearchMetadata(query?: string, district?: string) {
+function generateSearchMetadata(query?: string, district?: string) {
   const qLabel = query ? `"${query}"` : "Doctors";
   const dLabel = district ? ` in ${capitalizeDistrict(district)}` : " in Bihar";
   const title = `Search: ${qLabel}${dLabel} | JivniCare`;
@@ -221,7 +221,7 @@ export function generateSearchMetadata(query?: string, district?: string) {
 }
 
 // ── Helpers ──────────────────────────────────────────────────
-export function extractDistrict(location: string): string {
+function extractDistrict(location: string): string {
   const parts = location.split(",").map((p) => p.trim());
   return parts[parts.length - 1] || "Bihar";
 }
@@ -233,7 +233,7 @@ export function capitalizeDistrict(district: string): string {
     .join(" ");
 }
 
-export function slugToTitle(slug: string): string {
+function slugToTitle(slug: string): string {
   return slug
     .split("-")
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))

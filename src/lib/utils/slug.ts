@@ -19,7 +19,7 @@
  *
  * @example normalizeName("Dr. Rajesh Kumar Singh") → "rajesh-kumar-singh"
  */
-export function normalizeName(name: string): string {
+function normalizeName(name: string): string {
   return name
     .toLowerCase()
     .replace(/^(dr\.?\s*|prof\.?\s*|mr\.?\s*|ms\.?\s*|mrs\.?\s*)/i, '') // strip titles
@@ -39,7 +39,7 @@ export function normalizeName(name: string): string {
  * @example districtCode("Patna") → "pat"
  * @example districtCode("West Champaran") → "wch"
  */
-export function districtCode(district: string): string {
+function districtCode(district: string): string {
   const words = district.toLowerCase().replace(/[^a-z\s]/g, '').trim().split(/\s+/);
   if (words.length === 1) {
     return words[0].slice(0, 3);
@@ -116,31 +116,6 @@ export function generateShortCode(): string {
     CHARS[Math.floor(Math.random() * CHARS.length)]
   ).join('');
   return (ts + rnd).slice(0, 6);
-}
-
-// ── 6. SLUG VALIDATION ───────────────────────────────────────
-
-/**
- * Validate a slug string for safe use in URLs and DB.
- * Rejects slugs with uppercase, spaces, or special chars.
- */
-export function isValidSlug(slug: string): boolean {
-  return /^[a-z0-9][a-z0-9-]{2,78}[a-z0-9]$/.test(slug);
-}
-
-// ── 7. SLUG → DISPLAY NAME ───────────────────────────────────
-
-/**
- * Convert a slug back to a display-friendly name (best effort).
- * @example slugToDisplayName("dr-rajesh-kumar-pat-1k9z2x") → "Dr Rajesh Kumar"
- */
-export function slugToDisplayName(slug: string): string {
-  return slug
-    .replace(/^dr-/, 'Dr ')
-    .replace(/-[a-z]{2,3}-[a-z0-9]{4,6}$/, '') // remove district-timestamp suffix
-    .split('-')
-    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(' ');
 }
 // ── 8. SEQUENTIAL DOCTOR CODE SYSTEM ──────────────────────────
 

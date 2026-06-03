@@ -20,6 +20,15 @@ const createRedisClient = () => {
         setTimeout(() => store.delete(key), ttl * 1000);
         return 'OK';
       },
+      incr: async (key: string) => {
+        const val = (store.get(key) || 0) + 1;
+        store.set(key, val);
+        return val;
+      },
+      expire: async (key: string, ttl: number) => {
+        setTimeout(() => store.delete(key), ttl * 1000);
+        return 1;
+      },
       del: async (key: string) => { 
         store.delete(key); 
         return 1; 

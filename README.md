@@ -1,16 +1,30 @@
 # JivniCare V1 — Live Patient Queue Architecture
 
 ## 1. Project Overview
-JivniCare is a highly scalable, real-time clinic queue management system. It digitizes the patient waiting room, providing real-time tracking for walk-in and online patients while empowering doctors with a frictionless, mobile-first command center. It aims to reduce clinic chaos and improve patient wait-time predictability.
+JivniCare is a highly scalable, real-time clinic queue management system. It digitizes the patient waiting room, providing real-time tracking for walk-in and online patients while empowering doctors with a frictionless, mobile-first command center.
 
 ## 2. Architecture Overview
 To understand JivniCare, you only need to understand three core pillars:
-1. **Authentication:** Phone Number + OTP verification via Msg91/Twilio, protected by Upstash Redis rate-limiting. Sessions are managed via secure, HttpOnly JWT cookies.
-2. **The Queue Engine:** Uses atomic database updates (`increment: 1`) in MongoDB to guarantee perfect, sequential token issuance. Emergency tokens bypass the standard queue using a separate atomic Redis counter.
-3. **Doctor Command Center:** Built explicitly for Mobile. Doctors progress the queue by pressing and holding the "Call Next" FAB for 500ms. Swiping logic manages Holding and Recalling patients.
+
+1. **Authentication (Clinic First):** 
+   - **Doctor:** Phone + Password authentication. 30-day JWT sessions allow clinics/receptionists to operate the dashboard continuously without daily OTP friction. OTP is retained as a fallback (Forgot Password / Verification).
+   - **Patient:** Phone + OTP for quick booking.
+   - **Admin:** Email + Password access via JWT.
+
+2. **The Queue Engine (QueueService):** 
+   - Uses atomic database counters in MongoDB (`issuedTokensCount`, `noShowCount`, etc.) mapped to a single daily queue entity (`DailyQueue`). 
+   - The logical clinic day rolls over strictly at 04:00 AM IST (`resolveClinicLogicalDay`). This is the single source of truth for all queue queries.
+   - Emergency tokens bypass the standard queue sequence.
+
+3. **Doctor Command Center:** 
+   - Built explicitly for Mobile. Doctors progress the queue using standard actions: Next Patient, No-Show, and Walk-in additions.
+
+4. **Admin Command Center:**
+   - Pure server-side paginated tables ensuring stable performance up to 100,000+ records.
+   - Single source of truth: Admin APIs directly consume the exact same `QueueService` logic and logical day authority as the Doctor UI. No duplicate calculations exist.
 
 ## 3. Folder Structure
-The codebase strictly adheres to Next.js 14+ App Router conventions with a domain-driven design structure.
+The codebase strictly adheres to Next.js 14+ App Router conventions using Feature-Sliced Design.
 
 ```text
 /src
@@ -19,24 +33,26 @@ The codebase strictly adheres to Next.js 14+ App Router conventions with a domai
 │   ├── (public)/         # Marketing, Auth, Onboarding
 │   ├── admin/            # Admin operations dashboard
 │   ├── api/              # Unified REST API 
-│   │   ├── auth/         # OTP and JWT generation
+│   │   ├── admin/        # Server-side paginated admin endpoints
+│   │   ├── auth/         # Phone/Password and OTP handling
 │   │   ├── doctor/       # Queue state mutations
 │   │   ├── patient/      # Booking generation
 │   └── doctor/           # Doctor Command Center UI
 ├── components/           # Generic UI building blocks (Shadcn + Tailwind)
-├── features/             # Domain-specific logic (auth, doctor, queue)
-├── lib/                  # Infrastructure (db, utils, analytics)
+├── features/             # Domain-specific logic (e.g., auth, queue, admin)
+├── lib/                  # Infrastructure (db, utils, analytics, telemetry)
 └── types/                # Global TypeScript definitions
 ```
 
 ## 4. Environment Setup
-Create a `.env` file in the root directory based on `.env.example`.
+Create a `.env` file in the root directory.
 
 **Required Keys:**
 *   `DATABASE_URL`: MongoDB Atlas connection string (ensure `?maxPoolSize=10` is appended).
-*   `UPSTASH_REDIS_REST_URL` & `TOKEN`: For rate limiting and fast-access queue states.
-*   `JWT_SECRET`: Secure string for signing auth tokens.
+*   `UPSTASH_REDIS_REST_URL` & `TOKEN`: For rate limiting and telemetry.
+*   `JWT_SECRET`: Secure string for signing auth tokens (min 32 chars).
 *   `NEXT_PUBLIC_API_URL`: Set to `http://localhost:3000` for local dev.
+*   `BLOB_READ_WRITE_TOKEN`: For image/avatar uploads.
 
 ## 5. Local Development
 1. **Install Dependencies:** `npm install`

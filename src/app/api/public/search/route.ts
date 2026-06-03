@@ -4,6 +4,8 @@ import { searchDoctors } from '@/lib/search/search-engine';
 import { getInferredSpecialties } from '@/lib/search/search-dictionary';
 import { mapPrismaDoctorToUI } from '@/lib/utils/data-utils';
 import { normalizeDistrict } from '@/lib/constants/districts';
+import { redis } from '@/lib/db/redis';
+import { resolveClinicLogicalDay } from '@/lib/utils/clinic-utils';
 import type { Doctor } from '@/types';
 
 export const dynamic = 'force-dynamic';
@@ -23,6 +25,28 @@ function getDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): 
 
 export async function GET(request: Request) {
   try {
+    // ── Rate Limiting (RC-2) ──────────────────────────────────────────
+    const ip = request.headers.get('x-forwarded-for') || 'anonymous';
+    const rateLimit = 30; // 30 requests
+    const window = 15; // 15 seconds
+    const key = `rate_limit:search:${ip}`;
+    
+    const current = await redis.incr(key);
+    if (current === 1) {
+      await redis.expire(key, window);
+    }
+    
+    const remaining = Math.max(0, rateLimit - current);
+    
+    const headers = new Headers();
+    headers.set('X-RateLimit-Limit', rateLimit.toString());
+    headers.set('X-RateLimit-Remaining', remaining.toString());
+    
+    if (current > rateLimit) {
+      headers.set('Retry-After', window.toString());
+      return NextResponse.json({ error: "Too Many Requests" }, { status: 429, headers });
+    }
+
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('q') || '';
     let specialties = searchParams.getAll('specialty');
@@ -156,14 +180,14 @@ export async function GET(request: Request) {
         clinicOperations: true,
         dailyQueues: {
           where: {
-            date: {
-              gte: new Date(new Date().setHours(0, 0, 0, 0)),
-              lt:  new Date(new Date().setHours(23, 59, 59, 999)),
-            }
+            // Use IST logical day — never UTC midnight
+            date: resolveClinicLogicalDay(),
           },
           select: {
             status: true,
             issuedTokensCount: true,
+            cancelledCount: true,
+            noShowCount: true,
             currentActiveToken: true,
             maxCapacity: true,
           },
@@ -264,7 +288,7 @@ let mappedDoctors: Doctor[] = filteredDbDoctors.map(mapPrismaDoctorToUI);
       limit,
       totalPages: Math.ceil(searchResult.total / limit),
       hasMore: skip + paginatedResults.length < searchResult.total
-    });
+    }, { headers });
 
   } catch (error) {
     console.error("Search API Error:", error);
