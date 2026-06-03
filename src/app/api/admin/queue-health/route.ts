@@ -1,10 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db/prisma";
 import { verifyToken } from "@/lib/jwt";
 import { cookies } from "next/headers";
-import { getCurrentLogicalDay } from "@/lib/utils/clinic-utils";
+import { resolveClinicLogicalDay } from "@/lib/utils/clinic-utils";
+import { QueueService } from "@/features/queue/services/queueService";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get("auth-token")?.value;
@@ -18,59 +19,93 @@ export async function GET() {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const today = getCurrentLogicalDay();
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const limit = parseInt(searchParams.get("limit") || "20", 10);
+    const search = searchParams.get("search") || "";
+    const skip = (page - 1) * limit;
 
-    const activeQueues = await prisma.dailyQueue.findMany({
-      where: {
-        date: today
-      },
-      include: {
-        doctor: {
-          select: {
-            name: true,
-            hospitalName: true,
-            clinicName: true,
-            district: true,
-            averageConsultationTime: true,
-            verificationStatus: true,
-            user: {
-               select: { name: true }
+    const today = resolveClinicLogicalDay();
+
+    let doctorWhereClause: any = {};
+    if (search) {
+      doctorWhereClause = {
+        OR: [
+          { clinicName: { contains: search, mode: "insensitive" } },
+          { hospitalName: { contains: search, mode: "insensitive" } },
+          { name: { contains: search, mode: "insensitive" } },
+        ]
+      };
+    }
+
+    const whereClause = {
+      date: today,
+      ...(search && { doctor: doctorWhereClause })
+    };
+
+    const [activeQueues, total] = await Promise.all([
+      prisma.dailyQueue.findMany({
+        where: whereClause,
+        include: {
+          doctor: {
+            select: {
+              id: true,
+              name: true,
+              hospitalName: true,
+              clinicName: true,
+              district: true,
+              averageConsultationTime: true,
+              verificationStatus: true,
+              clinicOperations: true,
+              weeklySchedule: true,
+              user: { select: { name: true } }
+            }
+          },
+          _count: {
+            select: {
+              tokens: {
+                where: { status: "WAITING" }
+              }
             }
           }
         },
-        _count: {
-          select: {
-            tokens: {
-              where: { status: "WAITING" }
-            }
-          }
-        }
-      },
-      orderBy: {
-        updatedAt: 'desc'
-      }
-    });
+        orderBy: {
+          updatedAt: 'desc'
+        },
+        skip,
+        take: limit,
+      }),
+      prisma.dailyQueue.count({ where: whereClause })
+    ]);
 
     const formattedQueues = activeQueues.map(q => {
+      // PR-ADMIN-1: Admin must consume QueueService truth only
+      const dynamicStatus = QueueService.calculateDynamicStatus({ doctor: q.doctor, todayQueue: q });
       const waiting = q._count.tokens;
-      const avgTime = q.doctor.averageConsultationTime || 15;
-      const estWait = waiting * avgTime;
       
       return {
         id: q.id,
         clinicName: q.doctor.clinicName || q.doctor.hospitalName || "N/A",
         doctorName: q.doctor.name,
         verificationStatus: q.doctor.verificationStatus,
-        servingToken: q.currentActiveToken,
+        servingToken: dynamicStatus.activeTokenNumber || q.currentActiveToken,
         waitingCount: waiting,
-        estimatedWait: estWait,
-        status: q.status,
+        estimatedWait: dynamicStatus.estimatedWaitMinutes || 0,
+        status: dynamicStatus.status, 
         district: q.doctor.district,
         isHighLoad: waiting > 15
       };
     });
 
-    return NextResponse.json({ success: true, queues: formattedQueues });
+    return NextResponse.json({ 
+      success: true, 
+      queues: formattedQueues,
+      pagination: {
+        total,
+        pages: Math.ceil(total / limit),
+        current: page
+      }
+    });
   } catch (error) {
     console.error("Queue Health API Error:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
