@@ -11,7 +11,7 @@ import {
 import { toast } from "sonner";
 import { Logo } from "@/features/marketing/components/brand/Logo";
 import { QueueStatCards } from "@/features/doctor/components/queue/QueueStatCards";
-import { NowCallingController, HoldToConfirmButton } from "@/features/doctor/components/queue/NowCallingController";
+import { QueueStatusDisplay, ClinicStatusToggle, QuickActionPanel, HoldToConfirmButton } from "@/features/doctor/components/queue/NowCallingController";
 import { QueueOperationsMenu } from "@/features/doctor/components/queue/QueueOperationsMenu";
 import { PatientListTable, PatientListItem } from "@/features/doctor/components/queue/PatientListTable";
 import { Input } from "@/components/ui/input";
@@ -80,7 +80,7 @@ function DoctorDashboardContent() {
     }
   };
 
-  const { data: queueData, isLoading: isLoadingQueue, mutate: mutateQueue } = useSWR("/api/doctor/queue", fetcher, {
+  const { data: queueData, isLoading: isLoadingQueue, mutate: mutateQueue, isValidating } = useSWR("/api/doctor/queue", fetcher, {
     refreshInterval: 15000,
     revalidateOnFocus: true,
     revalidateOnReconnect: true,
@@ -516,150 +516,104 @@ function DoctorDashboardContent() {
     const currentPatient = patients.find(p => p.status === "In-Person") || null;
     const nextPatient = patients.find(p => p.status === "Waiting") || null;
     return (
-      <div className="max-w-7xl fade-in">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-black text-slate-900 flex items-center gap-2">
-              <span className="text-primary">Queue</span> Manager
-            </h1>
-          </div>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-            {/* B1: Quick Token Button */}
-            <button
-              onClick={() => handleQuickToken(false)}
-              disabled={isProcessingMutation}
-              className="h-11 px-4 bg-primary text-white text-sm font-bold rounded-xl shadow-sm hover:bg-primary/90 transition-all shrink-0 active:scale-95 disabled:opacity-50"
-            >
-              Quick Token
-            </button>
-
-            {/* B2: Instant Emergency Button */}
-            <button
-              onClick={() => handleQuickToken(true)}
-              disabled={isProcessingMutation}
-              className="h-11 px-4 bg-rose-600 text-white text-sm font-bold rounded-xl shadow-sm hover:bg-rose-700 transition-all shrink-0 active:scale-95 disabled:opacity-50 flex items-center gap-2"
-            >
-              <AlertTriangle className="w-4 h-4" />
-              Emergency
-            </button>
-
-            {/* Live Sync Badge */}
-            <div className="hidden sm:flex items-center gap-2 bg-emerald-50/60 border border-emerald-100/80 px-3.5 h-11 rounded-xl shrink-0 shadow-sm">
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-              </span>
-              <span className="text-[10px] font-black text-emerald-800 uppercase tracking-widest">Live Sync</span>
-            </div>
-
-            {/* Operational Status Dropdown Select */}
-            <div className="relative shrink-0">
-              <select
-                value={clinicStatus}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (val === "SHORT_BREAK") {
-                    setPromptData({ duration: "30", reason: "Doctor on short break" });
-                    setStatusPromptMode("SHORT_BREAK");
-                  } else if (val === "CLINIC_CLOSED") {
-                    setPromptData({ duration: "", reason: "Clinic Closed Today" });
-                    setStatusPromptMode("CLINIC_CLOSED");
-                  } else {
-                    handleUpdateStatus(val);
-                  }
-                }}
-                className={cn(
-                  "h-11 px-4 pr-10 rounded-xl font-bold text-xs uppercase tracking-wider border cursor-pointer appearance-none transition-all outline-none focus:ring-4 focus:ring-opacity-20 shadow-sm min-w-[170px]",
-                  clinicStatus === "AVAILABLE" && "bg-emerald-50 border-emerald-200 text-emerald-700 focus:ring-emerald-500/20 focus:border-emerald-500",
-                  clinicStatus === "SHORT_BREAK" && "bg-amber-50 border-amber-200 text-amber-700 focus:ring-amber-500/20 focus:border-amber-500",
-                  clinicStatus === "LIMITED_SLOTS" && "bg-orange-50 border-orange-200 text-orange-700 focus:ring-orange-500/20 focus:border-orange-500",
-                  clinicStatus === "EMERGENCY_ONLY" && "bg-rose-50 border-rose-200 text-rose-700 focus:ring-rose-500/20 focus:border-rose-500",
-                  clinicStatus === "CLINIC_CLOSED" && "bg-slate-100 border-slate-300 text-slate-700 focus:ring-slate-500/20 focus:border-slate-500"
-                )}
-                style={{
-                  backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`,
-                  backgroundPosition: "right 0.75rem center",
-                  backgroundSize: "1.25rem",
-                  backgroundRepeat: "no-repeat"
-                }}
-              >
-                <option value="AVAILABLE" className="font-bold text-slate-800 bg-white">🟢 AVAILABLE (LIVE)</option>
-                <option value="SHORT_BREAK" className="font-bold text-slate-800 bg-white">🟡 SHORT BREAK</option>
-                <option value="LIMITED_SLOTS" className="font-bold text-slate-800 bg-white">🟠 LIMITED SLOTS</option>
-                <option value="EMERGENCY_ONLY" className="font-bold text-slate-800 bg-white">🔴 EMERGENCY ONLY</option>
-                <option value="CLINIC_CLOSED" className="font-bold text-slate-800 bg-white">⚫ CLOSED TODAY</option>
-              </select>
-            </div>
+      <div className="max-w-7xl fade-in flex flex-col gap-10">
+        
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-black text-slate-900 flex items-center gap-2">
+            <span className="text-primary">Queue</span> Manager
+          </h1>
+          <div className="flex gap-3">
+             <button onClick={() => handleQuickToken(false)} disabled={isProcessingMutation} className="h-11 px-4 bg-primary text-white text-sm font-bold rounded-xl shadow-sm hover:bg-primary/90 active:scale-95 disabled:opacity-50">Quick Token</button>
+             <button onClick={() => handleQuickToken(true)} disabled={isProcessingMutation} className="h-11 px-4 bg-rose-600 text-white text-sm font-bold rounded-xl shadow-sm hover:bg-rose-700 active:scale-95 disabled:opacity-50 flex items-center gap-2"><AlertTriangle className="w-4 h-4" />Emergency</button>
           </div>
         </div>
-        
-        {/* Priority 6: Queue Stats Panel */}
-        <QueueStatCards 
-          patientsServed={queueStats.completed} 
-          currentQueue={queueStats.waiting} 
-          noShowCount={queueStats.noShowCount} 
-          avgWaitTime={queueStats.avgWaitTime} 
-        />
-        <div className="grid grid-cols-1 gap-6 mt-2">
-          <NowCallingController 
+
+        {/* SECTION 1: Current Queue Status */}
+        <section>
+          <h2 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Section 1: Current Queue Status</h2>
+          <QueueStatusDisplay 
             currentPatient={currentPatient} 
-            nextPatient={nextPatient}
-            waitingCount={queueStats.waiting || 0}
-            emergencyCount={queueStats.emergencyCount || 0}
-            onNext={() => handleNextPatient(false)} 
-            onSkip={() => handleNextPatient(true)}
-            onNoShow={() => currentPatient && updatePatientStatus(currentPatient.id, "NO_SHOW")}
+            nextPatient={nextPatient} 
+            waitingCount={queueStats.waiting || 0} 
+            emergencyCount={queueStats.emergencyCount || 0} 
           />
-          <WalkInModal 
-            isOpen={isWalkInModalOpen}
-            initialIsEmergency={walkInEmergency}
-            onClose={() => setIsWalkInModalOpen(false)}
-            onSuccess={async () => {
-              await mutateQueue();
-            }}
+        </section>
+
+        {/* SECTION 2: Today's Activity */}
+        <section>
+          <h2 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Section 2: Today's Activity</h2>
+          <QueueStatCards 
+            patientsServed={queueStats.completed} 
+            currentQueue={queueStats.waiting} 
+            noShowCount={queueStats.noShowCount} 
+            avgWaitTime={queueStats.avgWaitTime} 
           />
-        </div>
-        <PatientListTable 
-          patients={patients} 
-          onHold={handleHoldPatient}
-          onRecall={handleRecallPatient}
-          onServe={handleServePatient}
-          onNoShow={async (tokenId: string) => {
-            try {
-              const res = await fetch("/api/doctor/queue/no-show", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ tokenId }),
-              });
-              const data = await res.json();
-              if (!res.ok) {
-                toast.error(data.error || "Failed to mark as No-Show.");
-                return;
+        </section>
+
+        {/* SECTION 3: Clinic Status Controller */}
+        <section>
+          <h2 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Section 3: Clinic Status Controller</h2>
+          <ClinicStatusToggle 
+            status={clinicStatus} 
+            onStatusChange={(val: string) => {
+              if (val === "SHORT_BREAK") {
+                setPromptData({ duration: "30", reason: "Doctor on short break" });
+                setStatusPromptMode("SHORT_BREAK");
+              } else if (val === "CLINIC_CLOSED") {
+                setPromptData({ duration: "", reason: "Clinic Closed Today" });
+                setStatusPromptMode("CLINIC_CLOSED");
+              } else {
+                handleUpdateStatus(val);
               }
-              toast.success(data.message || "Marked as No-Show. Slot released.");
-              await mutateQueue();
-            } catch {
-              toast.error("Connection error. Please try again.");
-            }
-          }}
+            }} 
+            isLoading={isProcessingMutation} 
+          />
+        </section>
+
+        {/* SECTION 4: Quick Actions */}
+        <section>
+          <h2 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Section 4: Quick Actions</h2>
+          <QuickActionPanel 
+            onNext={() => handleNextPatient(false)}
+            onHold={() => handleNextPatient(true)}
+            onNoShow={() => { if(currentPatient) updatePatientStatus(currentPatient.id, "NO_SHOW") }}
+            onResume={() => { 
+                const held = patients.find(p => p.status === "Held");
+                if (held) updatePatientStatus(held.id, "WAITING");
+            }}
+            isLoading={isProcessingMutation}
+          />
+        </section>
+        
+        <WalkInModal 
+          isOpen={isWalkInModalOpen}
+          onClose={() => setIsWalkInModalOpen(false)}
+          onSuccess={mutateQueue}
         />
         
-        {/* Mobile Sticky FAB */}
-        <div className="fixed bottom-[80px] left-0 right-0 p-4 sm:hidden z-40 bg-gradient-to-t from-white via-white to-transparent pt-10 pointer-events-none">
-          <HoldToConfirmButton 
-            onConfirm={() => handleNextPatient(false)} 
-            isLoading={isProcessingMutation} 
-            className="w-full h-14 rounded-2xl bg-[#005da7] hover:bg-[#004b87] text-white font-bold text-lg shadow-premium shadow-blue-500/30 transition-all active:scale-95 pointer-events-auto"
-          >
-            {isProcessingMutation ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <ArrowRight className="w-5 h-5 mr-2" />}
-            Call Next Patient
-          </HoldToConfirmButton>
+        <div className="bg-white rounded-3xl border border-border shadow-sm overflow-hidden mb-10 pb-4">
+          <div className="p-6 border-b border-border flex justify-between items-center bg-slate-50">
+            <h3 className="font-black text-slate-900 text-lg flex items-center gap-2">
+              <Users className="w-5 h-5 text-primary" /> Patient Queue
+            </h3>
+            <button onClick={() => mutateQueue()} className="text-slate-400 hover:text-primary transition-colors bg-white p-2 border border-slate-200 rounded-lg shadow-sm active:scale-95">
+              <RefreshCw className={`w-4 h-4 ${isValidating ? "animate-spin text-primary" : ""}`} />
+            </button>
+          </div>
+          <div className="p-2 sm:p-6 pb-4 sm:pb-8">
+          <PatientListTable 
+            patients={patients} 
+            onHold={(id) => updatePatientStatus(id, "SKIPPED")}
+            onRecall={(id) => updatePatientStatus(id, "WAITING")}
+            onServe={(id) => updatePatientStatus(id, "COMPLETED")}
+            onNoShow={(id) => updatePatientStatus(id, "NO_SHOW")}
+          />
+          </div>
         </div>
       </div>
     );
   };
-
-  const renderProfile = () => (
+const renderProfile = () => (
     <div className="max-w-3xl fade-in pb-20">
       <h1 className="text-3xl font-black text-slate-900 mb-8">My Profile</h1>
       

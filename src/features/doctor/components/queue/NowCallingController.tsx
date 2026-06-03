@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { ArrowRight, PauseCircle, CheckCircle2, User, Loader2 } from "lucide-react";
+import { ArrowRight, PauseCircle, CheckCircle2, User, Loader2, PlayCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface PatientQueueItem {
@@ -10,17 +10,6 @@ interface PatientQueueItem {
   visitType: string;
   waitTime: number;
   priority: "Standard" | "Emergency";
-}
-
-interface NowCallingControllerProps {
-  currentPatient: PatientQueueItem | null;
-  nextPatient: PatientQueueItem | null;
-  waitingCount: number;
-  emergencyCount: number;
-  onNext: () => void;
-  onSkip: () => void; // Used for "Hold"
-  onNoShow?: () => void; // Used for "No-Show"
-  isLoading?: boolean;
 }
 
 export function HoldToConfirmButton({ onConfirm, children, className, disabled, isLoading, variant = "default" }: any) {
@@ -39,9 +28,9 @@ export function HoldToConfirmButton({ onConfirm, children, className, disabled, 
       if (p >= 100) {
         if (timerRef.current) clearInterval(timerRef.current);
         onConfirm();
-        setTimeout(() => setProgress(0), 200); // reset after short delay
+        setTimeout(() => setProgress(0), 200);
       }
-    }, 25); // 500ms to confirm
+    }, 25);
   };
 
   const endHold = () => {
@@ -75,10 +64,11 @@ export function HoldToConfirmButton({ onConfirm, children, className, disabled, 
   );
 }
 
-export function NowCallingController({ currentPatient, nextPatient, waitingCount, emergencyCount, onNext, onSkip, onNoShow, isLoading = false }: NowCallingControllerProps) {
+// SECTION 1: Current Queue Status
+export function QueueStatusDisplay({ currentPatient, nextPatient, waitingCount, emergencyCount }: any) {
   if (!currentPatient) {
     return (
-      <div className="bg-card rounded-3xl p-8 border-2 border-dashed border-border flex flex-col items-center justify-center text-center h-full min-h-[320px]">
+      <div className="bg-card rounded-3xl p-8 border border-slate-200 shadow-sm flex flex-col items-center justify-center text-center">
         <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 mb-4 shadow-sm border border-border">
           <User className="w-8 h-8" />
         </div>
@@ -92,15 +82,14 @@ export function NowCallingController({ currentPatient, nextPatient, waitingCount
   const cleanCondition = currentPatient.condition?.replace("[SYSTEM_AUDIT: CLINIC_CLOSED_OVERRIDE]", "").trim() || "General";
 
   return (
-    <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm relative h-full flex flex-col">
-      {/* Blue Left Border Accent */}
+    <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm relative flex flex-col">
       <div className={`absolute left-0 top-0 bottom-0 w-2 ${currentPatient.priority === 'Emergency' ? 'bg-red-600' : 'bg-[#005da7]'}`} />
       
-      <div className="p-6 md:p-8 flex-1">
+      <div className="p-6 md:p-8">
         <div className="flex justify-between items-start mb-6">
           <div>
             <span className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-md ${currentPatient.priority === 'Emergency' ? 'bg-red-100 text-red-700' : 'bg-blue-50 text-[#005da7]'}`}>
-              {currentPatient.priority === 'Emergency' ? 'EMERGENCY - NOW CALLING' : 'NOW CALLING'}
+              {currentPatient.priority === 'Emergency' ? 'EMERGENCY - NOW SERVING' : 'NOW SERVING'}
             </span>
             <h2 className="text-4xl font-black text-slate-900 mt-3">Token #{currentPatient.token}</h2>
           </div>
@@ -126,8 +115,7 @@ export function NowCallingController({ currentPatient, nextPatient, waitingCount
           </div>
         </div>
 
-        {/* Peripheral Next-Up Panel (Desktop only - stacked on mobile) */}
-        <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 mb-6 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+        <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
           <div>
             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Next Up</p>
             {nextPatient ? (
@@ -151,42 +139,100 @@ export function NowCallingController({ currentPatient, nextPatient, waitingCount
           </div>
         </div>
       </div>
+    </div>
+  );
+}
 
-      <div className="p-4 sm:p-6 bg-slate-50 border-t border-slate-100 flex flex-col gap-3">
-        <p className="hidden sm:block text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center mb-1">Hold to Confirm</p>
+// SECTION 3: Clinic Status Controller
+export function ClinicStatusToggle({ status, onStatusChange, isLoading }: any) {
+  const statuses = [
+    { id: "AVAILABLE", label: "Available", color: "emerald" },
+    { id: "LIMITED_SLOTS", label: "Busy", color: "orange" },
+    { id: "SHORT_BREAK", label: "On Break", color: "amber" },
+    { id: "CLINIC_CLOSED", label: "Closed", color: "slate" },
+  ];
+
+  return (
+    <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 flex flex-wrap gap-2">
+      {statuses.map(s => {
+        const isActive = status === s.id;
+        const colorClasses = {
+          emerald: isActive ? "bg-emerald-600 text-white shadow-md border-emerald-600" : "bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100",
+          orange: isActive ? "bg-orange-600 text-white shadow-md border-orange-600" : "bg-orange-50 text-orange-700 border-orange-100 hover:bg-orange-100",
+          amber: isActive ? "bg-amber-600 text-white shadow-md border-amber-600" : "bg-amber-50 text-amber-700 border-amber-100 hover:bg-amber-100",
+          slate: isActive ? "bg-slate-700 text-white shadow-md border-slate-700" : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100",
+        }[s.color];
+
+        return (
+          <button
+            key={s.id}
+            onClick={() => onStatusChange(s.id)}
+            disabled={isLoading || isActive}
+            className={`flex-1 min-w-[120px] h-14 rounded-2xl font-black text-sm border transition-all active:scale-95 disabled:opacity-80 disabled:scale-100 ${colorClasses}`}
+          >
+            {s.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// SECTION 4: Quick Actions
+export function QuickActionPanel({ onNext, onHold, onNoShow, onResume, isLoading }: any) {
+  return (
+    <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        
         <HoldToConfirmButton 
           onConfirm={onNext} 
           isLoading={isLoading} 
-          className="hidden sm:flex w-full h-14 rounded-2xl bg-[#005da7] hover:bg-[#004b87] text-white font-bold text-lg shadow-md transition-all active:scale-95"
+          className="w-full h-16 rounded-2xl bg-[#005da7] hover:bg-[#004b87] text-white font-black text-lg shadow-md transition-all active:scale-95"
         >
-          {isLoading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <CheckCircle2 className="w-5 h-5 mr-2" />} 
-          Mark Served & Call Next
+          {isLoading ? <Loader2 className="w-6 h-6 animate-spin mr-2" /> : <ArrowRight className="w-6 h-6 mr-2" />} 
+          Call Next Patient
         </HoldToConfirmButton>
-        <div className="flex gap-3 w-full">
-          <Button 
-            onClick={onSkip} 
-            disabled={isLoading} 
-            variant="outline" 
-            className="flex-1 h-12 rounded-xl border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-bold transition-all disabled:opacity-70"
-          >
-            {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <PauseCircle className="w-4 h-4 mr-2" />} 
-            Hold (Skip)
-          </Button>
-          <Button 
-            onClick={() => {
-              if (confirm("Mark patient as No-Show? They will lose their queue position.")) {
-                if (onNoShow) onNoShow();
-              }
-            }} 
-            disabled={isLoading} 
-            variant="outline" 
-            className="flex-1 h-12 rounded-xl border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700 font-bold transition-all disabled:opacity-70"
-          >
-            {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <span className="font-bold mr-1">✕</span>} 
-            No-Show
-          </Button>
-        </div>
+
+        <Button 
+          onClick={onHold} 
+          disabled={isLoading} 
+          variant="outline" 
+          className="w-full h-16 rounded-2xl border-slate-200 text-slate-700 hover:bg-slate-100 font-bold text-lg transition-all"
+        >
+          {isLoading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <PauseCircle className="w-5 h-5 mr-2" />} 
+          Hold Patient
+        </Button>
+
+        <Button 
+          onClick={() => {
+            if (confirm("Mark patient as No-Show?")) {
+              onNoShow();
+            }
+          }} 
+          disabled={isLoading} 
+          variant="outline" 
+          className="w-full h-16 rounded-2xl border-rose-200 text-rose-600 hover:bg-rose-50 font-bold text-lg transition-all"
+        >
+          {isLoading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <span className="text-xl mr-2">✕</span>} 
+          Mark No-show
+        </Button>
+
+        <Button 
+          onClick={onResume} 
+          disabled={isLoading} 
+          variant="outline" 
+          className="w-full h-16 rounded-2xl border-emerald-200 text-emerald-600 hover:bg-emerald-50 font-bold text-lg transition-all"
+        >
+          {isLoading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <PlayCircle className="w-5 h-5 mr-2" />} 
+          Resume Queue
+        </Button>
+
       </div>
     </div>
   );
+}
+
+// Ensure backward compatibility since page.tsx might still import NowCallingController
+export function NowCallingController(props: any) {
+  return null; // Stubs out the old component
 }
