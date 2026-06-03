@@ -14,6 +14,9 @@ interface PatientQueueItem {
 
 interface NowCallingControllerProps {
   currentPatient: PatientQueueItem | null;
+  nextPatient: PatientQueueItem | null;
+  waitingCount: number;
+  emergencyCount: number;
   onNext: () => void;
   onSkip: () => void; // Used for "Hold"
   isLoading?: boolean;
@@ -71,7 +74,7 @@ export function HoldToConfirmButton({ onConfirm, children, className, disabled, 
   );
 }
 
-export function NowCallingController({ currentPatient, onNext, onSkip, isLoading = false }: NowCallingControllerProps) {
+export function NowCallingController({ currentPatient, nextPatient, waitingCount, emergencyCount, onNext, onSkip, isLoading = false }: NowCallingControllerProps) {
   if (!currentPatient) {
     return (
       <div className="bg-card rounded-3xl p-8 border-2 border-dashed border-border flex flex-col items-center justify-center text-center h-full min-h-[320px]">
@@ -83,6 +86,9 @@ export function NowCallingController({ currentPatient, onNext, onSkip, isLoading
       </div>
     );
   }
+
+  const isOverride = currentPatient.condition?.includes("[SYSTEM_AUDIT: CLINIC_CLOSED_OVERRIDE]");
+  const cleanCondition = currentPatient.condition?.replace("[SYSTEM_AUDIT: CLINIC_CLOSED_OVERRIDE]", "").trim() || "General";
 
   return (
     <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm relative h-full flex flex-col">
@@ -107,31 +113,50 @@ export function NowCallingController({ currentPatient, onNext, onSkip, isLoading
             {currentPatient.name.charAt(0) || 'U'}
           </div>
           <div>
-            <h3 className="text-xl font-bold text-slate-900">{currentPatient.name}</h3>
-            <p className="text-sm text-slate-500 font-medium">{currentPatient.visitType} • {currentPatient.condition}</p>
+            <div className="flex items-center gap-2">
+              <h3 className="text-xl font-bold text-slate-900">{currentPatient.name}</h3>
+              {isOverride && (
+                <span className="bg-red-600 text-white text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded">
+                  OVERRIDE
+                </span>
+              )}
+            </div>
+            <p className="text-sm text-slate-500 font-medium">{currentPatient.visitType} • {cleanCondition}</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 mb-8">
-          <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Wait Time</p>
-            <p className="text-lg font-black text-slate-900">{currentPatient.waitTime} Mins</p>
+        {/* Peripheral Next-Up Panel (Desktop only - stacked on mobile) */}
+        <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 mb-6 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+          <div>
+            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Next Up</p>
+            {nextPatient ? (
+              <p className="font-bold text-slate-900 truncate flex items-center gap-2">
+                <span>{nextPatient.name}</span>
+                <span className="text-primary text-xs bg-primary/10 px-1.5 py-0.5 rounded">#{nextPatient.token}</span>
+              </p>
+            ) : (
+              <p className="text-sm font-medium text-slate-400 italic">No one waiting</p>
+            )}
           </div>
-          <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Priority</p>
-            <p className={`text-lg font-black ${currentPatient.priority === 'Emergency' ? 'text-red-600' : 'text-slate-900'}`}>
-              {currentPatient.priority}
-            </p>
+          <div className="flex gap-3">
+            <div className="text-center px-3 border-r border-slate-200">
+              <p className="text-lg font-black text-slate-900 leading-none">{waitingCount}</p>
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-1">Waiting</p>
+            </div>
+            <div className="text-center px-3">
+              <p className={`text-lg font-black leading-none ${emergencyCount > 0 ? 'text-red-600 animate-pulse' : 'text-slate-400'}`}>{emergencyCount}</p>
+              <p className={`text-[10px] font-bold uppercase tracking-wider mt-1 ${emergencyCount > 0 ? 'text-red-500' : 'text-slate-400'}`}>Emergency</p>
+            </div>
           </div>
         </div>
       </div>
 
       <div className="p-4 sm:p-6 bg-slate-50 border-t border-slate-100 flex flex-col gap-3">
-        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center mb-1">Hold to Confirm</p>
+        <p className="hidden sm:block text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center mb-1">Hold to Confirm</p>
         <HoldToConfirmButton 
           onConfirm={onNext} 
           isLoading={isLoading} 
-          className="w-full h-14 rounded-2xl bg-[#005da7] hover:bg-[#004b87] text-white font-bold text-lg shadow-md transition-all active:scale-95"
+          className="hidden sm:flex w-full h-14 rounded-2xl bg-[#005da7] hover:bg-[#004b87] text-white font-bold text-lg shadow-md transition-all active:scale-95"
         >
           {isLoading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <CheckCircle2 className="w-5 h-5 mr-2" />} 
           Mark Served & Call Next

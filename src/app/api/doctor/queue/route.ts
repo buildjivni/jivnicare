@@ -3,8 +3,8 @@ import prisma from "@/lib/db/prisma";
 import { verifyToken } from "@/lib/jwt";
 import { cookies } from "next/headers";
 import {
-  getCurrentLogicalDay,
-  getStartOfDay,
+  resolveClinicLogicalDay,
+  parseHistoricalClinicDate,
   getUnifiedQueueCapacity,
   isEmergencyToken,
 } from "@/lib/utils/clinic-utils";
@@ -36,7 +36,7 @@ export async function GET(request: Request) {
     const url = new URL(request.url);
     const dateParam = url.searchParams.get("date");
     
-    const queueDate = dateParam ? getStartOfDay(new Date(dateParam)) : getCurrentLogicalDay();
+    const queueDate = dateParam ? parseHistoricalClinicDate(dateParam) : resolveClinicLogicalDay();
 
     // Fetch the daily queue for this doctor on this date
     let dailyQueue = await prisma.dailyQueue.findUnique({

@@ -12,7 +12,7 @@ const idSchema = z.string().min(10).max(40);
 // 1. Patient Booking Schema
 export const bookAppointmentSchema = z.object({
   doctorId: idSchema,
-  date: z.string().datetime().or(z.date()), // Next.js API parses it as a string usually
+  date: z.string().or(z.date()).optional(), // Ignored by backend (Server generates logical date)
   location: z.string().min(2).max(100).optional(),
   isEmergency: z.boolean().optional().default(false),
   requestId: z.string().uuid().optional(),
@@ -29,7 +29,10 @@ export const walkInSchema = z.object({
   patientName: z.string()
     .min(2, "Name must be at least 2 characters")
     .max(100)
-    .regex(/^[a-zA-Z\s\.']+$/, "Name can only contain letters, spaces, dots and apostrophes"),
+    .regex(/^[a-zA-Z\s\.']+$/, "Name can only contain letters, spaces, dots and apostrophes")
+    .optional()
+    .nullable()
+    .or(z.literal("")),
   phoneNumber: z.string()
     .max(15)
     .optional()
@@ -63,7 +66,7 @@ export const step1OnboardSchema = z.object({
     return age >= 22;
   }, "Must be at least 22 years of age"),
   contactNumber: z.string().regex(/^\d{10}$/, "Contact number must be exactly 10 digits"),
-  email: z.string().email("Valid email is required").optional().nullable().or(z.literal("")),
+  email: z.string().email("Valid email is required"),
   password: z.string().min(6, "Password must be at least 6 characters").max(50),
   
   medicalRegistrationNumber: z.string().min(5, "At least 5 characters").max(30).regex(/^[a-zA-Z0-9\-\/\.\s]+$/, "Letters, numbers, hyphens, slashes, spaces and periods only"),

@@ -9,6 +9,7 @@ import { checkRateLimit } from '@/lib/infrastructure/rate-limit';
 import { logger } from '@/lib/infrastructure/logger';
 import { isTransientDbError, dbUnavailableResponse } from '@/lib/db/db-errors';
 import { incrementTelemetryCounter } from '@/lib/telemetry/redis';
+import { resolveClinicLogicalDay } from '@/lib/utils/clinic-utils';
 
 export async function POST(request: Request) {
   let requestIdForRollback: string | null = null;
@@ -64,10 +65,13 @@ export async function POST(request: Request) {
       }
     }
 
+    // Server strictly enforces logical day. Do not trust client date.
+    const logicalDate = resolveClinicLogicalDay();
+
     // Call service layer
-    const newQueueToken = await QueueService.issueToken(
+    const { token: newQueueToken } = await QueueService.issueToken(
       doctorId, 
-      new Date(date), 
+      logicalDate, 
       payload.id, 
       "ONLINE", 
       location,
@@ -103,8 +107,19 @@ export async function POST(request: Request) {
       "EMERGENCY_FULL": "Emergency capacity is currently full. Please visit the clinic directly."
     };
 
-    const message = errorMessages[err.message ?? ""] || "Failed to book appointment";
-    const status = errorMessages[err.message ?? ""] ? 400 : 500;
+    const errMsg = err.message ?? "";
+    
+    // Check for ALREADY_BOOKED with attached token ID
+    if (errMsg.startsWith("ALREADY_BOOKED:")) {
+      const tokenId = errMsg.split(":")[1];
+      return NextResponse.json(
+        { error: "ALREADY_BOOKED", tokenId },
+        { status: 409 }
+      );
+    }
+
+    const message = errorMessages[errMsg] || "Failed to book appointment";
+    const status = errorMessages[errMsg] ? 400 : 500;
     
     // Telemetry tracking for failures
     await incrementTelemetryCounter('bookingFailures').catch(() => {});

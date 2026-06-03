@@ -1,5 +1,5 @@
 import prisma from "@/lib/db/prisma";
-import { getStartOfDay, getUnifiedQueueCapacity } from "@/lib/utils/clinic-utils";
+import { resolveClinicLogicalDay, resolveClinicCurrentTime, getUnifiedQueueCapacity } from "@/lib/utils/clinic-utils";
 
 export class QueueService {
   /**
@@ -15,8 +15,9 @@ export class QueueService {
     isEmergency: boolean = false,
     prismaTx?: any
   ) {
-    // Phase 6: Canonical Start of Day
-    const queueDate = getStartOfDay(date);
+    // The QueueService is the final authority on logical day enforcement.
+    // We completely ignore externally provided dates for new token issuance.
+    const queueDate = resolveClinicLogicalDay();
 
     // The core logic that must run atomically
     const coreLogic = async (tx: any) => {
@@ -30,18 +31,32 @@ export class QueueService {
       const clinicOps = await tx.clinicOperations.findUnique({ where: { doctorId } });
       const schedule = await tx.weeklySchedule.findUnique({ where: { doctorId } });
 
-      if (clinicOps?.isClosedToday) {
-        throw new Error("CLINIC_CLOSED_TODAY");
+      let isClosedToday = clinicOps?.isClosedToday || false;
+      let pauseOnlineBooking = clinicOps?.pauseOnlineBooking || false;
+
+      // Task A4: Runtime evaluation of expiration
+      if (clinicOps?.statusExpiresAt && new Date(clinicOps.statusExpiresAt) < new Date()) {
+        isClosedToday = false;
+        pauseOnlineBooking = false;
       }
 
-      if (source === "ONLINE" && clinicOps?.pauseOnlineBooking && !isEmergency) {
+      let isEmergencyOverride = false;
+      if (isClosedToday) {
+        if (isEmergency) {
+          isEmergencyOverride = true;
+        } else {
+          throw new Error("CLINIC_CLOSED_TODAY");
+        }
+      }
+
+      if (source === "ONLINE" && pauseOnlineBooking && !isEmergency) {
         throw new Error("QUEUE_PAUSED");
       }
 
       // Check Weekly Schedule for the given day
       if (schedule) {
-        const days = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
-        const dayName = days[new Date(date).getDay()];
+        // IST weekday via central authority — never trust server UTC
+        const { weekday: dayName, timeStr: currentTimeStr } = resolveClinicCurrentTime();
         const dayConfig = (schedule as any)[dayName];
 
         if (dayConfig && typeof dayConfig === "object") {
@@ -49,13 +64,8 @@ export class QueueService {
             throw new Error("CLINIC_CLOSED_ON_THIS_DAY");
           }
 
-          // Strict Timing Enforcement for ONLINE bookings
+          // Strict Timing Enforcement for ONLINE bookings (IST window)
           if (source === "ONLINE" && !isEmergency) {
-            const now = new Date();
-            const currentHour = now.getHours();
-            const currentMin = now.getMinutes();
-            const currentTimeStr = `${currentHour.toString().padStart(2, "0")}:${currentMin.toString().padStart(2, "0")}`;
-
             if (dayConfig.start && currentTimeStr < dayConfig.start) {
               throw new Error("BOOKING_NOT_STARTED");
             }
@@ -89,10 +99,14 @@ export class QueueService {
       // 3. Check for duplicate online booking
       if (source === "ONLINE" && userId) {
         const existingToken = await tx.queueToken.findFirst({
-          where: { queueId: dailyQueue.id, userId },
+          where: { 
+            queueId: dailyQueue.id, 
+            userId,
+            status: { in: ["WAITING", "IN_CONSULTATION"] }
+          },
         });
 
-        if (existingToken) throw new Error("ALREADY_BOOKED");
+        if (existingToken) throw new Error(`ALREADY_BOOKED:${existingToken.id}`);
       }
 
       // 4. Atomic Capacity & Token Sequencing (Unified Pool)
@@ -103,7 +117,11 @@ export class QueueService {
         // Phase 2 Fix: Atomic Sequence Generation via Redis
         const emergencyCountKey = `queue:${dailyQueue.id}:emergency`;
         const currentEmergencyCount = await tx.queueToken.count({
-          where: { queueId: dailyQueue.id, isEmergency: true }
+          where: { 
+            queueId: dailyQueue.id, 
+            isEmergency: true,
+            status: { notIn: ["CANCELLED", "NO_SHOW"] }
+          }
         });
         
         if (currentEmergencyCount >= (clinicOps?.emergencySlots || 2)) {
@@ -127,7 +145,9 @@ export class QueueService {
           data: { issuedTokensCount: { increment: 1 } }
         });
 
-        if (updatedQueue.issuedTokensCount > updatedQueue.maxCapacity) {
+        const activeCapacity = updatedQueue.issuedTokensCount - (updatedQueue.cancelledCount ?? 0) - (updatedQueue.noShowCount ?? 0);
+        
+        if (activeCapacity > updatedQueue.maxCapacity) {
           throw new Error("QUEUE_FULL");
         }
         tokenNumber = updatedQueue.issuedTokensCount;
@@ -146,7 +166,7 @@ export class QueueService {
         },
       });
 
-      return newQueueToken;
+      return { token: newQueueToken, isEmergencyOverride };
     };
 
     // If an outer transaction is provided (e.g. from Walk-In endpoint), use it.
@@ -169,8 +189,17 @@ export class QueueService {
     const schedule = doctor.weeklySchedule;
     const avgTime = doctor.averageConsultationTime || 15; // minutes
 
+    let isClosedToday = operations?.isClosedToday || false;
+    let pauseOnlineBooking = operations?.pauseOnlineBooking || false;
+
+    // Task A4: Runtime evaluation of expiration
+    if (operations?.statusExpiresAt && new Date(operations.statusExpiresAt) < new Date()) {
+      isClosedToday = false;
+      pauseOnlineBooking = false;
+    }
+
     // 1. Is it closed entirely?
-    if (operations?.isClosedToday) {
+    if (isClosedToday) {
       return {
         status: 'CLOSED_FOR_TODAY',
         message: 'Clinic is closed today.',
@@ -180,9 +209,9 @@ export class QueueService {
       };
     }
 
-    // 2. Schedule Checks
-    const currentDayName = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-    const todaySchedule: any = schedule ? schedule[currentDayName] : null;
+    // 2. Schedule Checks — weekday and time from IST central authority
+    const { weekday: currentDayName, timeStr: currentTimeStr } = resolveClinicCurrentTime();
+    const todaySchedule: any = schedule ? (schedule as any)[currentDayName] : null;
 
     if (!todaySchedule || !todaySchedule.isOpen) {
       return {
@@ -194,17 +223,9 @@ export class QueueService {
       };
     }
 
-    const now = new Date();
-    const [startHour, startMin] = todaySchedule.start.split(':').map(Number);
-    const [endHour, endMin] = todaySchedule.end.split(':').map(Number);
-    
-    const startTime = new Date();
-    startTime.setHours(startHour, startMin, 0, 0);
-    
-    const endTime = new Date();
-    endTime.setHours(endHour, endMin, 0, 0);
-
-    if (now > endTime) {
+    // String comparison in HH:MM format is safe because both sides use the same format
+    // and lexicographic order is identical to chronological order for 00:00–23:59
+    if (todaySchedule.end && currentTimeStr > todaySchedule.end) {
       return {
         status: 'NEXT_AVAILABLE_TOMORROW',
         message: 'OPD hours have ended for today.',
@@ -221,7 +242,10 @@ export class QueueService {
 
     if (todayQueue) {
       activeToken = todayQueue.currentActiveToken;
-      issuedTokens = todayQueue.issuedTokensCount;
+      // PR-1: Active capacity = issued minus cancelled and no-shows (zero extra query)
+      issuedTokens = todayQueue.issuedTokensCount
+        - (todayQueue.cancelledCount ?? 0)
+        - (todayQueue.noShowCount ?? 0);
       maxCapacity = todayQueue.maxCapacity;
     }
 
@@ -229,7 +253,7 @@ export class QueueService {
     const estimatedWaitMinutes = waitingPatients * avgTime;
 
     // 4. Live Control Overrides
-    if (operations?.pauseOnlineBooking) {
+    if (pauseOnlineBooking) {
       return {
         status: 'BREAK_ACTIVE',
         message: 'Online booking is temporarily paused.',
