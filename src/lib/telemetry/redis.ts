@@ -6,6 +6,8 @@ export type OperationalMetricName =
   | 'bookingFailures'
   | 'bookingSuccess'
   | 'bookingAbandons'
+  | 'bookingCancelled'       // PR-1: Patient self-cancellation events
+  | 'noShowEvents'           // PR-1: Doctor-side no-show events
   | 'otpFailures'
   | 'authFailures'
   | 'uploadFailures'

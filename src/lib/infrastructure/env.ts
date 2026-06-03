@@ -6,7 +6,7 @@
 const DEV_JWT_FALLBACK =
   "development-only-jwt-secret-min-32-chars!!";
 
-export function isProduction(): boolean {
+function isProduction(): boolean {
   return process.env.NODE_ENV === "production" || !!process.env.VERCEL;
 }
 
@@ -30,8 +30,6 @@ export function getJwtSecret(): string {
   return secret;
 }
 
-
-
 export function getTwoFactorApiKey(): string {
   const key = process.env.TWOFACTOR_API_KEY?.trim();
   if (!key) {
@@ -45,48 +43,5 @@ export function getTwoFactorApiKey(): string {
 
 export function isBlobConfigured(): boolean {
   return !!process.env.BLOB_READ_WRITE_TOKEN?.trim();
-}
-
-/** Validates all required production/staging deployment variables. */
-export function assertProductionEnv(): void {
-  if (!isProduction()) return;
-
-  const errors: string[] = [];
-
-  try {
-    getJwtSecret();
-  } catch (e) {
-    errors.push(e instanceof Error ? e.message : "JWT_SECRET invalid");
-  }
-
-  if (!process.env.DATABASE_URL?.trim()) {
-    errors.push("FATAL: DATABASE_URL is required in production");
-  }
-
-  if (!getTwoFactorApiKey()) {
-    errors.push("FATAL: TWOFACTOR_API_KEY is required in production for SMS OTP");
-  }
-
-  if (!isBlobConfigured()) {
-    errors.push("FATAL: BLOB_READ_WRITE_TOKEN is required in production for uploads");
-  }
-
-  if (errors.length > 0) {
-    throw new Error(errors.join("\n"));
-  }
-}
-
-/** Human-readable checklist for deploy dashboards (does not throw). */
-export function getProductionEnvStatus(): {
-  ok: boolean;
-  missing: string[];
-} {
-  const missing: string[] = [];
-  const secret = process.env.JWT_SECRET?.trim();
-  if (!secret || secret.length < 32) missing.push("JWT_SECRET (min 32 chars)");
-  if (!process.env.DATABASE_URL?.trim()) missing.push("DATABASE_URL");
-  if (!getTwoFactorApiKey()) missing.push("TWOFACTOR_API_KEY");
-  if (!isBlobConfigured()) missing.push("BLOB_READ_WRITE_TOKEN");
-  return { ok: missing.length === 0, missing };
 }
 

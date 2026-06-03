@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db/prisma";
-import { getCurrentLogicalDay } from "@/lib/utils/clinic-utils";
+import { resolveClinicLogicalDay, getUnifiedQueueCapacity, isEmergencyToken } from "@/lib/utils/clinic-utils";
 import { redis } from "@/lib/db/redis";
 
 export async function GET(
@@ -27,7 +27,7 @@ export async function GET(
     }
 
     // Use hardened logical day reset
-    const today = getCurrentLogicalDay();
+    const today = resolveClinicLogicalDay();
 
     const doctor = await prisma.doctor.findUnique({
       where: { id: doctorId },

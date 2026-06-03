@@ -427,6 +427,7 @@ enum TokenStatus {
   COMPLETED
   SKIPPED
   CANCELLED
+  NO_SHOW // PR-1: Doctor-side terminal state; frees capacity without counting as served
 }
 
 enum Gender {
@@ -443,7 +444,9 @@ model DailyQueue {
   status             QueueStatus @default(NOT_STARTED)
   maxCapacity        Int // Maximum patients for today
   currentActiveToken Int         @default(0) // The token number currently inside the cabin
-  issuedTokensCount  Int         @default(0) // Atomic counter for sequential token issuance
+  issuedTokensCount  Int         @default(0) // Atomic counter for sequential token issuance (never decremented)
+  cancelledCount     Int         @default(0) // PR-1: Atomic count of CANCELLED tokens (frees capacity)
+  noShowCount        Int         @default(0) // PR-1: Atomic count of NO_SHOW tokens (frees capacity)
 
   tokens    QueueToken[]
   createdAt DateTime     @default(now())
@@ -471,6 +474,12 @@ model QueueToken {
   tokenIssuedAt   DateTime  @default(now()) // Determines strict FCFS priority
   isEmergency     Boolean   @default(false)
   patientLocation String? // Patient's city or village name
+
+  // PR-1: Audit Trail Fields
+  cancelledAt DateTime? // When patient cancelled
+  cancelledBy String?   // "PATIENT" | "SYSTEM"
+  noShowAt    DateTime? // When doctor marked no-show
+  noShowBy    String?   // doctorId who marked it (accountability)
 
   @@unique([queueId, tokenNumber])
   @@index([queueId, status])

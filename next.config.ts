@@ -1,5 +1,19 @@
 import type { NextConfig } from "next";
 
+// ── Startup Environment Validation ──────────────────────────────────────────
+const requiredEnvVars = ["JWT_SECRET", "DATABASE_URL"];
+const missingEnvVars = requiredEnvVars.filter((envVar) => !process.env[envVar]);
+
+if (missingEnvVars.length > 0) {
+  throw new Error(`
+    ❌ Invalid/Missing Environment Variables:
+    The following required environment variables are missing:
+    ${missingEnvVars.join(", ")}
+    Please define them in your .env.local file or Vercel environment before starting the app.
+  `);
+}
+
+
 const nextConfig: NextConfig = {
   // ── Tech Stack Obfuscation ──────────────────────────────────────────────────
   poweredByHeader: false,

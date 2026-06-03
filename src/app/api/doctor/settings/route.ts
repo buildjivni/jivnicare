@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { doctorSettingsSchema, formatZodError } from "@/lib/validators/validations";
 import { VerificationStatus } from "@prisma/client";
 import { normalizeQualifications, normalizeLanguages } from "@/lib/utils/normalizers";
-import { getCurrentLogicalDay, getUnifiedQueueCapacity, normalizeEmergencyConfig } from "@/lib/utils/clinic-utils";
+import { resolveClinicLogicalDay, resolveClinicCurrentTime, getUnifiedQueueCapacity, normalizeEmergencyConfig } from "@/lib/utils/clinic-utils";
 
 export async function PUT(request: Request) {
   try {
@@ -220,6 +220,15 @@ export async function PUT(request: Request) {
             opsUpdate.statusExpiresAt = new Date(Date.now() + minutes * 60 * 1000);
           } else if (body.status === "LIMITED_SLOTS") {
             opsUpdate.statusExpiresAt = new Date(Date.now() + 120 * 60 * 1000); // 2 hours
+          } else if (body.status === "CLINIC_CLOSED") {
+            // Expiry = next 4 AM IST logical rollover
+            const { hour: istHour } = resolveClinicCurrentTime();
+            const endOfDay = new Date();
+            if (istHour >= 4) {
+              endOfDay.setDate(endOfDay.getDate() + 1);
+            }
+            endOfDay.setHours(4, 0, 0, 0); // 4 AM local server time as close approximation
+            opsUpdate.statusExpiresAt = endOfDay;
           } else {
             opsUpdate.statusExpiresAt = null;
           }
@@ -238,7 +247,7 @@ export async function PUT(request: Request) {
         if (body.maxCapacity !== undefined) {
           const unifiedCapacity = getUnifiedQueueCapacity(updatedClinicOps);
           await tx.dailyQueue.updateMany({
-            where: { doctorId: doctor.id, date: getCurrentLogicalDay() },
+            where: { doctorId: doctor.id, date: resolveClinicLogicalDay() },
             data: { maxCapacity: unifiedCapacity },
           });
         }
