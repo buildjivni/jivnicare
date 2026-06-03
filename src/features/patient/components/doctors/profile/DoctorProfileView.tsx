@@ -349,6 +349,38 @@ export function DoctorProfileView({ doctor, relatedDoctors }: DoctorProfileViewP
               ))}
             </div>
           </div>
+
+          {(doctor.education || doctor.qualifications) && (
+            <div className="pt-4 border-t border-slate-100 mt-4">
+              <h2 className="text-sm font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2 mb-3">
+                <GraduationCap className="w-4 h-4" />
+                Education & Qualifications
+              </h2>
+              <div className="text-sm md:text-base text-slate-700 font-medium bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                {doctor.education || doctor.qualifications}
+              </div>
+            </div>
+          )}
+
+          {doctor.languages && doctor.languages.length > 0 && (
+            <div className="pt-4 border-t border-slate-100 mt-4">
+              <h2 className="text-sm font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2 mb-3">
+                <span className="w-4 h-4 flex items-center justify-center">🗣️</span>
+                Languages Spoken
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                {doctor.languages.map((lang: string) => (
+                  <Badge
+                    key={lang}
+                    variant="secondary"
+                    className="text-xs font-bold text-[#205E98] bg-blue-50 border border-blue-100 rounded-lg px-3 py-1.5"
+                  >
+                    {lang}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

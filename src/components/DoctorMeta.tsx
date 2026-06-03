@@ -8,7 +8,6 @@ interface DoctorMetaProps {
 }
 
 export default function DoctorMeta({ doctor }: DoctorMetaProps) {
-  const distance = (doctor as any).distanceStr || doctor.distance;
   const location = doctor.locality || doctor.location;
   return (
     <div className="flex items-start gap-2.5 p-3 rounded-2xl bg-slate-50/80 border border-slate-100/50 group-hover:bg-blue-50/30 group-hover:border-blue-100/50 transition-colors relative z-40">
@@ -24,12 +23,6 @@ export default function DoctorMeta({ doctor }: DoctorMetaProps) {
         </p>
         <div className="flex items-center flex-wrap gap-1.5 text-[11.5px] text-slate-500 font-medium">
           <span className="line-clamp-1">{location}</span>
-          {distance && (
-            <>
-              <span className="w-1 h-1 rounded-full bg-emerald-400" />
-              <span className="text-emerald-700 font-bold">{distance}</span>
-            </>
-          )}
         </div>
       </div>
       {(doctor as any).latitude && (doctor as any).longitude && (

@@ -7,6 +7,8 @@ import {
   VerifiedDoctorsSection
 } from "@/features/marketing/components/home";
 import { HelpEcosystem } from "@/features/marketing/components/trust/HelpEcosystem";
+import { ProductDemosSection } from "@/features/marketing/components/home/ProductDemosSection";
+import { ClinicOnboardingCta } from "@/features/marketing/components/home/ClinicOnboardingCta";
 import prisma from "@/lib/db/prisma";
 import type { Doctor } from "@/types";
 import { mapPrismaDoctorToUI } from "@/lib/utils/data-utils";
@@ -56,7 +58,11 @@ export default async function Home() {
         <HelpEcosystem />
       </div>
 
+      <ProductDemosSection />
+      
       <CtaBannerSection />
+      
+      <ClinicOnboardingCta />
     </main>
   );
 }

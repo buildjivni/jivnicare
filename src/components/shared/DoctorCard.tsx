@@ -339,7 +339,10 @@ export const DoctorCard = React.memo(function DoctorCard({ doctor, className, pr
                 ) : avail.isPaused ? (
                   "Call clinic for walk-in"
                 ) : (
-                  <><ShieldCheck className="w-3 h-3" /> Confirmed Booking</>
+                  <>
+                    <ShieldCheck className="w-3 h-3" />
+                    {doctor.nextAvailable && doctor.nextAvailable !== "Today" ? `Next Slot: ${doctor.nextAvailable}` : "Confirmed Booking"}
+                  </>
                 )}
               </p>
             </div>
