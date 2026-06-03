@@ -137,6 +137,3 @@ export function getRoleRedirect(role: UserRole): string {
   }
 }
 
-export const isDoctor  = (role: UserRole) => role === "DOCTOR";
-export const isAdmin   = (role: UserRole) => role === "ADMIN";
-export const isPatient = (role: UserRole) => role === "PATIENT";

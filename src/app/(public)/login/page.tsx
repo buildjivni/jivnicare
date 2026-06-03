@@ -27,6 +27,7 @@ function PatientLoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectUrl = searchParams.get("redirect");
+  const reason = searchParams.get("reason");
 
   const { login, isAuthenticated, user } = useAuthStore();
 
@@ -378,6 +379,22 @@ function PatientLoginContent() {
                     <h2 className="text-4xl font-black text-slate-900 tracking-tight">Welcome</h2>
                     <p className="text-slate-500 font-bold mt-3 text-base">Enter your mobile number to log in or sign up safely.</p>
                   </div>
+
+                  {reason === "session_expired" && !error && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="mb-8 p-5 bg-amber-50 border border-amber-200 rounded-3xl flex items-start gap-3 shadow-sm"
+                    >
+                      <div className="w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center shrink-0 mt-0.5">
+                        <span className="text-[10px] font-black text-white">!</span>
+                      </div>
+                      <p className="text-[13px] font-bold text-amber-900 leading-relaxed">
+                        Your session expired for security reasons.<br/>
+                        Please sign in again to continue managing your queue.
+                      </p>
+                    </motion.div>
+                  )}
 
                   {error && (
                     <motion.div

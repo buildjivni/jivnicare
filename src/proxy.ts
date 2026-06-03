@@ -54,6 +54,9 @@ export async function proxy(request: NextRequest) {
       if (userRole === 'DOCTOR') {
         return NextResponse.redirect(new URL('/doctor/dashboard', request.url));
       }
+      if (userRole === 'ADMIN') {
+        return NextResponse.redirect(new URL('/admin/dashboard', request.url));
+      }
       if (userRole === 'PATIENT') {
         return NextResponse.redirect(new URL('/', request.url));
       }
@@ -74,17 +77,14 @@ export async function proxy(request: NextRequest) {
 }
 
 function redirectToLogin(request: NextRequest, originalPath: string) {
-  const url = new URL('/login', request.url);
-  // Optional: preserve the intended destination
-  if (originalPath !== '/login' && originalPath !== '/') {
-    url.searchParams.set('redirect', originalPath);
+  const isTargetAdmin = originalPath.startsWith('/admin');
+  const loginPath = isTargetAdmin ? '/admin/login' : '/login';
+  const url = new URL(loginPath, request.url);
+  
+  if (originalPath !== '/login' && originalPath !== '/' && originalPath !== '/admin/login') {
+    url.searchParams.set('returnTo', originalPath);
   }
   
-  // If it's an admin route, redirect to admin login
-  if (originalPath.startsWith('/admin')) {
-    return NextResponse.redirect(new URL('/admin/login', request.url));
-  }
-
   return NextResponse.redirect(url);
 }
 
