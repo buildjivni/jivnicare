@@ -19,52 +19,63 @@ export async function GET(req: Request) {
 
     const url = new URL(req.url);
     const status = url.searchParams.get("status") || "ALL";
+    const page = parseInt(url.searchParams.get("page") || "1", 10);
+    const limit = parseInt(url.searchParams.get("limit") || "50", 10); // Standard dashboard limit
+    const skip = (page - 1) * limit;
 
     const whereClause: any = {};
     if (status !== "ALL") {
       whereClause.verificationStatus = status;
     }
 
-    const doctors = await prisma.doctor.findMany({
-      where: whereClause,
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            phone: true,
-            role: true,
+    // Parallel fetch for paginated items and total count
+    const [doctors, totalCount] = await Promise.all([
+      prisma.doctor.findMany({
+        where: whereClause,
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              phone: true,
+              role: true,
+            },
           },
+          clinicOperations: true,
+          specialties: { select: { name: true, slug: true } },
+          updateLogs: {
+            where: { status: "PENDING" }
+          }
         },
-        clinicOperations: true,
-        specialties: { select: { name: true, slug: true } },
-        updateLogs: {
-          where: { status: "PENDING" }
-        }
-      },
-      orderBy: { createdAt: "desc" },
-    });
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+      }),
+      prisma.doctor.count({ where: whereClause })
+    ]);
 
-    // Fetch moderation logs separately and merge (avoids prisma nested relation conflict)
+    // Fetch moderation logs separately and merge ONLY for the paginated subset
     const doctorIds = doctors.map((d) => d.id);
-    const moderationLogs = await prisma.moderationLog.findMany({
-      where: { targetId: { in: doctorIds }, targetType: "DOCTOR" },
-      orderBy: { createdAt: "desc" },
-      include: { admin: { select: { name: true } } },
-    });
-
-    // Build a map of doctorId → latest moderation logs
     const logsByDoctor: Record<string, any[]> = {};
-    for (const log of moderationLogs) {
-      if (!logsByDoctor[log.targetId]) logsByDoctor[log.targetId] = [];
-      if (logsByDoctor[log.targetId].length < 3) {
-        logsByDoctor[log.targetId].push({
-          action: log.action,
-          reason: log.reason,
-          createdAt: log.createdAt,
-          adminName: log.admin?.name || "Admin",
-        });
+
+    if (doctorIds.length > 0) {
+      const moderationLogs = await prisma.moderationLog.findMany({
+        where: { targetId: { in: doctorIds }, targetType: "DOCTOR" },
+        orderBy: { createdAt: "desc" },
+        include: { admin: { select: { name: true } } },
+      });
+
+      for (const log of moderationLogs) {
+        if (!logsByDoctor[log.targetId]) logsByDoctor[log.targetId] = [];
+        if (logsByDoctor[log.targetId].length < 3) {
+          logsByDoctor[log.targetId].push({
+            action: log.action,
+            reason: log.reason,
+            createdAt: log.createdAt,
+            adminName: log.admin?.name || "Admin",
+          });
+        }
       }
     }
 
@@ -73,7 +84,20 @@ export async function GET(req: Request) {
       moderationHistory: logsByDoctor[d.id] || [],
     }));
 
-    return NextResponse.json({ doctors: enrichedDoctors });
+    const totalPages = Math.ceil(totalCount / limit);
+
+    return NextResponse.json({ 
+      success: true,
+      doctors: enrichedDoctors,
+      pagination: {
+        page,
+        limit,
+        totalCount,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1
+      }
+    });
   } catch (error) {
     console.error("GET Admin Doctors Error:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

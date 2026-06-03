@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/features/auth/store/useAuthStore";
 import { OperationalDashboard } from "@/features/admin/components/OperationalDashboard";
+import { resolveClinicCurrentTime } from "@/lib/utils/clinic-utils";
 
 type DoctorStatus = "DRAFT" | "PENDING" | "PENDING_VERIFICATION" | "VERIFIED" | "UPDATE_PENDING" | "REJECTED" | "SUSPENDED";
 
@@ -84,7 +85,7 @@ function AdminDashboardContent() {
           const formatted: DoctorEntry[] = data.doctors.map((d: any) => {
             let timings = "Not Set";
             if (d.weeklySchedule) {
-              const currentDayName = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+              const currentDayName = resolveClinicCurrentTime().weekday;
               const todaySchedule = d.weeklySchedule[currentDayName];
               if (todaySchedule && todaySchedule.isOpen) {
                 timings = `${todaySchedule.start} - ${todaySchedule.end}`;
@@ -200,12 +201,56 @@ function AdminDashboardContent() {
   const [trustDoctors, setTrustDoctors] = useState<DoctorEntry[]>([]);
   const [expandedModerationId, setExpandedModerationId] = useState<string | null>(null);
   const [patientSearch, setPatientSearch] = useState("");
+  const [bookingSearch, setBookingSearch] = useState("");
+  const [clinicSearch, setClinicSearch] = useState("");
+  const [inspectQueueId, setInspectQueueId] = useState<string | null>(null);
+  const [queueTokensData, setQueueTokensData] = useState<any>(null);
   const [modReason, setModReason] = useState("");
   const [isModModalOpen, setIsModModalOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<{ id: string, status: DoctorStatus } | null>(null);
   const [filter, setFilter] = useState<"ALL" | "PENDING" | "VERIFIED" | "REJECTED" | "SUSPENDED">("ALL");
   const [bookingFilter, setBookingFilter] = useState<"ALL" | "COMPLETED" | "PENDING" | "CANCELLED">("ALL");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Dynamic fetchers for search
+  useEffect(() => {
+    const fetchBookings = async () => {
+      try {
+        const res = await fetch(`/api/admin/bookings?search=${encodeURIComponent(bookingSearch)}&limit=50`);
+        const data = await res.json();
+        if (data.success) setBookings(data.bookings);
+      } catch (e) { console.error(e); }
+    };
+    const t = setTimeout(fetchBookings, 300);
+    return () => clearTimeout(t);
+  }, [bookingSearch]);
+
+  useEffect(() => {
+    const fetchHealth = async () => {
+      try {
+        const res = await fetch(`/api/admin/queue-health?search=${encodeURIComponent(clinicSearch)}&limit=50`);
+        const data = await res.json();
+        if (data.success) setQueueHealth(data.queues);
+      } catch (e) { console.error(e); }
+    };
+    const t = setTimeout(fetchHealth, 300);
+    return () => clearTimeout(t);
+  }, [clinicSearch]);
+
+  // Queue Inspector Fetcher
+  useEffect(() => {
+    if (!inspectQueueId) return;
+    const fetchQueueTokens = async () => {
+      try {
+        const res = await fetch(`/api/admin/queues/${inspectQueueId}/tokens`);
+        const data = await res.json();
+        if (data.success) setQueueTokensData(data);
+      } catch (e) { console.error(e); }
+    };
+    fetchQueueTokens();
+    const interval = setInterval(fetchQueueTokens, 15000);
+    return () => clearInterval(interval);
+  }, [inspectQueueId]);
 
   const selectedDoctor = doctors.find(d => d.id === selectedDoctorId);
 
@@ -427,34 +472,34 @@ function AdminDashboardContent() {
           <div className="absolute right-[-20px] bottom-[-20px] opacity-10">
             <Users className="w-40 h-40" />
           </div>
-          <p className="text-sm font-bold text-blue-100 relative z-10">Total Verified Doctors</p>
+          <p className="text-sm font-bold text-blue-100 relative z-10">Active Patients Today</p>
           <div className="mt-4 relative z-10">
-            <h3 className="text-5xl font-black">{platformStats?.doctors.verified || 0}</h3>
+            <h3 className="text-5xl font-black">{platformStats?.operations?.activePatients || 0}</h3>
           </div>
         </div>
         <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm relative overflow-hidden group hover:border-[#489C66] transition-colors">
           <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center mb-4 text-[#489C66] group-hover:scale-110 transition-transform">
             <ActivitySquare className="w-6 h-6" />
           </div>
-          <p className="text-sm font-bold text-slate-500">Today&apos;s Bookings</p>
-          <h3 className="text-3xl font-black text-slate-900 mt-2">{platformStats?.bookings.today || 0}</h3>
-          <p className="text-xs font-bold text-emerald-600 mt-2 flex items-center gap-1"><TrendingUp className="w-3 h-3"/> Real-time traffic</p>
+          <p className="text-sm font-bold text-slate-500">Today's Bookings</p>
+          <h3 className="text-3xl font-black text-slate-900 mt-2">{platformStats?.operations?.todaysBookings || 0}</h3>
+          <p className="text-xs font-bold text-emerald-600 mt-2 flex items-center gap-1"><TrendingUp className="w-3 h-3"/> Net Volumes</p>
         </div>
-        <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm relative overflow-hidden group hover:border-amber-400 transition-colors">
-          <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center mb-4 text-amber-500 group-hover:scale-110 transition-transform">
-            <FileText className="w-6 h-6" />
+        <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm relative overflow-hidden group hover:border-blue-400 transition-colors">
+          <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center mb-4 text-blue-500 group-hover:scale-110 transition-transform">
+            <CheckCircle2 className="w-6 h-6" />
           </div>
-          <p className="text-sm font-bold text-slate-500">Pending Approvals</p>
-          <h3 className="text-3xl font-black text-slate-900 mt-2">{platformStats?.doctors.pending || 0}</h3>
-          <p className="text-xs font-bold text-amber-600 mt-2 flex items-center gap-1"><AlertTriangle className="w-3 h-3"/> Action Required</p>
+          <p className="text-sm font-bold text-slate-500">Completed Consultations</p>
+          <h3 className="text-3xl font-black text-slate-900 mt-2">{platformStats?.operations?.completed || 0}</h3>
+          <p className="text-xs font-bold text-blue-600 mt-2 flex items-center gap-1">Successfully Served</p>
         </div>
-        <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm relative overflow-hidden group hover:border-purple-400 transition-colors">
-          <div className="w-12 h-12 bg-purple-50 rounded-2xl flex items-center justify-center mb-4 text-purple-500 group-hover:scale-110 transition-transform">
-            <Star className="w-6 h-6" />
+        <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm relative overflow-hidden group hover:border-red-400 transition-colors">
+          <div className="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center mb-4 text-red-500 group-hover:scale-110 transition-transform">
+            <AlertTriangle className="w-6 h-6" />
           </div>
-          <p className="text-sm font-bold text-slate-500">Total Patients</p>
-          <h3 className="text-3xl font-black text-slate-900 mt-2">{platformStats?.patients.total.toLocaleString() || "0"}</h3>
-          <p className="text-xs font-bold text-purple-600 mt-2">Platform Users</p>
+          <p className="text-sm font-bold text-slate-500">No Shows</p>
+          <h3 className="text-3xl font-black text-slate-900 mt-2">{platformStats?.operations?.noShows || 0}</h3>
+          <p className="text-xs font-bold text-red-600 mt-2">Missed Appointments</p>
         </div>
       </div>
 
@@ -466,17 +511,17 @@ function AdminDashboardContent() {
             <Logo className="w-8 h-8 object-contain" />
           </div>
           <div>
-            <p className="text-sm font-bold text-slate-500">Active Queues Today</p>
-            <h4 className="text-2xl font-black text-slate-900">{platformStats?.queues.active || 0}</h4>
+            <p className="text-sm font-bold text-slate-500">Running Queues Today</p>
+            <h4 className="text-2xl font-black text-slate-900">{platformStats?.operations?.runningQueues || 0}</h4>
           </div>
         </div>
         <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center text-red-500">
-            <Zap className="w-8 h-8" />
+          <div className="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center text-[#5298D2]">
+            <Users className="w-8 h-8" />
           </div>
           <div>
-            <p className="text-sm font-bold text-slate-500">Emergency-Enabled Clinics</p>
-            <h4 className="text-2xl font-black text-slate-900">{platformStats?.emergency?.enabledClinics || 0}</h4>
+            <p className="text-sm font-bold text-slate-500">Active Verified Doctors</p>
+            <h4 className="text-2xl font-black text-slate-900">{platformStats?.operations?.verifiedDoctors || 0}</h4>
           </div>
         </div>
         <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex items-center gap-4">
@@ -872,7 +917,7 @@ function AdminDashboardContent() {
           <h1 className="text-3xl font-black text-slate-900">Booking Monitoring</h1>
           <p className="text-slate-500 mt-1">Track appointments and platform revenue flow.</p>
         </div>
-        <div className="flex bg-white rounded-xl border border-slate-200 p-1 shadow-sm">
+        <div className="flex bg-white rounded-xl border border-slate-200 p-1 shadow-sm shrink-0">
           {(["ALL", "TODAY", "COMPLETED", "CANCELLED"] as const).map(f => (
             <button 
               key={f} 
@@ -883,6 +928,15 @@ function AdminDashboardContent() {
             </button>
           ))}
         </div>
+      </div>
+
+      <div className="mb-4">
+        <Input 
+          placeholder="Global Support Search: Search by Phone Number, Token, Name, Clinic..." 
+          className="w-full h-12 bg-white rounded-xl shadow-sm text-base font-medium" 
+          value={bookingSearch}
+          onChange={(e) => setBookingSearch(e.target.value)}
+        />
       </div>
 
       <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden mt-4">
@@ -902,7 +956,7 @@ function AdminDashboardContent() {
                   <div className="col-span-1 font-bold text-slate-900">{booking.patient}</div>
                   <div className="col-span-1 text-sm font-medium text-slate-700">
                     <p className="font-bold text-primary">{booking.doctor}</p>
-                    <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5"><Clock className="w-3 h-3"/> {booking.date}, {booking.time}</p>
+                    <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5"><Clock className="w-3 h-3"/> {new Date(booking.issuedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</p>
                     <p className="text-[10px] text-slate-400 truncate">{booking.clinic}</p>
                   </div>
                   <div className="col-span-1">
@@ -914,7 +968,9 @@ function AdminDashboardContent() {
                       {booking.status}
                     </span>
                   </div>
-                  <div className="col-span-1 text-right pr-6 font-black text-slate-900">{booking.amount}</div>
+                  <div className="col-span-1 text-right pr-6 font-black text-slate-900">
+                    <span className="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded">#{booking.tokenNumber}</span>
+                  </div>
                 </div>
               ))}
               {bookings.length === 0 && (
@@ -937,9 +993,17 @@ function AdminDashboardContent() {
           <h1 className="text-3xl font-black text-slate-900">Live Queue Deep Dive</h1>
           <p className="text-slate-500 mt-1">Monitor active token movements across all clinics.</p>
         </div>
-        <span className="bg-emerald-50 text-emerald-600 px-5 py-2 rounded-full text-sm font-black flex items-center gap-2 border border-emerald-200 shadow-sm">
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span> Live Sync Active
-        </span>
+        <div className="flex items-center gap-4">
+          <Input 
+            placeholder="Search Clinics..." 
+            className="w-64 h-10 bg-white" 
+            value={clinicSearch}
+            onChange={(e) => setClinicSearch(e.target.value)}
+          />
+          <span className="bg-emerald-50 text-emerald-600 px-5 py-2 rounded-full text-sm font-black flex items-center gap-2 border border-emerald-200 shadow-sm">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span> Live Sync Active
+          </span>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -947,7 +1011,11 @@ function AdminDashboardContent() {
           <h3 className="text-lg font-black text-slate-900 mb-4">Active Clinics Queue Status</h3>
           <div className="space-y-4">
             {queueHealth.length > 0 ? queueHealth.map((clinic) => (
-              <div key={clinic.id} className={`bg-white p-6 rounded-3xl border shadow-sm flex items-center justify-between hover:border-primary/50 transition-colors ${clinic.isHighLoad ? 'border-amber-200 bg-amber-50/10' : 'border-slate-200'}`}>
+              <div 
+                key={clinic.id} 
+                onClick={() => setInspectQueueId(clinic.id)}
+                className={`cursor-pointer bg-white p-6 rounded-3xl border shadow-sm flex items-center justify-between hover:border-primary transition-colors ${clinic.status !== 'ACTIVE' ? 'opacity-70' : ''}`}
+              >
                 <div className="flex items-center gap-4">
                   <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${clinic.isHighLoad ? 'bg-amber-100 text-amber-600' : 'bg-blue-50 text-primary'}`}>
                     <MapPin className="w-6 h-6" />
@@ -958,10 +1026,14 @@ function AdminDashboardContent() {
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{clinic.district}, Bihar</p>
                   </div>
                 </div>
-                <div className="flex gap-8">
+                <div className="flex gap-6 items-center">
+                  <div className="text-center">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">State</p>
+                    <p className={`text-xs font-black px-2 py-1 rounded ${clinic.status === 'ACTIVE' || clinic.status === 'AVAILABLE_NOW' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>{clinic.status}</p>
+                  </div>
                   <div className="text-center">
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Now Serving</p>
-                    <p className="text-3xl font-black text-primary">#{clinic.servingToken}</p>
+                    <p className="text-3xl font-black text-primary">#{clinic.servingToken || '--'}</p>
                   </div>
                   <div className="text-center">
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Waiting</p>
@@ -1274,6 +1346,62 @@ function AdminDashboardContent() {
                 >
                   Confirm
                 </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Queue Inspector Modal ────────────────────────────────────── */}
+        {inspectQueueId && queueTokensData && (
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+            <div className="bg-white rounded-[2.5rem] p-8 max-w-3xl w-full shadow-2xl animate-in zoom-in-95 duration-300 max-h-[90vh] flex flex-col">
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h3 className="text-2xl font-black text-slate-900">{queueTokensData.queue.clinicName}</h3>
+                  <p className="text-slate-500 font-bold">{queueTokensData.queue.doctorName}</p>
+                </div>
+                <button onClick={() => setInspectQueueId(null)} className="p-2 bg-slate-100 rounded-full hover:bg-slate-200"><X className="w-5 h-5"/></button>
+              </div>
+
+              {queueTokensData.currentActiveRecord ? (
+                <div className="bg-gradient-to-r from-emerald-50 to-emerald-100/50 border border-emerald-200 p-6 rounded-2xl mb-6 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-black text-emerald-600 uppercase tracking-widest mb-1 animate-pulse">Now Serving</p>
+                    <p className="text-2xl font-black text-slate-900">{queueTokensData.currentActiveRecord.patientName}</p>
+                    <p className="text-sm font-bold text-slate-500">{queueTokensData.currentActiveRecord.phone}</p>
+                  </div>
+                  <div className="w-20 h-20 rounded-2xl bg-white shadow-sm border border-emerald-100 flex items-center justify-center">
+                    <p className="text-4xl font-black text-emerald-600">#{queueTokensData.currentActiveRecord.tokenNumber}</p>
+                  </div>
+                </div>
+              ) : (
+                 <div className="bg-slate-50 border border-slate-200 p-6 rounded-2xl mb-6 flex items-center justify-center">
+                   <p className="font-bold text-slate-500">No active patient currently being served.</p>
+                 </div>
+              )}
+
+              <div className="flex-1 overflow-y-auto pr-2">
+                <div className="space-y-2">
+                  {queueTokensData.tokens.map((t: any) => (
+                    <div key={t.id} className="bg-white border border-slate-100 p-4 rounded-xl flex items-center justify-between shadow-sm">
+                      <div className="flex items-center gap-4">
+                        <span className={`w-12 h-12 rounded-xl flex items-center justify-center font-black text-lg ${t.status === 'WAITING' ? 'bg-amber-100 text-amber-700' : t.status === 'IN_CONSULTATION' ? 'bg-blue-100 text-blue-700' : t.status === 'COMPLETED' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400'}`}>
+                          #{t.tokenNumber}
+                        </span>
+                        <div>
+                          <p className="font-black text-slate-900">{t.patientName}</p>
+                          <p className="text-xs font-bold text-slate-500">{t.phone} • {new Date(t.updatedAt).toLocaleTimeString('en-IN')}</p>
+                        </div>
+                      </div>
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${t.status === 'WAITING' ? 'bg-amber-100 text-amber-700' : t.status === 'IN_CONSULTATION' ? 'bg-blue-100 text-blue-700' : t.status === 'COMPLETED' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                        {t.status}
+                      </span>
+                    </div>
+                  ))}
+                  {queueTokensData.tokens.length === 0 && (
+                    <p className="text-center text-slate-400 font-bold p-8">No tokens generated for this queue today.</p>
+                  )}
+                </div>
               </div>
             </div>
           </div>
