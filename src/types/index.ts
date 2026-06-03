@@ -92,7 +92,7 @@ export interface BookingDetails {
   service: string;
   fee: string;
   clinic: string;
-  patientName: string;
+  patientName?: string;
   patientPhone: string;
 }
 

@@ -13,6 +13,7 @@ import {
   Users,
   RefreshCw,
   AlertCircle,
+  XCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -58,6 +59,10 @@ export default function MyBookingsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [countdown, setCountdown] = useState(60);
+  // PR-1: Cancellation state — tracks which tokenId is awaiting confirmation
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
 
   const fetchBookings = useCallback(async () => {
     setFetchError(null);
@@ -148,6 +153,34 @@ export default function MyBookingsPage() {
       setCountdown(60);
     }
   }, []);
+
+  // PR-1: Patient self-cancellation handler
+  const handleCancelBooking = async (tokenId: string) => {
+    setIsCancelling(true);
+    setCancelError(null);
+    try {
+      const res = await fetch("/api/patient/queue/cancel-token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tokenId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setCancelError(data.error || "Failed to cancel booking.");
+        return;
+      }
+      // Optimistic: remove from active list immediately, then refetch
+      setBookings((prev) =>
+        prev.map((b) => (b.id === tokenId ? { ...b, status: "CANCELLED" } : b))
+      );
+      setCancellingId(null);
+      fetchBookings();
+    } catch {
+      setCancelError("Connection error. Please try again.");
+    } finally {
+      setIsCancelling(false);
+    }
+  };
 
   useEffect(() => {
     let source: EventSource | null = null;
@@ -395,6 +428,47 @@ useEffect(() => {
                                 View Clinic{" "}
                                 <ExternalLink className="w-4 h-4 md:w-3.5 md:h-3.5" />
                               </Button>
+                              {/* PR-1: Cancel button — only for WAITING tokens */}
+                              {booking.status === "WAITING" && (
+                                <>
+                                  {cancellingId === booking.id ? (
+                                    <div className="flex flex-col gap-2 w-full sm:w-auto">
+                                      {cancelError && (
+                                        <p className="text-xs text-red-600 font-bold">{cancelError}</p>
+                                      )}
+                                      <div className="flex gap-2">
+                                        <Button
+                                          size="sm"
+                                          disabled={isCancelling}
+                                          onClick={() => handleCancelBooking(booking.id)}
+                                          className="rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold h-10 flex-1"
+                                        >
+                                          {isCancelling ? "Cancelling..." : "Yes, Cancel"}
+                                        </Button>
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          disabled={isCancelling}
+                                          onClick={() => { setCancellingId(null); setCancelError(null); }}
+                                          className="rounded-xl border-slate-200 text-slate-600 font-bold h-10 flex-1"
+                                        >
+                                          Keep
+                                        </Button>
+                                      </div>
+                                      <p className="text-[10px] text-slate-400 font-medium text-center">This will release your slot.</p>
+                                    </div>
+                                  ) : (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => { setCancellingId(booking.id); setCancelError(null); }}
+                                      className="rounded-xl border-red-100 text-red-600 hover:bg-red-50 font-bold gap-1.5 h-12 md:h-10 w-full sm:w-auto"
+                                    >
+                                      <XCircle className="w-4 h-4 md:w-3.5 md:h-3.5" /> Cancel
+                                    </Button>
+                                  )}
+                                </>
+                              )}
                             </div>
                           </div>
                         </div>
