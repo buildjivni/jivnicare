@@ -73,28 +73,20 @@ export async function GET(request: Request) {
     
     const andClauses: any[] = [];
 
-    if (specialties.length > 0) {
-      andClauses.push({
-        specialties: {
-          some: {
-            OR: specialties.map(s => ({
-              name: { contains: s, mode: 'insensitive' }
-            }))
-          }
-        }
-      });
-    }
+    // NOTE: Specialty filtering via Prisma relation is NOT applied here because
+    // MongoDB + Prisma does not support mode:'insensitive' on nested relation arrays.
+    // Specialty matching is handled in-memory by the search scoring engine below.
 
-    // Database-level text search for the query to ensure we fetch the right candidates
-    if (query) {
+    // Database-level text search — ONLY apply if query does NOT map to inferred specialties.
+    // Symptom queries (e.g. "heart", "fever") must bypass DB text filter to reach the scorer.
+    const hasInferredSpecialties = specialties.length > 0;
+    if (query && !hasInferredSpecialties) {
       andClauses.push({
         OR: [
           { name: { contains: query, mode: 'insensitive' } },
           { hospitalName: { contains: query, mode: 'insensitive' } },
           { district: { contains: query, mode: 'insensitive' } },
           { bio: { contains: query, mode: 'insensitive' } },
-          { keywords: { some: { term: { contains: query, mode: 'insensitive' } } } },
-          { specialties: { some: { name: { contains: query, mode: 'insensitive' } } } }
         ]
       });
     }
@@ -102,6 +94,7 @@ export async function GET(request: Request) {
     if (andClauses.length > 0) {
       whereClause.AND = andClauses;
     }
+
 
     // Geo Patient Location Data & Filters
     const districtRaw = searchParams.get('district') || '';

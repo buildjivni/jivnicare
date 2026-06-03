@@ -16,8 +16,6 @@ function normalize(text: string | null | undefined): string {
     .trim()
     .replace(/\s+/g, " ")                        // collapse spaces
     .replace(/[^\w\s]/g, "")                     // strip punctuation
-    .replace(/dr\.?\s*/g, "")                    // remove "Dr." prefix
-    .replace(/doctor\s*/g, "")                   // remove "doctor"
     .trim();
 }
 
