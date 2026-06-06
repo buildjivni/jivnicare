@@ -30,18 +30,23 @@ export async function signToken(
 }
 
 export async function verifyToken(token: string): Promise<any> {
-  const { payload } = await jwtVerify(token, getSecret(), {
-    algorithms: ["HS256"],
-  });
-  
-  if (!payload.sub && !payload.id && !payload.queueId) {
-    throw new Error("JWT payload missing required fields");
+  try {
+    const { payload } = await jwtVerify(token, getSecret(), {
+      algorithms: ["HS256"],
+    });
+    
+    if (!payload.sub && !payload.id && !payload.queueId) {
+      return null;
+    }
+    
+    if (payload.sub && !payload.id) payload.id = payload.sub as string;
+    if (payload.id && !payload.sub) payload.sub = payload.id as string;
+    
+    return payload;
+  } catch (error) {
+    // Return null for expired or invalid tokens instead of throwing
+    return null;
   }
-  
-  if (payload.sub && !payload.id) payload.id = payload.sub as string;
-  if (payload.id && !payload.sub) payload.sub = payload.id as string;
-  
-  return payload;
 }
 
 export const AUTH_COOKIE = "jivni_token" as const;
