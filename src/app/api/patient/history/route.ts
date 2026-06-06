@@ -29,9 +29,6 @@ export async function GET(req: NextRequest) {
           status: true,
           source: true,
           tokenIssuedAt: true,
-          arrivedAt: true,
-          paymentApprovedAt: true,
-          calledAt: true,
           isEmergency: true,
           queue: {
             select: {

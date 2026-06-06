@@ -35,7 +35,6 @@ export async function PATCH(req: NextRequest) {
         where: { id: tokenId },
         data: {
           status: "CALLED",
-          calledAt: new Date(),
         },
       });
 

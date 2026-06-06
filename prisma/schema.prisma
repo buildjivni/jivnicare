@@ -423,11 +423,16 @@ enum TokenSource {
 
 enum TokenStatus {
   WAITING
+  AWAITING_ARRIVAL
+  PAYMENT_PENDING
+  READY
+  CALLED
   IN_CONSULTATION
   COMPLETED
   SKIPPED
   CANCELLED
-  NO_SHOW // PR-1: Doctor-side terminal state; frees capacity without counting as served
+  NO_SHOW
+  EXPIRED
 }
 
 enum Gender {

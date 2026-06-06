@@ -33,18 +33,8 @@ export async function PATCH(req: NextRequest) {
 
     const queueToken = await verifyTokenOwnership(tokenId, user);
 
-    // Check clinic payment config
-    const doctor = await db.doctor.findUnique({
-      where: { userId: user.id },
-      select: { id: true },
-    });
-    const clinicOps = doctor
-      ? await db.clinicOperations.findUnique({
-          where: { doctorId: doctor.id },
-          select: { collectPaymentAtClinic: true },
-        })
-      : null;
-    const collectPayment = clinicOps?.collectPaymentAtClinic ?? true;
+    // Check clinic payment config (hardcoded to true for v1 since config is removed)
+    const collectPayment = true;
 
     // ── action: "request" ──────────────────────────────────────────────────
     if (action === "request") {
@@ -64,8 +54,6 @@ export async function PATCH(req: NextRequest) {
             where: { id: tokenId },
             data: {
               status: "READY",
-              paymentApprovedAt: new Date(),
-              paymentApprovedBy: "AUTO",
             },
           });
         });
@@ -80,7 +68,6 @@ export async function PATCH(req: NextRequest) {
           where: { id: tokenId },
           data: {
             status: "PAYMENT_PENDING",
-            paymentRequestedAt: new Date(),
           },
         });
       });
@@ -102,8 +89,6 @@ export async function PATCH(req: NextRequest) {
         where: { id: tokenId },
         data: {
           status: "READY",
-          paymentApprovedAt: new Date(),
-          paymentApprovedBy: user.id,
         },
       });
     });

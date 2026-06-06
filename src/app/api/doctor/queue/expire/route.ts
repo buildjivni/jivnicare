@@ -29,7 +29,6 @@ export async function POST(req: NextRequest) {
         },
         data: {
           status: "EXPIRED",
-          expiredAt: new Date(),
         },
       });
       return updated;
