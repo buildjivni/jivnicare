@@ -54,7 +54,6 @@ export async function GET(req: NextRequest) {
         select: {
           status: true,
           tokenIssuedAt: true,
-          arrivedAt: true,
           source: true,
         },
       }),
@@ -65,14 +64,8 @@ export async function GET(req: NextRequest) {
     const noShows = periodTokens.filter((t) => t.status === "NO_SHOW").length;
     const total = periodTokens.length;
 
-    // Average wait time: arrivedAt - tokenIssuedAt (for arrived patients)
-    const waitTimes = periodTokens
-      .filter((t) => t.arrivedAt)
-      .map((t) => t.arrivedAt!.getTime() - t.tokenIssuedAt.getTime());
-    const avgWaitMinutes =
-      waitTimes.length > 0
-        ? Math.round(waitTimes.reduce((a, b) => a + b, 0) / waitTimes.length / 60000)
-        : null;
+    // Average wait time is not tracked in v1 since arrivedAt was removed
+    const avgWaitMinutes = null;
 
     // Bookings by source
     const onlineCount = periodTokens.filter((t) => t.source === "ONLINE").length;
