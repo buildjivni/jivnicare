@@ -198,7 +198,7 @@ export async function POST(request: Request) {
     });
 
     // 7. Generate JWT
-    const token = signToken(
+    const token = await signToken(
       { id: result.user.id, role: result.user.role, doctorId: result.doctor.id },
       '30d'
     );

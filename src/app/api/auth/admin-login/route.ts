@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
 import prisma from "@/lib/db/prisma";
 import { AuthService } from "@/features/auth/services/authService";
 
@@ -56,10 +55,10 @@ export async function POST(req: Request) {
       const response = NextResponse.json({
         success: true,
         user: { id: user.id, name: user.name, email, role: "ADMIN" },
-        token
+        token: await token
       });
 
-      response.cookies.set("auth-token", token, {
+      response.cookies.set("auth-token", await token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",

@@ -68,7 +68,8 @@ export async function GET(request: Request) {
 
     // Build Prisma Where Clause
     const whereClause: any = {
-      verificationStatus: 'VERIFIED'
+      verificationStatus: 'VERIFIED',
+      isAcceptingAppointments: true
     };
     
     const andClauses: any[] = [];
@@ -157,6 +158,7 @@ export async function GET(request: Request) {
         hospitalName: true,
         district: true,
         rating: true,
+        reviewCount: true,
         verificationStatus: true,
         experience: true,
         fee: true,

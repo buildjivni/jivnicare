@@ -45,7 +45,7 @@ export async function createPhoneSessionResponse(input: CreatePhoneSessionInput)
     });
   }
 
-  const token = signToken({
+  const token = await signToken({
     id: user.id,
     role: user.role,
     ...(user.doctor?.id ? { doctorId: user.doctor.id } : {}),

@@ -250,13 +250,13 @@ model Doctor {
   updatedAt DateTime @updatedAt
 
   // ── Performance Indexes ──────────────────────────────────────
-  // Existing individual indexes preserved for backward compatibility
-  @@index([district])
-  @@index([verificationStatus])
   // Composite: primary discovery query (district + verified filter)
   @@index([district, verificationStatus])
   // Top-rated discovery queries
   @@index([rating, verificationStatus])
+  @@index([city, verificationStatus, isAcceptingAppointments])
+  @@index([verificationStatus, isAcceptingAppointments, createdAt])
+  @@index([specialtyIds])
 }
 
 model Specialty {

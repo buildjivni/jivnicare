@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isTestOtpModeEnabled } from "@/lib/config/test-mode";
 import { redis } from "@/lib/db/redis";
-import jwt from "jsonwebtoken";
+import { verifyToken } from "@/lib/jwt";
 
 export async function POST(request: NextRequest) {
   const token = request.cookies.get("auth-token")?.value;
   
   if (token) {
     try {
-      const decoded = jwt.decode(token) as { exp?: number };
+      const decoded = await verifyToken(token);
       if (decoded?.exp) {
         const ttl = Math.max(0, decoded.exp - Math.floor(Date.now() / 1000));
         if (ttl > 0) {
