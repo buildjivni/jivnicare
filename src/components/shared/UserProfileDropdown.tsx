@@ -77,15 +77,7 @@ export function UserProfileDropdown({ isOpen, onLogout }: UserProfileDropdownPro
                 <Link href="/my-bookings" className="flex items-center gap-3 px-3 py-2.5 text-[14px] font-semibold text-slate-700 hover:bg-slate-50 hover:text-[#5298D2] rounded-xl transition-all active:scale-[0.97] outline-none min-h-[44px]">
                   <Activity className="w-4.5 h-4.5 text-emerald-600" /> Queue Tracking
                 </Link>
-                <Link href="/saved-doctors" className="flex items-center gap-3 px-3 py-2.5 text-[14px] font-semibold text-slate-700 hover:bg-slate-50 hover:text-[#5298D2] rounded-xl transition-all active:scale-[0.97] outline-none min-h-[44px]">
-                  <Heart className="w-4.5 h-4.5 text-rose-500" /> Saved Doctors
-                </Link>
-                <Link href="/settings" className="flex items-center gap-3 px-3 py-2.5 text-[14px] font-semibold text-slate-700 hover:bg-slate-50 hover:text-[#5298D2] rounded-xl transition-all active:scale-[0.97] outline-none min-h-[44px]">
-                  <Settings className="w-4.5 h-4.5 text-slate-400" /> Account Settings
-                </Link>
-                <Link href="/notifications" className="flex items-center gap-3 px-3 py-2.5 text-[14px] font-semibold text-slate-700 hover:bg-slate-50 hover:text-[#5298D2] rounded-xl transition-all active:scale-[0.97] outline-none min-h-[44px]">
-                  <Bell className="w-4.5 h-4.5 text-amber-500" /> Notifications
-                </Link>
+
                 <Link href="/about" className="flex items-center gap-3 px-3 py-2.5 text-[14px] font-semibold text-slate-700 hover:bg-slate-50 hover:text-[#5298D2] rounded-xl transition-all active:scale-[0.97] outline-none min-h-[44px]">
                   <HelpCircle className="w-4.5 h-4.5 text-slate-400" /> Help & Support
                 </Link>

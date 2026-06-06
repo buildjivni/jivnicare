@@ -17,28 +17,31 @@ function getSecret(): Uint8Array {
 }
 
 export async function signToken(
-  payload: Omit<JivniPayload, "iat" | "exp">,
+  payload: any,
   expiresIn = "7d"
 ): Promise<string> {
-  return new SignJWT({ ...payload, id: payload.sub })
+  const sub = payload.sub || payload.id;
+  const id = payload.id || payload.sub;
+  return new SignJWT({ ...payload, sub, id })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(expiresIn)
     .sign(getSecret());
 }
 
-export async function verifyToken(token: string): Promise<JivniPayload> {
+export async function verifyToken(token: string): Promise<any> {
   const { payload } = await jwtVerify(token, getSecret(), {
     algorithms: ["HS256"],
   });
-  if (
-    typeof payload.sub !== "string" ||
-    typeof (payload as JivniPayload).role !== "string" ||
-    typeof (payload as JivniPayload).phone !== "string"
-  ) {
+  
+  if (!payload.sub && !payload.id && !payload.queueId) {
     throw new Error("JWT payload missing required fields");
   }
-  return payload as JivniPayload;
+  
+  if (payload.sub && !payload.id) payload.id = payload.sub as string;
+  if (payload.id && !payload.sub) payload.sub = payload.id as string;
+  
+  return payload;
 }
 
 export const AUTH_COOKIE = "jivni_token" as const;

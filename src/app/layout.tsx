@@ -53,7 +53,7 @@ export const metadata: Metadata = {
     description: SITE_CONFIG.description,
     images: [
       {
-        url: "/og-image.jpg",
+        url: "/icon.svg",
         width: 1200,
         height: 630,
         alt: "JivniCare — Healthcare Discovery for Bihar",
@@ -66,7 +66,7 @@ export const metadata: Metadata = {
     creator: SITE_CONFIG.twitterHandle,
     title: `${SITE_CONFIG.name} — Book Top Doctors in Bihar`,
     description: SITE_CONFIG.description,
-    images: ["/og-image.jpg"],
+    images: ["/icon.svg"],
   },
   alternates: {
     canonical: SITE_CONFIG.baseUrl,
@@ -74,6 +74,11 @@ export const metadata: Metadata = {
   verification: {
     // Add your Google Search Console verification token here
     // google: "your-verification-token",
+  },
+  icons: {
+    icon: "/icon.svg",
+    apple: "/icon.svg",
+    shortcut: "/icon.svg",
   },
 };
 

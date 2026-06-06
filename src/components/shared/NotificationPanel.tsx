@@ -213,14 +213,7 @@ export function NotificationPanel({ token }: { token?: string | null }) {
             )}
           </div>
 
-          {/* Footer */}
-          {notifications.length > 0 && (
-            <div className="px-4 py-2.5 border-t border-slate-100 text-center">
-              <button className="text-xs text-primary font-semibold hover:underline">
-                View all notifications
-              </button>
-            </div>
-          )}
+
         </div>
       )}
 

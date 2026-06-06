@@ -64,23 +64,27 @@ function OnboardingContent() {
         const { latitude, longitude } = position.coords;
         try {
           const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`,
-            { headers: { 'Accept-Language': 'en' } }
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`
           );
+          if (!res.ok) throw new Error("Failed to fetch address");
           const geo = await res.json();
+          if (geo.error) throw new Error("Geocoding error");
+          
           const addr = geo.address || {};
           setFormData(prev => ({
             ...prev, latitude, longitude,
+            practiceAddress: geo.display_name || prev.practiceAddress,
             city: addr.city || addr.town || addr.village || addr.county || prev.city,
             state: addr.state || prev.state,
             district: addr.county || addr.state_district || addr.city || prev.district,
             locality: addr.suburb || addr.neighbourhood || addr.residential || addr.road || prev.locality,
             pincode: addr.postcode || prev.pincode,
           }));
+          setGpsStatus('success');
         } catch {
           setFormData(prev => ({ ...prev, latitude, longitude }));
+          setGpsStatus('error');
         }
-        setGpsStatus('success'); setGpsLoading(false);
       },
       () => { setGpsStatus('error'); setGpsLoading(false); },
       { timeout: 20000, enableHighAccuracy: false, maximumAge: 60000 }
@@ -418,17 +422,17 @@ function OnboardingContent() {
                     <div className="p-6 md:p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2 md:col-span-2">
                         <label className="text-xs font-bold text-slate-700">Clinic Name</label>
-                        <Input placeholder="JivniCare Clinic" value={formData.practiceName} onChange={(e) => setFormData({...formData, practiceName: e.target.value.replace(/[0-9]/g, '')})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.practiceName ? 'border-rose-500' : ''}`} />
+                        <Input placeholder="e.g. City Care Clinic" value={formData.practiceName} onChange={(e) => setFormData({...formData, practiceName: e.target.value.replace(/[0-9]/g, '')})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.practiceName ? 'border-rose-500' : ''}`} />
                         {errors.practiceName && <p className="text-[10px] font-bold text-rose-500">{errors.practiceName}</p>}
                       </div>
                       <div className="space-y-2 md:col-span-2">
                         <label className="text-xs font-bold text-slate-700">Full Address</label>
-                        <Input placeholder="Flat 301, Pushpanjali Complex" value={formData.practiceAddress} onChange={(e) => setFormData({...formData, practiceAddress: e.target.value})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.practiceAddress ? 'border-rose-500' : ''}`} />
+                        <Input placeholder="e.g. Shop No. 5, Ground Floor" value={formData.practiceAddress} onChange={(e) => setFormData({...formData, practiceAddress: e.target.value})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.practiceAddress ? 'border-rose-500' : ''}`} />
                         {errors.practiceAddress && <p className="text-[10px] font-bold text-rose-500">{errors.practiceAddress}</p>}
                       </div>
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-700">Locality</label>
-                        <Input placeholder="Boring Road" value={formData.locality} onChange={(e) => setFormData({...formData, locality: e.target.value.replace(/[0-9]/g, '')})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.locality ? 'border-rose-500' : ''}`} />
+                        <Input placeholder="e.g. Downtown" value={formData.locality} onChange={(e) => setFormData({...formData, locality: e.target.value.replace(/[0-9]/g, '')})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.locality ? 'border-rose-500' : ''}`} />
                         {errors.locality && <p className="text-[10px] font-bold text-rose-500">{errors.locality}</p>}
                       </div>
                       <div className="space-y-2">
@@ -438,7 +442,7 @@ function OnboardingContent() {
                       </div>
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-700">Pincode</label>
-                        <Input placeholder="800001" value={formData.pincode} maxLength={6} onChange={(e) => setFormData({...formData, pincode: e.target.value.replace(/[^0-9]/g, '')})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.pincode ? 'border-rose-500' : ''}`} />
+                        <Input placeholder="e.g. 110001" value={formData.pincode} maxLength={6} onChange={(e) => setFormData({...formData, pincode: e.target.value.replace(/[^0-9]/g, '')})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.pincode ? 'border-rose-500' : ''}`} />
                         {errors.pincode && <p className="text-[10px] font-bold text-rose-500">{errors.pincode}</p>}
                       </div>
                     </div>
