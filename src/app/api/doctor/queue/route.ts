@@ -1,7 +1,9 @@
+import { apiResponse, apiError } from '@/lib/utils/api-response';
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db/prisma";
 import { verifyToken } from "@/lib/jwt";
 import { cookies } from "next/headers";
+import { getOrCreateDailyQueue, getLogicalDate } from "@/lib/queue";
 import {
   resolveClinicLogicalDay,
   parseHistoricalClinicDate,
@@ -12,15 +14,15 @@ import {
 export async function GET(request: Request) {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get("auth-token")?.value;
+    const token = cookieStore.get("jivnicare_token")?.value;
 
     if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiError("Unauthorized", 401);
     }
 
     const payload: any = await verifyToken(token);
     if (!payload || !payload.id || payload.role !== "DOCTOR") {
-      return NextResponse.json({ error: "Invalid token or not a doctor" }, { status: 401 });
+      return apiError("Invalid token or not a doctor", 401);
     }
 
     // Get doctor record for this user
@@ -29,76 +31,36 @@ export async function GET(request: Request) {
     });
 
     if (!doctor) {
-      return NextResponse.json({ error: "Doctor profile not found" }, { status: 404 });
+      return apiError("Doctor profile not found", 404);
     }
 
     // Parse date from query params or default to logical today
     const url = new URL(request.url);
     const dateParam = url.searchParams.get("date");
     
-    const queueDate = dateParam ? parseHistoricalClinicDate(dateParam) : resolveClinicLogicalDay();
+    const queueDate = dateParam ? dateParam : getLogicalDate();
 
-    // Fetch the daily queue for this doctor on this date
-    let dailyQueue = await prisma.dailyQueue.findUnique({
-      where: {
-        doctorId_date: {
-          doctorId: doctor.id,
-          date: queueDate,
-        },
-      },
+    // Fetch or lazy-init the daily queue
+    const dailyQueue = await getOrCreateDailyQueue(doctor.id);
+
+    // Fetch tokens with patient details
+    const tokens = await prisma.queueToken.findMany({
+      where: { queueId: dailyQueue.id },
       include: {
-        tokens: {
-          include: {
-            user: { select: { name: true, phone: true } },
-            walkInEntry: true
-          },
-          orderBy: [
-            { tokenNumber: 'asc' }
-          ]
-        }
-      }
+        patient: { select: { name: true, phone: true } },
+        walkInEntry: true
+      },
+      orderBy: { tokenNumber: 'asc' }
     });
 
-    // If it doesn't exist, they haven't had any bookings yet today. We can lazy-initialize it.
-    if (!dailyQueue) {
-      // Find operations to get max capacity
-      const clinicOps = await prisma.clinicOperations.findUnique({ where: { doctorId: doctor.id } });
-      const maxCapacity = getUnifiedQueueCapacity(clinicOps);
-
-      dailyQueue = await prisma.dailyQueue.create({
-        data: {
-          doctorId: doctor.id,
-          date: queueDate,
-          status: "ACTIVE",
-          maxCapacity,
-          issuedTokensCount: 0
-        },
-        include: {
-          tokens: {
-            include: {
-              user: { select: { name: true, phone: true } },
-              walkInEntry: true
-            },
-            orderBy: { tokenNumber: 'asc' }
-          }
-        }
-      });
-    }
-
-    // Phase 4: Real-time Stats Aggregation (regular tokens only for capacity metrics)
-    const tokens = dailyQueue.tokens || [];
-    const regularTokens = tokens.filter((t) => !isEmergencyToken(t));
-    const waitingRegular = regularTokens.filter((t) => t.status === "WAITING");
+    // V1 Stats
     const stats = {
-      total: regularTokens.length,
-      waiting: waitingRegular.length,
-      emergencyWaiting: tokens.filter(
-        (t) => isEmergencyToken(t) && t.status === "WAITING"
-      ).length,
-      completed: tokens.filter((t) => t.status === "COMPLETED").length,
-      currentActive: dailyQueue.currentActiveToken || 0,
-      avgWaitTime:
-        waitingRegular.length * (doctor.averageConsultationTime || 15),
+      total: dailyQueue.currentTokenNumber,
+      waiting: tokens.filter(t => t.status === "WAITING" || t.status === "READY").length,
+      emergencyWaiting: tokens.filter(t => t.tokenType === "EMERGENCY" && t.status === "WAITING").length,
+      completed: tokens.filter(t => t.status === "COMPLETED").length,
+      currentActive: dailyQueue.currentServingToken,
+      avgWaitTime: tokens.filter(t => t.status === "WAITING").length * (doctor.averageConsultationMinutes || 10),
     };
 
     return NextResponse.json({ 
@@ -107,11 +69,11 @@ export async function GET(request: Request) {
       tokens,
       stats,
       doctor: {
-        averageConsultationTime: doctor.averageConsultationTime
+        averageConsultationTime: doctor.averageConsultationMinutes
       }
     });
   } catch (error: any) {
     console.error("Fetch doctor queue error:", error);
-    return NextResponse.json({ error: "Failed to fetch queue" }, { status: 500 });
+    return apiError("Failed to fetch queue", 500);
   }
 }

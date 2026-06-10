@@ -1,0 +1,16 @@
+{
+  "name": "JivniCare — Book Doctors in Bihar",
+  "short_name": "JivniCare",
+  "description": "Bihar mein top doctors ko instantly book karein. Same-day appointments available.",
+  "display": "standalone",
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

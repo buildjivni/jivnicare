@@ -36,16 +36,17 @@ function timeAgo(dateStr: string): string {
 
 const API = process.env.NEXT_PUBLIC_API_URL || "/api";
 
-async function apiFetch(path: string, token: string, opts?: RequestInit) {
+async function apiFetch(path: string, opts?: RequestInit) {
   const res = await fetch(`${API}${path}`, {
     ...opts,
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", ...opts?.headers },
+    headers: { "Content-Type": "application/json", ...opts?.headers },
+    credentials: "include",
   });
   if (!res.ok) throw new Error("API error");
   return res.json();
 }
 
-export function NotificationPanel({ token }: { token?: string | null }) {
+export function NotificationPanel({ isLoggedIn }: { isLoggedIn: boolean }) {
   const [open, setOpen] = useState(false);
   const [unread, setUnread] = useState(0);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -63,14 +64,14 @@ export function NotificationPanel({ token }: { token?: string | null }) {
 
   // Poll unread count every 30 seconds if logged in
   useEffect(() => {
-    if (!token) return;
+    if (!isLoggedIn) return;
 
     let timeoutId: NodeJS.Timeout;
 
     const fetchCount = async () => {
       try {
         if (document.visibilityState === "visible") {
-          const data = await apiFetch("/notifications/unread-count", token);
+          const data = await apiFetch("/notifications/unread-count");
           setUnread(data.unreadCount ?? 0);
         }
       } catch {
@@ -82,23 +83,23 @@ export function NotificationPanel({ token }: { token?: string | null }) {
 
     fetchCount();
     return () => clearTimeout(timeoutId);
-  }, [token]);
+  }, [isLoggedIn]);
 
   // Load notifications when panel opens
   useEffect(() => {
-    if (!open || !token) return;
+    if (!open || !isLoggedIn) return;
      
     setLoading(true);
-    apiFetch("/notifications?limit=15", token)
+    apiFetch("/notifications?limit=15")
       .then((data) => setNotifications(data.notifications ?? []))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [open, token]);
+  }, [open, isLoggedIn]);
 
   async function markAllRead() {
-    if (!token) return;
+    if (!isLoggedIn) return;
     try {
-      await apiFetch("/notifications/mark-read", token, { method: "PATCH", body: JSON.stringify({}) });
+      await apiFetch("/notifications/mark-read", { method: "PATCH", body: JSON.stringify({}) });
       setUnread(0);
       setNotifications((n) => n.map((x) => ({ ...x, isRead: true })));
     } catch {
@@ -107,9 +108,9 @@ export function NotificationPanel({ token }: { token?: string | null }) {
   }
 
   async function markOne(id: string) {
-    if (!token) return;
+    if (!isLoggedIn) return;
     try {
-      await apiFetch("/notifications/mark-read", token, {
+      await apiFetch("/notifications/mark-read", {
         method: "PATCH",
         body: JSON.stringify({ ids: [id] }),
       });
@@ -120,7 +121,7 @@ export function NotificationPanel({ token }: { token?: string | null }) {
     }
   }
 
-  if (!token) return null;
+  if (!isLoggedIn) return null;
 
   return (
     <div ref={ref} className="relative">

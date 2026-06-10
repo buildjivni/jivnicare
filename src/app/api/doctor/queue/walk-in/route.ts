@@ -1,3 +1,4 @@
+import { apiResponse, apiError } from '@/lib/utils/api-response';
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db/prisma";
 import { verifyToken } from "@/lib/jwt";
@@ -13,15 +14,15 @@ export async function POST(request: Request) {
   return await withIdempotency(idempotencyKey, 86400, async () => {
     try {
       const cookieStore = await cookies();
-      const token = cookieStore.get("auth-token")?.value;
+      const token = cookieStore.get("jivnicare_token")?.value;
 
       if (!token) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        return apiError("Unauthorized", 401);
       }
 
       const payload: any = await verifyToken(token);
       if (!payload || !payload.id || payload.role !== "DOCTOR") {
-        return NextResponse.json({ error: "Invalid token or not a doctor" }, { status: 401 });
+        return apiError("Invalid token or not a doctor", 401);
       }
 
       const body = await request.json();
@@ -42,7 +43,7 @@ export async function POST(request: Request) {
       });
 
       if (!doctor) {
-        return NextResponse.json({ error: "Doctor profile not found" }, { status: 404 });
+        return apiError("Doctor profile not found", 404);
       }
 
       // Phase 1 & 7: Use Unified Service Logic
@@ -50,10 +51,10 @@ export async function POST(request: Request) {
 
       try {
         const result = await prisma.$transaction(async (tx) => {
-          // Create WalkInEntry first with placeholder if empty
+          // Create WalkInEntry
           const walkInEntry = await tx.walkInEntry.create({
             data: {
-              patientName: patientName || "Processing...",
+              patientName: patientName || "Patient",
               phoneNumber: phoneNumber || null,
               symptoms: symptoms || null,
               age: age || null,
@@ -63,26 +64,17 @@ export async function POST(request: Request) {
           });
 
           // Use Service for sequential token issuing and capacity checks.
-          const { token: newQueueToken, isEmergencyOverride } = await QueueService.issueToken(doctor.id, today, null, "WALK_IN", location || undefined, isEmergency || false, tx);
+          const { token: newQueueToken } = await QueueService.issueToken(
+            doctor.id, 
+            null, 
+            phoneNumber || "", 
+            isEmergency ? "EMERGENCY" : "WALKIN", 
+            patientName || undefined, 
+            tx
+          );
           
-          let finalPatientName = patientName;
-          let finalSymptoms = symptoms || null;
-
-          if (!finalPatientName) {
-            finalPatientName = isEmergency ? `Emergency #${newQueueToken.tokenNumber}` : `Walk-in #${newQueueToken.tokenNumber}`;
-          }
-
-          if (isEmergencyOverride) {
-            finalPatientName = patientName ? `${patientName} (Emergency Override)` : `Emergency Override #${newQueueToken.tokenNumber}`;
-            finalSymptoms = finalSymptoms ? `${finalSymptoms} [SYSTEM_AUDIT: CLINIC_CLOSED_OVERRIDE]` : `[SYSTEM_AUDIT: CLINIC_CLOSED_OVERRIDE]`;
-          }
-
-          // Update WalkInEntry with correct name and audit tags
-          await tx.walkInEntry.update({
-            where: { id: walkInEntry.id },
-            data: { patientName: finalPatientName, symptoms: finalSymptoms }
-          });
-
+          // Update WalkInEntry if needed (audit tags removed in V1)
+          
           // Link the walk-in entry to the token
           const updatedToken = await tx.queueToken.update({
             where: { id: newQueueToken.id },
@@ -93,19 +85,19 @@ export async function POST(request: Request) {
           return updatedToken;
         });
 
-        return NextResponse.json({ success: true, token: result });
+        return apiResponse({success: true, token: result});
       } catch (error: any) {
         import('@/lib/telemetry/redis').then(m => m.incrementTelemetryCounter('walkInFailures').catch(() => {}));
         const errorMessages: Record<string, string> = {
           "QUEUE_FULL": "Cannot add patient. Daily capacity reached.",
           "CLINIC_CLOSED_TODAY": "Clinic is marked as closed today.",
         };
-        return NextResponse.json({ error: errorMessages[error.message] || "Failed to add walk-in patient" }, { status: 400 });
+        return apiError(errorMessages[error.message] || "Failed to add walk-in patient", 400);
       }
     } catch (error: any) {
       console.error("Walk-in booking error:", error);
       import('@/lib/telemetry/redis').then(m => m.incrementTelemetryCounter('api500Errors').catch(() => {}));
-      return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+      return apiError("Internal server error", 500);
     }
   });
 }

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Logo } from "@/features/marketing/components/brand/Logo";
 
 const TRUST_STATS = [
-  { icon: <Users className="w-4 h-4 text-emerald-500" />, value: "15,000+", label: "Verified Patients" },
+  { icon: <Users className="w-4 h-4 text-emerald-500" />, value: "Verified", label: "Patient Network" },
   { icon: <Star className="w-4 h-4 text-amber-400" />, value: "4.9/5", label: "Average Rating" },
   { icon: <ShieldCheck className="w-4 h-4 text-blue-500" />, value: "100%", label: "Verified Doctors" },
 ];
@@ -44,7 +44,7 @@ export function CtaBannerSection() {
           Ready to See a Doctor<br className="hidden md:block" /> Today?
         </h2>
         <p className="text-lg md:text-xl text-slate-600 mb-3 max-w-2xl mx-auto leading-relaxed">
-          Join <strong className="text-slate-900">15,000+ patients</strong> who trust <span className="text-primary font-black">Jivni</span><span className="text-secondary font-black">Care</span>. Book in under 60 seconds — free, fast, and fully secure.
+          Join the <strong className="text-slate-900">growing network</strong> of patients who trust <span style={{ color: '#4A90D9' }}>Jivni</span><span style={{ color: '#4A8C4A' }}>Care</span>. Book in under 60 seconds — free, fast, and fully secure.
         </p>
         <p className="text-sm text-emerald-700 font-bold mb-10 flex items-center justify-center gap-2">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse inline-block" />

@@ -1,8 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider   = "prisma-client-js"
   engineType = "library"
@@ -91,6 +89,17 @@ model Media {
   createdAt DateTime  @default(now())
 }
 
+model Clinic {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  city         String
+  address      String
+  bannerImageUrl String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  doctors      Doctor[]
+}
+
 model User {
   id          String   @id @default(uuid()) @map("_id")
   firebaseUid String?
@@ -103,6 +112,8 @@ model User {
   longitude   Float?
   role        Role     @default(PATIENT)
   isVerified  Boolean  @default(false)
+  verificationStatus VerificationStatus @default(DRAFT)
+  isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -168,7 +179,29 @@ model Doctor {
   id                 String             @id @default(uuid()) @map("_id")
   userId             String             @unique
   user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name               String
+  
+  // JivniCare V1 Fields
+  jivnicareId                 String?  @unique  // JC-DR-000001
+  name                        String
+  phone                       String   @unique
+  speciality                  String
+  qualification               String
+  experienceYears             Int      @default(0)
+  lifetimePatientsDeclaration String?  // Doctor declared
+  jivnicarePatientsServed     Int      @default(0)  // System calculated
+  consultationFee             Int      @default(0)
+  clinicId                    String?  @db.ObjectId
+  clinic                      Clinic?  @relation(fields: [clinicId], references: [id])
+  isVerified                  Boolean  @default(false)
+  isOnline                    Boolean  @default(false)
+  isEmergencySupported        Boolean            @default(false)
+  verificationDocuments       String[]
+  averageConsultationMinutes  Int                @default(10)
+  dailyTokenLimit             Int                @default(50)
+  isActive                    Boolean            @default(true)
+  specializations             String[]           @default([])
+
+  // Legacy/Internal Fields
   slug               String             @unique
   doctorCode         String?            @unique
   bio                String?
@@ -191,9 +224,9 @@ model Doctor {
   dailyQueues  DailyQueue[]
 
   // ── Phase 16: Doctor Control System ────────────────────────
-  availableDays               String[] @default([]) // e.g., ["MONDAY", "TUESDAY"]
-  availableTimeSlots          Json? // e.g., [{start: "10:00", end: "13:00"}]
-  maxAppointmentsPerDay       Int      @default(0) // 0 means no limit
+  availableDays               String[] @default([]) 
+  availableTimeSlots          Json? 
+  maxAppointmentsPerDay       Int      @default(0) 
   isAcceptingAppointments     Boolean  @default(true)
   profileCompletionPercentage Int      @default(0)
 
@@ -204,14 +237,13 @@ model Doctor {
   govtIdentityReference          String?
   dateOfBirth                    DateTime?
   primarySpecialtyId             String?
-  consultationFee                Int      @default(0)
   followUpFee                    Int      @default(0)
-  averageConsultationTime        Int      @default(15) // minutes
+  averageConsultationTime        Int      @default(15) 
   treatmentFocus                 String[] @default([])
   commonSymptomsTreated          String[] @default([])
   certifications                 String[] @default([])
   education                      String?
-  qualifications                 String? // Structured: "MBBS, MD Medicine"
+  qualifications                 String? 
   onlineConsultationAvailable    Boolean  @default(false)
   emergencyConsultationAvailable Boolean  @default(false)
 
@@ -230,29 +262,20 @@ model Doctor {
   clinicOperations ClinicOperations?
   updateLogs       ProfileUpdateLog[]
 
-  // ── Future-Safe Identity Architecture (Doctor Discovery v2) ──
-  // QR-ready short code: 6-char alphanumeric (no ambiguous chars)
-  // Used for: /d/{shortCode} deep links, clinic QR codes, reception displays
   shortCode String?
+  clinicImage String? 
 
-  // Clinic visual identity
-  clinicImage String? // CDN URL for clinic/hospital photo
-
-  // Social proof metrics (additive — updated via admin/analytics)
   reviewCount        Int @default(0)
   totalConsultations Int @default(0)
 
-  // Trust tier label — set deterministically during onboarding based on experience
-  // Examples: "Verified Doctor" | "Experienced Partner" | "Clinic Verified"
   verifiedBadgeLabel String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // ── Performance Indexes ──────────────────────────────────────
-  // Composite: primary discovery query (district + verified filter)
+  operators          Operator[]
+
   @@index([district, verificationStatus])
-  // Top-rated discovery queries
   @@index([rating, verificationStatus])
   @@index([city, verificationStatus, isAcceptingAppointments])
   @@index([verificationStatus, isAcceptingAppointments, createdAt])
@@ -331,13 +354,12 @@ model ProfileAnalytics {
   @@index([createdAt])
 }
 
-// ── Phase 23: Trust & Safety (Reports) ────────────────────────
 model Report {
   id          String       @id @default(uuid()) @map("_id")
   reporterId  String
   reporter    User         @relation(fields: [reporterId], references: [id], onDelete: Cascade)
   targetType  TargetType
-  targetId    String // ID of Doctor, Hospital, or User
+  targetId    String 
   reason      String
   description String?
   status      ReportStatus @default(PENDING)
@@ -348,8 +370,6 @@ model Report {
   @@index([status])
   @@index([targetType, targetId])
 }
-
-// ── Phase 13: Notifications ───────────────────────────────────
 
 enum NotificationType {
   VERIFICATION_APPROVED
@@ -370,7 +390,7 @@ model Notification {
   title     String
   message   String
   isRead    Boolean          @default(false)
-  metadata  Json? // Extra context (doctorId, action, etc.)
+  metadata  Json? 
   createdAt DateTime         @default(now())
   readAt    DateTime?
 
@@ -378,8 +398,6 @@ model Notification {
   @@index([userId, createdAt])
   @@index([createdAt])
 }
-
-// ── Phase 13: Saved Doctors (Engagement) ─────────────────────
 
 model SavedDoctor {
   id        String   @id @default(uuid()) @map("_id")
@@ -393,8 +411,6 @@ model SavedDoctor {
   @@index([userId])
 }
 
-// ── Phase 13: Notification Preferences ───────────────────────
-
 model NotificationPreference {
   id              String   @id @default(uuid()) @map("_id")
   userId          String   @unique
@@ -405,8 +421,6 @@ model NotificationPreference {
   whatsappEnabled Boolean  @default(false)
   updatedAt       DateTime @updatedAt
 }
-
-// ── Phase 27: Unified Patient Queue System ───────────────────
 
 enum QueueStatus {
   NOT_STARTED
@@ -442,53 +456,60 @@ enum Gender {
 }
 
 model DailyQueue {
-  id                 String      @id @default(uuid()) @map("_id")
-  doctorId           String
-  doctor             Doctor      @relation(fields: [doctorId], references: [id], onDelete: Cascade)
-  date               DateTime    @db.Date // The specific operating day
-  status             QueueStatus @default(NOT_STARTED)
-  maxCapacity        Int // Maximum patients for today
-  currentActiveToken Int         @default(0) // The token number currently inside the cabin
-  issuedTokensCount  Int         @default(0) // Atomic counter for sequential token issuance (never decremented)
-  cancelledCount     Int         @default(0) // PR-1: Atomic count of CANCELLED tokens (frees capacity)
-  noShowCount        Int         @default(0) // PR-1: Atomic count of NO_SHOW tokens (frees capacity)
+  id                   String       @id @default(uuid()) @map("_id")
+  doctorId             String
+  doctor               Doctor       @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  clinicId             String?      @db.ObjectId
+  logicalDate          String       // YYYY-MM-DD
+  currentTokenNumber   Int          @default(0)
+  currentServingToken  Int          @default(0)
+  dailyLimit           Int          @default(50)
+  status               String       @default("OPEN") // OPEN, CLOSED, EMERGENCY_ONLY
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+  tokens               QueueToken[]
 
-  tokens    QueueToken[]
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
+  // Legacy/Internal Fields
+  date               DateTime    @db.Date @default(now())
+  queueStatus        QueueStatus @default(NOT_STARTED)
+  maxCapacity        Int         @default(50)
+  currentActiveToken Int         @default(0)
+  issuedTokensCount  Int         @default(0)
+  emergencyIssuedTokensCount Int @default(0)
+  cancelledCount     Int         @default(0)
+  noShowCount        Int         @default(0)
 
+  @@unique([doctorId, logicalDate])
   @@unique([doctorId, date])
 }
 
 model QueueToken {
-  id      String     @id @default(uuid()) @map("_id")
-  queueId String
-  queue   DailyQueue @relation(fields: [queueId], references: [id], onDelete: Cascade)
+  id           String    @id @default(uuid()) @map("_id")
+  queueId      String
+  queue        DailyQueue @relation(fields: [queueId], references: [id], onDelete: Cascade)
+  tokenNumber  Int       
+  patientId    String?   
+  patient      User?     @relation(fields: [patientId], references: [id])
+  walkInEntryId String?  
+  walkInEntry   WalkInEntry? @relation(fields: [walkInEntryId], references: [id])
+  patientPhone String
+  patientName  String?
+  tokenType    String    // ONLINE, WALKIN, EMERGENCY
+  status       String    // BOOKED, READY, CALLED, IN_CONSULTATION, COMPLETED, NO_SHOW, EXPIRED, CANCELLED
+  bookedAt     DateTime  @default(now())
+  readyAt      DateTime?
+  calledAt     DateTime?
+  completedAt  DateTime?
+  isWaitlist   Boolean   @default(false)
 
-  tokenNumber Int // Strict Sequence: 1, 2, 3...
-  source      TokenSource // ONLINE or WALK_IN
-  status      TokenStatus @default(WAITING)
-
-  // Patient Reference
-  userId        String?
-  user          User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
-  walkInEntryId String?
-  walkInEntry   WalkInEntry? @relation(fields: [walkInEntryId], references: [id], onDelete: SetNull)
-
-  estimatedTime   DateTime? // Dynamic estimate
-  tokenIssuedAt   DateTime  @default(now()) // Determines strict FCFS priority
-  isEmergency     Boolean   @default(false)
-  patientLocation String? // Patient's city or village name
-
-  // PR-1: Audit Trail Fields
-  cancelledAt DateTime? // When patient cancelled
-  cancelledBy String?   // "PATIENT" | "SYSTEM"
-  noShowAt    DateTime? // When doctor marked no-show
-  noShowBy    String?   // doctorId who marked it (accountability)
+  // Legacy/Internal Fields
+  source      TokenSource @default(ONLINE)
+  tokenStatus TokenStatus @default(WAITING)
+  priority    Int         @default(0)
+  isEmergency Boolean     @default(false)
+  updatedAt   DateTime    @updatedAt
 
   @@unique([queueId, tokenNumber])
-  @@index([queueId, status])
-  @@index([tokenIssuedAt])
 }
 
 model WalkInEntry {
@@ -503,8 +524,6 @@ model WalkInEntry {
 
   token QueueToken[]
 }
-
-// ── Phase 26: Security & OTP Persistence ─────────────────────
 
 model OtpToken {
   id        String   @id @default(uuid()) @map("_id")
@@ -525,13 +544,11 @@ model RateLimit {
   updatedAt DateTime @updatedAt
 }
 
-// ── Clinic Schedule & Operations Engine ──────────────────────
-
 model WeeklySchedule {
   id        String   @id @default(uuid()) @map("_id")
   doctorId  String   @unique
   doctor    Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
-  monday    Json // { isOpen: true, start: "09:00", end: "14:00", maxPatients: 30 }
+  monday    Json 
   tuesday   Json
   wednesday Json
   thursday  Json
@@ -560,3 +577,13 @@ model SystemCounter {
   count Int    @default(64000)
 }
 
+model Operator {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  doctorId  String   @db.ObjectId
+  doctor    Doctor   @relation(fields: [doctorId], references: [id])
+  name      String
+  phone     String
+  role      String   @default("Receptionist")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+}

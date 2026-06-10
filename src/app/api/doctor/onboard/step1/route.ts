@@ -1,3 +1,4 @@
+import { apiResponse, apiError } from '@/lib/utils/api-response';
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/db/prisma';
 import { isTestOtpModeEnabled } from '@/lib/config/test-mode';
@@ -43,7 +44,7 @@ export async function POST(request: Request) {
 
     const validation = step1OnboardSchema.safeParse(body);
     if (!validation.success) {
-      return NextResponse.json({ error: 'Validation failed: ' + formatZodError(validation.error) }, { status: 400 });
+      return apiError('Validation failed: ' + formatZodError(validation.error), 400);
     }
 
     const data = validation.data;
@@ -51,7 +52,7 @@ export async function POST(request: Request) {
     // 1. Check if phone is already registered
     let user = await prisma.user.findUnique({ where: { phone: data.contactNumber } });
     if (user && user.role === 'DOCTOR') {
-      return NextResponse.json({ error: 'Phone number is already registered as a Partner. Please login.' }, { status: 409 });
+      return apiError('Phone number is already registered as a Partner. Please login.', 409);
     }
 
     // 2. Check medical registration uniqueness
@@ -60,7 +61,7 @@ export async function POST(request: Request) {
       where: { medicalRegistrationNumber: regNumberUpper }
     });
     if (existingReg) {
-      return NextResponse.json({ error: `Medical Registration Number "${regNumberUpper}" is already registered.` }, { status: 400 });
+      return apiError(`Medical Registration Number "${regNumberUpper}" is already registered.`, 400);
     }
 
     // 3. Geocode Address - Use GPS coordinates from frontend if available, else server geocode
@@ -130,7 +131,8 @@ export async function POST(request: Request) {
 
       // Generate Slugs and Codes
       const doctorCode = await generateSequentialDoctorCode(tx);
-      const nameSlug = data.fullName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      const cleanName = data.fullName.replace(/^(dr\.?\s*|prof\.?\s*|mr\.?\s*|ms\.?\s*|mrs\.?\s*)/i, '');
+      const nameSlug = cleanName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
       let doctorSlug = `dr-${nameSlug}-${doctorCode.toLowerCase()}`;
       
       let shortCode = generateShortCode();
@@ -147,10 +149,14 @@ export async function POST(request: Request) {
         data: {
           userId: user.id,
           name: data.fullName,
+          phone: data.contactNumber, // V1 Required field
+          speciality: normalizedSpec, // V1 Required field
+          qualification: normalizeQualifications(data.qualifications), // V1 Required field
           slug: doctorSlug,
           shortCode,
           doctorCode,
           experience: expYears,
+          experienceYears: expYears, // V1 field
           district: data.district,
           hospitalName: data.practiceName,
           clinicName: data.practiceName,
@@ -167,12 +173,16 @@ export async function POST(request: Request) {
           specialtyIds: [specialtyRecord.id],
           keywordIds: keywordIds,
           verificationStatus: VerificationStatus.DRAFT,
+          isOnline: false, // V1 field
+          jivnicarePatientsServed: 0, // V1 field
           medicalRegistrationNumber: regNumberUpper,
           medicalCouncil: data.medicalCouncil,
           registrationYear: data.registrationYear,
           dateOfBirth: new Date(data.dateOfBirth),
           primarySpecialtyId: specialtyRecord.id,
           verifiedBadgeLabel,
+          averageConsultationMinutes: 10, // V1 field
+          dailyTokenLimit: 50, // V1 field
         }
       });
 
@@ -210,7 +220,7 @@ export async function POST(request: Request) {
     });
 
     const cookieStore = await cookies();
-    cookieStore.set('auth-token', token, {
+    cookieStore.set('jivnicare_token', token, {
       httpOnly: true, secure: process.env.NODE_ENV === 'production' && !isTestOtpModeEnabled(), sameSite: 'lax', path: '/', maxAge: 30 * 24 * 60 * 60
     });
 
@@ -218,6 +228,6 @@ export async function POST(request: Request) {
 
   } catch (error: any) {
     console.error('Doctor Onboard Step 1 Error:', error);
-    return NextResponse.json({ error: 'Internal server error.' }, { status: 500 });
+    return apiError('Internal server error.', 500);
   }
 }

@@ -1,3 +1,4 @@
+import { apiResponse, apiError } from '@/lib/utils/api-response';
 import { put } from '@vercel/blob';
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
@@ -10,12 +11,12 @@ export async function POST(request: Request): Promise<NextResponse> {
   const filename = searchParams.get('filename');
 
   if (!filename) {
-    return NextResponse.json({ error: 'Filename is required' }, { status: 400 });
+    return apiError('Filename is required', 400);
   }
 
   // Validate Authentication (Temporarily bypassed for Doctor Onboarding flow pilot)
   // In a strict production environment, we should either use presigned URLs or create the user first.
-  const token = (await cookies()).get("auth-token")?.value;
+  const token = (await cookies()).get("jivnicare_token")?.value;
   let isAuthenticated = false;
 
   if (token) {
@@ -29,7 +30,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   if (!isAuthenticated) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return apiError("Unauthorized", 401);
   }
 
   if (!isBlobConfigured()) {
@@ -43,18 +44,18 @@ export async function POST(request: Request): Promise<NextResponse> {
   const allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
   const mime = request.headers.get('content-type')?.split(';')[0]?.trim();
   if (!mime || !allowedMimes.includes(mime)) {
-    return NextResponse.json({ error: 'Unsupported file type' }, { status: 415 });
+    return apiError('Unsupported file type', 415);
   }
 
   // Simple filename sanity checks
   const parts = filename.split('.');
   if (parts.length !== 2) {
-    return NextResponse.json({ error: 'Invalid filename format' }, { status: 400 });
+    return apiError('Invalid filename format', 400);
   }
   const [name, ext] = parts;
   const extLower = ext.toLowerCase();
   if (['svg', 'gif', 'exe', 'bat'].includes(extLower)) {
-    return NextResponse.json({ error: 'File type not allowed' }, { status: 400 });
+    return apiError('File type not allowed', 400);
   }
   const mimeMap: Record<string, string> = {
     'jpeg': 'image/jpeg',
@@ -64,7 +65,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     'pdf': 'application/pdf',
   };
   if (mimeMap[extLower] !== mime) {
-    return NextResponse.json({ error: 'Filename extension does not match MIME type' }, { status: 400 });
+    return apiError('Filename extension does not match MIME type', 400);
   }
 
   try {
@@ -80,6 +81,6 @@ export async function POST(request: Request): Promise<NextResponse> {
       metadata: { filename },
       error,
     });
-    return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
+    return apiError('Upload failed', 500);
   }
 }

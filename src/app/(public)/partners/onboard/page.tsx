@@ -4,14 +4,13 @@ import { Logo } from "@/features/marketing/components/brand/Logo";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  ArrowRight, CheckCircle2, ShieldCheck, RefreshCw, AlertCircle, Sparkles, Lock, UserCircle, Briefcase, MapPin, Building, Star, Activity, ArrowLeft,
-  Clock, ArrowUpRight, FileText, PhoneCall
+  ArrowRight, CheckCircle2, ShieldCheck, RefreshCw, AlertCircle, Sparkles, Lock, UserCircle, Briefcase, MapPin, Building, Activity, ArrowLeft,
+  Clock, FileText, PhoneCall
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/features/auth/store/useAuthStore";
 import { PublicGuard } from "@/components/shared";
 import { ImageUploadField } from "@/components/shared/ImageUploadField";
 
@@ -37,7 +36,6 @@ export default function DoctorOnboardingFlow() {
 function OnboardingContent() {
   const router = useRouter();
   const [step, setStep] = useState(1);
-  const { login } = useAuthStore();
   
   const [formData, setFormData] = useState({
     fullName: "", gender: "", dateOfBirth: "", email: "", contactNumber: "", password: "",
@@ -49,6 +47,7 @@ function OnboardingContent() {
     latitude: null as number | null, longitude: null as number | null
   });
 
+  const [successMessage, setSuccessMessage] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [gpsLoading, setGpsLoading] = useState(false);
@@ -84,6 +83,8 @@ function OnboardingContent() {
         } catch {
           setFormData(prev => ({ ...prev, latitude, longitude }));
           setGpsStatus('error');
+        } finally {
+          setGpsLoading(false);
         }
       },
       () => { setGpsStatus('error'); setGpsLoading(false); },
@@ -99,7 +100,13 @@ function OnboardingContent() {
     if (!formData.fullName.trim() || formData.fullName.length < 3) { newErrors.fullName = "Name is required."; isValid = false; }
     if (!formData.gender) { newErrors.gender = "Gender is required."; isValid = false; }
     if (!formData.dateOfBirth) { newErrors.dateOfBirth = "DOB is required."; isValid = false; }
-    if (!formData.contactNumber || formData.contactNumber.length < 10) { newErrors.contactNumber = "Valid mobile required."; isValid = false; }
+    
+    const phoneRegex = /^[6-9]\d{9}$/;
+    if (!phoneRegex.test(formData.contactNumber)) {
+      newErrors.contactNumber = "Valid 10-digit phone number required (must start with 6, 7, 8 or 9)";
+      isValid = false;
+    }
+    
     if (!formData.password || formData.password.length < 6) { newErrors.password = "Password must be at least 6 characters."; isValid = false; }
     
     // Medical
@@ -122,46 +129,26 @@ function OnboardingContent() {
 
   const submitStep1 = async () => {
     if (!validateStep1()) {
-      // Scroll to top to see errors
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
-    setIsSubmitting(true);
-    setErrors({});
-    try {
-      const res = await fetch("/api/doctor/onboard/step1", {
-        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(formData)
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to submit.");
-      login(data.user);
-      setStep(2);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } catch (err: any) {
-      setErrors({ submit: err.message || "Network error. Please try again." });
-    } finally {
-      setIsSubmitting(false);
-    }
+    setStep(2);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const submitStep2 = async () => {
+  const finalSubmit = async () => {
     setIsSubmitting(true);
     setErrors({});
     try {
-      const res = await fetch("/api/doctor/onboard/step2", {
-        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
-          profilePhotoUrl: formData.profilePhotoUrl,
-          clinicPhotoUrl: formData.clinicPhotoUrl,
-          bio: formData.bio,
-          languages: formData.languages,
-          fee: parseInt(formData.fee || "0"),
-          emergencyAvailable: formData.emergencyAvailable
-        })
+      const res = await fetch("/api/doctor/onboard", {
+        method: "POST", 
+        headers: { "Content-Type": "application/json" }, 
+        body: JSON.stringify(formData)
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to submit.");
-      const { updateUser } = useAuthStore.getState();
-      updateUser({ verified: false });
+      
+      setSuccessMessage(data.message || "Registration submitted. Admin will verify within 24-48 hours.");
       setStep(3);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err: any) {
@@ -173,22 +160,19 @@ function OnboardingContent() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#EEF7FC] via-white to-[#F2FAF6] font-sans selection:bg-sky-500/20 selection:text-sky-900 relative pb-24 flex flex-col">
-      
-      {/* Soft background light blooms */}
       <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none -z-10">
         <div className="absolute top-[10%] left-[10%] w-[550px] h-[550px] rounded-full bg-[#5298D2]/5 blur-[130px] opacity-70" />
         <div className="absolute bottom-[20%] right-[10%] w-[500px] h-[500px] rounded-full bg-[#489C66]/5 blur-[130px] opacity-70" />
       </div>
 
-      {/* Top Navigation Bar with Logo */}
       <header className="w-full bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-50 px-6 py-4 shadow-sm shadow-slate-100/30">
         <div className="max-w-5xl mx-auto flex items-center justify-between w-full">
           <Link href="/" className="inline-flex items-center gap-3 group">
             <div className="w-10 h-10 rounded-xl overflow-hidden shadow-md group-hover:scale-105 transition-transform bg-white border border-sky-100 p-1.5 flex items-center justify-center">
-              <Logo className="w-8 h-8 object-contain" />
+              <Logo className="w-8 h-8" />
             </div>
-            <span className="text-xl font-black tracking-tight text-slate-800 leading-none">
-              <span className="text-[#5298D2]">Jivni</span><span className="text-[#489C66]">Care</span>
+            <span className="text-xl font-black tracking-tight leading-none">
+              <span style={{ color: '#4A90D9' }}>Jivni</span><span style={{ color: '#4A8C4A' }}>Care</span>
             </span>
           </Link>
           <Link href="/partners/login" className="px-5 py-2.5 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-655 hover:text-[#5298D2] hover:border-sky-200 shadow-sm transition-all flex items-center gap-2">
@@ -197,13 +181,8 @@ function OnboardingContent() {
         </div>
       </header>
 
-      {/* Main Content Area */}
       <main className="flex-1 w-full max-w-4xl mx-auto px-4 mt-12 relative z-10">
-        
-        {/* Unified Card Container */}
         <div className="bg-white/95 rounded-[32px] border border-slate-200/80 shadow-2xl shadow-sky-100/30 backdrop-blur-md overflow-hidden relative">
-          
-          {/* Header Title Section */}
           <div className="flex flex-col items-center pt-10 pb-8 px-6 border-b border-slate-100 bg-slate-50/30">
             <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight text-center">
               Doctor Registration Portal
@@ -213,7 +192,6 @@ function OnboardingContent() {
             </p>
           </div>
 
-          {/* Stepper Timeline Progress */}
           <div className="bg-slate-50/50 border-b border-slate-100 py-6 px-8 flex justify-center">
             <div className="flex items-center gap-4 md:gap-8 w-full max-w-xl justify-between">
               {[
@@ -252,14 +230,10 @@ function OnboardingContent() {
             </div>
           </div>
 
-          {/* Form Content body */}
           <div className="p-6 md:p-10">
             <AnimatePresence mode="wait">
-              <motion.div key={step} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3, ease: "easeOut" }}>
-                
-                {/* === STEP 1: IDENTITY & CLINIC === */}
                 {step === 1 && (
-                  <div className="space-y-8">
+                  <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
                   <div className="mb-10">
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-sky-100 text-sky-800 rounded-full text-[10px] font-black uppercase tracking-widest mb-4">
                       <ShieldCheck className="w-3.5 h-3.5" /> Identity & Security
@@ -275,7 +249,6 @@ function OnboardingContent() {
                     </div>
                   )}
 
-                  {/* Section: Personal Info */}
                   <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
                     <div className="p-6 md:p-8 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
@@ -301,13 +274,12 @@ function OnboardingContent() {
                       </div>
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-700">Date of Birth</label>
-                        <Input type="date" value={formData.dateOfBirth} onChange={(e) => setFormData({...formData, dateOfBirth: e.target.value})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.dateOfBirth ? 'border-rose-500' : ''}`} />
+                        <Input type="date" value={formData.dateOfBirth} onChange={(e) => setFormData({...formData, dateOfBirth: e.target.value})} className={`h-12 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.dateOfBirth ? 'border-rose-500' : ''}`} />
                         {errors.dateOfBirth && <p className="text-[10px] font-bold text-rose-500">{errors.dateOfBirth}</p>}
                       </div>
                     </div>
                   </div>
 
-                  {/* Section: Account Security */}
                   <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
                     <div className="p-6 md:p-8 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
@@ -336,7 +308,6 @@ function OnboardingContent() {
                     </div>
                   </div>
 
-                  {/* Section: Medical Credentials */}
                   <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
                     <div className="p-6 md:p-8 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
@@ -361,7 +332,7 @@ function OnboardingContent() {
                       </div>
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-700">Registration Year</label>
-                        <Input type="number" placeholder="e.g. 2012" value={formData.registrationYear} onChange={(e) => setFormData({...formData, registrationYear: e.target.value})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.registrationYear ? 'border-rose-500' : ''}`} />
+                        <Input type="number" placeholder="e.g. 2012" value={formData.registrationYear} onChange={(e) => setFormData({...formData, registrationYear: e.target.value})} className={`h-12 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.registrationYear ? 'border-rose-500' : ''}`} />
                         {errors.registrationYear && <p className="text-[10px] font-bold text-rose-500">{errors.registrationYear}</p>}
                       </div>
                       <div className="space-y-2">
@@ -374,18 +345,17 @@ function OnboardingContent() {
                       </div>
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-700">Years of Experience</label>
-                        <Input type="number" placeholder="e.g. 5" value={formData.experience} onChange={(e) => setFormData({...formData, experience: e.target.value})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.experience ? 'border-rose-500' : ''}`} />
+                        <Input type="number" placeholder="e.g. 5" value={formData.experience} onChange={(e) => setFormData({...formData, experience: e.target.value})} className={`h-12 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.experience ? 'border-rose-500' : ''}`} />
                         {errors.experience && <p className="text-[10px] font-bold text-rose-500">{errors.experience}</p>}
                       </div>
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-700">Qualifications</label>
-                        <Input placeholder="MBBS, MD" value={formData.qualifications} onChange={(e) => setFormData({...formData, qualifications: e.target.value.replace(/[^a-zA-Z0-9\s.,()&/-]/g, '')})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.qualifications ? 'border-rose-500' : ''}`} />
+                        <Input placeholder="MBBS, MD" value={formData.qualifications} onChange={(e) => setFormData({...formData, qualifications: e.target.value.replace(/[^a-zA-Z0-9\s.,()&/-]/g, '')})} className={`h-12 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.qualifications ? 'border-rose-500' : ''}`} />
                         {errors.qualifications && <p className="text-[10px] font-bold text-rose-500">{errors.qualifications}</p>}
                       </div>
                     </div>
                   </div>
 
-                  {/* Section: Clinic Location */}
                   <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
                     <div className="p-6 md:p-8 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3">
@@ -397,7 +367,6 @@ function OnboardingContent() {
                           <p className="text-xs text-slate-500 font-medium">Where patients will visit you.</p>
                         </div>
                       </div>
-                      {/* GPS Button */}
                       <button
                         type="button"
                         onClick={fetchGPSLocation}
@@ -412,8 +381,6 @@ function OnboardingContent() {
                           <><RefreshCw className="w-3.5 h-3.5 animate-spin" /> Locating...</>
                         ) : gpsStatus === 'success' ? (
                           <><CheckCircle2 className="w-3.5 h-3.5" /> Located!</>
-                        ) : gpsStatus === 'error' ? (
-                          <><AlertCircle className="w-3.5 h-3.5" /> Try Again</>
                         ) : (
                           <><MapPin className="w-3.5 h-3.5" /> Use GPS</>
                         )}
@@ -448,7 +415,6 @@ function OnboardingContent() {
                     </div>
                   </div>
 
-                  {/* Step 1 Save Action */}
                   <div className="flex items-center justify-end pt-6">
                     <Button 
                       type="button" 
@@ -456,26 +422,20 @@ function OnboardingContent() {
                       disabled={isSubmitting} 
                       className="h-14 px-8 w-full sm:w-auto rounded-2xl font-bold bg-[#5298D2] hover:bg-[#3d83bd] text-white flex items-center justify-center gap-2 shadow-lg shadow-sky-600/10 transition-all hover:-translate-y-0.5"
                     >
-                      {isSubmitting ? (
-                        <><RefreshCw className="w-5 h-5 animate-spin" /> Saving...</>
-                      ) : (
-                        <>Save & Continue <ArrowRight className="w-5 h-5" /></>
-                      )}
+                      Save & Continue <ArrowRight className="w-5 h-5" />
                     </Button>
                   </div>
+                </motion.div>
+                )}
 
-                </div>
-              )}
-
-              {/* === STEP 2: PROFILE ENHANCEMENT === */}
-              {step === 2 && (
-                <div className="space-y-8">
+                {step === 2 && (
+                  <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
                   <div className="mb-10">
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-[10px] font-black uppercase tracking-widest mb-4">
                       <Sparkles className="w-3.5 h-3.5" /> Profile Polish
                     </span>
                     <h2 className="text-3xl font-black text-slate-900 tracking-tight">Make your profile shine</h2>
-                    <p className="text-slate-500 font-medium mt-2 text-lg">Add details that help patients choose you. (Optional but highly recommended)</p>
+                    <p className="text-slate-500 font-medium mt-2 text-lg">Add details that help patients choose you.</p>
                   </div>
 
                   {errors.submit && (
@@ -536,7 +496,6 @@ function OnboardingContent() {
                      </div>
                   </div>
 
-                  {/* Step 2 Back & Submit Actions */}
                   <div className="flex items-center justify-between pt-6">
                     <Button 
                       type="button" 
@@ -547,7 +506,7 @@ function OnboardingContent() {
                     </Button>
                     <Button 
                       type="button" 
-                      onClick={submitStep2} 
+                      onClick={finalSubmit} 
                       disabled={isSubmitting} 
                       className="h-14 px-8 w-full sm:w-auto rounded-2xl font-bold bg-[#489C66] hover:bg-[#378151] text-white flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/10 transition-all hover:-translate-y-0.5"
                     >
@@ -558,15 +517,11 @@ function OnboardingContent() {
                       )}
                     </Button>
                   </div>
+                </motion.div>
+                )}
 
-                </div>
-              )}
-
-              {/* === STEP 3: SUCCESS === */}
               {step === 3 && (
-                <div className="max-w-2xl mx-auto space-y-8 animate-in zoom-in-95 slide-in-from-bottom-10 duration-500">
-                  
-                  {/* Premium Success Check with Glow */}
+                <motion.div key="step3" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="max-w-2xl mx-auto space-y-8">
                   <div className="flex flex-col items-center justify-center text-center pt-8 pb-4">
                     <div className="relative mb-6">
                       <div className="w-20 h-20 bg-emerald-100 rounded-3xl flex items-center justify-center shadow-md relative z-10 border border-emerald-200">
@@ -577,16 +532,13 @@ function OnboardingContent() {
                     <h2 className="text-3xl font-black text-slate-900 tracking-tight mb-3">
                       Digital Clinic Registered!
                     </h2>
-                    <p className="text-slate-500 font-semibold text-base max-w-md">
-                      Your partner application was received successfully. We have initiated the medical credentials verification.
+                    <p className="text-emerald-600 font-bold text-lg max-w-md bg-emerald-50 px-6 py-3 rounded-2xl border border-emerald-100 text-center mx-auto">
+                      {successMessage || "Registration submitted. Admin will verify within 24-48 hours."}
                     </p>
                   </div>
 
-                  {/* Glassmorphic Clinical Welcome Card (Receipt Style) */}
                   <div className="bg-white rounded-3xl border border-slate-200 shadow-xl shadow-slate-100/50 overflow-hidden relative">
                     <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-sky-500/10 to-transparent rounded-bl-full pointer-events-none" />
-                    
-                    {/* Header */}
                     <div className="p-6 md:p-8 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-sky-100 text-sky-600 flex items-center justify-center shrink-0">
                         <FileText className="w-5 h-5" />
@@ -595,12 +547,11 @@ function OnboardingContent() {
                         <h3 className="font-bold text-slate-955">Application Summary</h3>
                         <p className="text-xs text-slate-500 font-medium">B2B Partner Verification Receipt</p>
                       </div>
-                      <span className="ml-auto px-3 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-[10px] font-bold tracking-wider uppercase animate-pulse">
+                      <span className="ml-auto px-3 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-[10px] font-bold tracking-wider uppercase">
                         ⏳ Verifying
                       </span>
                     </div>
 
-                    {/* Details grid */}
                     <div className="p-6 md:p-8 space-y-4 text-sm font-medium text-slate-600">
                       <div className="grid grid-cols-3 py-1.5 border-b border-slate-100/70">
                         <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Doctor Partner</span>
@@ -620,286 +571,73 @@ function OnboardingContent() {
                       </div>
                       <div className="grid grid-cols-3 py-1.5">
                         <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Location</span>
-                        <span className="col-span-2 text-slate-800 font-semibold">{formData.locality}, {formData.city} (PIN {formData.pincode})</span>
+                        <span className="col-span-2 text-slate-800 font-semibold">{formData.locality}, {formData.city}</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Verification Workflow Timeline */}
                   <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 md:p-8 space-y-6">
                     <h4 className="font-extrabold text-slate-955 text-base tracking-tight flex items-center gap-2">
                       <Activity className="w-4 h-4 text-sky-500" />
-                      Verification & Activation Steps
+                      Verification Steps
                     </h4>
-
                     <div className="relative border-l-2 border-slate-100 pl-6 ml-3 space-y-6">
-                      
-                      {/* Step 1 */}
                       <div className="relative">
                         <div className="absolute -left-[35px] top-0 w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-md">
                           <CheckCircle2 className="w-4 h-4" />
                         </div>
                         <div>
                           <h5 className="font-bold text-slate-900 text-sm">Application Received</h5>
-                          <p className="text-xs text-slate-500 mt-1 font-medium">Digital clinic details submitted cleanly to JivniCare registry.</p>
+                          <p className="text-xs text-slate-500 mt-1 font-medium">Details submitted to JivniCare registry.</p>
                         </div>
                       </div>
-
-                      {/* Step 2 */}
                       <div className="relative">
                         <div className="absolute -left-[35px] top-0 w-6 h-6 rounded-full bg-sky-100 border-2 border-[#5298D2] flex items-center justify-center shadow-md animate-pulse">
                           <Clock className="w-3.5 h-3.5 text-sky-600" />
                         </div>
                         <div>
-                          <div className="flex items-center gap-2">
-                            <h5 className="font-bold text-slate-900 text-sm">JivniCare Operations Activation</h5>
-                            <span className="text-[10px] font-black text-sky-600 uppercase bg-sky-50 px-2 py-0.5 rounded border border-sky-200 animate-pulse">Self-Declared Profile</span>
-                          </div>
-                          <p className="text-xs text-slate-500 mt-1 font-medium">JivniCare team reviews registrations solely for platform setup and spam prevention. JivniCare is a software provider and does not legally verify practitioner credentials or represent the NMC/State Medical Councils.</p>
+                          <h5 className="font-bold text-slate-900 text-sm">JivniCare Audit</h5>
+                          <p className="text-xs text-slate-500 mt-1 font-medium">Team reviews registration for platform setup.</p>
                         </div>
                       </div>
-
-                      {/* Step 3 */}
-                      <div className="relative">
-                        <div className="absolute -left-[35px] top-0 w-6 h-6 rounded-full bg-slate-50 border-2 border-slate-200 flex items-center justify-center text-slate-400">
-                          <Lock className="w-3.5 h-3.5" />
-                        </div>
-                        <div>
-                          <h5 className="font-bold text-slate-400 text-sm">Clinic Activation Kit</h5>
-                          <p className="text-xs text-slate-400 mt-1 font-medium">Onboarding confirmation SMS, unique doctor shortcode, and live queue scheduler activation.</p>
-                        </div>
-                      </div>
-
                     </div>
                   </div>
 
-                  {/* Sandbox Notice Banner */}
-                  <div className="bg-gradient-to-r from-sky-50 to-indigo-50 border border-sky-100 rounded-3xl p-6 flex gap-4">
-                    <div className="w-10 h-10 rounded-2xl bg-white text-sky-600 flex items-center justify-center shrink-0 shadow-sm border border-sky-50">
-                      <Sparkles className="w-5 h-5 text-sky-500 animate-pulse" />
-                    </div>
-                    <div className="space-y-1">
-                      <h5 className="font-bold text-slate-900 text-sm">Explore Sandbox & Pre-configure slots</h5>
-                      <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                        While our moderation team audits your credentials, you can enter the dashboard in **Sandbox Mode**. Set up consultation fees, emergency settings, and schedule slots so you are ready to receive live bookings the moment activation completes!
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* CTA Buttons */}
-                  <div className="flex flex-col sm:flex-row gap-4 pt-2">
-                    <Button 
-                      onClick={() => router.push("/doctor/dashboard")} 
-                      className="h-14 px-8 flex-1 rounded-2xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-base shadow-lg shadow-sky-600/20 transition-all hover:-translate-y-0.5 flex items-center justify-center gap-2"
-                    >
-                      Enter Dashboard (Sandbox)
-                      <ArrowRight className="w-5 h-5" />
-                    </Button>
-                    <a 
-                      href="https://wa.me/919999999999?text=JivniCare%20Doctor%20Support%20Request" 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="h-14 px-8 rounded-2xl border border-slate-200 hover:border-slate-350 bg-white hover:bg-slate-50 text-slate-700 font-bold text-base transition-all hover:-translate-y-0.5 flex items-center justify-center gap-2"
-                    >
+                  <div className="flex flex-col sm:flex-row gap-4 pt-2 justify-center">
+                    <Link href="/" className="flex-1">
+                      <Button className="h-14 px-8 w-full rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-base shadow-lg transition-all hover:-translate-y-0.5 flex items-center justify-center gap-2">
+                        Return to Homepage
+                        <ArrowRight className="w-5 h-5" />
+                      </Button>
+                    </Link>
+                    <a href="https://wa.me/910000000000?text=JivniCare%20Doctor%20Support" target="_blank" rel="noopener noreferrer" className="h-14 px-8 rounded-2xl border border-slate-200 hover:border-slate-350 bg-white hover:bg-slate-50 text-slate-700 font-bold text-base transition-all hover:-translate-y-0.5 flex items-center justify-center gap-2">
                       <PhoneCall className="w-5 h-5 text-slate-400" />
-                      Contact Support Desk
+                      Contact Support
                     </a>
                   </div>
-
-                </div>
-              )}
-
-            </motion.div>
-          </AnimatePresence>
+                </motion.div>
+                )}
+            </AnimatePresence>
+          </div>
         </div>
-      </div>
-    </main>
+      </main>
 
-    {/* Elegant clean trust footer outside the main card */}
-    <footer className="mt-8 mb-16 text-center max-w-2xl mx-auto px-4 flex flex-col items-center gap-3 text-slate-400">
-      <div className="flex items-center gap-1.5 justify-center">
-        <ShieldCheck className="w-4 h-4 text-[#5298D2] shrink-0" />
-        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600">JivniCare B2B Platform Disclaimer</span>
-      </div>
-      <p className="text-[10px] text-slate-400 leading-relaxed max-w-xl mx-auto">
-        JivniCare is a clinic queue optimization and dashboard software provider. Medical registration details (NMC / State Councils) are self-declared by the participating doctors under their sole professional responsibility. JivniCare and its administration do not act as a licensing authority or independently verify or endorse practitioners.
-      </p>
-      <div className="flex items-center gap-4 text-xs font-semibold mt-1">
-        <button 
-          onClick={() => setShowTerms(true)}
-          className="text-[#5298D2] hover:text-[#3d83bd] hover:underline transition-all cursor-pointer bg-transparent border-none p-0 outline-none"
-        >
-          Terms of Service
-        </button>
-        <span className="text-slate-300">•</span>
-        <button 
-          onClick={() => setShowPrivacy(true)}
-          className="text-[#5298D2] hover:text-[#3d83bd] hover:underline transition-all cursor-pointer bg-transparent border-none p-0 outline-none"
-        >
-          Privacy Policy
-        </button>
-      </div>
-    </footer>
-
-    {/* Terms & Conditions Modal */}
-    <AnimatePresence>
-      {showTerms && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          {/* Backdrop */}
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setShowTerms(false)}
-            className="absolute inset-0 bg-slate-900/60 backdrop-blur-md"
-          />
-          {/* Content Card */}
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative w-full max-w-2xl bg-white rounded-3xl border border-slate-200 shadow-2xl p-6 md:p-8 overflow-hidden z-10 flex flex-col max-h-[80vh]"
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <div className="w-9 h-9 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center">
-                  <FileText className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-extrabold text-slate-900 text-lg">Terms & Conditions</h3>
-                  <p className="text-[11px] text-slate-500 font-bold uppercase tracking-wider">JivniCare B2B Partner Portal</p>
-                </div>
-              </div>
-              <button 
-                onClick={() => setShowTerms(false)}
-                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center text-sm font-bold transition-all"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Body */}
-            <div className="flex-1 overflow-y-auto py-6 pr-2 space-y-6 text-sm text-slate-600 leading-relaxed font-medium">
-              <div>
-                <h4 className="font-black text-slate-800 text-base mb-1.5">1. B2B Software Service Platform</h4>
-                <p>
-                  JivniCare is a cloud-based software-as-a-service (SaaS) provider. We supply dynamic queuing engines, token allocation dashboards, and electronic clinical records tools. JivniCare is not a medical practice, clinic chain, or healthcare regulator.
-                </p>
-              </div>
-
-              <div>
-                <h4 className="font-black text-slate-800 text-base mb-1.5">2. Practitioner Self-Declaration</h4>
-                <p>
-                  All licensing numbers, National Medical Commission (NMC) registrations, Bihar Medical Council credentials, educational qualifications, clinical addresses, and consultation charges displayed are strictly self-declared by the registering doctor. JivniCare is not responsible for validating the clinical truthfulness or legally licensing practitioners.
-                </p>
-              </div>
-
-              <div>
-                <h4 className="font-black text-slate-800 text-base mb-1.5">3. Verification Limitations</h4>
-                <p>
-                  JivniCare admin validation only ensures profile completeness, valid input formatting, and protection against spam/duplicate profiles on the platform. The ultimate legal responsibility to hold a valid active license to practice medicine lies solely on the practitioner under applicable medical council regulations.
-                </p>
-              </div>
-
-              <div>
-                <h4 className="font-black text-slate-800 text-base mb-1.5">4. Dynamic Queue Management</h4>
-                <p>
-                  The timing and flow of dynamic OPD clinic queues are controlled by the clinic operator or doctor dashboard. JivniCare does not guarantee booking conversions, patient footfall, or specific patient arrival schedules.
-                </p>
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="pt-4 border-t border-slate-100 flex justify-end">
-              <Button 
-                onClick={() => setShowTerms(false)}
-                className="px-6 py-2.5 bg-[#5298D2] hover:bg-[#3d83bd] text-white rounded-xl font-bold text-xs shadow-sm transition-all"
-              >
-                I Understand & Close
-              </Button>
-            </div>
-          </motion.div>
+      <footer className="mt-8 mb-16 text-center max-w-2xl mx-auto px-4 flex flex-col items-center gap-3 text-slate-400">
+        <div className="flex items-center gap-1.5 justify-center">
+          <ShieldCheck className="w-4 h-4 text-[#4A90D9] shrink-0" />
+          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600">
+            <span style={{ color: '#4A90D9' }}>Jivni</span><span style={{ color: '#4A8C4A' }}>Care</span> Platform Disclaimer
+          </span>
         </div>
-      )}
-    </AnimatePresence>
-
-    {/* Privacy Policy Modal */}
-    <AnimatePresence>
-      {showPrivacy && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          {/* Backdrop */}
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setShowPrivacy(false)}
-            className="absolute inset-0 bg-slate-900/60 backdrop-blur-md"
-          />
-          {/* Content Card */}
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative w-full max-w-2xl bg-white rounded-3xl border border-slate-200 shadow-2xl p-6 md:p-8 overflow-hidden z-10 flex flex-col max-h-[80vh]"
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <div className="w-9 h-9 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center">
-                  <ShieldCheck className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-extrabold text-slate-900 text-lg">Privacy Policy</h3>
-                  <p className="text-[11px] text-slate-500 font-bold uppercase tracking-wider">JivniCare B2B Partner Portal</p>
-                </div>
-              </div>
-              <button 
-                onClick={() => setShowPrivacy(false)}
-                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center text-sm font-bold transition-all"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Body */}
-            <div className="flex-1 overflow-y-auto py-6 pr-2 space-y-6 text-sm text-slate-600 leading-relaxed font-medium">
-              <div>
-                <h4 className="font-black text-slate-800 text-base mb-1.5">1. Practice Data Handling</h4>
-                <p>
-                  We collect professional registration coordinates, clinic address details, geo-location mapping, and dynamic operating hours strictly to render a clear dashboard and schedule appointments for patients.
-                </p>
-              </div>
-
-              <div>
-                <h4 className="font-black text-slate-800 text-base mb-1.5">2. Security Standards</h4>
-                <p>
-                  All database exchanges, profile configurations, and patient queue metrics are hosted on encrypted servers to secure sensitive practice credentials against unauthorized access.
-                </p>
-              </div>
-
-              <div>
-                <h4 className="font-black text-slate-800 text-base mb-1.5">3. Third-Party Sharing Policies</h4>
-                <p>
-                  JivniCare operates on a strict enterprise B2B framework. We do not sell, rent, or distribute personal physician profiles, email IDs, contact numbers, or credential metadata to third-party marketing companies.
-                </p>
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="pt-4 border-t border-slate-100 flex justify-end">
-              <Button 
-                onClick={() => setShowPrivacy(false)}
-                className="px-6 py-2.5 bg-[#5298D2] hover:bg-[#3d83bd] text-white rounded-xl font-bold text-xs shadow-sm transition-all"
-              >
-                Close Privacy Policy
-              </Button>
-            </div>
-          </motion.div>
+        <p className="text-[10px] text-slate-400 leading-relaxed max-w-xl mx-auto text-center">
+          <span style={{ color: '#4A90D9' }}>Jivni</span><span style={{ color: '#4A8C4A' }}>Care</span> is a clinic queue software provider. Medical registration details are self-declared.
+        </p>
+        <div className="flex items-center gap-4 text-xs font-semibold mt-1">
+          <button onClick={() => setShowTerms(true)} className="text-[#5298D2] hover:text-[#3d83bd] hover:underline transition-all cursor-pointer bg-transparent border-none p-0 outline-none">Terms of Service</button>
+          <span className="text-slate-300">•</span>
+          <button onClick={() => setShowPrivacy(true)} className="text-[#5298D2] hover:text-[#3d83bd] hover:underline transition-all cursor-pointer bg-transparent border-none p-0 outline-none">Privacy Policy</button>
         </div>
-      )}
-    </AnimatePresence>
-
-  </div>
+      </footer>
+    </div>
   );
 }

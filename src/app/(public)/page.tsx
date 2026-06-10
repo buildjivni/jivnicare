@@ -8,31 +8,42 @@ import {
 } from "@/features/marketing/components/home";
 import { HelpEcosystem } from "@/features/marketing/components/trust/HelpEcosystem";
 import { ProductDemosSection } from "@/features/marketing/components/home/ProductDemosSection";
-import { ClinicOnboardingCta } from "@/features/marketing/components/home/ClinicOnboardingCta";
 import prisma from "@/lib/db/prisma";
-import type { Doctor } from "@/types";
 import { mapPrismaDoctorToUI } from "@/lib/utils/data-utils";
 
-export default async function Home() {
-  // Fetch Top 3 Verified Doctors
+async function getVerifiedDoctors() {
   const dbDoctors = await prisma.doctor.findMany({
+    where: {
+      verificationStatus: 'VERIFIED',
+      isOnline: true,
+    },
+    include: {
+      clinic: true,
+    },
+    take: 6, // Show max 6 on homepage
+    orderBy: {
+      jivnicarePatientsServed: 'desc',
+    },
+  });
+  return dbDoctors.map(doc => mapPrismaDoctorToUI(doc));
+}
+
+async function getSpecialities() {
+  // In V1 spec, specialties are just a string on the Doctor model.
+  // We fetch distinct values from the speciality field.
+  const doctors = await prisma.doctor.findMany({
     where: { verificationStatus: 'VERIFIED' },
-    take: 3,
-    orderBy: { rating: 'desc' },
-    include: { specialties: true, keywords: true, dailyQueues: true }
+    select: { speciality: true },
+    distinct: ['speciality'],
   });
+  return doctors.map(d => ({ name: d.speciality, id: d.speciality.toLowerCase() }));
+}
 
-  // Fetch all specialties that have at least one doctor
-  const dbSpecialties = await prisma.specialty.findMany({
-    where: { doctorIds: { isEmpty: false } },
-    take: 8
-  });
-
-  const featuredDoctors: Doctor[] = dbDoctors.map(doc => mapPrismaDoctorToUI(doc));
-
-  const specialties = dbSpecialties.length > 0 
-    ? dbSpecialties.map(s => ({ name: s.name, id: s.slug }))
-    : undefined;
+export default async function Home() {
+  const [featuredDoctors, specialties] = await Promise.all([
+    getVerifiedDoctors(),
+    getSpecialities()
+  ]);
 
   return (
     <main className="flex flex-col min-h-screen w-full max-w-full overflow-x-hidden box-border bg-white">
@@ -61,8 +72,6 @@ export default async function Home() {
       <ProductDemosSection />
       
       <CtaBannerSection />
-      
-      <ClinicOnboardingCta />
     </main>
   );
 }

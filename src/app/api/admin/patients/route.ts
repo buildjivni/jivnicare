@@ -1,3 +1,4 @@
+import { apiResponse, apiError } from '@/lib/utils/api-response';
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db/prisma";
 import { verifyToken } from "@/lib/jwt";
@@ -6,15 +7,15 @@ import { cookies } from "next/headers";
 export async function GET(req: Request) {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get("auth-token")?.value;
+    const token = cookieStore.get("jivnicare_token")?.value;
 
     if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiError("Unauthorized", 401);
     }
 
     const decoded: any = await verifyToken(token);
     if (!decoded || decoded.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return apiError("Forbidden", 403);
     }
 
     const url = new URL(req.url);
@@ -41,7 +42,7 @@ export async function GET(req: Request) {
           name: true,
           phone: true,
           createdAt: true,
-          isVerified: true
+          verificationStatus: true
         },
         orderBy: {
           createdAt: 'desc'
@@ -68,6 +69,6 @@ export async function GET(req: Request) {
     });
   } catch (error) {
     console.error("Admin Patients API Error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return apiError("Internal Server Error", 500);
   }
 }

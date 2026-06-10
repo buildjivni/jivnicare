@@ -1,13 +1,11 @@
+import { apiResponse, apiError } from '@/lib/utils/api-response';
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db/prisma";
 import { getTwoFactorApiKey } from "@/lib/infrastructure/env";
-import { checkRateLimit } from "@/lib/infrastructure/rate-limit";
+import { otpRatelimit, checkUpstashRateLimit } from "@/lib/ratelimit";
 import { logger } from "@/lib/infrastructure/logger";
 
 import { isTestOtpModeEnabled, getTestOtpNumbers } from "@/lib/config/test-mode";
-
-const SEND_LIMIT = 5;
-const SEND_WINDOW_MS = 15 * 60 * 1000;
 
 export async function POST(request: Request) {
   try {
@@ -15,50 +13,27 @@ export async function POST(request: Request) {
     const { phone } = body;
 
     if (!phone || typeof phone !== "string") {
-      return NextResponse.json(
-        { error: "Valid phone number is required" },
-        { status: 400 }
-      );
+      return apiError("Valid phone number dena zaroori hai", 400);
     }
 
     const phone10 = phone.replace(/\D/g, "").slice(-10);
-    if (phone10.length !== 10) {
-      return NextResponse.json({ error: "Invalid phone number format" }, { status: 400 });
+    if (!/^[6-9]\d{9}$/.test(phone10)) {
+      return apiError("Phone number sahi nahi hai", 400);
     }
 
-    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "127.0.0.1";
+    // --- Upstash Rate Limiting ---
+    const { success } = await checkUpstashRateLimit(
+      otpRatelimit, 
+      `otp_send_${phone10}`
+    );
 
-    const phoneLimit = await checkRateLimit({
-      identifier: `otp_send_phone_${phone10}`,
-      limit: SEND_LIMIT,
-      windowMs: SEND_WINDOW_MS,
-    });
-    const ipLimit = await checkRateLimit({
-      identifier: `otp_send_ip_${ip}`,
-      limit: 10,
-      windowMs: SEND_WINDOW_MS,
-    });
-
-    if (!phoneLimit.success || !ipLimit.success) {
-      const reset = !phoneLimit.success ? phoneLimit.resetTime : ipLimit.resetTime;
-      return NextResponse.json(
-        {
-          error: "Too many OTP requests. Please wait before trying again.",
-          retryAfterSec: Math.max(
-            0,
-            Math.ceil((reset.getTime() - Date.now()) / 1000)
-          ),
-        },
-        { status: 429 }
-      );
+    if (!success) {
+      return apiError("Bahut zyada requests. Thodi der mein try karein.", 429);
     }
 
     const apiKey = getTwoFactorApiKey();
     if (!apiKey) {
-      return NextResponse.json(
-        { error: "Phone verification service is not configured on the server." },
-        { status: 503 }
-      );
+      return apiError("Phone verification service configured nahi hai.", 503);
     }
 
     if (isTestOtpModeEnabled() && getTestOtpNumbers().includes(phone10)) {
@@ -66,8 +41,8 @@ export async function POST(request: Request) {
         where: { phone: phone10 },
         select: { id: true },
       });
-      return NextResponse.json({
-        message: "Test OTP generated",
+      return apiResponse({
+        message: "Test OTP generate ho gaya",
         sessionId: `test_session_${phone10}`,
         userExists: !!existingUser,
       });
@@ -80,13 +55,13 @@ export async function POST(request: Request) {
     
     if (!res.ok) {
       logger.error({ category: "OTP", message: "2Factor API HTTP error", error: `status ${res.status}` });
-      return NextResponse.json({ error: "Failed to send OTP. SMS service may be unavailable." }, { status: 503 });
+      return apiError("OTP bhejne mein dikkat hui. SMS service shayad band hai.", 503);
     }
 
     const data = await res.json();
     if (data.Status !== "Success") {
       logger.error({ category: "OTP", message: "2Factor API error", error: data });
-      return NextResponse.json({ error: "Failed to send OTP. Please try again." }, { status: 500 });
+      return apiError("OTP nahi bhej paaye. Kripya dubara try karein.", 500);
     }
 
     const existingUser = await prisma.user.findUnique({
@@ -100,16 +75,13 @@ export async function POST(request: Request) {
       metadata: { phoneSuffix: phone10.slice(-4), sessionId: data.Details },
     });
 
-    return NextResponse.json({
-      message: "OTP sent successfully",
+    return apiResponse({
+      message: "OTP bhej diya gaya hai",
       sessionId: data.Details,
       userExists: !!existingUser,
     });
   } catch (error) {
     logger.error({ category: "OTP", message: "Send OTP error", error });
-    return NextResponse.json(
-      { error: "Internal server error while sending OTP" },
-      { status: 500 }
-    );
+    return apiError("Internal server error while sending OTP", 500);
   }
 }

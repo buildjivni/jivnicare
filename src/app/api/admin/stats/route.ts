@@ -1,3 +1,4 @@
+import { apiResponse, apiError } from '@/lib/utils/api-response';
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db/prisma";
 import { verifyToken } from "@/lib/jwt";
@@ -7,15 +8,15 @@ import { resolveClinicLogicalDay } from "@/lib/utils/clinic-utils";
 export async function GET() {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get("auth-token")?.value;
+    const token = cookieStore.get("jivnicare_token")?.value;
 
     if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiError("Unauthorized", 401);
     }
 
     const decoded: any = await verifyToken(token);
     if (!decoded || decoded.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return apiError("Forbidden", 403);
     }
 
     const today = resolveClinicLogicalDay();
@@ -68,9 +69,9 @@ export async function GET() {
       }
     };
 
-    return NextResponse.json({ success: true, stats });
+    return apiResponse({success: true, stats});
   } catch (error) {
     console.error("Admin Stats API Error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return apiError("Internal Server Error", 500);
   }
 }

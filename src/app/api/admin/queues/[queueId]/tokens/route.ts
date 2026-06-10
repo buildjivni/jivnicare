@@ -1,3 +1,4 @@
+import { apiResponse, apiError } from '@/lib/utils/api-response';
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db/prisma";
 import { verifyToken } from "@/lib/jwt";
@@ -9,15 +10,15 @@ export async function GET(
 ) {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get("auth-token")?.value;
+    const token = cookieStore.get("jivnicare_token")?.value;
 
     if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiError("Unauthorized", 401);
     }
 
     const decoded: any = await verifyToken(token);
     if (!decoded || decoded.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return apiError("Forbidden", 403);
     }
 
     const { queueId } = await params;
@@ -32,14 +33,14 @@ export async function GET(
     });
 
     if (!dailyQueue) {
-      return NextResponse.json({ error: "Queue not found" }, { status: 404 });
+      return apiError("Queue not found", 404);
     }
 
     const tokens = await prisma.queueToken.findMany({
       where: { queueId },
       orderBy: { tokenNumber: 'asc' },
       include: {
-        user: { select: { name: true, phone: true } },
+        patient: { select: { name: true, phone: true } },
         walkInEntry: { select: { patientName: true, phoneNumber: true } }
       }
     });
@@ -47,12 +48,12 @@ export async function GET(
     const formattedTokens = tokens.map(t => ({
       id: t.id,
       tokenNumber: t.tokenNumber,
-      patientName: t.user?.name || t.walkInEntry?.patientName || "Walk-in Patient",
-      phone: t.user?.phone || t.walkInEntry?.phoneNumber || "N/A",
+      patientName: t.patient?.name || t.walkInEntry?.patientName || "Walk-in Patient",
+      phone: t.patient?.phone || t.walkInEntry?.phoneNumber || "N/A",
       status: t.status,
-      type: t.source,
-      issuedAt: t.tokenIssuedAt.toISOString(),
-      isEmergency: t.isEmergency,
+      type: t.tokenType,
+      issuedAt: t.bookedAt.toISOString(),
+      isEmergency: t.tokenType === "EMERGENCY",
     }));
 
     // Identify the exact current active token record if it exists
@@ -76,6 +77,6 @@ export async function GET(
     });
   } catch (error) {
     console.error("Queue Inspector API Error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return apiError("Internal Server Error", 500);
   }
 }

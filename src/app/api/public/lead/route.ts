@@ -1,3 +1,4 @@
+import { apiResponse, apiError } from '@/lib/utils/api-response';
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/db/prisma';
 import { z } from 'zod';
@@ -18,7 +19,7 @@ export async function POST(request: Request) {
     
     const validation = leadSchema.safeParse(body);
     if (!validation.success) {
-      return NextResponse.json({ error: "Invalid lead payload" }, { status: 400 });
+      return apiError("Invalid lead payload", 400);
     }
 
     const { phone, ...data } = validation.data;
@@ -36,10 +37,10 @@ export async function POST(request: Request) {
       }
     });
 
-    return NextResponse.json({ success: true, leadId: lead.id });
+    return apiResponse({success: true, leadId: lead.id});
   } catch (error) {
     console.error("Lead capture error:", error);
     // Don't expose database errors to public endpoint
-    return NextResponse.json({ error: "Failed to capture lead" }, { status: 500 });
+    return apiError("Failed to capture lead", 500);
   }
 }

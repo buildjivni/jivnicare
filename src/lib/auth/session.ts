@@ -10,7 +10,7 @@ export interface SessionPayload {
 }
 
 export async function getSession(): Promise<SessionPayload | null> {
-  const token = (await cookies()).get("auth-token")?.value;
+  const token = (await cookies()).get("jivnicare_token")?.value;
   if (!token) return null;
 
   try {

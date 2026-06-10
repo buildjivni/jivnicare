@@ -20,9 +20,11 @@ import { useAuthStore } from "@/features/auth/store/useAuthStore";
 import { useDoctorWorkspace } from "@/features/doctor/hooks/useDoctorWorkspace";
 import { WeeklyScheduleEditor } from "@/features/doctor/components/settings/WeeklyScheduleEditor";
 import { ClinicOperationsForm } from "@/features/doctor/components/settings/ClinicOperationsForm";
+import { OperatorManagement } from "@/features/doctor/components/settings/OperatorManagement";
 import { ImageUploadField } from "@/components/shared/ImageUploadField";
 import { WalkInModal } from "@/features/doctor/components/queue/WalkInModal";
 import { cn } from "@/lib/utils/utils";
+import { formatDoctorName } from "@/lib/utils/name-utils";
 
 // ── BRAND COLORS (From Logo) ──────────────────────────────────────
 const BrandColors = {
@@ -42,6 +44,7 @@ function DoctorDashboardContent() {
     verificationStatus,
     profileCompleteness,
     isReady: profileReady,
+    error: profileError,
     refresh: refreshProfile,
     setProfileField,
     setSettingsField,
@@ -119,7 +122,11 @@ function DoctorDashboardContent() {
       let heldCount = 0;
       let noShowCount = 0;
 
-      formattedPatients = queueData.tokens.map((t: any) => {
+      const activeTokens = queueData.tokens.filter((t: any) => 
+        ["WAITING", "READY", "CALLED", "IN_CONSULTATION", "SKIPPED"].includes(t.status)
+      );
+
+      formattedPatients = activeTokens.map((t: any) => {
         const isEmergency = t.isEmergency || t.tokenNumber >= 9000;
         const waitTokens = isEmergency ? 0 : Math.max(0, t.tokenNumber - currentActive - 1);
         const waitTime = t.status === "WAITING" && !isEmergency ? waitTokens * avgTime : 0;
@@ -451,23 +458,35 @@ function DoctorDashboardContent() {
   const toggleLeaveMode = async () => {
     if (isTogglingLeave) return;
     const newMode = !leaveMode;
-    setLeaveMode(newMode);
+    const newState = !newMode; // isOnline is the inverse of leaveMode
+
+    if (newMode) {
+      const confirmed = confirm(
+        "Offline karne par nayi bookings band ho jaayengi. Pehle se booked patients queue mein rahenge. Continue?"
+      );
+      if (!confirmed) return;
+    }
+
     setIsTogglingLeave(true);
     
-    if (newMode) {
-      await handleUpdateSettings({ 
-        isClosedToday: true,
-        status: "CLINIC_CLOSED"
-      });
-    } else {
-      await handleUpdateSettings({ 
-        isClosedToday: false,
-        status: "AVAILABLE",
-        pauseOnlineBooking: false,
-        statusReason: ""
-      });
+    try {
+      const res = await fetch('/api/doctor/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isOnline: newState }),
+      })
+
+      if (res.ok) {
+        setLeaveMode(newMode);
+        await refreshProfile();
+      } else {
+        alert('Update failed. Please try again.');
+      }
+    } catch (err) {
+      console.error("Toggle failed", err);
+    } finally {
+      setIsTogglingLeave(false);
     }
-    setIsTogglingLeave(false);
   };
 
   const renderSidebar = () => {
@@ -651,8 +670,8 @@ const renderProfile = () => (
             </div>
           )}
           <div>
-            <h2 className="text-2xl font-bold text-slate-900">{profileData.name || "Doctor Profile"}</h2>
-            <p className="text-slate-500">{profileData.specialty}</p>
+            <h2 className="text-2xl font-bold text-slate-900">{formatDoctorName(profileData.name)}</h2>
+            <p className="text-slate-500">{profileData.specialty || "Specialty not set"}</p>
           </div>
         </div>
 
@@ -688,7 +707,7 @@ const renderProfile = () => (
               <label className="text-xs font-bold text-slate-500 uppercase mb-2 block flex items-center gap-1">
                 Primary Specialty <AlertCircle className="w-3 h-3 text-slate-400" />
               </label>
-              <Input disabled value={profileData.specialty} className="h-12 rounded-xl bg-slate-100 text-slate-500 cursor-not-allowed border-slate-200" />
+              <Input disabled value={profileData.specialty || "Not set"} className="h-12 rounded-xl bg-slate-100 text-slate-500 cursor-not-allowed border-slate-200" />
             </div>
           </div>
           <div>
@@ -792,15 +811,16 @@ const renderProfile = () => (
       </div>
       <div className="space-y-10">
         <section className="bg-white rounded-[2rem] border border-slate-200 p-8 shadow-sm">
-          <ClinicOperationsForm 
-            initialData={settingsData} 
-            isSaving={isSaving} 
+          <ClinicOperationsForm
+            initialData={settingsData}
+            isSaving={isSaving}
             onSave={async (newData) => {
               await handleUpdateSettings(newData);
               await refreshProfile();
             }}
           />
         </section>
+        <OperatorManagement />
         <section className="bg-white rounded-[2rem] border border-slate-200 p-8 shadow-sm">
           <WeeklyScheduleEditor 
             initialSchedule={(weeklySchedule ?? undefined) as Parameters<typeof WeeklyScheduleEditor>[0]["initialSchedule"]} 
@@ -829,6 +849,44 @@ const renderProfile = () => (
   );
 
 
+
+  if (profileError) {
+    const isAuthError = profileError.includes("401") || profileError.toLowerCase().includes("unauthorized");
+    return (
+      <div className="min-h-screen bg-[#f8f9fa] flex items-center justify-center p-4">
+        <div className="bg-white rounded-[2.5rem] p-10 shadow-xl border border-slate-100 max-w-md w-full text-center fade-in">
+          <div className={`w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 ${isAuthError ? "bg-amber-50 text-amber-600" : "bg-rose-50 text-rose-600"}`}>
+            {isAuthError ? <ShieldCheck className="w-10 h-10" /> : <AlertCircle className="w-10 h-10" />}
+          </div>
+          <h2 className="text-2xl font-black text-slate-900 mb-2">
+            {isAuthError ? "Session Expired" : "System Error"}
+          </h2>
+          <p className="text-slate-500 font-medium mb-8 leading-relaxed">
+            {isAuthError 
+              ? "Aapki session expire ho chuki hai. Kripya dobara login karein." 
+              : "Profile load karne mein dikkat ho rahi hai. Kripya apna internet check karein."}
+          </p>
+          <div className="flex flex-col gap-3">
+            <Button 
+              onClick={() => isAuthError ? window.location.href = "/login" : refreshProfile()} 
+              className="h-14 rounded-2xl bg-primary text-white font-bold shadow-lg shadow-primary/20"
+            >
+              {isAuthError ? "Go to Login" : "Try Again"}
+            </Button>
+            {!isAuthError && (
+              <Button 
+                variant="ghost" 
+                onClick={() => window.location.reload()} 
+                className="h-12 rounded-2xl text-slate-500 font-bold"
+              >
+                Refresh Page
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!profileReady) {
     return (

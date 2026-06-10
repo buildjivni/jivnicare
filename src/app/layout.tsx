@@ -13,12 +13,9 @@ const geistSans = Geist({
 
 // ── Root Metadata ─────────────────────────────────────────────
 export const metadata: Metadata = {
-  metadataBase: new URL(SITE_CONFIG.baseUrl),
-  title: {
-    default: `${SITE_CONFIG.name} | Book Top Doctors in Bihar Instantly`,
-    template: `%s | ${SITE_CONFIG.name}`,
-  },
-  description: SITE_CONFIG.description,
+  metadataBase: new URL('https://www.jinnicare.com'),
+  title: 'JivniCare — Book Top Doctors in Bihar',
+  description: 'Bihar mein top doctors ko instantly book karein. Verified specialists in Jamui, Deoghar aur pure Bihar mein.',
   keywords: [
     "book doctor Bihar",
     "doctor appointment Patna",

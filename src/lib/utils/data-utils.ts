@@ -71,22 +71,10 @@ export function mapPrismaDoctorToUI(doc: any): UIDoctor {
   const todayQueue = Array.isArray(doc.dailyQueues)
     ? doc.dailyQueues[0] ?? null
     : null;
-  const avgConsultTime = doc.averageConsultationTime || 15;
+  const avgConsultTime = doc.averageConsultationMinutes || doc.averageConsultationTime || 15;
 
-  // Queue state — require ACTIVE or NOT_STARTED and not explicitly closed
-  const isQueueActive =
-    todayQueue !== null &&
-    (todayQueue.status === "ACTIVE" || todayQueue.status === "NOT_STARTED") &&
-    !clinicOps?.isClosedToday &&
-    clinicOps?.status !== "CLINIC_CLOSED";
-
-  const waitingCount = isQueueActive
-    ? Math.max(
-        0,
-        ((todayQueue.issuedTokensCount || 0) - (todayQueue.cancelledCount || 0) - (todayQueue.noShowCount || 0)) - (todayQueue.currentActiveToken || 0)
-      )
-    : 0;
-  const waitMinutes = isQueueActive ? waitingCount * avgConsultTime : 0;
+  // Queue state — V1 use isOnline
+  const isQueueActive = doc.isOnline;
 
   // Availability from schedule (India TZ aware)
   const { isAvailableToday, available, nextSlotTime } = getAvailability(
@@ -94,19 +82,17 @@ export function mapPrismaDoctorToUI(doc: any): UIDoctor {
     clinicOps
   );
 
+  let availableSlots = 0;
+  if (isAvailableToday && todayQueue) {
+    availableSlots = Math.max(0, (doc.dailyTokenLimit || 50) - (todayQueue.issuedTokensCount || 0));
+  } else if (isAvailableToday && !todayQueue) {
+    availableSlots = doc.dailyTokenLimit || 50; 
+  }
+
   // Human-readable availability status for DoctorCard pills
   let availabilityStatus: string;
-  if (clinicOps?.isClosedToday || clinicOps?.status === "CLINIC_CLOSED") {
-    availabilityStatus = "OPD Closed";
-  } else if (clinicOps?.status === "SHORT_BREAK") {
-    availabilityStatus = "Short Break";
-  } else if (clinicOps?.status === "EMERGENCY_ONLY") {
-    availabilityStatus = "Emergency Only";
-  } else if (clinicOps?.status === "LIMITED_SLOTS") {
-    availabilityStatus = "Limited Slots";
-  } else if (isQueueActive) {
-    availabilityStatus =
-      waitMinutes > 0 ? `~${waitMinutes} mins wait` : "OPD Open";
+  if (isQueueActive) {
+    availabilityStatus = "OPD Open";
   } else if (isAvailableToday) {
     availabilityStatus = nextSlotTime ? `Opens at ${nextSlotTime}` : "OPD Open";
   } else {
@@ -114,12 +100,12 @@ export function mapPrismaDoctorToUI(doc: any): UIDoctor {
   }
 
   // Fee — always ₹ prefixed
-  const rawFee = doc.fee ?? doc.consultationFee ?? 0;
+  const rawFee = doc.consultationFee || doc.fee || 0;
   const feeFormatted = `₹${rawFee}`;
 
   // Images — never inject fake external URLs
   const profileImage = doc.profileImage || "";
-  const clinicImage = doc.clinicImage || "";
+  const clinicImage = doc.clinicImage || (doc.clinic as any)?.bannerImageUrl || "";
 
   // Languages — handle both string CSV and array
   const rawLangs = doc.languages;
@@ -136,12 +122,12 @@ export function mapPrismaDoctorToUI(doc: any): UIDoctor {
     id: doc.id,
     name: doc.name,
     slug: doc.slug || doc.id,
-    specialty: doc.specialties?.[0]?.name || "General Physician",
-    clinic: doc.hospitalName || "",
-    location: doc.district || doc.city || "",
+    specialty: doc.speciality || doc.specialties?.[0]?.name || "General Physician",
+    clinic: doc.hospitalName || doc.clinic?.name || "",
+    location: doc.city || doc.district || doc.clinic?.city || "",
     locality: doc.locality || "",
     landmark: doc.landmark || undefined,
-    fullAddress: doc.fullAddress || undefined,
+    fullAddress: doc.fullAddress || doc.clinic?.address || undefined,
     pincode: doc.pincode || undefined,
     latitude: doc.latitude ?? null,
     longitude: doc.longitude ?? null,
@@ -149,11 +135,12 @@ export function mapPrismaDoctorToUI(doc: any): UIDoctor {
     distance: doc.distance || undefined,
     distanceStr: (doc as any).distanceStr || undefined,
     distanceKm: (doc as any).distanceKm || undefined,
-    rating: doc.rating || 0,
-    reviewCount: doc.reviewCount || 0,
-    reviews: doc.reviewCount || 0,
-    totalConsultations: doc.totalConsultations || 0,
-    experience: String(doc.experience || 0),
+    rating: 0, // No rating in V1
+    reviewCount: 0, // No reviews in V1
+    reviews: 0,
+    totalConsultations: doc.jivnicarePatientsServed || 0,
+    lifetimePatientsDeclaration: doc.lifetimePatientsDeclaration || undefined,
+    experience: String(doc.experienceYears || doc.experience || 0),
     fee: feeFormatted,
     videoFee: feeFormatted,
     // Images: use DB values only
@@ -163,21 +150,21 @@ export function mapPrismaDoctorToUI(doc: any): UIDoctor {
     available,
     availabilityStatus,
     isAvailableToday,
+    availableSlots,
     isQueueActive,
-    queueWaitMinutes: waitMinutes,
-    patientsWaiting: waitingCount,
+    queueWaitMinutes: 0, // wait time logic will be refined in Phase 3
+    patientsWaiting: 0,
     nextAvailable: nextSlotTime || (isAvailableToday ? "Today" : ""),
     verifiedBadgeLabel:
       doc.verifiedBadgeLabel ||
-      (doc.experience >= 10 ? "Experienced Partner" : "Verified Doctor"),
+      ((doc.experienceYears || doc.experience) >= 10 ? "Experienced Partner" : "Verified Doctor"),
     tags: [
-      ...(doc.specialties?.map((s: any) => s.name) || []),
-      ...(doc.keywords?.map((k: any) => k.term) || []),
-    ],
+      doc.speciality || (doc.specialties?.[0]?.name),
+    ].filter(Boolean),
     about: doc.bio || "",
     education: doc.education || "",
     qualifications:
-      doc.qualifications ||
+      doc.qualifications || doc.qualification ||
       (doc.education ? doc.education.split(",")[0].trim() : ""),
     averageConsultationTime: avgConsultTime,
     languages,

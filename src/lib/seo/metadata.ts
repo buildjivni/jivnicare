@@ -52,7 +52,7 @@ export function generateDoctorMetadata(doctor: {
     ? `${doctor.about.slice(0, 140)}. Book appointment with ${doctor.name} on JivniCare.`
     : `Book an appointment with ${doctor.name}, ${doctor.specialty} in ${district}, Bihar. ${
         doctor.experience ? `${doctor.experience} experience.` : ""
-      } Rated ${doctor.rating ?? "4.5"}⭐ by ${doctor.reviews ?? "patients"} patients.`;
+      } Verified doctor on JivniCare.`;
 
   return {
     title,

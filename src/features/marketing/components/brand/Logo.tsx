@@ -1,16 +1,23 @@
-import React from "react";
-import Image from "next/image";
-import type { LogoProps } from "@/types";
+import Image from 'next/image'
 
-export function Logo({ className = "h-10 w-10", ...props }: LogoProps & React.ImgHTMLAttributes<HTMLImageElement>) {
+export function Logo({ size = 40, className }: { size?: number; className?: string }) {
   return (
-    <Image 
-      src="/icon.svg" 
-      alt="JivniCare Logo" 
-      width={512} 
-      height={512} 
-      className={`object-contain antialiased shrink-0 ${className}`}
-      {...(props as any)} 
-    />
-  );
+    <div className={`flex items-center gap-2 ${className || ''}`}>
+      <Image
+        src="/icon.png"
+        alt="JivniCare"
+        width={size}
+        height={size}
+        className="object-contain"
+        style={{ background: 'transparent' }}
+      />
+      <div className="flex flex-col leading-none">
+        <span className="font-bold text-lg">
+          <span style={{color: '#4A90D9'}}>Jivni</span>
+          <span style={{color: '#4A8C4A'}}>Care</span>
+        </span>
+        <span className="text-xs text-slate-400 tracking-widest uppercase">Bihar</span>
+      </div>
+    </div>
+  )
 }

@@ -1,3 +1,4 @@
+import { apiResponse, apiError } from '@/lib/utils/api-response';
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import prisma from "@/lib/db/prisma";
@@ -6,14 +7,14 @@ import { logger } from "@/lib/infrastructure/logger";
 
 export async function POST(request: Request) {
   try {
-    const token = (await cookies()).get("auth-token")?.value;
+    const token = (await cookies()).get("jivnicare_token")?.value;
     if (!token) {
-      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+      return apiError("Authentication required", 401);
     }
 
     const payload = await verifyToken(token) as { id: string; role?: string } | null;
     if (!payload?.id) {
-      return NextResponse.json({ error: "Invalid session" }, { status: 401 });
+      return apiError("Invalid session", 401);
     }
 
     const body = await request.json();
@@ -69,6 +70,6 @@ export async function POST(request: Request) {
       message: "update-profile failed",
       error,
     });
-    return NextResponse.json({ error: "Failed to save profile" }, { status: 500 });
+    return apiError("Failed to save profile", 500);
   }
 }

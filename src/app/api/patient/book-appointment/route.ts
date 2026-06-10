@@ -1,3 +1,4 @@
+import { apiResponse, apiError } from '@/lib/utils/api-response';
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db/prisma";
 import { redis } from "@/lib/db/redis";
@@ -5,7 +6,7 @@ import { verifyToken } from "@/lib/jwt";
 import { cookies } from "next/headers";
 import { QueueService } from "@/features/queue/services/queueService";
 import { bookAppointmentSchema, formatZodError } from "@/lib/validators/validations";
-import { checkRateLimit } from '@/lib/infrastructure/rate-limit';
+import { bookingRatelimit, checkUpstashRateLimit } from "@/lib/ratelimit";
 import { logger } from '@/lib/infrastructure/logger';
 import { isTransientDbError, dbUnavailableResponse } from '@/lib/db/db-errors';
 import { incrementTelemetryCounter } from '@/lib/telemetry/redis';
@@ -17,28 +18,26 @@ export async function POST(request: Request) {
   
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get("auth-token")?.value;
+    const token = cookieStore.get("jivnicare_token")?.value;
 
     if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiError("Unauthorized", 401);
     }
 
     const payload: any = await verifyToken(token);
     if (!payload || !payload.id) {
-      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+      return apiError("Invalid token", 401);
     }
-    const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
     userIdForRollback = payload.id;
     
-    const rateLimit = await checkRateLimit({
-      identifier: `book_appt_${payload.id}`, // Rate limit by patient ID
-      limit: 10,
-      windowMs: 60 * 60 * 1000, // 10 bookings per hour
-    });
+    // --- Upstash Rate Limiting ---
+    const { success } = await checkUpstashRateLimit(
+      bookingRatelimit, 
+      `book_appt_${payload.id}`
+    );
 
-    if (!rateLimit.success) {
-      logger.warn({ category: 'BOOKING', message: 'Rate limit exceeded for booking', metadata: { userId: payload.id, ip } });
-      return NextResponse.json({ error: "Too many booking attempts. Please try again later." }, { status: 429 });
+    if (!success) {
+      return apiError("Bahut zyada requests. Thodi der mein try karein.", 429);
     }
 
     const body = await request.json();
@@ -46,10 +45,7 @@ export async function POST(request: Request) {
     // Strict Payload Validation
     const validation = bookAppointmentSchema.safeParse(body);
     if (!validation.success) {
-      return NextResponse.json(
-        { error: "Invalid payload: " + formatZodError(validation.error) }, 
-        { status: 400 }
-      );
+      return apiError("Invalid payload: " + formatZodError(validation.error), 400);
     }
 
     const { doctorId, date, location, isEmergency, requestId } = validation.data;
@@ -61,25 +57,31 @@ export async function POST(request: Request) {
       const isNewRequest = await redis.set(idempotencyKey, "PROCESSING", { nx: true, ex: 86400 });
       if (!isNewRequest) {
         logger.warn({ category: 'BOOKING', message: 'Duplicate booking request suppressed', metadata: { userId: payload.id, requestId } });
-        return NextResponse.json({ error: "Booking already being processed or completed." }, { status: 409 });
+        return apiError("Booking already being processed or completed.", 409);
       }
     }
 
-    // Server strictly enforces logical day. Do not trust client date.
-    const logicalDate = resolveClinicLogicalDay();
+    // Get patient details
+    const user = await prisma.user.findUnique({
+      where: { id: payload.id },
+      select: { phone: true, name: true }
+    });
 
-    // Call service layer
+    if (!user) {
+      return apiError("User not found", 404);
+    }
+
+    // Call service layer (V1 refactored)
     const { token: newQueueToken } = await QueueService.issueToken(
       doctorId, 
-      logicalDate, 
       payload.id, 
-      "ONLINE", 
-      location,
-      isEmergency
+      user.phone,
+      isEmergency ? "EMERGENCY" : "ONLINE",
+      user.name || undefined
     );
 
     await incrementTelemetryCounter('bookingSuccess').catch(() => {});
-    return NextResponse.json({ success: true, token: newQueueToken });
+    return apiResponse({ success: true, token: newQueueToken });
   } catch (error: unknown) {
     // Rollback idempotency key on failure so the user can retry safely
     if (requestIdForRollback && userIdForRollback && redis) {
@@ -90,35 +92,34 @@ export async function POST(request: Request) {
     if (isTransientDbError(error)) {
       logger.warn({ category: 'BOOKING', message: 'Transient DB error during booking', error });
       const { error: msg, status } = dbUnavailableResponse();
-      return NextResponse.json({ error: msg }, { status });
+      return apiError(msg, status);
     }
     logger.error({ category: 'BOOKING', message: 'Booking error', error });
 
     // Phase 2: Explicit Error Messages for Patients
     const errorMessages: Record<string, string> = {
-      "DOCTOR_NOT_VERIFIED": "This doctor is not currently verified to accept online bookings.",
-      "ALREADY_BOOKED": "You already have a token for this date.",
-      "QUEUE_FULL": "Queue is full for this date.",
-      "CLINIC_CLOSED_TODAY": "Clinic is closed today. Please try another day.",
-      "CLINIC_CLOSED_ON_THIS_DAY": "Doctor does not consult on this day.",
-      "BOOKING_NOT_STARTED": "Bookings for today haven't started yet.",
-      "BOOKING_FINISHED": "Bookings for today are now closed.",
-      "QUEUE_PAUSED": "The doctor has temporarily paused new online bookings.",
-      "EMERGENCY_FULL": "Emergency capacity is currently full. Please visit the clinic directly."
+      "DOCTOR_NOT_VERIFIED": "Doctor abhi verified nahi hain online bookings ke liye.",
+      "DOCTOR_NOT_ACCEPTING": "Doctor abhi appointments nahi le rahe hain",
+      "ALREADY_BOOKED": "Aapka token pehle se booked hai.",
+      "QUEUE_FULL": "Aaj ke slots full ho gaye hain.",
+      "DAILY_LIMIT_REACHED": "Aaj ke saare slots full ho gaye hain",
+      "CLINIC_CLOSED_TODAY": "Clinic aaj band hai. Kripya kisi aur din try karein.",
+      "CLINIC_CLOSED_ON_THIS_DAY": "Doctor aaj ke din nahi baithte hain.",
+      "BOOKING_NOT_STARTED": "Aaj ki bookings abhi shuru nahi hui hain.",
+      "BOOKING_FINISHED": "Aaj ki bookings band ho chuki hain.",
+      "QUEUE_PAUSED": "Doctor ne abhi online bookings rok di hain.",
+      "EMERGENCY_FULL": "Emergency slots bhi full ho gaye hain"
     };
 
     const errMsg = err.message ?? "";
     
-    // Check for ALREADY_BOOKED with attached token ID
+    // Check for ALREADY_BOOKED with attached token number
     if (errMsg.startsWith("ALREADY_BOOKED:")) {
-      const tokenId = errMsg.split(":")[1];
-      return NextResponse.json(
-        { error: "ALREADY_BOOKED", tokenId },
-        { status: 409 }
-      );
+      const tokenNumber = errMsg.split(":")[1];
+      return apiError(`Aapka token pehle se hai: #${tokenNumber}`, 409);
     }
 
-    const message = errorMessages[errMsg] || "Failed to book appointment";
+    const message = errorMessages[errMsg] || "Booking fail ho gayi. Dobara try karein.";
     const status = errorMessages[errMsg] ? 400 : 500;
     
     // Telemetry tracking for failures
@@ -128,6 +129,6 @@ export async function POST(request: Request) {
       await incrementTelemetryCounter('api500Errors').catch(() => {});
     }
 
-    return NextResponse.json({ error: message }, { status });
+    return apiError(message, status);
   }
 }

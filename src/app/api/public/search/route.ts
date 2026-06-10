@@ -1,292 +1,75 @@
-import { NextResponse } from 'next/server';
-import prisma from '@/lib/db/prisma';
-import { searchDoctors } from '@/lib/search/search-engine';
-import { getInferredSpecialties } from '@/lib/search/search-dictionary';
-import { mapPrismaDoctorToUI } from '@/lib/utils/data-utils';
-import { normalizeDistrict } from '@/lib/constants/districts';
-import { redis } from '@/lib/db/redis';
-import { resolveClinicLogicalDay } from '@/lib/utils/clinic-utils';
-import type { Doctor } from '@/types';
+import { NextRequest, NextResponse } from 'next/server'
+import prisma from '@/lib/db/prisma'
+import { getInferredSpecialties } from '@/lib/search/search-dictionary'
 
-export const dynamic = 'force-dynamic';
-
-// Helper: Haversine Formula for air distance calculation
-function getDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371; // Radius of the earth in km
-  const dLat = (lat2 - lat1) * (Math.PI / 180);
-  const dLon = (lon2 - lon1) * (Math.PI / 180);
-  const a = 
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * 
-    Math.sin(dLon/2) * Math.sin(dLon/2); 
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
-  return R * c; // Distance in km
-}
-
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
-    // ── Rate Limiting (RC-2) ──────────────────────────────────────────
-    const ip = request.headers.get('x-forwarded-for') || 'anonymous';
-    const rateLimit = 30; // 30 requests
-    const window = 15; // 15 seconds
-    const key = `rate_limit:search:${ip}`;
-    
-    const current = await redis.incr(key);
-    if (current === 1) {
-      await redis.expire(key, window);
-    }
-    
-    const remaining = Math.max(0, rateLimit - current);
-    
-    const headers = new Headers();
-    headers.set('X-RateLimit-Limit', rateLimit.toString());
-    headers.set('X-RateLimit-Remaining', remaining.toString());
-    
-    if (current > rateLimit) {
-      headers.set('Retry-After', window.toString());
-      return NextResponse.json({ error: "Too Many Requests" }, { status: 429, headers });
+    const { searchParams } = new URL(request.url)
+    const input = {
+      city: searchParams.get('city'),
+      speciality: searchParams.get('speciality'),
+      name: searchParams.get('name'),
+      district: searchParams.get('district'),
+      availableToday: searchParams.get('availableToday') === 'true'
     }
 
-    const { searchParams } = new URL(request.url);
-    const query = searchParams.get('q') || '';
-    let specialties = searchParams.getAll('specialty');
-    
-    // If not array params, try comma-separated
-    if (specialties.length === 0) {
-      const specParam = searchParams.get('specialty');
-      if (specParam) specialties = specParam.split(',').filter(Boolean);
-    }
+    // Infer specialties from user query if provided
+    const inferredSpecs = input.speciality ? getInferredSpecialties(input.speciality) : []
 
-    // Phase 3: Search Intelligence Dictionary
-    // Infer specialties from symptoms (e.g. "heart" -> "Cardiologist")
-    if (query) {
-      const inferred = getInferredSpecialties(query);
-      if (inferred.length > 0) {
-        specialties = [...specialties, ...inferred];
-      }
-    }
-
-    // Build Prisma Where Clause
-    const whereClause: any = {
+    const where: any = {
       verificationStatus: 'VERIFIED',
-      isAcceptingAppointments: true
-    };
-    
-    const andClauses: any[] = [];
-
-    // NOTE: Specialty filtering via Prisma relation is NOT applied here because
-    // MongoDB + Prisma does not support mode:'insensitive' on nested relation arrays.
-    // Specialty matching is handled in-memory by the search scoring engine below.
-
-    // Database-level text search — ONLY apply if query does NOT map to inferred specialties.
-    // Symptom queries (e.g. "heart", "fever") must bypass DB text filter to reach the scorer.
-    const hasInferredSpecialties = specialties.length > 0;
-    if (query && !hasInferredSpecialties) {
-      andClauses.push({
-        OR: [
-          { name: { contains: query, mode: 'insensitive' } },
-          { hospitalName: { contains: query, mode: 'insensitive' } },
-          { district: { contains: query, mode: 'insensitive' } },
-          { bio: { contains: query, mode: 'insensitive' } },
-        ]
-      });
+      isActive: true,
     }
 
-    if (andClauses.length > 0) {
-      whereClause.AND = andClauses;
+    if (input.district) {
+      where.district = input.district
     }
 
-
-    // Geo Patient Location Data & Filters
-    const districtRaw = searchParams.get('district') || '';
-    const district = normalizeDistrict(districtRaw);
-    const minExperience = parseInt(searchParams.get('minExperience') || '0', 10);
-    const maxFee = parseInt(searchParams.get('maxFee') || '10000', 10);
-    const availability = searchParams.get('availability'); // 'any', 'today'
-    const sort = searchParams.get('sort') || 'recommended';
-    const isEmergency = searchParams.get('isEmergency') === 'true';
-
-    // Filter by district only when explicitly provided by the UI
-    if (district) {
-      whereClause.district = { equals: district, mode: 'insensitive' };
+    if (inferredSpecs.length > 0) {
+      where.specializations = { hasSome: inferredSpecs }
     }
 
-    // Phase 3: Lead/Search Tracking (Fire and forget)
-    // We don't await this so it doesn't block the API response
-    if (query) {
-      prisma.searchAnalytics.create({
-        data: {
-          query,
-          normalizedQuery: query.toLowerCase(),
-          district,
-          resultsCount: 0 // Will update later or just track the query for now
-        }
-      }).catch(e => console.warn("Search Analytics Tracking Failed:", e));
-    }
-    
-    
-    // Geo Patient Location Data
-    const patientLatParam = searchParams.get('lat');
-    const patientLngParam = searchParams.get('lng');
-    const patientLat = patientLatParam ? parseFloat(patientLatParam) : null;
-    const patientLng = patientLngParam ? parseFloat(patientLngParam) : null;
-
-    if (minExperience > 0) {
-      whereClause.experience = { gte: minExperience };
-    }
-    
-    if (maxFee < 10000) {
-      whereClause.fee = { lte: maxFee };
+    if (input.city) {
+      where.city = { contains: input.city, mode: 'insensitive' }
     }
 
-    if (isEmergency) {
-      whereClause.clinicOperations = {
-        is: {
-          emergencySlots: { gt: 0 }
-        }
-      };
+    if (input.name) {
+      where.name = { contains: input.name, mode: 'insensitive' }
     }
 
-    // ── Fetch verified doctors from DB ───────────────────────────────────
-    const dbDoctors = await prisma.doctor.findMany({
-      where: whereClause,
-      select: {
-        id: true,
-        slug: true,
-        name: true,
-        education: true,
-        hospitalName: true,
-        district: true,
-        rating: true,
-        reviewCount: true,
-        verificationStatus: true,
-        experience: true,
-        fee: true,
-        profileImage: true,
-        clinicImage: true,
-        updatedAt: true,
-        averageConsultationTime: true,
-        latitude: true,
-        longitude: true,
-        bio: true,
-        specialties: { select: { name: true } },
-        keywords: { select: { term: true } },
-        weeklySchedule: true,
-        clinicOperations: true,
-        dailyQueues: {
-          where: {
-            // Use IST logical day — never UTC midnight
-            date: resolveClinicLogicalDay(),
-          },
-          select: {
-            status: true,
-            issuedTokensCount: true,
-            cancelledCount: true,
-            noShowCount: true,
-            currentActiveToken: true,
-            maxCapacity: true,
-          },
-          take: 1,
-        }
-      },
-      take: 100 // Prevent crashing edge functions on massive datasets
-    });
-
-    // ── Pre-Filter for Emergency Discovery ──────────────────────────────
-    let filteredDbDoctors = dbDoctors;
-    // If we're strictly looking for nearby emergency, ensure they have coords
-    if (isEmergency && patientLat && patientLng) {
-      filteredDbDoctors = filteredDbDoctors.filter(d => d.latitude !== null && d.longitude !== null);
+    if (input.availableToday) {
+      where.isOnline = true
     }
 
-    // Compute distance for geo-aware search and attach to doctor objects
-    if (patientLat && patientLng) {
-      filteredDbDoctors = filteredDbDoctors.map(d => {
-        if (d.latitude != null && d.longitude != null) {
-          const distanceKm = getDistanceKm(patientLat, patientLng, d.latitude, d.longitude);
-          const distanceStr = distanceKm < 1 ? `${Math.round(distanceKm * 1000)} m away` : `${distanceKm.toFixed(1)} km away`;
-          return { ...d, distanceKm, distance: distanceKm, distanceStr };
-        }
-        return d;
-      });
-    }
+    const doctors = await prisma.doctor.findMany({
+      where,
+      include: { clinic: true },
+      orderBy: [
+        { isOnline: 'desc' },
+        { jivnicarePatientsServed: 'desc' },
+      ],
+      take: 500, // Safety cap for result set depth
+    })
 
-let mappedDoctors: Doctor[] = filteredDbDoctors.map(mapPrismaDoctorToUI);
+    // Remove all hardcoded/extra fields like rating, reviews, bgImage as per JivniCare V1 spec
+    const mappedDoctors = doctors.map(doc => ({
+      id: doc.id,
+      name: doc.name,
+      speciality: doc.speciality,
+      city: doc.city || (doc.clinic as any)?.city,
+      hospitalName: doc.hospitalName || (doc.clinic as any)?.name,
+      isOnline: doc.isOnline,
+      consultationFee: doc.consultationFee,
+      experienceYears: doc.experienceYears,
+      // No rating, reviews, or bgImage in V1
+    }))
 
-    // ── Availability Filtering ──────────────────────────────────────────
-    if (availability === 'today') {
-      mappedDoctors = mappedDoctors.filter(d => d.isAvailableToday);
-    }
-
-    // ── Discovery Intelligence: Sorting ──────────────────────────────────
-    mappedDoctors.sort((a, b) => {
-      // 1. Distance Priority (If requested or if patient coordinates provided for generic search)
-      if (sort === 'distance' || (patientLat && patientLng && sort === 'recommended')) {
-        const distA = a.distanceKm ?? 99999;
-        const distB = b.distanceKm ?? 99999;
-        
-        // If sorting strictly by distance or if emergency
-        if (sort === 'distance' || isEmergency) {
-          return distA - distB;
-        }
-        
-        // Soft distance sort for recommended (bump very close clinics)
-        if (distA < 5 && distB > 10) return -1;
-        if (distB < 5 && distA > 10) return 1;
-      }
-
-      // 2. Prioritize active queues in 'recommended'
-      if (sort === 'recommended') {
-        if (a.isQueueActive && !b.isQueueActive) return -1;
-        if (!a.isQueueActive && b.isQueueActive) return 1;
-        return (b.rating || 0) - (a.rating || 0);
-      }
-      
-      // 2. Experience
-      if (sort === 'experience') {
-        const expA = Number(a.experience) || 0;
-        const expB = Number(b.experience) || 0;
-        return expB - expA;
-      }
-      
-      // 3. Fee (Low to High)
-      if (sort === 'fee_low') {
-        const feeA = Number(String(a.fee).replace(/\D/g, '')) || 0;
-        const feeB = Number(String(b.fee).replace(/\D/g, '')) || 0;
-        return feeA - feeB;
-      }
-      
-      // 4. Wait Time (Only for active queues)
-      if (sort === 'wait_time') {
-        const waitA = a.isQueueActive ? (a.queueWaitMinutes || 0) : 9999;
-        const waitB = b.isQueueActive ? (b.queueWaitMinutes || 0) : 9999;
-        return waitA - waitB;
-      }
-
-      return 0;
-    });
-
-    const page = parseInt(searchParams.get('page') || '1', 10);
-    const limit = parseInt(searchParams.get('limit') || '15', 10);
-
-    // Run the fuzzy search algorithm for final scoring if query exists
-    const searchResult = searchDoctors(query, mappedDoctors, district);
-
-    // Apply pagination AFTER all sorting and fuzzy matching to preserve relevance
-    const skip = (page - 1) * limit;
-    const paginatedResults = searchResult.results.slice(skip, skip + limit);
-
-    return NextResponse.json({
-      ...searchResult,
-      results: paginatedResults,
-      page,
-      limit,
-      totalPages: Math.ceil(searchResult.total / limit),
-      hasMore: skip + paginatedResults.length < searchResult.total
-    }, { headers });
-
+    return NextResponse.json({ doctors: mappedDoctors }, { status: 200 })
   } catch (error) {
-    console.error("Search API Error:", error);
-    return NextResponse.json({ error: "Failed to perform search" }, { status: 500 });
+    console.error('[SEARCH_API_ERROR]', error)
+    return NextResponse.json(
+      { error: 'Search failed. Please try again.' },
+      { status: 500 }
+    )
   }
 }

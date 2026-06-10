@@ -1,4 +1,6 @@
 import type { NextConfig } from "next";
+// @ts-expect-error - next-pwa missing types
+import withPWA from 'next-pwa';
 
 // ── Startup Environment Validation ──────────────────────────────────────────
 const requiredEnvVars = ["JWT_SECRET", "DATABASE_URL"];
@@ -13,7 +15,6 @@ if (missingEnvVars.length > 0) {
   `);
 }
 
-
 const nextConfig: NextConfig = {
   // ── Tech Stack Obfuscation ──────────────────────────────────────────────────
   poweredByHeader: false,
@@ -26,23 +27,7 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'res.cloudinary.com',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'images.unsplash.com',
-        pathname: '/photo-**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'ui-avatars.com',
-        pathname: '/api/**',
-      },
-      {
-        // Used for texture backgrounds in PartnerCtaSection and confirmation
-        protocol: 'https',
-        hostname: 'www.transparenttextures.com',
-        pathname: '/patterns/**',
+        pathname: '/jivnicare/**',
       },
       {
         protocol: 'https',
@@ -87,6 +72,16 @@ const nextConfig: NextConfig = {
 
   // ── External Server Packages (Prisma, bcryptjs) ────────────────────────────
   serverExternalPackages: ["@prisma/client", "bcryptjs", "firebase-admin"],
+
+  // ── Turbopack Compatibility ─────────────────────────────────────────────
+  turbopack: {},
 };
 
-export default nextConfig;
+const pwaConfig = withPWA({
+  dest: 'public',
+  disable: process.env.NODE_ENV === 'development',
+  register: true,
+  skipWaiting: true,
+});
+
+export default pwaConfig(nextConfig);

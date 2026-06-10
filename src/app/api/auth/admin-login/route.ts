@@ -1,3 +1,4 @@
+import { apiResponse, apiError } from '@/lib/utils/api-response';
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/db/prisma";
@@ -8,7 +9,7 @@ export async function POST(req: Request) {
     const { email, password } = await req.json();
 
     if (!email || !password) {
-      return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
+      return apiError("Email and password are required", 400);
     }
 
     // IP-based Rate Limiting to prevent brute-force
@@ -58,7 +59,7 @@ export async function POST(req: Request) {
         token: await token
       });
 
-      response.cookies.set("auth-token", await token, {
+      response.cookies.set("jivnicare_token", await token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
@@ -69,12 +70,12 @@ export async function POST(req: Request) {
       return response;
     } catch (e: any) {
       if (e.message === "INVALID_CREDENTIALS") {
-        return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+        return apiError("Invalid credentials", 401);
       }
       throw e;
     }
   } catch (error) {
     console.error("Admin Login Error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return apiError("Internal Server Error", 500);
   }
 }

@@ -40,8 +40,17 @@ export function BookingWidget({
           const res = await fetch(`/api/public/doctor/${doctor.id}/queue-stats`);
           if (res.ok) {
             const data = await res.json();
-            if (data.success) {
-              setQueue(data.queue);
+            if (data.success && data.queue) {
+              setQueue({
+                currentToken: data.queue.currentToken ?? 0,
+                totalInQueue: data.queue.totalInQueue ?? 0,
+                estimatedWait: data.queue.estimatedWait ?? 0,
+                avgTime: data.queue.avgTime ?? 0,
+                status: data.queue.status ?? "NOT_STARTED",
+                isClosedToday: data.queue.isClosedToday ?? false,
+                emergencySlots: data.queue.emergencySlots ?? 0,
+                timings: data.queue.timings ?? "",
+              });
               setHasQueueData(true);
             }
           }
@@ -56,10 +65,10 @@ export function BookingWidget({
     return () => clearTimeout(timeoutId);
   }, [doctor.id]);
 
-  const isClosedToday = queue.isClosedToday;
-  const hasEmergencySlots = queue.emergencySlots > 0;
+  const isClosedToday = queue?.isClosedToday ?? false;
+  const hasEmergencySlots = (queue?.emergencySlots ?? 0) > 0;
   const canBook = !isClosedToday;
-  const queueActive = queue.status === "ACTIVE";
+  const queueActive = queue?.status === "ACTIVE";
 
   return (
     <Card className="border-slate-100 shadow-[0_4px_24px_rgba(0,0,0,0.08)] rounded-[22px] bg-white overflow-hidden">

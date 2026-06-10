@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/features/auth/store/useAuthStore";
 import { OperationalDashboard } from "@/features/admin/components/OperationalDashboard";
 import { resolveClinicCurrentTime } from "@/lib/utils/clinic-utils";
+import { formatDoctorName } from "@/lib/utils/name-utils";
 
 type DoctorStatus = "DRAFT" | "PENDING" | "PENDING_VERIFICATION" | "VERIFIED" | "UPDATE_PENDING" | "REJECTED" | "SUSPENDED";
 
@@ -56,6 +57,7 @@ function AdminDashboardContent() {
   const [selectedDoctorId, setSelectedDoctorId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState<{type: 'error'|'success', text: string} | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const _hasHydrated = useAuthStore(state => state._hasHydrated);
 
@@ -96,7 +98,7 @@ function AdminDashboardContent() {
 
             return {
               id: d.id,
-              name: d.user?.name || "Dr. Unnamed",
+              name: formatDoctorName(d.user?.name),
               specialization: d.specialties?.length ? d.specialties[0].name : (d.specialtyIds?.length ? d.specialtyIds[0] : "General"),
               specialties: d.specialties || [],
               experience: d.experience ? `${d.experience} Years` : "N/A",
@@ -538,12 +540,20 @@ function AdminDashboardContent() {
   );
 
   const renderDoctorManagement = () => {
-    const filteredDoctors = filter === "ALL" 
+    let filteredDoctors = filter === "ALL" 
       ? doctors 
       : doctors.filter(d => {
           if (filter === "PENDING") return ["DRAFT", "PENDING", "PENDING_VERIFICATION", "UPDATE_PENDING"].includes(d.status);
           return d.status === filter;
         });
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      filteredDoctors = filteredDoctors.filter(d => 
+        d.name.toLowerCase().includes(q) || 
+        (d.phone && d.phone.includes(q))
+      );
+    }
 
     return (
       <div className="h-[calc(100vh-80px)] flex fade-in">
@@ -554,16 +564,27 @@ function AdminDashboardContent() {
               <h1 className="text-3xl font-black text-slate-900">Doctor Management</h1>
               <p className="text-slate-500 mt-1">Review credentials, approve onboarding, and manage platform access.</p>
             </div>
-            <div className="flex bg-white rounded-xl border border-slate-200 p-1 shadow-sm">
-              {(["ALL", "PENDING", "VERIFIED", "REJECTED", "SUSPENDED"] as const).map(f => (
-                <button 
-                  key={f} 
-                  onClick={() => setFilter(f)}
-                  className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${filter === f ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'}`}
-                >
-                  {f === "ALL" ? "All" : f.charAt(0) + f.slice(1).toLowerCase()}
-                </button>
-              ))}
+            <div className="flex flex-col items-end gap-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Input
+                  placeholder="Doctor naam ya phone number se search karein"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 pr-4 w-72 h-10 rounded-xl bg-white border-slate-200 text-sm font-medium focus-visible:ring-primary/20"
+                />
+              </div>
+              <div className="flex bg-white rounded-xl border border-slate-200 p-1 shadow-sm">
+                {(["ALL", "PENDING", "VERIFIED", "REJECTED", "SUSPENDED"] as const).map(f => (
+                  <button 
+                    key={f} 
+                    onClick={() => setFilter(f)}
+                    className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${filter === f ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'}`}
+                  >
+                    {f === "ALL" ? "All" : f.charAt(0) + f.slice(1).toLowerCase()}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -894,7 +915,7 @@ function AdminDashboardContent() {
                   <div className="text-sm font-bold text-slate-700">
                     {new Date(patient.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                   </div>
-                  <div><span className={`px-3 py-1 rounded-full text-xs font-bold ${patient.isVerified ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>{patient.isVerified ? 'Verified' : 'Active'}</span></div>
+                  <div><span className={`px-3 py-1 rounded-full text-xs font-bold ${(patient as any).verificationStatus === 'VERIFIED' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>{(patient as any).verificationStatus === 'VERIFIED' ? 'Verified' : 'Active'}</span></div>
                 </div>
               ))}
               {patients.length === 0 && (

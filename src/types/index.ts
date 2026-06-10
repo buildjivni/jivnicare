@@ -49,6 +49,7 @@ export interface Doctor {
   reviews: number;          // Legacy review count
   reviewCount?: number;     // Real verified review count
   totalConsultations?: number; // "5k+ Consultations" social proof
+  lifetimePatientsDeclaration?: string; // Doctor declared total
   verifiedBadgeLabel?: string; // "Verified Doctor" / "Clinic Verified"
   patientTrustLabel?: string;  // "Trusted by 500+ patients"
 
@@ -61,6 +62,7 @@ export interface Doctor {
   patientsWaiting?: number;  // "7 Patients Waiting"
   onboardingStage?: string;
   isAvailableToday?: boolean;
+  availableSlots?: number;
 
   // ── Fees & Modes ──────────────────────────────────────────
   fee: string;              // "₹400"

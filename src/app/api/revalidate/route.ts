@@ -1,3 +1,4 @@
+import { apiResponse, apiError } from '@/lib/utils/api-response';
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 
@@ -22,9 +23,7 @@ export async function POST(req: NextRequest) {
 
   revalidatePath(path);
 
-  return NextResponse.json({
-    revalidated: true,
+  return apiResponse({revalidated: true,
     path,
-    timestamp: new Date().toISOString(),
-  });
+    timestamp: new Date().toISOString(),});
 }

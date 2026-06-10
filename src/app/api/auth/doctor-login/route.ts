@@ -1,3 +1,4 @@
+import { apiResponse, apiError } from '@/lib/utils/api-response';
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/db/prisma';
 import bcrypt from 'bcryptjs';
@@ -11,7 +12,7 @@ export async function POST(request: Request) {
     const { phone, password } = await request.json();
 
     if (!phone || !password) {
-      return NextResponse.json({ error: 'Phone number and password are required' }, { status: 400 });
+      return apiError('Phone number and password are required', 400);
     }
 
     // Find the user by phone
@@ -21,11 +22,11 @@ export async function POST(request: Request) {
     });
 
     if (!user) {
-      return NextResponse.json({ error: 'Invalid phone number or password' }, { status: 401 });
+      return apiError('Invalid phone number or password', 401);
     }
 
     if (user.role !== 'DOCTOR' || !user.doctor) {
-      return NextResponse.json({ error: 'Account is not registered as a Doctor.' }, { status: 403 });
+      return apiError('Account is not registered as a Doctor.', 403);
     }
 
     // ── Lightweight Test OTP Mode for Doctors ─────────────────────────
@@ -46,18 +47,18 @@ export async function POST(request: Request) {
     // ── Real Password Verification ────────────────────────────────────
     if (!passwordMatch) {
       if (!user.password) {
-        return NextResponse.json({ error: 'Password not set. Please contact Administrator for verification.' }, { status: 403 });
+        return apiError('Password not set. Please contact Administrator for verification.', 403);
       }
       passwordMatch = await bcrypt.compare(password, user.password);
     }
 
     if (!passwordMatch) {
-      return NextResponse.json({ error: 'Invalid phone number or password' }, { status: 401 });
+      return apiError('Invalid phone number or password', 401);
     }
 
     // Check doctor verification status - allow unverified to log in to see status
     if (user.doctor.verificationStatus === 'SUSPENDED') {
-      return NextResponse.json({ error: 'Account has been suspended. Please contact support.' }, { status: 403 });
+      return apiError('Account has been suspended. Please contact support.', 403);
     }
 
     // Sign JWT Token
@@ -72,7 +73,7 @@ export async function POST(request: Request) {
 
     // Set HttpOnly Cookie
     const cookieStore = await cookies();
-    cookieStore.set('auth-token', token, {
+    cookieStore.set('jivnicare_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production' && !isTestOtpModeEnabled(),
       sameSite: 'lax',
@@ -94,6 +95,6 @@ export async function POST(request: Request) {
 
   } catch (error) {
     console.error('Doctor Login Error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return apiError('Internal server error', 500);
   }
 }

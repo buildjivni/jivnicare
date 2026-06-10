@@ -33,7 +33,7 @@ export default function AdminLogin() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Login failed");
 
-      login(data.user, data.token);
+      login(data.user);
       router.push("/admin/dashboard");
     } catch (error: any) {
       console.error(error);
@@ -58,10 +58,10 @@ export default function AdminLogin() {
           <div className="relative z-10">
             <div className="flex items-center gap-3 mb-8">
               <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-lg">
-                 <Logo className="w-8 h-8 object-contain" />
+                 <Logo className="w-8 h-8" />
               </div>
-              <h2 className="text-3xl font-bold tracking-tight text-white leading-none">
-                Jivni<span className="text-[#489C66]">Care</span>
+              <h2 className="text-3xl font-bold tracking-tight leading-none">
+                <span style={{ color: '#4A90D9' }}>Jivni</span><span style={{ color: '#4A8C4A' }}>Care</span>
               </h2>
             </div>
             <h1 className="text-4xl font-black text-white leading-tight mt-10">

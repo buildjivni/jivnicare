@@ -42,7 +42,7 @@ export function ClinicOnboardingCta() {
               </li>
             </ul>
 
-            <Link href="/onboarding">
+            <Link href="/partners/onboard">
               <Button className="h-14 px-8 rounded-full bg-white text-slate-900 hover:bg-blue-50 font-black text-lg w-full sm:w-auto shadow-xl shadow-white/10 group transition-all">
                 Partner With Us
                 <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />

@@ -1,3 +1,4 @@
+import { apiResponse, apiError } from '@/lib/utils/api-response';
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db/prisma";
 import { verifyToken } from "@/lib/jwt";
@@ -9,15 +10,15 @@ import { incrementTelemetryCounter } from "@/lib/telemetry/redis";
 export async function POST(request: Request) {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get("auth-token")?.value;
+    const token = cookieStore.get("jivnicare_token")?.value;
 
     if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiError("Unauthorized", 401);
     }
 
     const payload: any = await verifyToken(token);
     if (!payload || !payload.id || payload.role !== "PATIENT") {
-      return NextResponse.json({ error: "Invalid token or not a patient" }, { status: 401 });
+      return apiError("Invalid token or not a patient", 401);
     }
 
     // Rate limit: prevent cancel-abuse loops
@@ -28,14 +29,14 @@ export async function POST(request: Request) {
     });
 
     if (!rateLimit.success) {
-      return NextResponse.json({ error: "Too many cancellation attempts. Please try again later." }, { status: 429 });
+      return apiError("Bahut zyada cancellation attempts. Kripya baad mein try karein.", 429);
     }
 
     const body = await request.json();
     const { tokenId } = body;
 
     if (!tokenId || typeof tokenId !== "string") {
-      return NextResponse.json({ error: "Missing or invalid tokenId" }, { status: 400 });
+      return apiError("Token ID missing hai ya galat hai", 400);
     }
 
     // Fetch token with queue for ownership and state verification
@@ -45,17 +46,17 @@ export async function POST(request: Request) {
     });
 
     if (!queueToken) {
-      return NextResponse.json({ error: "Token not found" }, { status: 404 });
+      return apiError("Token nahi mila", 404);
     }
 
     // IDOR check: token must belong to this patient
-    if (queueToken.userId !== payload.id) {
+    if (queueToken.patientId !== payload.id) {
       logger.warn({
         category: "CANCELLATION",
         message: "IDOR attempt: patient tried to cancel another user's token",
-        metadata: { requestingUserId: payload.id, tokenOwnerId: queueToken.userId },
+        metadata: { requestingUserId: payload.id, tokenOwnerId: queueToken.patientId },
       });
-      return NextResponse.json({ error: "Access denied" }, { status: 403 });
+      return apiError("Aapko iska access nahi hai", 403);
     }
 
     const now = new Date();
@@ -71,13 +72,11 @@ export async function POST(request: Request) {
         throw new Error("INVALID_STATE");
       }
 
-      // 2. Mark token as CANCELLED with audit trail
+      // 2. Mark token as CANCELLED
       await tx.queueToken.update({
         where: { id: tokenId },
         data: {
           status: "CANCELLED",
-          cancelledAt: now,
-          cancelledBy: "PATIENT",
         },
       });
 
@@ -102,15 +101,12 @@ export async function POST(request: Request) {
 
     await incrementTelemetryCounter("bookingCancelled").catch(() => {});
 
-    return NextResponse.json({ success: true, message: "Your booking has been cancelled." });
+    return apiResponse({ success: true, message: "Aapka booking cancel kar diya gaya hai." });
   } catch (error: any) {
     if (error.message === "INVALID_STATE") {
-      return NextResponse.json(
-        { error: "This token cannot be cancelled. It may have already been processed or cancelled." },
-        { status: 409 }
-      );
+      return apiError("Token cancel nahi ho sakta — aapki baari aa gayi hai ya consultation complete ho chuka hai", 409);
     }
     logger.error({ category: "CANCELLATION", message: "Cancel token error", error });
-    return NextResponse.json({ error: "Failed to cancel booking. Please try again." }, { status: 500 });
+    return apiError("Booking cancel karne mein dikat hui. Dobara try karein.", 500);
   }
 }

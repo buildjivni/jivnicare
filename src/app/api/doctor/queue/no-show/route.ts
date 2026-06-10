@@ -1,3 +1,4 @@
+import { apiResponse, apiError } from '@/lib/utils/api-response';
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db/prisma";
 import { verifyToken } from "@/lib/jwt";
@@ -8,28 +9,28 @@ import { incrementTelemetryCounter } from "@/lib/telemetry/redis";
 export async function POST(request: Request) {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get("auth-token")?.value;
+    const token = cookieStore.get("jivnicare_token")?.value;
 
     if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiError("Unauthorized", 401);
     }
 
     const payload: any = await verifyToken(token);
     if (!payload || !payload.id || payload.role !== "DOCTOR") {
-      return NextResponse.json({ error: "Invalid token or not a doctor" }, { status: 401 });
+      return apiError("Invalid token or not a doctor", 401);
     }
 
     const body = await request.json();
     const { tokenId } = body;
 
     if (!tokenId || typeof tokenId !== "string") {
-      return NextResponse.json({ error: "Missing or invalid tokenId" }, { status: 400 });
+      return apiError("Missing or invalid tokenId", 400);
     }
 
     // Fetch doctor profile for ownership check
     const doctor = await prisma.doctor.findUnique({ where: { userId: payload.id } });
     if (!doctor) {
-      return NextResponse.json({ error: "Doctor profile not found" }, { status: 404 });
+      return apiError("Doctor profile not found", 404);
     }
 
     // Fetch token with queue for ownership and state verification
@@ -39,12 +40,12 @@ export async function POST(request: Request) {
     });
 
     if (!queueToken) {
-      return NextResponse.json({ error: "Token not found" }, { status: 404 });
+      return apiError("Token not found", 404);
     }
 
     // Ownership check: token must belong to this doctor's queue
     if (queueToken.queue.doctorId !== doctor.id) {
-      return NextResponse.json({ error: "Access denied" }, { status: 403 });
+      return apiError("Access denied", 403);
     }
 
     const now = new Date();
@@ -65,13 +66,11 @@ export async function POST(request: Request) {
         throw new Error("INVALID_STATE");
       }
 
-      // 2. Mark token as NO_SHOW with full audit trail
+      // 2. Mark token as NO_SHOW
       await tx.queueToken.update({
         where: { id: tokenId },
         data: {
           status: "NO_SHOW",
-          noShowAt: now,
-          noShowBy: doctor.id, // Accountability: which doctor's session triggered it
         },
       });
 
@@ -110,6 +109,6 @@ export async function POST(request: Request) {
       );
     }
     logger.error({ category: "NO_SHOW", message: "No-show error", error });
-    return NextResponse.json({ error: "Failed to mark no-show. Please try again." }, { status: 500 });
+    return apiError("Failed to mark no-show. Please try again.", 500);
   }
 }

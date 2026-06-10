@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
  *   PROCESSING    → API call in-flight
  *   SUCCESS       → redirect to /confirmation
  */
-type FormState = "HYDRATING" | "AUTH_GATE" | "AUTHED_FORM" | "PROCESSING" | "SUCCESS";
+type FormState = "HYDRATING" | "AUTH_GATE" | "AUTHED_FORM" | "PROCESSING" | "SUCCESS" | "QUEUE_FULL";
 
 export function PaymentForm() {
   const router = useRouter();
@@ -192,6 +192,27 @@ export function PaymentForm() {
     return (
       <div className="flex-1 space-y-8">
         <InlineOTPWidget onVerified={() => setFormState("AUTHED_FORM")} />
+      </div>
+    );
+  }
+
+  // ── Render: Queue Full ───────────────────────────────────────────
+  if (formState === "QUEUE_FULL") {
+    return (
+      <div className="flex-1 space-y-8 animate-in fade-in zoom-in-95 duration-300">
+        <div className="bg-red-50/50 rounded-[2.5rem] p-8 md:p-12 text-center border border-red-100 relative overflow-hidden">
+          <div className="w-20 h-20 bg-white rounded-3xl mx-auto flex items-center justify-center mb-6 shadow-sm border border-red-100">
+            <Activity className="w-10 h-10 text-red-500" />
+          </div>
+          <h2 className="text-2xl font-black text-slate-900 mb-2">Aaj ke slots full hain</h2>
+          <p className="text-slate-500 font-medium mb-8">Kal subah available slots check karein.</p>
+          <Button 
+            onClick={() => router.back()} 
+            className="h-14 px-8 rounded-2xl bg-white text-slate-900 hover:bg-slate-50 font-bold border border-slate-200 shadow-sm"
+          >
+            Go Back
+          </Button>
+        </div>
       </div>
     );
   }

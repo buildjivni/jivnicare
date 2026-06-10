@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default async function PatientDashboardPage() {
   const cookieStore = await cookies();
-  const token = cookieStore.get("auth-token")?.value;
+  const token = cookieStore.get("jivnicare_token")?.value;
 
   if (!token) {
     redirect("/login");
@@ -33,7 +33,7 @@ export default async function PatientDashboardPage() {
 
   // Fetch all tokens for this user
   const rawQueueTokens = await prisma.queueToken.findMany({
-    where: { userId: payload.id },
+    where: { patientId: payload.id },
     include: {
       queue: {
         include: {
@@ -43,7 +43,7 @@ export default async function PatientDashboardPage() {
         }
       }
     },
-    orderBy: { tokenIssuedAt: 'desc' }
+    orderBy: { bookedAt: 'desc' }
   });
 
   const queueTokens = rawQueueTokens.map(token => ({

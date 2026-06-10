@@ -1,10 +1,11 @@
+import { apiResponse, apiError } from '@/lib/utils/api-response';
 import { NextRequest, NextResponse } from "next/server";
 import { isTestOtpModeEnabled } from "@/lib/config/test-mode";
 import { redis } from "@/lib/db/redis";
 import { verifyToken } from "@/lib/jwt";
 
 export async function POST(request: NextRequest) {
-  const token = request.cookies.get("auth-token")?.value;
+  const token = request.cookies.get("jivnicare_token")?.value;
   
   if (token) {
     try {
@@ -21,9 +22,9 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const response = NextResponse.json({ status: "success" });
+  const response = apiResponse({status: "success"});
   
-  response.cookies.set("auth-token", "", {
+  response.cookies.set("jivnicare_token", "", {
     maxAge: 0,
     path: "/",
     httpOnly: true,

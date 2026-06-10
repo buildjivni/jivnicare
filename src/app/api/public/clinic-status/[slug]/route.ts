@@ -1,3 +1,4 @@
+import { apiResponse, apiError } from '@/lib/utils/api-response';
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 
@@ -16,7 +17,7 @@ export async function GET(
     });
 
     if (!doctor) {
-      return Response.json({ error: "Doctor not found" }, { status: 404 });
+      return apiError("Doctor not found", 404);
     }
 
     const ops = await db.clinicOperations.findUnique({
@@ -32,16 +33,14 @@ export async function GET(
 
     if (!ops) {
       // No ClinicOperations record means clinic is available by default
-      return Response.json({
-        status: "AVAILABLE",
+      return apiResponse({status: "AVAILABLE",
         isClosedToday: false,
-        pauseOnlineBooking: false,
-      });
+        pauseOnlineBooking: false,});
     }
 
     return Response.json(ops);
   } catch (err) {
     console.error("[GET /api/public/clinic-status]", err);
-    return Response.json({ error: "Internal server error" }, { status: 500 });
+    return apiError("Internal server error", 500);
   }
 }

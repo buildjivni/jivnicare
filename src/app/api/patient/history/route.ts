@@ -1,3 +1,4 @@
+import { apiResponse, apiError } from '@/lib/utils/api-response';
 import { NextRequest } from "next/server";
 import { cookies } from "next/headers";
 import { verifyToken, AUTH_COOKIE } from "@/lib/jwt";
@@ -9,7 +10,7 @@ export async function GET(req: NextRequest) {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get(AUTH_COOKIE)?.value;
-    if (!token) return Response.json({ error: "Unauthorized" }, { status: 401 });
+    if (!token) return apiError("Unauthorized", 401);
     const user = await verifyToken(token);
 
     const { searchParams } = new URL(req.url);
@@ -19,20 +20,19 @@ export async function GET(req: NextRequest) {
 
     const [tokens, total] = await Promise.all([
       db.queueToken.findMany({
-        where: { userId: user.id },
-        orderBy: { tokenIssuedAt: "desc" },
+        where: { patientId: user.id },
+        orderBy: { bookedAt: "desc" },
         take: limit,
         skip,
         select: {
           id: true,
           tokenNumber: true,
           status: true,
-          source: true,
-          tokenIssuedAt: true,
-          isEmergency: true,
+          tokenType: true,
+          bookedAt: true,
           queue: {
             select: {
-              date: true,
+              logicalDate: true,
               doctor: {
                 select: {
                   name: true,
@@ -47,17 +47,15 @@ export async function GET(req: NextRequest) {
           },
         },
       }),
-      db.queueToken.count({ where: { userId: user.id } }),
+      db.queueToken.count({ where: { patientId: user.id } }),
     ]);
 
-    return Response.json({
-      tokens,
+    return apiResponse({tokens,
       total,
       page,
-      totalPages: Math.ceil(total / limit),
-    });
+      totalPages: Math.ceil(total / limit),});
   } catch (err) {
     console.error("[GET /api/patient/history]", err);
-    return Response.json({ error: "Internal server error" }, { status: 500 });
+    return apiError("Internal server error", 500);
   }
 }

@@ -1,3 +1,4 @@
+import { apiResponse, apiError } from '@/lib/utils/api-response';
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db/prisma";
 import { verifyToken } from "@/lib/jwt";
@@ -8,20 +9,20 @@ import { isTransientDbError, dbUnavailableResponse } from "@/lib/db/db-errors";
 export async function GET(request: Request) {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get("auth-token")?.value;
+    const token = cookieStore.get("jivnicare_token")?.value;
 
     if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiError("Unauthorized", 401);
     }
 
     const payload: any = await verifyToken(token);
     if (!payload || !payload.id) {
-      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+      return apiError("Invalid token", 401);
     }
 
     const tokens = await prisma.queueToken.findMany({
       where: {
-        userId: payload.id,
+        patientId: payload.id,
       },
       include: {
         queue: {
@@ -43,11 +44,11 @@ export async function GET(request: Request) {
         },
       },
       orderBy: {
-        tokenIssuedAt: "desc",
+        bookedAt: "desc",
       },
     });
 
-    return NextResponse.json({ success: true, bookings: tokens });
+    return apiResponse({success: true, bookings: tokens});
   } catch (error: unknown) {
     if (isTransientDbError(error)) {
       logger.warn({ category: "BOOKING", message: "Transient DB error fetching bookings", error });
@@ -55,6 +56,6 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: msg }, { status });
     }
     logger.error({ category: "API_EXCEPTION", message: "Fetch bookings error", error });
-    return NextResponse.json({ error: "Failed to fetch bookings" }, { status: 500 });
+    return apiError("Failed to fetch bookings", 500);
   }
 }

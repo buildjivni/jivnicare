@@ -1,3 +1,4 @@
+import { apiResponse, apiError } from '@/lib/utils/api-response';
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/db/prisma';
 import { verifyToken } from '@/lib/jwt';
@@ -7,33 +8,33 @@ import { revalidatePath } from 'next/cache';
 export async function POST(request: Request) {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get('auth-token')?.value;
+    const token = cookieStore.get('jivnicare_token')?.value;
 
     if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return apiError('Unauthorized', 401);
     }
 
     const decoded = await verifyToken(token) as { id: string; role?: string } | null;
     if (!decoded?.id) {
-      return NextResponse.json({ error: 'Invalid or expired session' }, { status: 401 });
+      return apiError('Invalid or expired session', 401);
     }
 
     if (decoded.role !== 'DOCTOR') {
-      return NextResponse.json({ error: 'Only doctors can update their profiles.' }, { status: 403 });
+      return apiError('Only doctors can update their profiles.', 403);
     }
 
     const userId = decoded.id;
     const doctor = await prisma.doctor.findUnique({ where: { userId } });
 
     if (!doctor) {
-      return NextResponse.json({ error: 'Doctor profile not found.' }, { status: 404 });
+      return apiError('Doctor profile not found.', 404);
     }
 
     const body = await request.json();
     const { updates } = body;
 
     if (!updates || typeof updates !== 'object') {
-      return NextResponse.json({ error: 'Invalid update payload.' }, { status: 400 });
+      return apiError('Invalid update payload.', 400);
     }
 
     // Define sensitive vs safe fields based on architecture plan
@@ -91,17 +92,15 @@ export async function POST(request: Request) {
       console.error("Revalidation failed", e);
     }
 
-    return NextResponse.json({
-      success: true,
+    return apiResponse({success: true,
       message: sensitiveLogs.length > 0 
         ? 'Profile updated. Sensitive changes require admin verification.' 
         : 'Profile updated successfully.',
       safeUpdatesApplied: Object.keys(safeUpdates),
-      pendingReviewFields: sensitiveLogs.map(l => l.field)
-    });
+      pendingReviewFields: sensitiveLogs.map(l => l.field)});
 
   } catch (error: any) {
     console.error('Doctor Profile Update Error:', error);
-    return NextResponse.json({ error: 'Internal server error.' }, { status: 500 });
+    return apiError('Internal server error.', 500);
   }
 }

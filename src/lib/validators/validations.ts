@@ -33,13 +33,7 @@ export const walkInSchema = z.object({
     .optional()
     .nullable()
     .or(z.literal("")),
-  phoneNumber: z.string()
-    .max(15)
-    .optional()
-    .nullable()
-    .refine((val) => !val || val.trim().length === 0 || /^\d{10}$/.test(val.trim()), {
-      message: "Phone number must be exactly 10 digits",
-    }),
+  phoneNumber: z.string().regex(/^[6-9]\d{9}$/, "Patient ka phone number required hai"),
   symptoms: z.string().max(500).optional().nullable(),
   location: z.string()
     .max(100)
@@ -65,7 +59,7 @@ export const step1OnboardSchema = z.object({
     if (m < 0 || (m === 0 && today.getDate() < date.getDate())) age--;
     return age >= 22;
   }, "Must be at least 22 years of age"),
-  contactNumber: z.string().regex(/^\d{10}$/, "Contact number must be exactly 10 digits"),
+  contactNumber: z.string().regex(/^[6-9]\d{9}$/, "Contact number must be 10 digits starting with 6-9"),
   email: z.string().email("Valid email is required"),
   password: z.string().min(6, "Password must be at least 6 characters").max(50),
   

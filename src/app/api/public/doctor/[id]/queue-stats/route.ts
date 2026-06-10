@@ -1,3 +1,4 @@
+import { apiResponse, apiError } from '@/lib/utils/api-response';
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db/prisma";
 import { resolveClinicLogicalDay, getUnifiedQueueCapacity, isEmergencyToken } from "@/lib/utils/clinic-utils";
@@ -21,7 +22,7 @@ export async function GET(
     
     if (cachedStats) {
       const stats = typeof cachedStats === 'string' ? JSON.parse(cachedStats) : cachedStats;
-      const response = NextResponse.json({ success: true, queue: stats });
+      const response = apiResponse({success: true, queue: stats});
       response.headers.set('Cache-Control', 's-maxage=10, stale-while-revalidate');
       return response;
     }
@@ -39,7 +40,7 @@ export async function GET(
     });
 
     if (!doctor) {
-      return NextResponse.json({ error: "Doctor not found" }, { status: 404 });
+      return apiError("Doctor not found", 404);
     }
 
     const queue = await prisma.dailyQueue.findUnique({
@@ -91,16 +92,14 @@ export async function GET(
       console.warn("⚠️ Redis caching failed in queue-stats, continuing without cache:", redisError);
     }
 
-    const response = NextResponse.json({
-      success: true,
-      queue: queueData
-    });
+    const response = apiResponse({success: true,
+      queue: queueData});
 
     response.headers.set('Cache-Control', 's-maxage=10, stale-while-revalidate');
     return response;
 
   } catch (error: any) {
     console.error("Queue stats error:", error);
-    return NextResponse.json({ error: "Failed to fetch queue stats" }, { status: 500 });
+    return apiError("Failed to fetch queue stats", 500);
   }
 }

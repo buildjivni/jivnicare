@@ -10,6 +10,7 @@ import Link from "next/link";
 export default function ConfirmationPage() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
+  const [timedOut, setTimedOut] = useState(false);
   const [eta, setEta] = useState("");
   const [queueStats, setQueueStats] = useState<{ currentToken: number; totalInQueue: number; estimatedWait: number } | null>(null);
   
@@ -20,6 +21,14 @@ export default function ConfirmationPage() {
 
   useEffect(() => {
     setMounted(true);
+    
+    // Set a 3-second timeout to show error if data is missing
+    const timer = setTimeout(() => {
+      if (!token && !localStorage.getItem("jc_active_token")) {
+        setTimedOut(true);
+      }
+    }, 3000);
+
     if (!token) {
       try {
         const savedToken = localStorage.getItem("jc_active_token");
@@ -29,14 +38,18 @@ export default function ConfirmationPage() {
         }
       } catch (e) { console.error("Hydration failed", e); }
     }
-  }, [setGeneratedToken]);
+
+    return () => clearTimeout(timer);
+  }, [setGeneratedToken, token]);
 
   useEffect(() => {
     if (!mounted) return;
-    if (!token && !localStorage.getItem("jc_active_token")) {
-      router.replace("/");
+    // Immediate redirect only if we are absolutely sure no data exists
+    // Otherwise wait for the 3s timeout or hydration
+    if (!token && !localStorage.getItem("jc_active_token") && timedOut) {
+      // router.replace("/"); // Let the UI show the error first
     }
-  }, [mounted, router, token]);
+  }, [mounted, router, token, timedOut]);
 
   // Poll real queue stats every 15 seconds
   useEffect(() => {
@@ -64,12 +77,41 @@ export default function ConfirmationPage() {
   // Calculate progress for the visual timeline
   const tokensAhead = Math.max(0, myToken - currentServing);
   const progressPercent = myToken === 1 ? 100 : Math.min(100, Math.max(5, (currentServing / myToken) * 100));
+  const isMyTurn = tokensAhead === 0 || currentServing >= myToken;
 
   useEffect(() => {
     if (mounted) {
       setEta(new Date(Date.now() + currentWait * 60000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
     }
   }, [mounted, currentWait]);
+
+  if (timedOut && (!token || !doctor)) {
+    return (
+      <div className="bg-slate-50 min-h-screen flex items-center justify-center p-4">
+        <div className="bg-white rounded-[2.5rem] p-10 shadow-xl border border-slate-100 max-w-md w-full text-center fade-in">
+          <div className="w-20 h-20 bg-amber-50 rounded-3xl flex items-center justify-center mx-auto mb-6">
+            <Activity className="w-10 h-10 text-amber-500" />
+          </div>
+          <h2 className="text-2xl font-black text-slate-900 mb-2 tracking-tight">Booking nahi mila</h2>
+          <p className="text-slate-500 font-medium mb-8 leading-relaxed">
+            Hamein aapka active booking data nahi mila. Agar aapne abhi book kiya hai, toh kripya "My Bookings" check karein.
+          </p>
+          <div className="flex flex-col gap-3">
+            <Link href="/my-bookings" className="w-full">
+              <Button className="h-14 w-full rounded-2xl bg-primary text-white font-bold shadow-lg shadow-primary/20">
+                Check My Bookings
+              </Button>
+            </Link>
+            <Link href="/" onClick={resetBooking} className="w-full">
+              <Button variant="ghost" className="h-12 w-full rounded-2xl text-slate-500 font-bold">
+                Return to Home
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!mounted || !token || !doctor) return (
     <div className="bg-slate-50 min-h-screen pt-12">
@@ -96,67 +138,83 @@ export default function ConfirmationPage() {
           <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <CheckCircle2 className="w-8 h-8 text-emerald-500" />
           </div>
-          <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">Booking Confirmed</h1>
-          <p className="text-slate-500 font-medium mt-1.5">Your place in the queue is secured.</p>
+          <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">Booking Confirm ho gayi!</h1>
+          <p className="text-slate-500 font-medium mt-1.5">Queue mein aapki jagah safe hai.</p>
         </div>
 
         {/* Live Tracking Card */}
-        <div className="bg-white rounded-[32px] shadow-premium border border-slate-100 relative overflow-hidden mb-6">
+        <div className={`bg-white rounded-[32px] shadow-premium border ${isMyTurn ? 'border-emerald-200 shadow-emerald-900/10' : 'border-slate-100'} relative overflow-hidden mb-6 transition-all duration-500`}>
           
-          <div className="absolute top-5 right-5 flex items-center gap-1.5 bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full border border-emerald-100">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          <div className={`absolute top-5 right-5 flex items-center gap-1.5 px-2.5 py-1 rounded-full border ${isMyTurn ? 'bg-emerald-500 text-white border-emerald-400' : 'bg-emerald-50 text-emerald-700 border-emerald-100'}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${isMyTurn ? 'bg-white' : 'bg-emerald-500'} animate-pulse`} />
             <span className="text-[10px] font-bold uppercase tracking-wide">Live</span>
           </div>
 
           <div className="p-6 md:p-8 text-center border-b border-slate-50">
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Your Token</p>
-            <h2 className="text-7xl font-black text-slate-900 tracking-tighter leading-none mb-4">#{myToken}</h2>
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Aapka Token</p>
+            <h2 className={`text-7xl font-black ${isMyTurn ? 'text-emerald-600' : 'text-slate-900'} tracking-tighter leading-none mb-4`}>#{myToken}</h2>
             
-            <div className="inline-flex items-center gap-2 bg-[#205E98]/5 border border-[#205E98]/10 px-4 py-2 rounded-xl">
-              <Activity className="w-4 h-4 text-[#205E98]" />
-              <p className="text-sm font-bold text-slate-700">Currently Serving: <span className="text-[#205E98] text-base">#{currentServing}</span></p>
-            </div>
+            {isMyTurn ? (
+              <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-100 px-4 py-2 rounded-xl animate-pulse">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                <p className="text-sm font-bold text-emerald-800">Doctor abhi aapko dekh rahe hain</p>
+              </div>
+            ) : (
+              <div className="inline-flex items-center gap-2 bg-[#205E98]/5 border border-[#205E98]/10 px-4 py-2 rounded-xl">
+                <Activity className="w-4 h-4 text-[#205E98]" />
+                <p className="text-sm font-bold text-slate-700">Abhi Number Hai: <span className="text-[#205E98] text-base">#{currentServing}</span></p>
+              </div>
+            )}
           </div>
 
           {/* Visual Timeline Bar */}
-          <div className="px-6 md:px-8 py-6 bg-slate-50/50">
-            <div className="flex justify-between text-xs font-bold text-slate-500 mb-3">
-              <span>Token #1</span>
-              <span>Your Turn</span>
+          {isMyTurn ? (
+            <div className="px-6 md:px-8 py-8 bg-emerald-500 text-center animate-in fade-in duration-500">
+              <h3 className="text-2xl md:text-3xl font-black text-white mb-2 tracking-tight">Aapki baari aa gayi!</h3>
+              <p className="text-emerald-50 font-medium text-lg">Doctor ke paas jaiye abhi.</p>
             </div>
-            
-            <div className="h-3 w-full bg-slate-200 rounded-full overflow-hidden relative">
-              <div 
-                className="absolute top-0 left-0 h-full bg-[#205E98] rounded-full transition-all duration-1000 ease-out"
-                style={{ width: `${progressPercent}%` }}
-              />
-              {/* Pulse effect on the leading edge */}
-              <div 
-                className="absolute top-0 h-full w-4 bg-white/40 blur-[2px] animate-pulse transition-all duration-1000 ease-out"
-                style={{ left: `calc(${progressPercent}% - 8px)` }}
-              />
+          ) : (
+            <div className="px-6 md:px-8 py-6 bg-slate-50/50">
+              <div className="flex justify-between text-xs font-bold text-slate-500 mb-3">
+                <span>Token #1</span>
+                <span>Aapka Number</span>
+              </div>
+              
+              <div className="h-3 w-full bg-slate-200 rounded-full overflow-hidden relative">
+                <div 
+                  className="absolute top-0 left-0 h-full bg-[#205E98] rounded-full transition-all duration-1000 ease-out"
+                  style={{ width: `${progressPercent}%` }}
+                />
+                <div 
+                  className="absolute top-0 h-full w-4 bg-white/40 blur-[2px] animate-pulse transition-all duration-1000 ease-out"
+                  style={{ left: `calc(${progressPercent}% - 8px)` }}
+                />
+              </div>
+              
+              <div className="mt-4 flex items-center justify-center gap-2 text-sm text-slate-600 font-medium">
+                Aapse pehle <span className="font-bold text-slate-900">{tokensAhead}</span> {tokensAhead === 1 ? 'patient' : 'patients'} hain
+              </div>
             </div>
-            
-            <div className="mt-4 flex items-center justify-center gap-2 text-sm text-slate-600 font-medium">
-              <span className="font-bold text-slate-900">{tokensAhead}</span> {tokensAhead === 1 ? 'person' : 'people'} ahead of you
-            </div>
-          </div>
+          )}
 
-          {/* Arrival Window */}
-          <div className="p-6 md:p-8 border-t border-slate-50">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center shrink-0 border border-amber-100">
-                <Clock className="w-6 h-6 text-amber-500" />
-              </div>
-              <div>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Estimated Arrival</p>
-                <p className="font-black text-xl text-slate-900">In ~{currentWait} mins</p>
-                <p className="text-sm text-slate-500 font-medium leading-snug mt-1">
-                  Please aim to reach the clinic by <strong className="text-slate-700">{eta}</strong>
-                </p>
+          {/* Arrival Window (Only show if not my turn) */}
+          {!isMyTurn && (
+            <div className="p-6 md:p-8 border-t border-slate-50">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center shrink-0 border border-amber-100">
+                  <Clock className="w-6 h-6 text-amber-500" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Kab Tak Pahuchna Hai</p>
+                  <p className="font-black text-xl text-slate-900">Lagbhag {currentWait} mins mein</p>
+                  <p className="text-[11px] font-bold text-slate-400 mb-1">(Actual time vary kar sakta hai)</p>
+                  <p className="text-sm text-slate-500 font-medium leading-snug mt-1">
+                    Koshish karein ki clinic <strong className="text-slate-700">{eta}</strong> tak pahuch jayein
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Clinic Info & Directions */}
@@ -175,7 +233,7 @@ export default function ConfirmationPage() {
             className="w-full sm:w-auto shrink-0"
           >
             <Button variant="outline" className="w-full rounded-xl font-bold border-slate-200 text-[#205E98] hover:bg-[#205E98]/5">
-              <Navigation className="w-4 h-4 mr-2" /> Get Directions
+              <Navigation className="w-4 h-4 mr-2" /> Raasta Dekhein
             </Button>
           </a>
         </div>
@@ -185,9 +243,9 @@ export default function ConfirmationPage() {
           <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex items-start gap-3">
             <Info className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
             <div>
-              <h4 className="text-[13px] font-bold text-slate-900 mb-1">Missing your turn?</h4>
+              <h4 className="text-[13px] font-bold text-slate-900 mb-1">Der ho gayi toh?</h4>
               <p className="text-xs text-slate-500 font-medium leading-relaxed">
-                If you arrive late, your token will be pushed down slightly so you don't lose your booking entirely.
+                Agar aap late hote hain, toh aapka token thoda neeche kar diya jayega taaki booking cancel na ho.
               </p>
             </div>
           </div>
@@ -195,12 +253,12 @@ export default function ConfirmationPage() {
           <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex items-start gap-3">
             <PhoneCall className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
             <div>
-              <h4 className="text-[13px] font-bold text-slate-900 mb-1">Need to cancel?</h4>
+              <h4 className="text-[13px] font-bold text-slate-900 mb-1">Cancel karna hai?</h4>
               <p className="text-xs text-slate-500 font-medium leading-relaxed mb-2">
-                Release your token so another patient can take the slot.
+                Token release kar dein taaki kisi aur patient ko jagah mil sake.
               </p>
               <Link href="/my-bookings" className="text-[11px] font-bold text-red-600 hover:underline">
-                Cancel Booking
+                Booking Cancel Karein
               </Link>
             </div>
           </div>
@@ -209,7 +267,7 @@ export default function ConfirmationPage() {
         <div className="mt-8 text-center">
           <Link href="/" onClick={resetBooking}>
             <Button variant="ghost" className="h-14 px-8 rounded-xl font-bold text-slate-500 hover:text-slate-900">
-              Return to Home
+              Home Par Jaiye
             </Button>
           </Link>
         </div>

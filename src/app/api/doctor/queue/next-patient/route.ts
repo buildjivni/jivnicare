@@ -1,3 +1,4 @@
+import { apiResponse, apiError } from '@/lib/utils/api-response';
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db/prisma";
 import { verifyToken, signToken } from "@/lib/jwt";
@@ -8,15 +9,15 @@ import { nextPatientSchema, formatZodError } from "@/lib/validators/validations"
 export async function POST(request: Request) {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get("auth-token")?.value;
+    const token = cookieStore.get("jivnicare_token")?.value;
 
     if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiError("Unauthorized", 401);
     }
 
     const payload: any = await verifyToken(token);
     if (!payload || !payload.id || payload.role !== "DOCTOR") {
-      return NextResponse.json({ error: "Invalid token or not a doctor" }, { status: 401 });
+      return apiError("Invalid token or not a doctor", 401);
     }
 
     const doctor = await prisma.doctor.findUnique({
@@ -24,7 +25,7 @@ export async function POST(request: Request) {
     });
 
     if (!doctor) {
-      return NextResponse.json({ error: "Doctor profile not found" }, { status: 404 });
+      return apiError("Doctor profile not found", 404);
     }
 
     const body = await request.json();
@@ -117,7 +118,7 @@ export async function POST(request: Request) {
       return { nextPatient: null, undoToken: null };
     });
 
-    return NextResponse.json({ success: true, data: result });
+    return apiResponse({success: true, data: result});
   } catch (error: any) {
     console.error("Next patient operation error:", error);
     if (error.message === "CONCURRENCY_CONFLICT_RETRY") {
@@ -125,9 +126,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Queue was updated concurrently, please refresh" }, { status: 409 });
     }
     if (error.message === "QUEUE_NOT_FOUND") {
-      return NextResponse.json({ error: "Queue has not been started for today" }, { status: 400 });
+      return apiError("Queue has not been started for today", 400);
     }
     import('@/lib/telemetry/redis').then(m => m.incrementTelemetryCounter('api500Errors').catch(() => {}));
-    return NextResponse.json({ error: "An unexpected error occurred while progressing the queue" }, { status: 500 });
+    return apiError("An unexpected error occurred while progressing the queue", 500);
   }
 }

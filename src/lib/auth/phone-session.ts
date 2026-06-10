@@ -27,7 +27,7 @@ export async function createPhoneSessionResponse(input: CreatePhoneSessionInput)
         firebaseUid,
         name: name?.trim() || "Patient",
         location: location?.trim() || null,
-        isVerified: true,
+        verificationStatus: 'VERIFIED',
         role: "PATIENT",
       },
       include: { doctor: true },
@@ -37,7 +37,7 @@ export async function createPhoneSessionResponse(input: CreatePhoneSessionInput)
       where: { id: user.id },
       data: {
         firebaseUid: user.firebaseUid || firebaseUid,
-        isVerified: true,
+        verificationStatus: 'VERIFIED',
         ...(name?.trim() && !user.name ? { name: name.trim() } : {}),
         ...(location?.trim() && !user.location ? { location: location.trim() } : {}),
       },
@@ -74,10 +74,10 @@ export async function createPhoneSessionResponse(input: CreatePhoneSessionInput)
 
   const maxAge = 7 * 24 * 60 * 60;
 
-  response.cookies.set("auth-token", token, {
+  response.cookies.set("jivnicare_token", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production" && !isTestOtpModeEnabled(),
-    sameSite: "lax",
+    sameSite: "strict",
     maxAge,
     path: "/",
   });

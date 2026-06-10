@@ -53,7 +53,7 @@ export function mapDoctorWorkspace(
     doctor.specialties?.[0]?.name ??
     (Array.isArray(doctor.specialtyIds) && doctor.specialtyIds[0]
       ? String(doctor.specialtyIds[0])
-      : "General Medicine");
+      : "");
 
   const fee = doctor.fee ?? doctor.consultationFee ?? 0;
 

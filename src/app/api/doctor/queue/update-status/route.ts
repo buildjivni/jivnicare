@@ -1,3 +1,4 @@
+import { apiResponse, apiError } from '@/lib/utils/api-response';
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db/prisma";
 import { verifyToken } from "@/lib/jwt";
@@ -6,22 +7,22 @@ import { cookies } from "next/headers";
 export async function PUT(request: Request) {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get("auth-token")?.value;
+    const token = cookieStore.get("jivnicare_token")?.value;
 
     if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiError("Unauthorized", 401);
     }
 
     const payload: any = await verifyToken(token);
     if (!payload || !payload.id || payload.role !== "DOCTOR") {
-      return NextResponse.json({ error: "Invalid token or not a doctor" }, { status: 401 });
+      return apiError("Invalid token or not a doctor", 401);
     }
 
     const body = await request.json();
     const { tokenId, status } = body;
 
     if (!tokenId || !status) {
-      return NextResponse.json({ error: "Missing tokenId or status" }, { status: 400 });
+      return apiError("Missing tokenId or status", 400);
     }
 
     // Ensure the token belongs to a queue owned by this doctor
@@ -30,7 +31,7 @@ export async function PUT(request: Request) {
     });
 
     if (!doctor) {
-      return NextResponse.json({ error: "Doctor profile not found" }, { status: 404 });
+      return apiError("Doctor profile not found", 404);
     }
 
     const queueToken = await prisma.queueToken.findUnique({
@@ -39,11 +40,11 @@ export async function PUT(request: Request) {
     });
 
     if (!queueToken) {
-      return NextResponse.json({ error: "Token not found" }, { status: 404 });
+      return apiError("Token not found", 404);
     }
 
     if (queueToken.queue.doctorId !== doctor.id) {
-      return NextResponse.json({ error: "Unauthorized access to this token" }, { status: 403 });
+      return apiError("Unauthorized access to this token", 403);
     }
 
     // Use Prisma transaction to atomically update both the token status and the daily queue's active token
@@ -80,9 +81,9 @@ export async function PUT(request: Request) {
       return updatedToken;
     });
 
-    return NextResponse.json({ success: true, token: result });
+    return apiResponse({success: true, token: result});
   } catch (error: any) {
     console.error("Update token status error:", error);
-    return NextResponse.json({ error: "Failed to update token status" }, { status: 500 });
+    return apiError("Failed to update token status", 500);
   }
 }

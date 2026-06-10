@@ -70,23 +70,55 @@ export function useDoctorWorkspace() {
 
       if (res.status === 401) {
         useAuthStore.getState().logout();
+        window.location.href = "/login?reason=session_expired";
         return null;
       }
 
-      const data = await parseResponseJson<{
-        success?: boolean;
-        doctor?: Record<string, unknown>;
-        completeness?: number;
-        error?: string;
-      }>(res);
+      const data = await res.json();
       if (!data) {
         throw new Error("Invalid server response");
       }
-      if (!res.ok || !data.success || !data.doctor) {
+      if (!res.ok || !data.doctor) {
         throw new Error(data.error || "Failed to load doctor profile");
       }
 
-      const mapped = mapDoctorWorkspace(data.doctor, data.completeness ?? 0);
+      // V1 mapping: doctor model returned directly
+      const doctor = data.doctor;
+      const mapped: DoctorWorkspaceView = {
+        profile: {
+          id: doctor.id,
+          name: doctor.name,
+          bio: doctor.bio || "",
+          regNumber: doctor.medicalRegistrationNumber || "",
+          specialty: doctor.speciality || "",
+          experience: String(doctor.experienceYears || 0),
+          qualifications: doctor.qualification || "",
+          hospitalName: doctor.hospitalName || doctor.clinic?.name || "",
+          address: doctor.fullAddress || doctor.clinic?.address || "",
+          city: doctor.city || doctor.clinic?.city || "",
+          district: doctor.district || doctor.clinic?.city || "",
+          locality: doctor.locality || "",
+          pincode: doctor.pincode || "",
+          phone: doctor.phone || "",
+          consultationFee: String(doctor.consultationFee || 0),
+          profileImage: doctor.profileImage || "",
+          clinicImage: doctor.clinicImage || doctor.clinic?.bannerImageUrl || "",
+          verificationStatus: doctor.verificationStatus || "DRAFT",
+          profileCompleteness: 100, // simplified for V1
+        },
+        settings: {
+          fee: String(doctor.consultationFee || 0),
+          maxCapacity: String(doctor.dailyTokenLimit || 50),
+          averageConsultationTime: String(doctor.averageConsultationMinutes || 10),
+          emergencySlots: doctor.isEmergencySupported ? "5" : "0",
+          leaveMode: !doctor.isOnline,
+          clinicStatus: doctor.isOnline ? "AVAILABLE" : "CLINIC_CLOSED",
+          statusReason: "",
+          statusExpiresAt: null,
+        },
+        weeklySchedule: doctor.weeklySchedule || null,
+      };
+
       applyWorkspace(mapped);
       return mapped;
     } catch (e) {

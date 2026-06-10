@@ -1,3 +1,4 @@
+import { apiResponse, apiError } from '@/lib/utils/api-response';
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/db/prisma';
 import { verifyToken } from '@/lib/jwt';
@@ -9,20 +10,20 @@ import { normalizeLanguages } from '@/lib/utils/normalizers';
 export async function POST(request: Request) {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get('auth-token')?.value;
+    const token = cookieStore.get('jivnicare_token')?.value;
 
     if (!token) {
-      return NextResponse.json({ error: 'Unauthorized. Please complete step 1 first.' }, { status: 401 });
+      return apiError('Unauthorized. Please complete step 1 first.', 401);
     }
 
     const decoded = await verifyToken(token) as { id: string; doctorId?: string } | null;
     if (!decoded?.id) {
-      return NextResponse.json({ error: 'Invalid or expired session. Please log in again.' }, { status: 401 });
+      return apiError('Invalid or expired session. Please log in again.', 401);
     }
 
     const doctorId = decoded.doctorId;
     if (!doctorId) {
-      return NextResponse.json({ error: 'Doctor profile not found in session.' }, { status: 403 });
+      return apiError('Doctor profile not found in session.', 403);
     }
 
     const body = await request.json();
@@ -30,7 +31,7 @@ export async function POST(request: Request) {
 
     const validation = step2OnboardSchema.safeParse(body);
     if (!validation.success) {
-      return NextResponse.json({ error: 'Validation failed: ' + formatZodError(validation.error) }, { status: 400 });
+      return apiError('Validation failed: ' + formatZodError(validation.error), 400);
     }
 
     const data = validation.data;
@@ -48,13 +49,11 @@ export async function POST(request: Request) {
       }
     });
 
-    return NextResponse.json({
-      success: true,
-      message: 'Doctor profile submitted for verification.',
-    });
+    return apiResponse({success: true,
+      message: 'Doctor profile submitted for verification.',});
 
   } catch (error: any) {
     console.error('Doctor Onboard Step 2 Error:', error);
-    return NextResponse.json({ error: 'Internal server error.' }, { status: 500 });
+    return apiError('Internal server error.', 500);
   }
 }

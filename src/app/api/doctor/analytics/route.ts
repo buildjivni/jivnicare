@@ -1,3 +1,4 @@
+import { apiResponse, apiError } from '@/lib/utils/api-response';
 import { NextRequest } from "next/server";
 import { cookies } from "next/headers";
 import { verifyToken, AUTH_COOKIE } from "@/lib/jwt";
@@ -9,7 +10,7 @@ export async function GET(req: NextRequest) {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get(AUTH_COOKIE)?.value;
-    if (!token) return Response.json({ error: "Unauthorized" }, { status: 401 });
+    if (!token) return apiError("Unauthorized", 401);
     const user = await verifyToken(token);
 
     const doctor = await db.doctor.findUnique({
@@ -17,7 +18,7 @@ export async function GET(req: NextRequest) {
       select: { id: true },
     });
     if (!doctor) {
-      return Response.json({ error: "Doctor profile not found" }, { status: 404 });
+      return apiError("Doctor profile not found", 404);
     }
 
     const { searchParams } = new URL(req.url);
@@ -49,12 +50,12 @@ export async function GET(req: NextRequest) {
       db.queueToken.findMany({
         where: {
           queue: { doctorId: doctor.id },
-          tokenIssuedAt: { gte: since },
+          bookedAt: { gte: since },
         },
         select: {
           status: true,
-          tokenIssuedAt: true,
-          source: true,
+          bookedAt: true,
+          tokenType: true,
         },
       }),
     ]);
@@ -68,8 +69,8 @@ export async function GET(req: NextRequest) {
     const avgWaitMinutes = null;
 
     // Bookings by source
-    const onlineCount = periodTokens.filter((t) => t.source === "ONLINE").length;
-    const walkInCount = periodTokens.filter((t) => t.source === "WALK_IN").length;
+    const onlineCount = periodTokens.filter((t) => t.tokenType === "ONLINE").length;
+    const walkInCount = periodTokens.filter((t) => t.tokenType === "WALKIN").length;
 
     return Response.json({
       today: {
@@ -93,6 +94,6 @@ export async function GET(req: NextRequest) {
     });
   } catch (err) {
     console.error("[GET /api/doctor/analytics]", err);
-    return Response.json({ error: "Internal server error" }, { status: 500 });
+    return apiError("Internal server error", 500);
   }
 }

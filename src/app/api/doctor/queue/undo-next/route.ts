@@ -1,3 +1,4 @@
+import { apiResponse, apiError } from '@/lib/utils/api-response';
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db/prisma";
 import { verifyToken } from "@/lib/jwt";
@@ -6,35 +7,35 @@ import { cookies } from "next/headers";
 export async function POST(request: Request) {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get("auth-token")?.value;
+    const token = cookieStore.get("jivnicare_token")?.value;
 
     if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiError("Unauthorized", 401);
     }
 
     const payload: any = await verifyToken(token);
     if (!payload || !payload.id || payload.role !== "DOCTOR") {
-      return NextResponse.json({ error: "Invalid token or not a doctor" }, { status: 401 });
+      return apiError("Invalid token or not a doctor", 401);
     }
 
     const body = await request.json();
     const { undoToken } = body;
 
     if (!undoToken) {
-      return NextResponse.json({ error: "Missing undoToken" }, { status: 400 });
+      return apiError("Missing undoToken", 400);
     }
 
     // Verify the undo token
     const undoPayload: any = await verifyToken(undoToken);
     if (!undoPayload || !undoPayload.queueId) {
-      return NextResponse.json({ error: "Undo time window expired or invalid token" }, { status: 400 });
+      return apiError("Undo time window expired or invalid token", 400);
     }
 
     const { action, queueId, fromTokenId, fromTokenNumber, toTokenId, toTokenNumber } = undoPayload;
 
     // We only support reversing CALL_NEXT and SKIP_NEXT
     if (action !== "CALL_NEXT" && action !== "SKIP_NEXT") {
-      return NextResponse.json({ error: "Unsupported undo action" }, { status: 400 });
+      return apiError("Unsupported undo action", 400);
     }
 
     // Atomic transaction for strict undo
@@ -90,15 +91,15 @@ export async function POST(request: Request) {
       return { success: true };
     });
 
-    return NextResponse.json({ success: true, data: result });
+    return apiResponse({success: true, data: result});
   } catch (error: any) {
     console.error("Undo next operation error:", error);
     if (error.message === "CONCURRENCY_CONFLICT_RETRY") {
-      return NextResponse.json({ error: "Newer queue transition detected. Undo is no longer valid." }, { status: 409 });
+      return apiError("Newer queue transition detected. Undo is no longer valid.", 409);
     }
     if (error.message === "QUEUE_NOT_FOUND") {
-      return NextResponse.json({ error: "Queue not found" }, { status: 404 });
+      return apiError("Queue not found", 404);
     }
-    return NextResponse.json({ error: "An unexpected error occurred while undoing the action" }, { status: 500 });
+    return apiError("An unexpected error occurred while undoing the action", 500);
   }
 }

@@ -30,13 +30,12 @@ export interface AuthUser {
 
 interface AuthState {
   user: AuthUser | null;
-  token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   _hasHydrated: boolean;
 
   // Actions
-  login: (user: AuthUser, token?: string) => void;
+  login: (user: AuthUser) => void;
   /** Merge partial fields into existing user — used after role upgrade/onboarding */
   updateUser: (partial: Partial<AuthUser>) => void;
   logout: () => void;
@@ -48,13 +47,12 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       user: null,
-      token: null,
       isAuthenticated: false,
       isLoading: false,
       _hasHydrated: false,
 
-      login: (user, token) =>
-        set({ user, token: token ?? null, isAuthenticated: true, isLoading: false }),
+      login: (user) =>
+        set({ user, isAuthenticated: true, isLoading: false }),
 
       updateUser: (partial) => {
         const current = get().user;
@@ -64,7 +62,7 @@ export const useAuthStore = create<AuthState>()(
 
       logout: () => {
         // 1. Clear store state immediately (synchronous)
-        set({ user: null, token: null, isAuthenticated: false });
+        set({ user: null, isAuthenticated: false });
 
         // 2. Fire-and-forget server-side cookie cleanup
         fetch("/api/auth/logout", { method: "POST" }).catch(() => {});

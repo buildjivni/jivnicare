@@ -1,5 +1,6 @@
+import { apiResponse, apiError } from '@/lib/utils/api-response';
 import { NextResponse } from 'next/server';
-import { checkRateLimit } from '@/lib/infrastructure/rate-limit';
+import { otpRatelimit, checkUpstashRateLimit } from '@/lib/ratelimit';
 import { logger } from '@/lib/infrastructure/logger';
 import { getTwoFactorApiKey } from '@/lib/infrastructure/env';
 import { createPhoneSessionResponse } from '@/lib/auth/phone-session';
@@ -7,66 +8,32 @@ import { isTransientDbError, dbUnavailableResponse } from '@/lib/db/db-errors';
 import { isTestOtpModeEnabled, getTestOtpNumbers, getTestOtpCode } from '@/lib/config/test-mode';
 import { incrementTelemetryCounter } from '@/lib/telemetry/redis';
 
-const VERIFY_LIMIT = 5;
-const VERIFY_WINDOW_MS = 10 * 60 * 1000;
-
 export async function POST(request: Request) {
   try {
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || '127.0.0.1';
-
     const body = await request.json();
     const { phone, otp, sessionId, name, location } = body;
 
     if (!phone) {
-      return NextResponse.json({ error: 'Phone number is required' }, { status: 400 });
+      return apiError('Phone number is required', 400);
     }
 
     if (!otp || !sessionId) {
-      return NextResponse.json({ error: 'OTP and Session ID are required' }, { status: 400 });
+      return apiError('OTP and Session ID are required', 400);
     }
 
     const phone10 = phone.replace(/\D/g, '').slice(-10);
     if (phone10.length !== 10) {
-      return NextResponse.json({ error: 'Invalid phone number format' }, { status: 400 });
+      return apiError('Invalid phone number format', 400);
     }
 
-    const rateLimit = await checkRateLimit({
-      identifier: `otp_verify_ip_${ip}`,
-      limit: VERIFY_LIMIT,
-      windowMs: VERIFY_WINDOW_MS,
-    });
+    // --- Upstash Rate Limiting ---
+    const { success } = await checkUpstashRateLimit(
+      otpRatelimit, 
+      `otp_verify_${phone10}`
+    );
 
-    if (!rateLimit.success) {
-      logger.warn({ category: 'OTP', message: 'Rate limit exceeded for OTP verification', metadata: { ip } });
-      return NextResponse.json(
-        {
-          error: 'Too many attempts, please try again later.',
-          retryAfterSec: Math.max(
-            0,
-            Math.ceil((rateLimit.resetTime.getTime() - Date.now()) / 1000)
-          ),
-        },
-        { status: 429 }
-      );
-    }
-
-    const phoneRateLimit = await checkRateLimit({
-      identifier: `otp_verify_phone_${phone10}`,
-      limit: VERIFY_LIMIT,
-      windowMs: VERIFY_WINDOW_MS,
-    });
-
-    if (!phoneRateLimit.success) {
-      return NextResponse.json(
-        {
-          error: 'Too many attempts for this number. Please wait and try again.',
-          retryAfterSec: Math.max(
-            0,
-            Math.ceil((phoneRateLimit.resetTime.getTime() - Date.now()) / 1000)
-          ),
-        },
-        { status: 429 }
-      );
+    if (!success) {
+      return apiError("Bahut zyada requests. Thodi der mein try karein.", 429);
     }
 
     const apiKey = getTwoFactorApiKey();
@@ -101,7 +68,7 @@ export async function POST(request: Request) {
 
       if (!res.ok) {
         logger.error({ category: 'OTP', message: '2Factor verify HTTP error', error: `status ${res.status}` });
-        return NextResponse.json({ error: 'Verification service unavailable. Please try again.' }, { status: 503 });
+        return apiError('Verification service unavailable. Please try again.', 503);
       }
 
       const data = await res.json();
@@ -124,7 +91,7 @@ export async function POST(request: Request) {
     } catch (err) {
       logger.error({ category: 'OTP', message: '2Factor token verification failed', error: err });
       await incrementTelemetryCounter('otpFailures');
-      return NextResponse.json({ error: 'Invalid or expired verification. Please try again.' }, { status: 401 });
+      return apiError('Invalid or expired verification. Please try again.', 401);
     }
 
   } catch (error) {

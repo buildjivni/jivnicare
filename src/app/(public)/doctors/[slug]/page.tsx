@@ -136,24 +136,26 @@ export default async function DoctorProfilePage({ params }: PageProps) {
     }
   });
 
-  const relatedDoctors = relatedPrismaDoctors.map(mapPrismaDoctorToUI);
+  const relatedDoctors = (relatedPrismaDoctors || []).map(mapPrismaDoctorToUI);
   const doctor = mapPrismaDoctorToUI(doc);
-  const district = doctor.location.split(",").pop()?.trim() ?? "Bihar";
-  const availableToday = doctor.available?.toLowerCase().includes("available today");
+  const district = doctor?.location?.split(",")?.pop()?.trim() ?? "Bihar";
+  const availableToday = doctor?.available?.toLowerCase()?.includes("available today") ?? false;
+
+  if (!doctor) notFound();
 
   return (
     <div className="bg-[#f7f9fc] min-h-screen pb-28 md:pb-8">
       {/* JSON-LD Structured Data */}
-      <JsonLd schema={physicianSchema({ ...doctor, image: doctor.image })} />
+      <JsonLd schema={physicianSchema({ ...doctor, image: doctor?.image || "" })} />
       <JsonLd
         schema={breadcrumbSchema([
           { name: "Home", url: SITE_CONFIG.baseUrl },
           { name: "Doctors", url: `${SITE_CONFIG.baseUrl}/doctors` },
           {
-            name: `${doctor.specialty} in ${district}`,
-            url: `${SITE_CONFIG.baseUrl}/doctors?specialty=${doctor.specialty}`,
+            name: `${doctor?.specialty || "Specialist"} in ${district}`,
+            url: `${SITE_CONFIG.baseUrl}/doctors?specialty=${doctor?.specialty || ""}`,
           },
-          { name: doctor.name, url: `${SITE_CONFIG.baseUrl}/doctors/${doc.slug}` },
+          { name: doctor?.name || "Doctor", url: `${SITE_CONFIG.baseUrl}/doctors/${doc.slug}` },
         ])}
       />
 
@@ -174,8 +176,8 @@ export default async function DoctorProfilePage({ params }: PageProps) {
           {/* Profile breadcrumb context */}
           <div className="flex items-center gap-2 text-center">
             <div className="hidden sm:flex flex-col items-center">
-              <p className="text-[11px] font-bold text-slate-900 leading-tight line-clamp-1">{doctor.name}</p>
-              <p className="text-[10px] text-slate-600">{doctor.specialty} · {district}</p>
+              <p className="text-[11px] font-bold text-slate-900 leading-tight line-clamp-1">{doctor?.name || "Doctor"}</p>
+              <p className="text-[10px] text-slate-600">{doctor?.specialty || "Specialist"} · {district}</p>
             </div>
           </div>
 
@@ -222,7 +224,7 @@ export default async function DoctorProfilePage({ params }: PageProps) {
           <div className="shrink-0">
             <p className="text-[9px] text-slate-600 font-bold uppercase tracking-widest leading-none">Consult Fee</p>
             <p className="font-black text-[20px] text-slate-900 leading-tight tabular-nums mt-0.5">
-              {doctor.fee}
+              {doctor?.fee || "₹0"}
             </p>
             <div className="flex items-center gap-1 mt-0.5">
               <span className={`w-1.5 h-1.5 rounded-full ${availableToday ? "bg-emerald-500 animate-pulse" : "bg-slate-300"}`} />

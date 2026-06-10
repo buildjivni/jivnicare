@@ -1,3 +1,4 @@
+import { apiResponse, apiError } from '@/lib/utils/api-response';
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import prisma from '@/lib/db/prisma';
@@ -10,19 +11,19 @@ export async function POST(request: Request) {
   try {
     // 1. Authenticate Admin
     const cookieStore = await cookies();
-    const token = cookieStore.get('auth-token')?.value;
+    const token = cookieStore.get('jivnicare_token')?.value;
 
     if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return apiError('Unauthorized', 401);
     }
 
     const decoded = await verifyToken(token) as { role: string } | null;
     if (!decoded) {
-      return NextResponse.json({ error: 'Invalid or expired session' }, { status: 401 });
+      return apiError('Invalid or expired session', 401);
     }
 
     if (decoded.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Access denied. Admins only.' }, { status: 403 });
+      return apiError('Access denied. Admins only.', 403);
     }
 
     // 2. Parse Payload
@@ -41,7 +42,7 @@ export async function POST(request: Request) {
 
     const doctor = await prisma.doctor.findUnique({ where: { id: doctorId } });
     if (!doctor) {
-      return NextResponse.json({ error: 'Doctor not found.' }, { status: 404 });
+      return apiError('Doctor not found.', 404);
     }
 
     // 4. Update Doctor Status atomically
@@ -120,6 +121,6 @@ export async function POST(request: Request) {
 
   } catch (error: any) {
     console.error('Admin Doctor Verification Error:', error);
-    return NextResponse.json({ error: 'Internal server error.' }, { status: 500 });
+    return apiError('Internal server error.', 500);
   }
 }

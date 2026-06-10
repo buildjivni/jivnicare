@@ -1,3 +1,4 @@
+import { apiResponse, apiError } from '@/lib/utils/api-response';
 import { NextRequest } from "next/server";
 import { cookies } from "next/headers";
 import { verifyToken, AUTH_COOKIE } from "@/lib/jwt";
@@ -11,7 +12,7 @@ export async function PATCH(req: NextRequest) {
     const cookieStore = await cookies();
     const rawToken = cookieStore.get(AUTH_COOKIE)?.value;
     if (!rawToken) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
+      return apiError("Unauthorized", 401);
     }
     const user = await verifyToken(rawToken);
 
@@ -57,10 +58,8 @@ export async function PATCH(req: NextRequest) {
             },
           });
         });
-        return Response.json({
-          token: updated,
-          message: "Payment step skipped — clinic does not collect payment",
-        });
+        return apiResponse({token: updated,
+          message: "Payment step skipped — clinic does not collect payment",});
       }
 
       const updated = await db.$transaction(async (tx) => {
@@ -71,7 +70,7 @@ export async function PATCH(req: NextRequest) {
           },
         });
       });
-      return Response.json({ token: updated });
+      return apiResponse({token: updated});
     }
 
     // ── action: "approve" ──────────────────────────────────────────────────
@@ -92,7 +91,7 @@ export async function PATCH(req: NextRequest) {
         },
       });
     });
-    return Response.json({ token: updated });
+    return apiResponse({token: updated});
   } catch (err) {
     return queueError(new Response(), err);
   }

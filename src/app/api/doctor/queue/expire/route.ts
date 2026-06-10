@@ -1,3 +1,4 @@
+import { apiResponse, apiError } from '@/lib/utils/api-response';
 import { NextRequest } from "next/server";
 import { cookies } from "next/headers";
 import { verifyToken, AUTH_COOKIE } from "@/lib/jwt";
@@ -10,13 +11,13 @@ export async function POST(req: NextRequest) {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get(AUTH_COOKIE)?.value;
-    if (!token) return Response.json({ error: "Unauthorized" }, { status: 401 });
+    if (!token) return apiError("Unauthorized", 401);
     const user = await verifyToken(token);
 
     const body = await req.json();
     const { queueId } = body;
     if (!queueId) {
-      return Response.json({ error: "queueId is required" }, { status: 400 });
+      return apiError("queueId is required", 400);
     }
 
     await verifyQueueOwnership(queueId, user);

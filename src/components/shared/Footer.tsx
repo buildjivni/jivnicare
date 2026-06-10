@@ -63,7 +63,7 @@ export function Footer() {
                 <span className="flex items-center gap-1.5"><Heart className="w-4 h-4 text-emerald-600" /> Privacy First</span>
               </div>
             </div>
-            <Link href="/partners">
+            <Link href="/partners/onboard">
               <button className="bg-[#205E98] hover:bg-[#1a4c7a] text-white font-bold text-sm md:text-base px-8 py-3.5 md:py-4 rounded-xl transition-all duration-200 active:scale-95 shadow-md shrink-0">
                 Partner With Us
               </button>
@@ -84,8 +84,8 @@ export function Footer() {
                 <Logo className="h-10 w-10 md:h-12 md:w-12" />
               </div>
               <div className="flex flex-col -space-y-1">
-                 <span className="text-xl md:text-2xl font-black tracking-tight leading-none text-slate-800">
-                    <span className="text-[#205E98]">Jivni</span><span className="text-[#166534]">Care</span>
+                 <span className="text-xl md:text-2xl font-black tracking-tight leading-none">
+                    <span style={{ color: '#4A90D9' }}>Jivni</span><span style={{ color: '#4A8C4A' }}>Care</span>
                  </span>
                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] pl-0.5">Bihar</span>
               </div>

@@ -40,7 +40,7 @@ export function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const profileRef = useRef<HTMLDivElement>(null);
-  const { isAuthenticated, logout, token, user } = useAuthStore();
+  const { isAuthenticated, logout, user } = useAuthStore();
   const { district } = useLocationStore();
   const [mounted, setMounted] = useState(false);
   
@@ -167,10 +167,10 @@ export function Header() {
                 {/* Logo and Brand Title (Always visible unless search is expanded on mobile) */}
                 <div className="flex items-center shrink-0 transition-all">
                   <Link href="/" className="flex items-center gap-2.5 md:gap-3.5 group shrink min-w-0">
-                    <Logo className="h-11 w-11 md:h-14 md:w-14 shrink-0 transition-transform duration-300 group-hover:scale-[1.01]" />
+                    <Logo className="h-11 w-11 md:h-14 md:w-14 shrink-0 transition-transform duration-300 group-hover:scale-[1.02]" />
                     <div className="flex flex-col -space-y-0.5 md:-space-y-1 pt-0.5">
-                       <span className="text-[20px] md:text-2xl font-bold tracking-tight leading-none text-slate-800">
-                          <span className="text-[#205E98]">Jivni</span><span className="text-[#166534]">Care</span>
+                       <span className="text-[20px] md:text-2xl font-bold tracking-tight leading-none">
+                          <span style={{ color: '#4A90D9' }}>Jivni</span><span style={{ color: '#4A8C4A' }}>Care</span>
                        </span>
                        <span className="text-[9px] md:text-[10px] font-bold text-slate-500 uppercase tracking-[0.25em] pl-0.5 mt-0.5">Bihar</span>
                     </div>
@@ -248,7 +248,7 @@ export function Header() {
             {isLoggedIn ? (
               <>
                 {user?.role === "PATIENT" && (
-                  <div className="hidden lg:block"><NotificationPanel token={token} /></div>
+                  <div className="hidden lg:block"><NotificationPanel isLoggedIn={isLoggedIn} /></div>
                 )}
                 <div className="relative" ref={profileRef}>
                   <button 

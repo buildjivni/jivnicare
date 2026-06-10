@@ -27,11 +27,11 @@ const fmtTime = (t: string) => {
   return `${hh % 12 || 12}:${m} ${hh >= 12 ? "PM" : "AM"}`;
 };
 
-function fmtCount(n: number): string {
+function fmtCount(n: number): string | null {
   if (n >= 10000) return `${Math.floor(n / 1000)}k+`;
   if (n >= 1000) return `${(n / 1000).toFixed(1)}k+`;
   if (n > 0) return `${n}+`;
-  return "500+";
+  return null;
 }
 
 const DAYS = [
@@ -180,10 +180,18 @@ export function DoctorProfileView({ doctor, relatedDoctors }: DoctorProfileViewP
           </div>
 
           <div className="mb-4">
-            <h1 className="font-black text-2xl md:text-3xl text-slate-900 tracking-tight flex items-center gap-2">
-              {doctor.name}
-              <ShieldCheck className="w-6 h-6 text-[#205E98] shrink-0" />
-            </h1>
+            <div className="flex flex-wrap items-center gap-2 mb-1">
+              <h1 className="font-black text-2xl md:text-3xl text-slate-900 tracking-tight flex items-center gap-2">
+                {doctor.name}
+                <ShieldCheck className="w-6 h-6 text-[#205E98] shrink-0" />
+              </h1>
+              {((doctor as any).clinicOperations?.emergencySlots > 0 || (doctor as any).emergencySlots > 0) && (
+                <div className="flex items-center gap-1 bg-red-50 text-red-700 border border-red-200 px-2.5 py-0.5 rounded-full shadow-sm">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                  <span className="text-[10px] font-black uppercase tracking-wider">Emergency Available</span>
+                </div>
+              )}
+            </div>
             <p className="text-base font-bold text-[#205E98] mt-1">{doctor.specialty}</p>
           </div>
 
@@ -227,11 +235,19 @@ export function DoctorProfileView({ doctor, relatedDoctors }: DoctorProfileViewP
 
           {/* Stats grid */}
           <div className="grid grid-cols-3 gap-3 mt-2">
-            <div className="flex flex-col items-center justify-center text-center p-3 md:p-4 bg-blue-50/50 border border-blue-100/60 rounded-2xl">
-              <Users className="w-5 h-5 text-[#205E98] mb-1.5" />
-              <span className="font-black text-lg md:text-xl text-slate-900">{consultCount}</span>
-              <span className="text-[10px] md:text-xs text-slate-500 font-bold uppercase tracking-wide mt-1">Patients</span>
-            </div>
+            {consultCount ? (
+              <div className="flex flex-col items-center justify-center text-center p-3 md:p-4 bg-blue-50/50 border border-blue-100/60 rounded-2xl">
+                <Users className="w-5 h-5 text-[#205E98] mb-1.5" />
+                <span className="font-black text-lg md:text-xl text-slate-900">{consultCount}</span>
+                <span className="text-[9px] md:text-[10px] text-slate-500 font-bold uppercase tracking-wide mt-1 leading-tight">Via JivniCare</span>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center text-center p-3 md:p-4 bg-slate-50/50 border border-slate-100/40 rounded-2xl opacity-40">
+                <Users className="w-5 h-5 text-slate-400 mb-1.5" />
+                <span className="font-black text-lg md:text-xl text-slate-400">New</span>
+                <span className="text-[9px] md:text-[10px] text-slate-400 font-bold uppercase tracking-wide mt-1 leading-tight">Partner</span>
+              </div>
+            )}
 
             <div className={`flex flex-col items-center justify-center text-center p-3 md:p-4 rounded-2xl ${
               availableToday ? "bg-emerald-50/50 border border-emerald-100/60" : "bg-slate-50 border border-slate-100"
@@ -244,7 +260,7 @@ export function DoctorProfileView({ doctor, relatedDoctors }: DoctorProfileViewP
               <span className="font-black text-lg md:text-xl text-slate-900">
                 {doctor.isQueueActive ? "Live" : (availableToday ? "Open" : "Closed")}
               </span>
-              <span className="text-[10px] md:text-xs text-slate-500 font-bold uppercase tracking-wide mt-1">Queue</span>
+              <span className="text-[9px] md:text-[10px] text-slate-500 font-bold uppercase tracking-wide mt-1 leading-tight">Queue</span>
             </div>
 
             <div className="flex flex-col items-center justify-center text-center p-3 md:p-4 bg-slate-50 border border-slate-100 rounded-2xl">
@@ -252,9 +268,16 @@ export function DoctorProfileView({ doctor, relatedDoctors }: DoctorProfileViewP
               <span className="font-black text-lg md:text-xl text-slate-900 tabular-nums">
                 {doctor.fee.replace("₹", "")}
               </span>
-              <span className="text-[10px] md:text-xs text-slate-500 font-bold uppercase tracking-wide mt-1">Consult</span>
+              <span className="text-[9px] md:text-[10px] text-slate-500 font-bold uppercase tracking-wide mt-1 leading-tight">Consult</span>
             </div>
           </div>
+
+          {doctor.lifetimePatientsDeclaration && (
+            <div className="mt-3 text-center px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl">
+              <p className="text-sm font-black text-slate-700">{doctor.lifetimePatientsDeclaration} Patients Served</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Doctor Declared (Not Verified by JivniCare)</p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -262,14 +285,24 @@ export function DoctorProfileView({ doctor, relatedDoctors }: DoctorProfileViewP
       <Card className="rounded-3xl border-slate-100 shadow-soft">
         <CardContent className="p-5 md:p-6 space-y-5">
           <div className={`flex items-center gap-4 p-4 rounded-2xl ${
-            availableToday ? "bg-emerald-50/50 border border-emerald-100" : "bg-slate-50 border border-slate-100"
+            !availableToday ? "bg-slate-50 border border-slate-100" 
+            : (doctor.availableSlots || 0) > 0 ? "bg-emerald-50/50 border border-emerald-100" 
+            : "bg-red-50/50 border border-red-100"
           }`}>
-            <div className={`p-3 rounded-xl ${availableToday ? "bg-emerald-100 text-emerald-600" : "bg-slate-200 text-slate-500"}`}>
+            <div className={`p-3 rounded-xl ${
+              !availableToday ? "bg-slate-200 text-slate-500"
+              : (doctor.availableSlots || 0) > 0 ? "bg-emerald-100 text-emerald-600"
+              : "bg-red-100 text-red-600"
+            }`}>
               <CalendarCheck className="w-5 h-5" />
             </div>
             <div>
-              <p className={`text-sm md:text-base font-black ${availableToday ? "text-emerald-800" : "text-slate-700"}`}>
-                {availableToday ? "OPD Open Today" : "Check Schedule"}
+              <p className={`text-sm md:text-base font-black ${
+                !availableToday ? "text-slate-700"
+                : (doctor.availableSlots || 0) > 0 ? "text-emerald-800"
+                : "text-red-800"
+              }`}>
+                {!availableToday ? "Not available today" : (doctor.availableSlots || 0) > 0 ? `${doctor.availableSlots} slots available today` : "Slots full today"}
               </p>
               {doctor.nextAvailable && doctor.nextAvailable !== "N/A" && doctor.nextAvailable !== "Today" && (
                 <p className="text-xs md:text-sm text-slate-500 font-medium mt-0.5">

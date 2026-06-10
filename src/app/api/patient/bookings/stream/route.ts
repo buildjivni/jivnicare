@@ -1,3 +1,4 @@
+import { apiResponse, apiError } from '@/lib/utils/api-response';
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db/prisma";
 import { verifyToken } from "@/lib/jwt";
@@ -7,14 +8,14 @@ import { logger } from "@/lib/infrastructure/logger";
 // No special runtime, runs as standard Node serverless function
 export async function GET(request: Request) {
   const cookieStore = await cookies();
-  const token = cookieStore.get("auth-token")?.value;
+  const token = cookieStore.get("jivnicare_token")?.value;
   if (!token) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return apiError("Unauthorized", 401);
   }
 
   const payload: any = await verifyToken(token);
   if (!payload?.id) {
-    return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    return apiError("Invalid token", 401);
   }
 
   // Create a streaming response using a TransformStream
@@ -25,7 +26,7 @@ export async function GET(request: Request) {
   // Helper to fetch bookings for the user
   const fetchBookings = async () => {
     const tokens = await prisma.queueToken.findMany({
-      where: { userId: payload.id },
+      where: { patientId: payload.id },
       include: {
         queue: {
           include: {
@@ -45,7 +46,7 @@ export async function GET(request: Request) {
           },
         },
       },
-      orderBy: { tokenIssuedAt: "desc" },
+      orderBy: { bookedAt: "desc" },
     });
     return tokens;
   };

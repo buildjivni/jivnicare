@@ -102,11 +102,11 @@ function DoctorLoginContent() {
           <div className="relative z-10">
             <Link href="/" className="flex items-center gap-3 mb-12 group">
               <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-xl group-hover:scale-105 transition-transform duration-300">
-                <Logo className="h-8 w-auto object-contain" />
+                <Logo className="w-8 h-8" />
               </div>
               <div className="flex flex-col">
-                <span className="text-2xl font-bold tracking-tight text-white leading-none">
-                  Jivni<span className="text-[#489C66]">Care</span>
+                <span className="text-2xl font-bold tracking-tight leading-none">
+                  <span style={{ color: '#4A90D9' }}>Jivni</span><span style={{ color: '#4A8C4A' }}>Care</span>
                 </span>
                 <span className="text-[10px] font-bold text-sky-200 uppercase tracking-widest mt-1">Partner Portal</span>
               </div>

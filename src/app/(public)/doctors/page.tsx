@@ -210,7 +210,7 @@ function DoctorListingContent() {
             selectedSpecialties={selectedSpecialties}
             onSpecialtyToggle={handleSpecialtyToggle}
             onClearAll={handleClearFilters}
-            totalResults={searchResult?.results.length || 0}
+            totalResults={searchResult?.results?.length ?? 0}
             // Pass all filter values for state sync
             availability={availability}
             maxFee={maxFee}
@@ -227,7 +227,7 @@ function DoctorListingContent() {
                     {query ? `Search results for "${query}"` : effectiveDistrict ? `Doctors in ${effectiveDistrict}` : 'Showing doctors across Bihar'}
                   </h1>
                   <p className="text-sm font-medium text-slate-500 mt-0.5" aria-live="polite" aria-atomic="true">
-                    {isLoading ? 'Searching...' : isError ? 'Search unavailable' : `${searchResult?.results.length || 0} specialists found`}
+                    {isLoading ? 'Searching...' : isError ? 'Search unavailable' : `${searchResult?.results?.length ?? 0} specialists found`}
                   </p>
                 </div>
                 

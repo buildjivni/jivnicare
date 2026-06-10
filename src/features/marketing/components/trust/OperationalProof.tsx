@@ -40,7 +40,7 @@ export function OperationalProof({ className }: OperationalProofProps) {
           <div className="flex items-center gap-1">
             <span className="text-sm font-bold text-foreground">4.9/5 Rating</span>
           </div>
-          <span className="text-xs text-muted-foreground font-medium">From 15,000+ happy patients</span>
+          <span className="text-xs text-muted-foreground font-medium">Bihar's Trusted Healthcare Network</span>
         </div>
       </div>
     </div>

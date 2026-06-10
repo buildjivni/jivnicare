@@ -1,103 +1,52 @@
-/**
- * Canonical edge request/auth layer (Next.js 16 proxy convention).
- * Do not add middleware.ts — Next.js allows only proxy.ts OR middleware, not both.
- */
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-import { jwtVerify } from 'jose';
-import { getJwtSecret } from '@/lib/infrastructure/env';
-import { logger } from '@/lib/infrastructure/logger';
-
-// Define the paths that require authentication and specific roles
-const protectedPaths = [
-  { prefix: '/doctor', roles: ['DOCTOR'] },
-  { prefix: '/admin', roles: ['ADMIN'] },
-  // For patient dashboard, assuming it's at /patient or /booking 
-  // /booking has no page route; checkout/confirmation are protected separately 
-  { prefix: '/my-bookings', roles: ['PATIENT', 'DOCTOR', 'ADMIN'] },
-  { prefix: '/checkout', roles: ['PATIENT', 'DOCTOR', 'ADMIN'] },
-];
+import { NextRequest, NextResponse } from 'next/server'
+import { jwtVerify } from 'jose'
 
 export async function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { pathname } = request.nextUrl
+  const token = request.cookies.get('jivnicare_token')?.value
 
-  // Check if the path is protected
-  const isAuthPage = pathname.endsWith('/login') || pathname.endsWith('/register');
-  const protectedRoute = !isAuthPage ? protectedPaths.find((route) => 
-    pathname === route.prefix || pathname.startsWith(route.prefix + '/')
-  ) : undefined;
+  // Routes that need protection
+  const doctorRoutes = pathname.startsWith('/doctor')
+  const adminRoutes = pathname.startsWith('/admin')
+  const doctorApiRoutes = pathname.startsWith('/api/doctor')
+  const adminApiRoutes = pathname.startsWith('/api/admin')
 
-  // Explicitly ignore public discovery routes even if matched accidentally
-  if (pathname === '/doctors' || pathname.startsWith('/doctors/')) {
-    return NextResponse.next();
-  }
-
-  if (!protectedRoute) {
-    return NextResponse.next();
-  }
-
-  // Get the auth-token cookie
-  const token = request.cookies.get('auth-token')?.value;
-
-  if (!token) {
-    return redirectToLogin(request, pathname);
-  }
-
-  try {
-    // Verify the JWT token using jose
-    const secret = new TextEncoder().encode(getJwtSecret());
-    const { payload } = await jwtVerify(token, secret);
-
-    const userRole = payload.role as string;
-
-    if (!userRole || !protectedRoute.roles.includes(userRole)) {
-      if (userRole === 'DOCTOR') {
-        return NextResponse.redirect(new URL('/doctor/dashboard', request.url));
-      }
-      if (userRole === 'ADMIN') {
-        return NextResponse.redirect(new URL('/admin/dashboard', request.url));
-      }
-      if (userRole === 'PATIENT') {
-        return NextResponse.redirect(new URL('/', request.url));
-      }
-      return NextResponse.redirect(new URL('/', request.url));
+  if (doctorRoutes || adminRoutes || doctorApiRoutes || adminApiRoutes) {
+    if (!token) {
+      if (doctorRoutes) return NextResponse.redirect(new URL('/login', request.url))
+      if (adminRoutes) return NextResponse.redirect(new URL('/admin/login', request.url))
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Role is allowed, proceed
-    return NextResponse.next();
-  } catch (error) {
-    logger.warn({
-      category: 'AUTH',
-      message: 'Edge JWT verification failed',
-      metadata: { path: pathname },
-      error,
-    });
-    return redirectToLogin(request, pathname);
-  }
-}
+    try {
+      const secret = new TextEncoder().encode(process.env.JWT_SECRET!)
+      const { payload } = await jwtVerify(token, secret)
 
-function redirectToLogin(request: NextRequest, originalPath: string) {
-  const isTargetAdmin = originalPath.startsWith('/admin');
-  const loginPath = isTargetAdmin ? '/admin/login' : '/login';
-  const url = new URL(loginPath, request.url);
-  
-  if (originalPath !== '/login' && originalPath !== '/' && originalPath !== '/admin/login') {
-    url.searchParams.set('returnTo', originalPath);
+      // Role check
+      if ((doctorRoutes || doctorApiRoutes) && payload.role !== 'DOCTOR') {
+        // Allow fallback to login if role mismatch on frontend routes
+        if (doctorRoutes) return NextResponse.redirect(new URL('/login', request.url))
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+      if ((adminRoutes || adminApiRoutes) && payload.role !== 'ADMIN') {
+        if (adminRoutes) return NextResponse.redirect(new URL('/admin/login', request.url))
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+    } catch {
+      if (doctorRoutes) return NextResponse.redirect(new URL('/login', request.url))
+      if (adminRoutes) return NextResponse.redirect(new URL('/admin/login', request.url))
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+    }
   }
-  
-  return NextResponse.redirect(url);
+
+  return NextResponse.next()
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public files (images, fonts, etc.)
-     */
-    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/doctor/:path*',
+    '/admin/:path*',
+    '/api/doctor/:path*',
+    '/api/admin/:path*',
   ],
-};
+}

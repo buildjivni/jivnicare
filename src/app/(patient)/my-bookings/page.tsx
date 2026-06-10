@@ -26,11 +26,11 @@ import {
 import { trackOperationalEvent } from "@/lib/telemetry/client";
 
 const TOKEN_STATUS_LABELS: Record<string, string> = {
-  WAITING: "Waiting",
-  IN_CONSULTATION: "In consultation",
-  COMPLETED: "Completed",
-  SKIPPED: "Skipped",
-  CANCELLED: "Cancelled",
+  WAITING: "Intezaar mein",
+  IN_CONSULTATION: "Consultation jaari hai",
+  COMPLETED: "Poora ho gaya",
+  SKIPPED: "Skip kiya gaya",
+  CANCELLED: "Cancel kiya gaya",
 };
 
 function statusLabel(status: string): string {
@@ -71,7 +71,7 @@ export default function MyBookingsPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setFetchError(data.error || "Failed to load bookings");
+        setFetchError(data.error || "Bookings load nahi ho paayi");
         setBookings([]);
         return;
       }
@@ -109,7 +109,7 @@ export default function MyBookingsPage() {
 
           let queuePosition = 0;
           let positionLabel = "—";
-          let estimatedWaitTime = "Next";
+          let estimatedWaitTime = "Baari aane wali hai";
 
           if (emergency) {
             positionLabel = "Emergency priority";
@@ -146,7 +146,7 @@ export default function MyBookingsPage() {
       }
     } catch (e) {
       console.error("Failed to load bookings", e);
-      setFetchError("Unable to reach the server. Please try again.");
+      setFetchError("Server se connection nahi ho paa raha hai.");
       setBookings([]);
     } finally {
       setIsLoading(false);
@@ -166,7 +166,7 @@ export default function MyBookingsPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setCancelError(data.error || "Failed to cancel booking.");
+        setCancelError(data.error || "Booking cancel nahi ho paayi.");
         return;
       }
       // Optimistic: remove from active list immediately, then refetch
@@ -176,7 +176,7 @@ export default function MyBookingsPage() {
       setCancellingId(null);
       fetchBookings();
     } catch {
-      setCancelError("Connection error. Please try again.");
+      setCancelError("Connection fail ho gaya. Dobara try karein.");
     } finally {
       setIsCancelling(false);
     }
@@ -295,10 +295,10 @@ useEffect(() => {
         <div className="max-w-4xl mx-auto flex items-start justify-between">
           <div>
             <h1 className="text-3xl font-black text-slate-900 tracking-tight">
-              My Bookings
+              Aapki Bookings
             </h1>
             <p className="text-slate-500 font-medium mt-1">
-              Manage your active tokens and history.
+              Apne active tokens aur history yahan dekhein.
             </p>
           </div>
           <button
@@ -325,11 +325,11 @@ useEffect(() => {
           <div className="bg-white rounded-[40px] p-10 text-center border border-red-100 max-w-2xl mx-auto">
             <AlertCircle className="w-10 h-10 text-red-500 mx-auto mb-4" />
             <h2 className="text-xl font-black text-slate-900 mb-2">
-              Could not load bookings
+              Bookings load nahi ho paayi
             </h2>
             <p className="text-slate-500 font-medium mb-6">{fetchError}</p>
             <Button onClick={fetchBookings} className="rounded-xl">
-              Try again
+              Dobara koshish karein
             </Button>
           </div>
         ) : (
@@ -348,7 +348,7 @@ useEffect(() => {
                         <div className="flex flex-col md:flex-row">
                           <div className="bg-primary md:w-40 p-4 md:p-6 flex flex-col items-center justify-center text-white text-center">
                             <p className="text-[10px] md:text-xs font-bold uppercase tracking-widest opacity-70 mb-1">
-                              {booking.isEmergency ? "Emergency" : "Token"}
+                              {booking.isEmergency ? "Emergency" : "Token Number"}
                             </p>
                             <p className="text-4xl md:text-5xl font-black">
                               #{booking.tokenNumber}
@@ -385,7 +385,7 @@ useEffect(() => {
                                 <div className="flex items-center gap-2">
                                   <Activity className="w-4 h-4 text-primary" />
                                   <span>
-                                    Serving: <b>#{booking.currentServing}</b>
+                                    Abhi Number Hai: <b>#{booking.currentServing}</b>
                                   </span>
                                 </div>
                               )}
@@ -408,6 +408,12 @@ useEffect(() => {
                               </div>
                             </div>
                             <div className="mt-6 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                              <Button
+                                onClick={() => router.push(`/confirmation`)}
+                                className="rounded-xl bg-[#205E98] text-white hover:bg-[#205E98]/90 font-bold gap-1.5 h-12 md:h-10 w-full sm:w-auto shadow-md shadow-blue-900/20"
+                              >
+                                Live Queue Track Karo <ChevronRight className="w-4 h-4 md:w-3.5 md:h-3.5" />
+                              </Button>
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -443,7 +449,7 @@ useEffect(() => {
                                           onClick={() => handleCancelBooking(booking.id)}
                                           className="rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold h-10 flex-1"
                                         >
-                                          {isCancelling ? "Cancelling..." : "Yes, Cancel"}
+                                          {isCancelling ? "Cancelling..." : "Haan, Cancel Karein"}
                                         </Button>
                                         <Button
                                           variant="outline"
@@ -455,7 +461,7 @@ useEffect(() => {
                                           Keep
                                         </Button>
                                       </div>
-                                      <p className="text-[10px] text-slate-400 font-medium text-center">This will release your slot.</p>
+                                      <p className="text-[10px] text-slate-400 font-medium text-center">Isse aapka slot hat jayega.</p>
                                     </div>
                                   ) : (
                                     <Button
@@ -484,17 +490,16 @@ useEffect(() => {
                   <Search className="w-9 h-9 text-primary" />
                 </div>
                 <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-2">
-                  No Active Tokens
+                  Koi Active Token Nahi Hai
                 </h2>
                 <p className="text-slate-500 font-medium max-w-md mx-auto leading-relaxed mb-8">
-                  You don&apos;t have any active queue tokens. Need to see a doctor
-                  today?
+                  Aapka abhi koi active queue token nahi hai. Kya aapko aaj doctor ko dikhana hai?
                 </p>
                 <Button
                   onClick={() => router.push("/doctors")}
                   className="h-14 px-8 rounded-2xl bg-primary hover:bg-primary/90 font-bold shadow-lg shadow-primary/20 transition-all text-white"
                 >
-                  Find Verified Doctors{" "}
+                  Verified Doctors Dhundhein{" "}
                   <ChevronRight className="w-5 h-5 ml-1" />
                 </Button>
               </div>
@@ -503,7 +508,7 @@ useEffect(() => {
             {pastBookings.length > 0 && (
               <div className="pt-8">
                 <h3 className="text-xl font-black text-slate-900 mb-6 flex items-center gap-2">
-                  <Activity className="w-5 h-5 text-primary" /> Previously Consulted
+                  <Activity className="w-5 h-5 text-primary" /> Purani Consultations
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {pastBookings.slice(0, 6).map((booking) => (
@@ -542,7 +547,7 @@ useEffect(() => {
                         }
                         className="mt-5 w-full h-10 rounded-xl border-primary/20 text-primary font-bold hover:bg-primary/5 hover:border-primary/40"
                       >
-                        Book Again
+                        Dobara Book Karein
                       </Button>
                     </div>
                   ))}
@@ -555,10 +560,9 @@ useEffect(() => {
         <div className="mt-12 p-6 rounded-3xl bg-emerald-50 border border-emerald-100 flex items-start gap-4">
           <ShieldCheck className="w-6 h-6 text-emerald-600 shrink-0 mt-0.5" />
           <div>
-            <p className="font-bold text-emerald-900">Privacy & Security</p>
+            <p className="font-bold text-emerald-900">Privacy & Suraksha</p>
             <p className="text-sm text-emerald-700 mt-1">
-              Your booking data is stored securely. JivniCare verified clinics will
-              only access your details when you arrive and present your token.
+              Aapka booking data bilkul safe hai. JivniCare verified clinics aapka details tabhi dekh payenge jab aap pahuch kar apna token dikhayenge.
             </p>
           </div>
         </div>

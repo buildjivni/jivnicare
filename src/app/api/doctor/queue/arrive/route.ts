@@ -1,3 +1,4 @@
+import { apiResponse, apiError } from '@/lib/utils/api-response';
 import { NextRequest } from "next/server";
 import { cookies } from "next/headers";
 import { verifyToken, AUTH_COOKIE } from "@/lib/jwt";
@@ -10,13 +11,13 @@ export async function PATCH(req: NextRequest) {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get(AUTH_COOKIE)?.value;
-    if (!token) return Response.json({ error: "Unauthorized" }, { status: 401 });
+    if (!token) return apiError("Unauthorized", 401);
     const user = await verifyToken(token);
 
     const body = await req.json();
     const { tokenId } = body;
     if (!tokenId) {
-      return Response.json({ error: "tokenId is required" }, { status: 400 });
+      return apiError("tokenId is required", 400);
     }
 
     const queueToken = await verifyTokenOwnership(tokenId, user);
@@ -39,7 +40,7 @@ export async function PATCH(req: NextRequest) {
       });
     });
 
-    return Response.json({ token: updated });
+    return apiResponse({token: updated});
   } catch (err) {
     return queueError(new Response(), err);
   }

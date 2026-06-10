@@ -1,3 +1,4 @@
+import { apiResponse, apiError } from '@/lib/utils/api-response';
 import { NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/jwt';
 import { cookies } from 'next/headers';
@@ -7,15 +8,15 @@ import { logOperationalError } from '@/lib/telemetry/redis';
 export async function POST(request: Request) {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get("auth-token")?.value;
+    const token = cookieStore.get("jivnicare_token")?.value;
 
     if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return apiError("Unauthorized", 401);
     }
 
     const payload: any = await verifyToken(token);
     if (!payload || !payload.id || payload.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden: Admin access only" }, { status: 403 });
+      return apiError("Forbidden: Admin access only", 403);
     }
 
     const { target } = await request.json();
@@ -65,7 +66,7 @@ export async function POST(request: Request) {
         break;
       }
       default:
-        return NextResponse.json({ error: "Invalid target specified." }, { status: 400 });
+        return apiError("Invalid target specified.", 400);
     }
 
     // Log the cleanup action operationally for security/audit trail
@@ -77,14 +78,12 @@ export async function POST(request: Request) {
       // Adding target/count as part of category text just to fit existing schema
     }).catch(() => {});
 
-    return NextResponse.json({
-      success: true,
+    return apiResponse({success: true,
       message,
-      deletedCount
-    });
+      deletedCount});
 
   } catch (error) {
     console.error("Data Hygiene Cleanup Error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return apiError("Internal Server Error", 500);
   }
 }

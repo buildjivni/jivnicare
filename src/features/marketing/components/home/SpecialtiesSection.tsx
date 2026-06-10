@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 import {
   Stethoscope, HeartPulse, Sparkles, Baby, Bone, Brain, ArrowRight
 } from "lucide-react";
-import { SPECIALTIES } from "@/lib/constants/constants";
 import { staggerContainer, itemVariants } from "@/animations/variants";
 
 interface SpecialtiesSectionProps {
@@ -33,7 +32,9 @@ const COLOR_SETS = [
 ];
 
 export function SpecialtiesSection({ specialties }: SpecialtiesSectionProps) {
-  const displaySpecialties = specialties || SPECIALTIES;
+  if (!specialties || specialties.length === 0) return null;
+
+  const displaySpecialties = specialties;
 
   return (
     <section className="py-10 md:py-16 bg-white border-b border-slate-100 relative" id="specialties">

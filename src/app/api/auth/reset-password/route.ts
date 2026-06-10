@@ -1,3 +1,4 @@
+import { apiResponse, apiError } from '@/lib/utils/api-response';
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/db/prisma';
 import bcrypt from 'bcryptjs';
@@ -14,12 +15,12 @@ export async function POST(request: Request) {
     }
 
     if (password.length < 6) {
-      return NextResponse.json({ error: 'Password must be at least 6 characters long' }, { status: 400 });
+      return apiError('Password must be at least 6 characters long', 400);
     }
 
     const phone10 = phone.replace(/\D/g, '').slice(-10);
     if (phone10.length !== 10) {
-      return NextResponse.json({ error: 'Invalid phone number format' }, { status: 400 });
+      return apiError('Invalid phone number format', 400);
     }
 
     const user = await prisma.user.findUnique({
@@ -28,11 +29,11 @@ export async function POST(request: Request) {
     });
 
     if (!user) {
-      return NextResponse.json({ error: 'No account registered with this phone number.' }, { status: 404 });
+      return apiError('No account registered with this phone number.', 404);
     }
 
     if (user.role !== 'DOCTOR' || !user.doctor) {
-      return NextResponse.json({ error: 'Account is not registered as a Doctor.' }, { status: 403 });
+      return apiError('Account is not registered as a Doctor.', 403);
     }
 
     let otpVerified = false;
@@ -43,7 +44,7 @@ export async function POST(request: Request) {
         otpVerified = true;
         logger.info({ category: 'OTP', message: 'Test mode OTP matched for reset password', metadata: { phoneSuffix: phone10.slice(-4) } });
       } else {
-        return NextResponse.json({ error: 'Invalid test OTP.' }, { status: 401 });
+        return apiError('Invalid test OTP.', 401);
       }
     }
 
@@ -64,7 +65,7 @@ export async function POST(request: Request) {
 
         if (!res.ok) {
           logger.error({ category: 'OTP', message: '2Factor verify HTTP error in reset password', error: `status ${res.status}` });
-          return NextResponse.json({ error: 'Verification service unavailable. Please try again.' }, { status: 503 });
+          return apiError('Verification service unavailable. Please try again.', 503);
         }
 
         const data = await res.json();
@@ -78,7 +79,7 @@ export async function POST(request: Request) {
         }
       } catch (err) {
         logger.error({ category: 'OTP', message: '2Factor token verification failed', error: err });
-        return NextResponse.json({ error: 'Invalid or expired verification. Please try again.' }, { status: 401 });
+        return apiError('Invalid or expired verification. Please try again.', 401);
       }
     }
 
@@ -89,9 +90,9 @@ export async function POST(request: Request) {
       data: { password: hashedPassword },
     });
 
-    return NextResponse.json({ success: true, message: 'Password reset successfully.' });
+    return apiResponse({success: true, message: 'Password reset successfully.'});
   } catch (error) {
     logger.error({ category: "OTP", message: "Reset Password Error", error });
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return apiError('Internal server error', 500);
   }
 }

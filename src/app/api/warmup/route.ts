@@ -1,3 +1,4 @@
+import { apiResponse, apiError } from '@/lib/utils/api-response';
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db/prisma";
 
@@ -20,18 +21,14 @@ export async function GET() {
       where: { verificationStatus: "VERIFIED" },
     });
 
-    return NextResponse.json({
-      status: "warm",
+    return apiResponse({status: "warm",
       verifiedDoctors: count,
-      timestamp: new Date().toISOString(),
-    });
+      timestamp: new Date().toISOString(),});
   } catch (error: any) {
     // Warmup failure is non-critical — never crash
     console.warn("[Warmup] DB ping failed:", error?.message);
-    return NextResponse.json({
-      status: "cold",
+    return apiResponse({status: "cold",
       error: "DB connection warming up",
-      timestamp: new Date().toISOString(),
-    }, { status: 200 }); // Always 200 so UptimeRobot doesn't false-alarm
+      timestamp: new Date().toISOString(),}, 200); // Always 200 so UptimeRobot doesn't false-alarm
   }
 }

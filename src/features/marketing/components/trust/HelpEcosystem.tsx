@@ -4,6 +4,7 @@ import { useState } from "react";
 import { HelpCircle, ChevronDown, Phone, MessageCircle, Mail, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { Logo } from "@/features/marketing/components/brand/Logo";
 
 const faqs = [
   {
@@ -88,15 +89,15 @@ export function HelpEcosystem({ className }: { className?: string }) {
 
         <div>
            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-4">
-             <span className="text-primary">Jivni</span><span className="text-secondary">Care</span> Trust Guarantee
+             <span style={{ color: '#4A90D9' }}>Jivni</span><span style={{ color: '#4A8C4A' }}>Care</span> Trust Guarantee
            </h4>
            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm h-[calc(100%-2rem)] flex flex-col justify-center">
              <div className="w-12 h-12 rounded-xl bg-white border border-slate-100 flex items-center justify-center mb-5 shadow-sm">
-               <img src="/logo.png" alt="" className="w-8 h-8 object-contain" />
+               <Logo className="w-8 h-8" />
              </div>
              <h5 className="text-lg font-black text-slate-900 mb-3">Your Health, Our Priority</h5>
              <p className="text-sm text-slate-600 leading-relaxed font-medium mb-6">
-               <span className="text-primary font-black">Jivni</span><span className="text-secondary font-black">Care</span> operates under strict medical and data compliance. We ensure that every clinic listed on our platform meets high standards of hygiene, professionalism, and medical authenticity.
+               <span style={{ color: '#4A90D9' }}>Jivni</span><span style={{ color: '#4A8C4A' }}>Care</span> operates under strict medical and data compliance. We ensure that every clinic listed on our platform meets high standards of hygiene, professionalism, and medical authenticity.
              </p>
              <div className="space-y-3 mt-auto">
                <div className="flex items-center gap-2">

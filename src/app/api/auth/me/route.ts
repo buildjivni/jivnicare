@@ -1,3 +1,4 @@
+import { apiResponse, apiError } from '@/lib/utils/api-response';
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/jwt';
@@ -10,7 +11,7 @@ import { logger } from '@/lib/infrastructure/logger';
  * Lightweight identity hydration endpoint.
  *
  * Returns the current authenticated user's full identity, resolved
- * from the HttpOnly auth-token cookie + a minimal DB lookup.
+ * from the HttpOnly jivnicare_token cookie + a minimal DB lookup.
  *
  * Use cases:
  *   - Dashboard load: confirm session is still valid
@@ -19,7 +20,7 @@ import { logger } from '@/lib/infrastructure/logger';
  *   - Doctor dashboard: get doctorId without a separate API call
  *
  * Returns 401 if:
- *   - No auth-token cookie present
+ *   - No jivnicare_token cookie present
  *   - Token is expired or invalid
  *   - User no longer exists in DB
  *
@@ -34,16 +35,16 @@ export async function GET() {
   try {
     // 1. Read HttpOnly cookie
     const cookieStore = await cookies();
-    const token = cookieStore.get('auth-token')?.value;
+    const token = cookieStore.get('jivnicare_token')?.value;
 
     if (!token) {
-      return NextResponse.json({ authenticated: false, user: null }, { status: 200 });
+      return apiResponse({authenticated: false, user: null}, 200);
     }
 
     // 2. Verify JWT (returns null if expired/invalid — no throw)
     const decoded = await verifyToken(token) as { id: string; role: string } | null;
     if (!decoded?.id) {
-      return NextResponse.json({ authenticated: false, user: null }, { status: 200 });
+      return apiResponse({authenticated: false, user: null}, 200);
     }
 
     // 3. Minimal DB lookup — just what the client needs for identity
@@ -55,7 +56,7 @@ export async function GET() {
         name: true,
         location: true,
         role: true,
-        isVerified: true,
+        verificationStatus: true,
         // Linked doctor record (null for PATIENT/ADMIN)
         doctor: {
           select: { id: true },
@@ -64,7 +65,7 @@ export async function GET() {
     });
 
     if (!user) {
-      return NextResponse.json({ authenticated: false, user: null }, { status: 200 });
+      return apiResponse({authenticated: false, user: null}, 200);
     }
 
     return NextResponse.json({
@@ -74,7 +75,7 @@ export async function GET() {
         name: user.name,
         location: user.location,
         role: user.role,
-        verified: user.isVerified,
+        verified: (user as any).verificationStatus === 'VERIFIED',
         doctorId: user.doctor?.id ?? null,
       },
     });

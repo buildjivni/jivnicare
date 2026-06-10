@@ -1,3 +1,4 @@
+import { apiResponse, apiError } from '@/lib/utils/api-response';
 import { NextResponse } from 'next/server';
 import { incrementTelemetryCounter, logOperationalError, OperationalMetricName } from '@/lib/telemetry/redis';
 
@@ -26,7 +27,7 @@ export async function POST(req: Request) {
     
     // Validate required fields
     if (!data.metric || !ALLOWED_METRICS.has(data.metric as OperationalMetricName)) {
-      return NextResponse.json({ error: 'Invalid metric' }, { status: 400 });
+      return apiError('Invalid metric', 400);
     }
 
     const metric = data.metric as OperationalMetricName;
@@ -51,7 +52,7 @@ export async function POST(req: Request) {
       });
     }
 
-    return NextResponse.json({ success: true });
+    return apiResponse({success: true});
   } catch (error) {
     // Fail silently from the client's perspective
     console.error('Telemetry API Error:', error);

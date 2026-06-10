@@ -314,12 +314,14 @@ function PatientLoginContent() {
 
           <div className="relative z-10">
             <Link href="/" className="flex items-center gap-3 mb-12 group">
-              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-xl group-hover:scale-105 transition-transform duration-300">
-                <Logo className="w-8 h-8 object-contain" />
+              <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-xl group-hover:scale-105 transition-transform duration-300">
+                <Logo size={48} className="w-12 h-12" />
               </div>
               <div className="flex flex-col">
-                <span className="text-2xl font-black text-white leading-none">JivniCare</span>
-                <span className="text-[10px] font-bold text-blue-200 uppercase tracking-widest mt-1">Unified Health</span>
+                <span className="text-2xl font-black text-white leading-none">
+                   <span style={{ color: '#4A90D9' }}>Jivni</span><span style={{ color: '#4A8C4A' }}>Care</span>
+                </span>
+                <span className="text-[10px] font-bold text-blue-200 uppercase tracking-widest mt-1">BIHAR HEALTHCARE</span>
               </div>
             </Link>
 
@@ -329,7 +331,7 @@ function PatientLoginContent() {
                 <span className="text-blue-200">Fully Protected.</span>
               </h1>
               <p className="text-blue-100 font-medium text-lg max-w-xs leading-relaxed opacity-90">
-                Securely access your medical history and book instant appointments across our nationwide network.
+                Bihar mein doctors ko instantly book karein
               </p>
             </div>
           </div>
@@ -345,7 +347,7 @@ function PatientLoginContent() {
               </div>
             </div>
             <p className="text-[11px] text-blue-300/80 font-bold uppercase tracking-widest text-center">
-              Trusted by 5,000+ Doctors in Bihar
+              Bihar ka Trusted Healthcare Platform
             </p>
           </div>
         </div>
