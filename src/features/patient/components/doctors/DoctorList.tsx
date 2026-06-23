@@ -69,8 +69,8 @@ function DoctorRequestForm() {
 
   return (
     <div className="bg-slate-50/50 rounded-[2.5rem] p-6 md:p-8 border border-slate-100 max-w-md mx-auto text-left mt-10">
-      <h4 className="text-lg font-black text-slate-900 mb-2 tracking-tight">Doctor nahi mila? Hamein batayein</h4>
-      <p className="text-xs text-slate-500 font-medium mb-6 leading-relaxed">
+      <h4 className="text-lg font-heading font-black text-slate-900 mb-2 tracking-tight">Doctor nahi mila? Hamein batayein</h4>
+      <p className="text-xs text-slate-500 font-bold mb-6 leading-relaxed">
         Aap jis doctor ya specialty ko dhoondh rahe hain, unki details niche likhein. Hum jald se jald unhe JivniCare par lane ki koshish karenge.
       </p>
       
@@ -83,7 +83,7 @@ function DoctorRequestForm() {
             placeholder="e.g. 9876543210"
             value={phone}
             onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
-            className="w-full h-12 px-4 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:border-primary font-medium"
+            className="w-full h-12 px-4 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary font-bold transition-all"
           />
         </div>
 
@@ -94,7 +94,7 @@ function DoctorRequestForm() {
             placeholder="e.g. Amit Kumar"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full h-12 px-4 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:border-primary font-medium"
+            className="w-full h-12 px-4 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary font-bold transition-all"
           />
         </div>
 
@@ -106,7 +106,7 @@ function DoctorRequestForm() {
               placeholder="e.g. Jamui"
               value={city}
               onChange={(e) => setCity(e.target.value)}
-              className="w-full h-12 px-4 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:border-primary font-medium"
+              className="w-full h-12 px-4 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary font-bold transition-all"
             />
           </div>
           <div>
@@ -116,7 +116,7 @@ function DoctorRequestForm() {
               placeholder="e.g. Cardiologist"
               value={specialty}
               onChange={(e) => setSpecialty(e.target.value)}
-              className="w-full h-12 px-4 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:border-primary font-medium"
+              className="w-full h-12 px-4 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary font-bold transition-all"
             />
           </div>
         </div>
@@ -124,7 +124,7 @@ function DoctorRequestForm() {
         <Button
           type="submit"
           disabled={isSubmitting}
-          className="w-full h-12 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/10 flex items-center justify-center gap-2 mt-2 transition-all"
+          className="w-full h-14 rounded-2xl bg-primary hover:bg-[#184a7a] text-white font-black text-lg shadow-xl shadow-primary/10 flex items-center justify-center gap-2 mt-2 transition-all active:scale-[0.98]"
         >
           {isSubmitting ? "Submitting..." : "Submit Doctor Request"}
         </Button>

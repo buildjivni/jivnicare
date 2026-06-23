@@ -29,6 +29,11 @@ export async function POST(request: Request) {
     if (body.registrationYear !== undefined && body.registrationYear !== null && body.registrationYear !== "") {
       body.registrationYear = parseInt(String(body.registrationYear), 10);
     }
+    if (body.lifetimePatientsDeclaration !== undefined && body.lifetimePatientsDeclaration !== null && body.lifetimePatientsDeclaration !== "") {
+      body.lifetimePatientsDeclaration = parseInt(String(body.lifetimePatientsDeclaration), 10);
+    } else if (body.lifetimePatientsDeclaration === "") {
+      body.lifetimePatientsDeclaration = null;
+    }
 
     const validation = step3OnboardSchema.safeParse(body);
     if (!validation.success) {
@@ -127,6 +132,7 @@ export async function POST(request: Request) {
           },
           gender: data.gender || undefined,
           dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : undefined,
+          lifetimePatientsDeclaration: data.lifetimePatientsDeclaration !== undefined ? (data.lifetimePatientsDeclaration !== null ? String(data.lifetimePatientsDeclaration) : null) : undefined,
         }
       });
 

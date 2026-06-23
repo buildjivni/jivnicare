@@ -46,13 +46,20 @@ export async function POST(request: Request) {
       // 1. Complete or Skip the current patient if ID provided
       if (currentTokenId) {
         // Strict verification: updateMany allows atomic where clauses on non-unique fields
-        await tx.queueToken.updateMany({
+        const updateRes = await tx.queueToken.updateMany({
           where: { 
             id: currentTokenId,
             status: "IN_CONSULTATION" // Must currently be in consultation
           },
           data: { status: skipCurrent ? "SKIPPED" : "COMPLETED" }
         });
+
+        if (updateRes.count > 0 && !skipCurrent) {
+          await tx.doctor.update({
+            where: { id: doctor.id },
+            data: { jivnicarePatientsServed: { increment: 1 } }
+          });
+        }
       }
 
       // 2. Find the next WAITING patient in strict sequential order

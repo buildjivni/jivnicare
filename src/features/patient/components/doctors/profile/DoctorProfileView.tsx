@@ -60,7 +60,9 @@ export function DoctorProfileView({ doctor, relatedDoctors }: DoctorProfileViewP
   const isClosedToday = doctor.available?.toLowerCase().includes("closed");
   const isBookingPaused = doctor.availabilityStatus?.toLowerCase().includes("paused");
   const badge = doctor.verifiedBadgeLabel ?? "Verified Doctor";
-  const consultCount = fmtCount(doctor.totalConsultations ?? 0);
+  const consultCount = doctor.lifetimePatientsDeclaration 
+    ? fmtCount(Number(doctor.lifetimePatientsDeclaration)) 
+    : null;
   const clinicImage = doctor.clinicImage || doctor.bgImage;
 
   const expertiseTags = Array.from(
@@ -239,7 +241,7 @@ export function DoctorProfileView({ doctor, relatedDoctors }: DoctorProfileViewP
               <div className="flex flex-col items-center justify-center text-center p-3 md:p-4 bg-blue-50/50 border border-blue-100/60 rounded-2xl">
                 <Users className="w-5 h-5 text-[#205E98] mb-1.5" />
                 <span className="font-black text-lg md:text-xl text-slate-900">{consultCount}</span>
-                <span className="text-[9px] md:text-[10px] text-slate-500 font-bold uppercase tracking-wide mt-1 leading-tight">Via JivniCare</span>
+                <span className="text-[9px] md:text-[10px] text-slate-500 font-bold uppercase tracking-wide mt-1 leading-tight">Patients Served</span>
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center text-center p-3 md:p-4 bg-slate-50/50 border border-slate-100/40 rounded-2xl opacity-40">

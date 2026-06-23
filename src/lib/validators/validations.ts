@@ -51,7 +51,7 @@ export const walkInSchema = z.object({
 export const step1OnboardSchema = z.object({
   fullName: z.string().min(3, "Name must be at least 3 characters").max(60).regex(/^[a-zA-Z\s\.]+$/, "Letters, spaces, and periods only."),
   contactNumber: z.string().regex(/^[6-9]\d{9}$/, "Contact number must be 10 digits starting with 6-9"),
-  speciality: z.string().min(2).max(100).regex(/^[a-zA-Z\s\-\/]+$/, "Letters, spaces, hyphens and slashes only"),
+  speciality: z.string().min(2).max(100).regex(/^[a-zA-Z\s\-\/\&]+$/, "Letters, spaces, hyphens, slashes, and ampersands only"),
 });
 
 // 4b. Doctor Onboarding Schema - Step 2 (Clinic Information)
@@ -78,7 +78,7 @@ export const step3OnboardSchema = z.object({
   medicalRegistrationNumber: z.string().min(5, "At least 5 characters").max(30).regex(/^[a-zA-Z0-9\-\/\.\s]+$/, "Letters, numbers, hyphens, slashes, spaces and periods only"),
   medicalCouncil: z.string().min(2, "Council name is too short").max(150),
   registrationYear: z.number().int("Year must be a whole number").min(1960).max(new Date().getFullYear(), "Cannot be in the future"),
-  specialization: z.string().min(2).max(100).regex(/^[a-zA-Z\s\-\/]+$/, "Letters, spaces, hyphens and slashes only"),
+  specialization: z.string().min(2).max(100).regex(/^[a-zA-Z\s\-\/\&]+$/, "Letters, spaces, hyphens, slashes, and ampersands only"),
   degreeCertificate: z.string().url("Valid Degree Certificate URL required"),
   nmcCertificate: z.string().url("Valid NMC Certificate URL required"),
   clinicPhotos: z.array(z.string().url("Invalid URL")).max(3).optional().default([]),
@@ -88,6 +88,7 @@ export const step3OnboardSchema = z.object({
   gender: z.enum(["Male", "Female", "Other"]).optional().nullable(),
   dateOfBirth: z.string().or(z.date()).optional().nullable(),
   email: z.string().email("Valid email is required").optional().nullable(),
+  lifetimePatientsDeclaration: z.number().int().min(0).max(1000000).optional().nullable(),
 });
 
 // 4d. Doctor Onboarding Schema - Step 4 (Schedule & Pricing)
@@ -114,7 +115,7 @@ export const doctorSettingsSchema = z.object({
   fee: z.number().int("Fee must be a whole number").min(0, "Fee cannot be negative").max(5000, "Fee cannot exceed 5000 rupees").optional(),
   averageConsultationTime: z.number().int().min(5).max(180).optional(),
   name: z.string().min(3, "Name must be at least 3 characters").max(60, "Name is too long").regex(/^[a-zA-Z\s\.]+$/, "Name can only contain letters, spaces, and periods").optional(),
-  regNumber: z.string().min(5, "Registration number must be at least 5 characters").max(30, "Registration number is too long").regex(/^[A-Z0-9\-]+$/, "Registration number must contain only uppercase letters, numbers, and hyphens").optional(),
+  regNumber: z.string().min(5, "Registration number must be at least 5 characters").max(30, "Registration number is too long").regex(/^[a-zA-Z0-9\-\/\.\s]+$/, "Letters, numbers, hyphens, slashes, spaces and periods only").optional(),
   isClosedToday: z.boolean().optional(),
   maxCapacity: z.number().int().min(0).max(1000).optional(),
   pauseOnlineBooking: z.boolean().optional(),

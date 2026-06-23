@@ -15,9 +15,36 @@ import { ImageUploadField } from "@/components/shared/ImageUploadField";
 import { SessionProvider, useSession, signIn } from "next-auth/react";
 
 const STANDARD_SPECIALTIES = [
-  "General Medicine", "Pediatrics", "Gynecology & Obstetrics", "Dermatology",
-  "Cardiology", "Orthopedics", "Ophthalmology", "ENT (Otolaryngology)",
-  "Dentistry", "Psychiatry", "Neurology", "Gastroenterology"
+  "General Physician",
+  "Dentist",
+  "Dermatologist & Cosmetologist",
+  "Gynecologist & Obstetrician",
+  "Pediatrician",
+  "Orthopedic Surgeon",
+  "ENT Specialist",
+  "Ophthalmologist",
+  "Cardiologist",
+  "Diabetologist",
+  "Psychiatrist & Psychologist",
+  "Physiotherapist",
+  "Neurologist",
+  "Gastroenterologist",
+  "Urologist",
+  "Pulmonologist",
+  "Endocrinologist",
+  "Nephrologist",
+  "Oncologist",
+  "Rheumatologist",
+  "Dietitian & Nutritionist",
+  "Sexologist",
+  "Hair & Skin Specialist",
+  "Ayurvedic Doctor",
+  "Homeopathic Doctor",
+  "Unani Specialist",
+  "Siddha Specialist",
+  "Naturopath",
+  "Geriatrician",
+  "Emergency Medicine Specialist"
 ];
 
 const MEDICAL_COUNCILS = [
@@ -43,7 +70,7 @@ function DoctorOnboardingFlowContent() {
   const [formData, setFormData] = useState({
     fullName: "", gender: "", dateOfBirth: "", email: "", contactNumber: "",
     medicalRegistrationNumber: "", medicalCouncil: "Bihar Medical Council", registrationYear: "",
-    speciality: "", experience: "", qualifications: "",
+    speciality: "", experience: "", qualifications: "", lifetimePatientsDeclaration: "",
     practiceType: "clinic", practiceName: "", practiceAddress: "", city: "", state: "Bihar", district: "", pincode: "", locality: "",
     bio: "", languages: "Hindi, English", fee: "400",
     profilePhotoUrl: "", clinicPhotoUrl: "", emergencyAvailable: false,
@@ -369,6 +396,7 @@ function DoctorOnboardingFlowContent() {
               gender: formData.gender || null,
               dateOfBirth: formData.dateOfBirth || null,
               email: session?.user?.email || formData.email || null,
+              lifetimePatientsDeclaration: formData.lifetimePatientsDeclaration ? parseInt(String(formData.lifetimePatientsDeclaration), 10) : null,
             })
           });
           const data = await res.json();
@@ -977,6 +1005,17 @@ function DoctorOnboardingFlowContent() {
                           className={`h-12 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.qualifications ? 'border-rose-500' : ''}`} 
                         />
                         {errors.qualifications && <p className="text-[10px] font-bold text-rose-500">{errors.qualifications}</p>}
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-700">Historical Career Patients Count (Declared)</label>
+                        <Input 
+                          type="number"
+                          placeholder="e.g. 5000" 
+                          value={formData.lifetimePatientsDeclaration} 
+                          onChange={(e) => setFormData({...formData, lifetimePatientsDeclaration: e.target.value})} 
+                          className="h-12 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all" 
+                        />
                       </div>
 
                       <div className="space-y-2">

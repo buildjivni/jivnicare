@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import {
   Star, MapPin, Clock, ShieldCheck,
   ChevronRight, Users, Zap, Activity, Shield,
-  Globe, GraduationCap
+  Globe, GraduationCap, Siren
 } from "lucide-react";
 import type { Doctor } from "@/types";
 import { cn } from "@/lib/utils/utils";
@@ -25,6 +25,19 @@ interface DoctorCardProps {
 function getAvailabilityConfig(doctor: Doctor) {
   const status = doctor.availabilityStatus || doctor.available || "";
   const lower = status.toLowerCase();
+
+  // Emergency Mode Active
+  if (lower.includes("emergency_only") || lower.includes("emergency only")) {
+    return {
+      label: "Emergency Only",
+      pill: "text-red-700 bg-red-50 border-red-200 font-extrabold animate-pulse",
+      dot: "bg-red-600",
+      pulse: true,
+      isClosed: false,
+      isPaused: false,
+      isEmergency: true,
+    };
+  }
 
   // Closed Today — highest priority
   if (lower.includes("opd closed") || lower.includes("closed today") || doctor.available?.toLowerCase().includes("closed")) {
@@ -128,7 +141,9 @@ export const DoctorCard = React.memo(function DoctorCard({ doctor, className, pr
   const url = getDoctorUrl(doctor);
   const goToDoctor = useCallback(() => router.push(url), [router, url]);
   const avail = useMemo(() => getAvailabilityConfig(doctor), [doctor]);
-  const consultCount = formatConsultations(doctor.totalConsultations ?? 0);
+  const consultCount = doctor.lifetimePatientsDeclaration 
+    ? formatConsultations(Number(doctor.lifetimePatientsDeclaration)) 
+    : null;
   const badge = doctor.verifiedBadgeLabel ?? "JivniCare Verified";
   // Only use clinicImage from DB — never fall back to bgImage (Unsplash placeholder)
   const banner = doctor.clinicImage || undefined;
@@ -277,6 +292,12 @@ export const DoctorCard = React.memo(function DoctorCard({ doctor, className, pr
             <Shield className="w-3 h-3" />
             {badge}
           </div>
+          {doctor.emergencyAvailable && (
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-red-50 border border-red-200 text-red-600 text-[10.5px] font-bold animate-pulse">
+              <Siren className="w-3 h-3 text-red-600" />
+              Emergency Open
+            </div>
+          )}
           {consultCount && (
             <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-emerald-50/50 border border-emerald-100 text-emerald-700 text-[10.5px] font-bold">
               <Users className="w-3 h-3" />
@@ -313,6 +334,8 @@ export const DoctorCard = React.memo(function DoctorCard({ doctor, className, pr
                   "active:scale-[0.98] transition-all duration-200 group",
                   avail.isClosed
                     ? "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed"
+                    : (avail as any).isEmergency
+                    ? "bg-red-600 text-white border-transparent hover:bg-red-700 animate-pulse"
                     : avail.isPaused
                     ? "bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100"
                     : cn(
@@ -324,7 +347,13 @@ export const DoctorCard = React.memo(function DoctorCard({ doctor, className, pr
                 )}
               >
                 <span>
-                  {avail.isClosed ? "Closed Today" : avail.isPaused ? "Walk-in Only" : "Book Clinic Visit"}
+                  {avail.isClosed 
+                    ? "Closed Today" 
+                    : (avail as any).isEmergency 
+                    ? "Emergency Visit" 
+                    : avail.isPaused 
+                    ? "Walk-in Only" 
+                    : "Book Clinic Visit"}
                 </span>
                 {!avail.isClosed && (
                   <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform opacity-80" />
@@ -332,10 +361,12 @@ export const DoctorCard = React.memo(function DoctorCard({ doctor, className, pr
               </button>
               <p className={cn(
                 "text-center mt-1.5 text-[9.5px] font-bold flex items-center justify-center gap-0.5",
-                avail.isClosed ? "text-slate-400" : avail.isPaused ? "text-amber-600" : "text-emerald-600"
+                avail.isClosed ? "text-slate-400" : (avail as any).isEmergency ? "text-red-600" : avail.isPaused ? "text-amber-600" : "text-emerald-600"
               )}>
                 {avail.isClosed ? (
                   "Not accepting today"
+                ) : (avail as any).isEmergency ? (
+                  "🚨 Emergency Cases Only"
                 ) : avail.isPaused ? (
                   "Call clinic for walk-in"
                 ) : (

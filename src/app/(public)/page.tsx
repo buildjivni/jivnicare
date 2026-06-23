@@ -33,31 +33,12 @@ async function getVerifiedDoctors() {
   }
 }
 
-async function getSpecialities() {
-  try {
-    // In V1 spec, specialties are just a string on the Doctor model.
-    // We fetch distinct values from the speciality field.
-    const doctors = await prisma.doctor.findMany({
-      where: { verificationStatus: 'VERIFIED' },
-      select: { speciality: true },
-      distinct: ['speciality'],
-    });
-    return doctors.map(d => ({ name: d.speciality, id: d.speciality.toLowerCase() }));
-  } catch (err) {
-    console.warn("Failed to fetch specialties during homepage build:", err);
-    return [];
-  }
-}
-
 export default async function Home() {
-  const [featuredDoctors, specialties] = await Promise.all([
-    getVerifiedDoctors(),
-    getSpecialities()
-  ]);
+  const featuredDoctors = await getVerifiedDoctors();
 
   return (
     <main className="flex flex-col min-h-screen w-full max-w-full overflow-x-hidden box-border bg-white">
-      <HeroSection />
+      <HeroSection featuredDoctor={featuredDoctors[0]} />
       
       {/* ── AVAILABLE DOCTORS (Now Primary Discovery) ── */}
       <VerifiedDoctorsSection doctors={featuredDoctors} />
@@ -69,7 +50,7 @@ export default async function Home() {
 
       {/* ── SPECIALTIES (Secondary Discovery) ── */}
       <div className="bg-slate-50/30">
-        <SpecialtiesSection specialties={specialties} />
+        <SpecialtiesSection />
       </div>
 
       {/* ── HOW IT WORKS ── */}

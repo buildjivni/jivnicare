@@ -1,12 +1,18 @@
 import type { Metadata, Viewport } from "next";
-import { Geist } from "next/font/google";
+import { Inter, Outfit } from "next/font/google";
 import "./globals.css";
 import { GoogleAnalytics } from "@/components/shared/GoogleAnalytics";
 import { SITE_CONFIG } from "@/lib/seo/metadata";
 import { websiteSchema, organizationSchema } from "@/lib/seo/jsonld";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-sans",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const outfit = Outfit({
+  variable: "--font-heading",
   subsets: ["latin"],
   display: "swap",
 });
@@ -94,7 +100,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="hi-IN" className={`${geistSans.variable} antialiased`}>
+    <html lang="hi-IN" className={`${inter.variable} ${outfit.variable} antialiased`}>
       <head>
         {/* Website + Sitelinks Searchbox */}
         <script

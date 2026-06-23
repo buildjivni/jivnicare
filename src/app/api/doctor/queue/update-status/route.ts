@@ -70,6 +70,14 @@ export async function PUT(request: Request) {
         data: { status }
       });
 
+      // Increment patients served counter if status resolves to COMPLETED
+      if (status === "COMPLETED") {
+        await tx.doctor.update({
+          where: { id: doctor.id },
+          data: { jivnicarePatientsServed: { increment: 1 } }
+        });
+      }
+
       // 2. If marked as IN_CONSULTATION, atomically update the currentActiveToken in DailyQueue
       if (status === "IN_CONSULTATION") {
         await tx.dailyQueue.update({

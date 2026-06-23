@@ -172,6 +172,8 @@ export function mapPrismaDoctorToUI(doc: any): UIDoctor {
     languages,
     partnerTier: doc.platformPricing?.partnerTier || undefined,
     gender: doc.gender || undefined,
+    emergencyAvailable: doc.emergencyAvailable || doc.isEmergencySupported || false,
+    isEmergencySupported: doc.isEmergencySupported || doc.emergencyAvailable || false,
     updatedAt: doc.updatedAt,
   };
 }

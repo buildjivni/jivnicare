@@ -386,6 +386,7 @@ function DoctorDashboardContent() {
           experience: parseInt(profileData.experience) || 0,
           fee: parseInt(profileData.consultationFee) || 0,
           qualifications: profileData.qualifications,
+          lifetimePatientsDeclaration: profileData.lifetimePatientsDeclaration ? parseInt(profileData.lifetimePatientsDeclaration, 10) : null,
         }),
       });
       const data = await res.json();
@@ -890,7 +891,7 @@ const renderProfile = () => (
 
         <div className="space-y-6 mt-8 pt-8 border-t border-slate-100">
           <h3 className="text-lg font-black text-slate-900 mb-4 flex items-center gap-2"><Wallet className="w-5 h-5 text-emerald-600"/> Professional Info</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div>
               <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Experience (Years)</label>
               <Input 
@@ -914,6 +915,16 @@ const renderProfile = () => (
               <Input 
                 value={profileData.qualifications} 
                 onChange={e => setProfileField("qualifications", e.target.value)}
+                className="h-12 rounded-xl bg-slate-50 text-slate-900 border-slate-200" 
+              />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Declared Career Patients</label>
+              <Input 
+                type="number"
+                placeholder="e.g. 5000"
+                value={profileData.lifetimePatientsDeclaration || ""} 
+                onChange={e => setProfileField("lifetimePatientsDeclaration", e.target.value)}
                 className="h-12 rounded-xl bg-slate-50 text-slate-900 border-slate-200" 
               />
             </div>

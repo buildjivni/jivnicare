@@ -25,9 +25,10 @@ export interface DoctorProfileView {
   verificationStatus: string;
   profileCompleteness: number;
   jivnicarePatientsServed: number;
+  lifetimePatientsDeclaration?: string;
   platformPricing?: any;
 }
-
+ 
 export interface DoctorSettingsView {
   fee: string;
   maxCapacity: string;
@@ -38,13 +39,13 @@ export interface DoctorSettingsView {
   statusReason: string;
   statusExpiresAt: string | null;
 }
-
+ 
 export interface DoctorWorkspaceView {
   profile: DoctorProfileView;
   settings: DoctorSettingsView;
   weeklySchedule: Record<string, unknown> | null;
 }
-
+ 
 /** Map raw /api/doctor/profile response into one stable workspace shape. */
 export function mapDoctorWorkspace(
   doctor: Record<string, any>,
@@ -53,9 +54,9 @@ export function mapDoctorWorkspace(
   const ops = doctor.clinicOperations ?? {};
   const specialty =
     doctor.specialties?.[0]?.name ?? "";
-
+ 
   const fee = doctor.fee ?? doctor.consultationFee ?? 0;
-
+ 
   return {
     profile: {
       id: doctor.id,
@@ -82,6 +83,7 @@ export function mapDoctorWorkspace(
       verificationStatus: doctor.verificationStatus || "DRAFT",
       profileCompleteness: completeness,
       jivnicarePatientsServed: doctor.jivnicarePatientsServed || 0,
+      lifetimePatientsDeclaration: doctor.lifetimePatientsDeclaration != null ? String(doctor.lifetimePatientsDeclaration) : "",
     },
     settings: {
       fee: String(fee),

@@ -81,61 +81,87 @@ export function normalizeQualifications(input: string | null | undefined): strin
 
 // 2. Specialty Normalization Mapping
 const SPECIALTY_MAP: Record<string, string> = {
-  "cardio": "Cardiology",
-  "cardiology": "Cardiology",
-  "cardiologist": "Cardiology",
+  "cardio": "Cardiologist",
+  "cardiology": "Cardiologist",
+  "cardiologist": "Cardiologist",
   
-  "derma": "Dermatology",
-  "dermatology": "Dermatology",
-  "dermatologist": "Dermatology",
+  "derma": "Dermatologist & Cosmetologist",
+  "dermatology": "Dermatologist & Cosmetologist",
+  "dermatologist": "Dermatologist & Cosmetologist",
+  "dermatologist & cosmetologist": "Dermatologist & Cosmetologist",
   
-  "pedia": "Pediatrics",
-  "pediatrician": "Pediatrics",
-  "pediatrics": "Pediatrics",
+  "pedia": "Pediatrician",
+  "pediatrician": "Pediatrician",
+  "pediatrics": "Pediatrician",
   
-  "ortho": "Orthopedics",
-  "orthopedic": "Orthopedics",
-  "orthopedics": "Orthopedics",
-  "orthopedician": "Orthopedics",
+  "ortho": "Orthopedic Surgeon",
+  "orthopedic": "Orthopedic Surgeon",
+  "orthopedics": "Orthopedic Surgeon",
+  "orthopedician": "Orthopedic Surgeon",
+  "orthopedic surgeon": "Orthopedic Surgeon",
   
-  "gyne": "Gynecology",
-  "gynecology": "Gynecology",
-  "gynecologist": "Gynecology",
-  "gynaecology": "Gynecology",
-  "gynaecologist": "Gynecology",
+  "gyne": "Gynecologist & Obstetrician",
+  "gynecology": "Gynecologist & Obstetrician",
+  "gynecologist": "Gynecologist & Obstetrician",
+  "gynaecology": "Gynecologist & Obstetrician",
+  "gynaecologist": "Gynecologist & Obstetrician",
+  "gynecologist & obstetrician": "Gynecologist & Obstetrician",
   
-  "neuro": "Neurology",
-  "neurology": "Neurology",
-  "neurologist": "Neurology",
+  "neuro": "Neurologist",
+  "neurology": "Neurologist",
+  "neurologist": "Neurologist",
   
-  "general medicine": "General Medicine",
-  "physician": "General Medicine",
-  "general physician": "General Medicine",
-  "gp": "General Medicine",
-  "internal medicine": "General Medicine",
+  "general medicine": "General Physician",
+  "physician": "General Physician",
+  "general physician": "General Physician",
+  "gp": "General Physician",
+  "internal medicine": "General Physician",
   
   "ent": "ENT Specialist",
   "e.n.t": "ENT Specialist",
   "otolaryngology": "ENT Specialist",
+  "ent specialist": "ENT Specialist",
   
-  "dentist": "Dentistry",
-  "dentistry": "Dentistry",
-  "dental": "Dentistry",
+  "dentist": "Dentist",
+  "dentistry": "Dentist",
+  "dental": "Dentist",
   
-  "ophthalmology": "Ophthalmology",
-  "ophthalmologist": "Ophthalmology",
-  "eye specialist": "Ophthalmology",
+  "ophthalmology": "Ophthalmologist",
+  "ophthalmologist": "Ophthalmologist",
+  "eye specialist": "Ophthalmologist",
   
-  "psychiatry": "Psychiatry",
-  "psychiatrist": "Psychiatry",
-  "mental health": "Psychiatry",
+  "psychiatry": "Psychiatrist & Psychologist",
+  "psychiatrist": "Psychiatrist & Psychologist",
+  "mental health": "Psychiatrist & Psychologist",
+  "psychiatrist & psychologist": "Psychiatrist & Psychologist",
+
+  "physiotherapist": "Physiotherapist",
+  "gastroenterologist": "Gastroenterologist",
+  "urologist": "Urologist",
+  "pulmonologist": "Pulmonologist",
+  "endocrinologist": "Endocrinologist",
+  "nephrologist": "Nephrologist",
+  "oncologist": "Oncologist",
+  "rheumatologist": "Rheumatologist",
+  "dietitian & nutritionist": "Dietitian & Nutritionist",
+  "dietitian": "Dietitian & Nutritionist",
+  "nutritionist": "Dietitian & Nutritionist",
+  "sexologist": "Sexologist",
+  "hair & skin specialist": "Hair & Skin Specialist",
+  "ayurvedic doctor": "Ayurvedic Doctor",
+  "homeopathic doctor": "Homeopathic Doctor",
+  "unani specialist": "Unani Specialist",
+  "siddha specialist": "Siddha Specialist",
+  "naturopath": "Naturopath",
+  "geriatrician": "Geriatrician",
+  "emergency medicine specialist": "Emergency Medicine Specialist",
 };
 
 /**
  * Normalizes a specialty name to standard title casing and mapping.
  */
 export function normalizeSpecialty(input: string | null | undefined): string {
-  if (!input) return "General Medicine";
+  if (!input) return "General Physician";
   const cleaned = input.trim().toLowerCase();
   
   if (SPECIALTY_MAP[cleaned]) {

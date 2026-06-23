@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
       gender: searchParams.get("gender"),
       language: searchParams.get("language"),
       availableToday: searchParams.get("availableToday") === "true",
-      emergencyOnly: searchParams.get("emergencyOnly") === "true",
+      emergencyOnly: searchParams.get("emergencyOnly") === "true" || searchParams.get("isEmergency") === "true" || searchParams.get("emergency") === "true",
       feeRange: searchParams.get("feeRange"),
       lat: searchParams.get("lat"),
       lng: searchParams.get("lng"),

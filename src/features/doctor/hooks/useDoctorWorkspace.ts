@@ -31,6 +31,7 @@ const EMPTY_PROFILE: DoctorProfileView = {
   verificationStatus: "DRAFT",
   profileCompleteness: 0,
   jivnicarePatientsServed: 0,
+  lifetimePatientsDeclaration: "",
 };
 
 const EMPTY_SETTINGS: DoctorSettingsView = {
@@ -107,6 +108,7 @@ export function useDoctorWorkspace() {
           verificationStatus: doctor.verificationStatus || "DRAFT",
           profileCompleteness: 100, // simplified for V1
           jivnicarePatientsServed: doctor.jivnicarePatientsServed || 0,
+          lifetimePatientsDeclaration: doctor.lifetimePatientsDeclaration != null ? String(doctor.lifetimePatientsDeclaration) : "",
           platformPricing: doctor.platformPricing || null,
         },
         settings: {

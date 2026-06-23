@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, ShieldCheck, Activity } from "lucide-react";
+import { ArrowLeft, ShieldCheck, Activity, ChevronRight } from "lucide-react";
 import { OrderSummary, PaymentForm } from "@/features/booking/components/checkout";
 import { useBookingStore } from "@/features/booking/store/useBookingStore";
 import { useAuthStore } from "@/features/auth/store/useAuthStore";
@@ -108,6 +108,13 @@ export default function CheckoutPage() {
       </div>
 
       <div className="container mx-auto px-4 max-w-5xl mt-8 md:mt-12 relative z-10">
+
+        {/* Step Indicator */}
+        <div className="flex items-center gap-2 mb-6 text-xs md:text-sm font-bold text-slate-400">
+          <span className="text-[#205E98] bg-[#205E98]/10 px-2.5 py-1 rounded-md">1. Patient Details</span>
+          <ChevronRight className="w-4 h-4 text-slate-300" />
+          <span>2. Confirmed Token</span>
+        </div>
 
         {/* Queue Warning Banner */}
         <div className="mb-6 p-4 rounded-2xl bg-blue-50 border border-blue-100 flex items-center gap-3">

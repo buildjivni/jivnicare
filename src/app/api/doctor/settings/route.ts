@@ -9,74 +9,200 @@ export async function PUT(request: NextRequest) {
     const payload = auth.session!;
 
     const body = await request.json();
-    const { isOnline, status, statusReason, breakDuration } = body;
+    const { 
+      isOnline, status, statusReason, breakDuration,
+      name, regNumber, bio, hospitalName, city, address, district,
+      experience, fee, qualifications, lifetimePatientsDeclaration,
+      maxCapacity, averageConsultationTime, emergencySlots
+    } = body;
 
     const doctor = await prisma.doctor.findUnique({
       where: { userId: payload.id },
-      select: { id: true }
+      include: { clinicOperations: true }
     });
 
     if (!doctor) {
       return NextResponse.json({ error: 'Doctor profile not found' }, { status: 404 });
     }
 
-    // 1. Update isOnline on Doctor record if provided
+    const doctorUpdates: any = {};
+    const opsUpdates: any = {};
+    const sensitiveLogs: any[] = [];
+
+    // isOnline
     if (typeof isOnline === 'boolean') {
-      await prisma.doctor.update({
-        where: { id: doctor.id },
-        data: { isOnline },
+      doctorUpdates.isOnline = isOnline;
+    }
+
+    // name
+    if (name !== undefined && name !== doctor.name) {
+      sensitiveLogs.push({
+        doctorId: doctor.id,
+        field: 'name',
+        oldValue: doctor.name || null,
+        newValue: String(name),
+        status: 'PENDING'
       });
     }
 
-    // 2. Update ClinicOperations if status is provided
+    // regNumber (medicalRegistrationNumber)
+    if (regNumber !== undefined && regNumber !== doctor.medicalRegistrationNumber) {
+      sensitiveLogs.push({
+        doctorId: doctor.id,
+        field: 'medicalRegistrationNumber',
+        oldValue: doctor.medicalRegistrationNumber || null,
+        newValue: String(regNumber),
+        status: 'PENDING'
+      });
+    }
+
+    // hospitalName
+    if (hospitalName !== undefined && hospitalName !== doctor.hospitalName) {
+      sensitiveLogs.push({
+        doctorId: doctor.id,
+        field: 'hospitalName',
+        oldValue: doctor.hospitalName || null,
+        newValue: String(hospitalName),
+        status: 'PENDING'
+      });
+    }
+
+    // district
+    if (district !== undefined && district !== doctor.district) {
+      sensitiveLogs.push({
+        doctorId: doctor.id,
+        field: 'district',
+        oldValue: doctor.district || null,
+        newValue: String(district),
+        status: 'PENDING'
+      });
+    }
+
+    // bio
+    if (bio !== undefined) {
+      doctorUpdates.bio = bio;
+    }
+
+    // city
+    if (city !== undefined) {
+      doctorUpdates.city = city;
+    }
+
+    // address
+    if (address !== undefined) {
+      doctorUpdates.fullAddress = address;
+    }
+
+    // experience
+    if (experience !== undefined) {
+      const exp = parseInt(String(experience), 10) || 0;
+      doctorUpdates.experience = exp;
+      doctorUpdates.experienceYears = exp;
+    }
+
+    // fee
+    if (fee !== undefined) {
+      const parsedFee = parseInt(String(fee), 10) || 0;
+      doctorUpdates.fee = parsedFee;
+      doctorUpdates.consultationFee = parsedFee;
+    }
+
+    // qualifications
+    if (qualifications !== undefined) {
+      doctorUpdates.qualifications = qualifications;
+      doctorUpdates.qualification = qualifications;
+    }
+
+    // lifetimePatientsDeclaration
+    if (lifetimePatientsDeclaration !== undefined) {
+      doctorUpdates.lifetimePatientsDeclaration = lifetimePatientsDeclaration !== null ? String(lifetimePatientsDeclaration) : null;
+    }
+
+    // averageConsultationTime
+    if (averageConsultationTime !== undefined) {
+      const avgTime = parseInt(String(averageConsultationTime), 10) || 15;
+      doctorUpdates.averageConsultationTime = avgTime;
+      doctorUpdates.averageConsultationMinutes = avgTime;
+    }
+
+    // maxCapacity
+    if (maxCapacity !== undefined) {
+      const cap = parseInt(String(maxCapacity), 10) || 40;
+      doctorUpdates.dailyTokenLimit = cap;
+      opsUpdates.walkInLimit = Math.floor(cap / 2);
+      opsUpdates.onlineLimit = cap - opsUpdates.walkInLimit;
+    }
+
+    // emergencySlots
+    if (emergencySlots !== undefined) {
+      opsUpdates.emergencySlots = parseInt(String(emergencySlots), 10) || 0;
+    }
+
+    // status / ClinicOperations status settings
     if (status) {
       let statusExpiresAt: Date | null = null;
       if (status === "SHORT_BREAK" && breakDuration) {
         statusExpiresAt = new Date(Date.now() + parseInt(String(breakDuration), 10) * 60 * 1000);
       }
+      opsUpdates.status = status;
+      opsUpdates.statusReason = statusReason || null;
+      opsUpdates.statusExpiresAt = statusExpiresAt;
+      opsUpdates.isClosedToday = status === "CLINIC_CLOSED";
+      opsUpdates.pauseOnlineBooking = status === "SHORT_BREAK" || status === "CLINIC_CLOSED" || status === "EMERGENCY_ONLY";
 
-      await prisma.clinicOperations.upsert({
-        where: { doctorId: doctor.id },
-        update: {
-          status,
-          statusReason: statusReason || null,
-          statusExpiresAt,
-          isClosedToday: status === "CLINIC_CLOSED",
-          pauseOnlineBooking: status === "SHORT_BREAK" || status === "CLINIC_CLOSED",
-        },
-        create: {
-          doctorId: doctor.id,
-          status,
-          statusReason: statusReason || null,
-          statusExpiresAt,
-          isClosedToday: status === "CLINIC_CLOSED",
-          pauseOnlineBooking: status === "SHORT_BREAK" || status === "CLINIC_CLOSED",
-        }
-      });
-
-      // Special handling: if CLOSED, ensure doctor isOffline as well
       if (status === "CLINIC_CLOSED") {
-        await prisma.doctor.update({
-          where: { id: doctor.id },
-          data: { isOnline: false }
-        });
+        doctorUpdates.isOnline = false;
       } else if (status === "AVAILABLE") {
-        await prisma.doctor.update({
+        doctorUpdates.isOnline = true;
+      }
+    }
+
+    // Perform transaction
+    await prisma.$transaction(async (tx) => {
+      // 1. Update Doctor
+      if (Object.keys(doctorUpdates).length > 0) {
+        await tx.doctor.update({
           where: { id: doctor.id },
-          data: { isOnline: true }
+          data: doctorUpdates
         });
       }
 
-      // 3. Trigger proactive notifications to active patients for breaks/closures
-      if (status === "SHORT_BREAK" || status === "CLINIC_CLOSED") {
-        try {
-          const { triggerClinicStatusAlerts } = require("@/lib/notifications");
-          triggerClinicStatusAlerts(doctor.id, status, statusReason || "").catch((err: any) =>
-            console.error("Error triggering clinic status alerts:", err)
-          );
-        } catch (triggerErr) {
-          console.error("Clinic status alerts trigger exception:", triggerErr);
-        }
+      // 2. Update ClinicOperations
+      if (Object.keys(opsUpdates).length > 0 || status) {
+        await tx.clinicOperations.upsert({
+          where: { doctorId: doctor.id },
+          update: opsUpdates,
+          create: {
+            doctorId: doctor.id,
+            status: opsUpdates.status || "AVAILABLE",
+            statusReason: opsUpdates.statusReason || null,
+            statusExpiresAt: opsUpdates.statusExpiresAt || null,
+            isClosedToday: opsUpdates.isClosedToday || false,
+            pauseOnlineBooking: opsUpdates.pauseOnlineBooking || false,
+            walkInLimit: opsUpdates.walkInLimit || 10,
+            onlineLimit: opsUpdates.onlineLimit || 20,
+            emergencySlots: opsUpdates.emergencySlots || 0,
+          }
+        });
+      }
+
+      // 3. Sensitive Logs
+      if (sensitiveLogs.length > 0) {
+        await tx.profileUpdateLog.createMany({
+          data: sensitiveLogs
+        });
+      }
+    });
+
+    // 4. Trigger proactive notifications to active patients for breaks/closures
+    if (status === "SHORT_BREAK" || status === "CLINIC_CLOSED") {
+      try {
+        const { triggerClinicStatusAlerts } = require("@/lib/notifications");
+        triggerClinicStatusAlerts(doctor.id, status, statusReason || "").catch((err: any) =>
+          console.error("Error triggering clinic status alerts:", err)
+        );
+      } catch (triggerErr) {
+        console.error("Clinic status alerts trigger exception:", triggerErr);
       }
     }
 

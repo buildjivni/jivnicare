@@ -27,10 +27,36 @@ export const BIHAR_DISTRICTS = [
 ];
 
 export const HEALTHCARE_SPECIALTIES = [
-  "Cardiologist", "Dermatologist", "Pediatrician", "Neurologist",
-  "General Physician", "Orthopedist", "Gynecologist", "Dentist",
-  "Ophthalmologist", "Psychiatrist", "Diabetologist", "ENT Specialist",
-  "Urologist", "Gastroenterologist", "Oncologist", "Pulmonologist",
+  "General Physician",
+  "Dentist",
+  "Dermatologist & Cosmetologist",
+  "Gynecologist & Obstetrician",
+  "Pediatrician",
+  "Orthopedic Surgeon",
+  "ENT Specialist",
+  "Ophthalmologist",
+  "Cardiologist",
+  "Diabetologist",
+  "Psychiatrist & Psychologist",
+  "Physiotherapist",
+  "Neurologist",
+  "Gastroenterologist",
+  "Urologist",
+  "Pulmonologist",
+  "Endocrinologist",
+  "Nephrologist",
+  "Oncologist",
+  "Rheumatologist",
+  "Dietitian & Nutritionist",
+  "Sexologist",
+  "Hair & Skin Specialist",
+  "Ayurvedic Doctor",
+  "Homeopathic Doctor",
+  "Unani Specialist",
+  "Siddha Specialist",
+  "Naturopath",
+  "Geriatrician",
+  "Emergency Medicine Specialist"
 ];
 
 // ── Doctor Metadata ─────────────────────────────────────────

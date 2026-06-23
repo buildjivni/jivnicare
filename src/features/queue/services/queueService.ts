@@ -17,9 +17,29 @@ export class QueueService {
   ) {
     const coreLogic = async (tx: any) => {
       // 0. Ensure Doctor exists and is VERIFIED
-      const doctor = await tx.doctor.findUnique({ where: { id: doctorId } });
+      const doctor = await tx.doctor.findUnique({ 
+        where: { id: doctorId },
+        include: { clinicOperations: true }
+      });
       if (!doctor || doctor.verificationStatus !== 'VERIFIED') {
         throw new Error("DOCTOR_NOT_VERIFIED");
+      }
+
+      const ops = doctor.clinicOperations;
+
+      // 0b. Enforce clinic closed, paused, and EMERGENCY_ONLY validations
+      if (ops) {
+        if (ops.status === "CLINIC_CLOSED" || ops.isClosedToday) {
+          throw new Error("CLINIC_CLOSED_TODAY");
+        }
+        if (tokenType !== "EMERGENCY") {
+          if (ops.status === "EMERGENCY_ONLY") {
+            throw new Error("EMERGENCY_ONLY_ACTIVE");
+          }
+          if (ops.status === "SHORT_BREAK" || ops.pauseOnlineBooking) {
+            throw new Error("QUEUE_PAUSED");
+          }
+        }
       }
 
       if (!doctor.isOnline && tokenType === "ONLINE") {
@@ -67,6 +87,13 @@ export class QueueService {
       const activeBookingsCount = updatedQueue.issuedTokensCount - updatedQueue.cancelledCount - updatedQueue.noShowCount;
       if (activeBookingsCount > updatedQueue.dailyLimit && tokenType !== "EMERGENCY") {
         throw new Error('DAILY_LIMIT_REACHED');
+      }
+
+      // Check emergency slots limit if emergency
+      if (tokenType === "EMERGENCY" && ops) {
+        if (updatedQueue.emergencyIssuedTokensCount > ops.emergencySlots) {
+          throw new Error('EMERGENCY_FULL');
+        }
       }
 
       // 5. Create token

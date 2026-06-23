@@ -84,9 +84,7 @@ export function Footer() {
                 <Logo className="h-10 w-10 md:h-12 md:w-12" />
               </div>
               <div className="flex flex-col -space-y-1">
-                 <span className="text-xl md:text-2xl font-black tracking-tight leading-none">
-                    <span style={{ color: '#4A90D9' }}>Jivni</span><span style={{ color: '#4A8C4A' }}>Care</span>
-                 </span>
+                 <Logo variant="wordmark" className="text-xl md:text-2xl font-black tracking-tight leading-none" />
                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] pl-0.5">Bihar</span>
               </div>
             </Link>

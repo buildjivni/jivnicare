@@ -164,8 +164,19 @@ Elasticsearch, Algolia, MongoDB Atlas Search
 Rating-based scoring
 Distance radius filter UI
 Search analytics
-Autocomplete suggestions
 Search history
+
+---
+
+## APPROVED SEARCH SUGGESTIONS SPECIFICATION
+
+Search suggestions should help users type queries by recommending matching items when they type at least 2 characters:
+- **Doctor name search suggestions**: Match active verified doctors by name
+- **Specialty search suggestions**: Match any of the 30 priority specialties
+- **Symptom-based search suggestions**: Match matching symptoms mapping to priority specialties
+- Geography constraint: Suggestions must respect the active district filter or restrict to the supported districts (Jamui, Deoghar).
+- Maximum of 5-8 total suggestions returned (grouped by Doctor Names, Specialties, or Symptoms).
+
 
 ---
 

@@ -43,8 +43,49 @@ export function Header() {
   const { isAuthenticated, logout, user } = useAuthStore();
   const { district } = useLocationStore();
   const [mounted, setMounted] = useState(false);
+  const [isEmergencyMode, setIsEmergencyMode] = useState(false);
+  const [isTogglingEmergency, setIsTogglingEmergency] = useState(false);
   
   useEffect(() => setMounted(true), []);
+
+  useEffect(() => {
+    if (mounted && isAuthenticated && user?.role === "DOCTOR") {
+      fetch("/api/doctor/profile")
+        .then(res => res.json())
+        .then(data => {
+          if (data?.doctor?.clinicOperations?.status === "EMERGENCY_ONLY") {
+            setIsEmergencyMode(true);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [mounted, isAuthenticated, user]);
+
+  const handleToggleEmergency = async () => {
+    if (isTogglingEmergency) return;
+    setIsTogglingEmergency(true);
+    const newStatus = isEmergencyMode ? "AVAILABLE" : "EMERGENCY_ONLY";
+    try {
+      const res = await fetch("/api/doctor/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: newStatus,
+          statusReason: newStatus === "EMERGENCY_ONLY" ? "OPD Emergency Mode Active" : "Clinic back to normal operations"
+        })
+      });
+      if (res.ok) {
+        setIsEmergencyMode(newStatus === "EMERGENCY_ONLY");
+        if (window.location.pathname.includes("/doctor/dashboard")) {
+          window.location.reload();
+        }
+      }
+    } catch (err) {
+      console.error("Toggle emergency failed", err);
+    } finally {
+      setIsTogglingEmergency(false);
+    }
+  };
   
   const isLoggedIn = mounted ? isAuthenticated : false;
   const isDoctorsPage = pathname.startsWith("/doctors");
@@ -233,14 +274,25 @@ export function Header() {
             {isLoggedIn && user?.role === "DOCTOR" && (
               <div className="hidden sm:flex items-center gap-2 shrink-0">
                 <Button 
-                  variant="outline" 
+                  variant={isEmergencyMode ? "destructive" : "outline"}
                   size="sm"
-                  className="h-9 xl:h-10 text-[11px] xl:text-xs px-3 xl:px-4 bg-red-50 hover:bg-red-100 border-red-200 text-red-700 font-bold rounded-xl flex items-center gap-1.5 active:scale-95 shadow-sm whitespace-nowrap shrink-0"
-                  onClick={() => alert("OPD emergency state locked. Displaying alert banner to waiting patients.")}
+                  className={cn(
+                    "h-9 xl:h-10 text-[11px] xl:text-xs px-3 xl:px-4 font-bold rounded-xl flex items-center gap-1.5 active:scale-95 shadow-sm whitespace-nowrap shrink-0 transition-all duration-300",
+                    isEmergencyMode 
+                      ? "bg-red-600 text-white border-transparent hover:bg-red-700 animate-pulse" 
+                      : "bg-red-50 hover:bg-red-100 border-red-200 text-red-700"
+                  )}
+                  onClick={handleToggleEmergency}
+                  disabled={isTogglingEmergency}
                 >
-                  <AlertTriangle className="w-3.5 h-3.5 animate-pulse text-red-600 shrink-0" />
-                  <span className="hidden md:inline">OPD Emergency Mode</span>
-                  <span className="md:hidden">Emergency Mode</span>
+                  <AlertTriangle className={cn("w-3.5 h-3.5 shrink-0", isEmergencyMode ? "text-white animate-bounce" : "text-red-600 animate-pulse")} />
+                  <span>
+                    {isTogglingEmergency 
+                      ? "Updating..." 
+                      : isEmergencyMode 
+                      ? "Emergency Mode Active" 
+                      : "OPD Emergency Mode"}
+                  </span>
                 </Button>
               </div>
             )}

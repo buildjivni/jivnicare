@@ -80,6 +80,8 @@ export interface Doctor {
   about: string;            // Bio / description
   averageConsultationTime?: number; // minutes
   updatedAt?: string | Date; // Cache buster timestamp
+  emergencyAvailable?: boolean;
+  isEmergencySupported?: boolean;
 }
 
 export interface Specialty {

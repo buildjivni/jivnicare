@@ -69,18 +69,16 @@ function DoctorLoginContent() {
           <div className="relative z-10">
             <Link href="/" className="flex items-center gap-3 mb-12 group">
               <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-xl group-hover:scale-105 transition-transform duration-300">
-                <Logo className="w-8 h-8" />
+                <Logo variant="icon" size={32} />
               </div>
               <div className="flex flex-col">
-                <span className="text-2xl font-bold tracking-tight leading-none">
-                  <span style={{ color: '#4A90D9' }}>Jivni</span><span style={{ color: '#4A8C4A' }}>Care</span>
-                </span>
+                <Logo variant="wordmark" className="text-2xl leading-none" />
                 <span className="text-[10px] font-bold text-sky-200 uppercase tracking-widest mt-1">Partner Portal</span>
               </div>
             </Link>
-
+ 
             <div className="space-y-6">
-              <h1 className="text-[40px] font-black text-white leading-[1.1] tracking-tight">
+              <h1 className="text-[40px] font-heading font-black text-white leading-[1.1] tracking-tight">
                 A Modern Platform <br />
                 <span className="text-sky-200">for Trusted Doctors.</span>
               </h1>
@@ -89,7 +87,7 @@ function DoctorLoginContent() {
               </p>
             </div>
           </div>
-
+ 
           <div className="relative z-10 space-y-4">
             <div className="flex items-center gap-4 bg-white/10 backdrop-blur-md p-5 rounded-3xl border border-white/20 shadow-lg">
               <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shrink-0 shadow-inner">
@@ -102,7 +100,7 @@ function DoctorLoginContent() {
             </div>
           </div>
         </div>
-
+ 
         {/* Right Side - Interactive Form */}
         <div className="flex-1 p-8 sm:p-12 lg:p-20 flex flex-col justify-center bg-white/40 relative">
           <div className="max-w-[360px] w-full mx-auto">
@@ -115,7 +113,7 @@ function DoctorLoginContent() {
                 transition={{ duration: 0.3 }}
               >
                 <div className="mb-10 text-center md:text-left">
-                  <h2 className="text-3xl font-black text-slate-900 tracking-tight">Partner Login</h2>
+                  <h2 className="text-3xl font-heading font-black text-slate-900 tracking-tight">Partner Login</h2>
                   <p className="text-slate-500 font-bold mt-2 text-sm">
                     Access your clinical dashboard via Google OAuth.
                   </p>

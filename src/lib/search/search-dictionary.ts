@@ -5,78 +5,76 @@
 
 export const symptomToSpecialtyMap: Record<string, string[]> = {
   // General
-  "fever": ["General Physician", "General Medicine", "Internal Medicine"],
-  "bukhar": ["General Physician", "General Medicine", "Internal Medicine"],
-  "cold": ["General Physician", "ENT"],
-  "cough": ["General Physician", "ENT", "Pulmonologist"],
-  "khasi": ["General Physician", "ENT", "Pulmonologist"],
-  "general physician": ["General Physician", "General Medicine"],
-  "general medicine": ["General Medicine", "General Physician"],
-  "doctor": ["General Physician", "General Medicine"],
-  
+  "fever": ["General Physician"],
+  "bukhar": ["General Physician"],
+  "cold": ["General Physician", "ENT Specialist"],
+  "cough": ["General Physician", "ENT Specialist", "Pulmonologist"],
+  "khasi": ["General Physician", "ENT Specialist", "Pulmonologist"],
+  "general physician": ["General Physician"],
+  "general medicine": ["General Physician"],
+  "doctor": ["General Physician"],
 
   // Cardiology
-  "heart": ["Cardiology", "Cardiologist", "Cardiac Surgeon"],
-  "chest pain": ["Cardiology", "Cardiologist", "General Physician"],
-  "dil": ["Cardiology", "Cardiologist"],
-  "blood pressure": ["Cardiology", "Cardiologist", "Internal Medicine"],
-  "bp": ["Cardiology", "Cardiologist", "Internal Medicine"],
-  "cardiology": ["Cardiology", "Cardiologist"],
-  "cardiologist": ["Cardiology", "Cardiologist"],
+  "heart": ["Cardiologist"],
+  "chest pain": ["Cardiologist", "General Physician"],
+  "dil": ["Cardiologist"],
+  "blood pressure": ["Cardiologist", "General Physician"],
+  "bp": ["Cardiologist", "General Physician"],
+  "cardiology": ["Cardiologist"],
+  "cardiologist": ["Cardiologist"],
 
   // Dermatology
-  "skin": ["Dermatology", "Dermatologist"],
-  "hair": ["Dermatology", "Dermatologist"],
-  "hairfall": ["Dermatology", "Dermatologist"],
-  "acne": ["Dermatology", "Dermatologist"],
-  "pimple": ["Dermatology", "Dermatologist"],
-  "khujli": ["Dermatology", "Dermatologist"],
-  "dermatology": ["Dermatology", "Dermatologist"],
-  "dermatologist": ["Dermatology", "Dermatologist"],
-
+  "skin": ["Dermatologist & Cosmetologist"],
+  "hair": ["Dermatologist & Cosmetologist"],
+  "hairfall": ["Dermatologist & Cosmetologist"],
+  "acne": ["Dermatologist & Cosmetologist"],
+  "pimple": ["Dermatologist & Cosmetologist"],
+  "khujli": ["Dermatologist & Cosmetologist"],
+  "dermatology": ["Dermatologist & Cosmetologist"],
+  "dermatologist": ["Dermatologist & Cosmetologist"],
 
   // Pediatrics
-  "child": ["Pediatrics", "Pediatrician"],
-  "baby": ["Pediatrics", "Pediatrician"],
-  "kid": ["Pediatrics", "Pediatrician"],
-  "bacha": ["Pediatrics", "Pediatrician"],
+  "child": ["Pediatrician"],
+  "baby": ["Pediatrician"],
+  "kid": ["Pediatrician"],
+  "bacha": ["Pediatrician"],
 
   // Orthopedics
-  "bone": ["Orthopedics", "Orthopedic Surgeon", "Orthopedist"],
-  "joint": ["Orthopedics", "Orthopedic Surgeon", "Rheumatologist"],
-  "knee": ["Orthopedics", "Orthopedic Surgeon"],
-  "back pain": ["Orthopedics", "Orthopedic Surgeon", "Physiotherapist"],
-  "haddi": ["Orthopedics", "Orthopedic Surgeon"],
+  "bone": ["Orthopedic Surgeon"],
+  "joint": ["Orthopedic Surgeon", "Rheumatologist"],
+  "knee": ["Orthopedic Surgeon"],
+  "back pain": ["Orthopedic Surgeon", "Physiotherapist"],
+  "haddi": ["Orthopedic Surgeon"],
 
   // Gynecology
-  "pregnancy": ["Gynecology", "Gynecologist", "Obstetrician"],
-  "period": ["Gynecology", "Gynecologist"],
-  "women": ["Gynecology", "Gynecologist"],
-  "aurat": ["Gynecology", "Gynecologist"],
+  "pregnancy": ["Gynecologist & Obstetrician"],
+  "period": ["Gynecologist & Obstetrician"],
+  "women": ["Gynecologist & Obstetrician"],
+  "aurat": ["Gynecologist & Obstetrician"],
 
   // Neurology
-  "brain": ["Neurology", "Neurologist", "Neurosurgeon"],
-  "headache": ["Neurology", "Neurologist", "General Physician"],
-  "migraine": ["Neurology", "Neurologist"],
-  "sar dard": ["Neurology", "Neurologist", "General Physician"],
+  "brain": ["Neurologist"],
+  "headache": ["Neurologist", "General Physician"],
+  "migraine": ["Neurologist"],
+  "sar dard": ["Neurologist", "General Physician"],
 
   // Gastroenterology
-  "stomach": ["Gastroenterology", "Gastroenterologist", "General Physician"],
-  "gas": ["Gastroenterology", "Gastroenterologist"],
-  "acidity": ["Gastroenterology", "Gastroenterologist", "General Physician"],
-  "pet dard": ["Gastroenterology", "Gastroenterologist"],
-  "digestion": ["Gastroenterology", "Gastroenterologist"],
+  "stomach": ["Gastroenterologist", "General Physician"],
+  "gas": ["Gastroenterologist"],
+  "acidity": ["Gastroenterologist", "General Physician"],
+  "pet dard": ["Gastroenterologist"],
+  "digestion": ["Gastroenterologist"],
 
   // Dental
-  "tooth": ["Dentistry", "Dentist", "Orthodontist"],
-  "teeth": ["Dentistry", "Dentist"],
-  "gums": ["Dentistry", "Dentist", "Periodontist"],
-  "daant": ["Dentistry", "Dentist"],
+  "tooth": ["Dentist"],
+  "teeth": ["Dentist"],
+  "gums": ["Dentist"],
+  "daant": ["Dentist"],
 
   // Eye
-  "eye": ["Ophthalmology", "Ophthalmologist", "Eye Specialist"],
-  "vision": ["Ophthalmology", "Ophthalmologist"],
-  "aankh": ["Ophthalmology", "Ophthalmologist"],
+  "eye": ["Ophthalmologist"],
+  "vision": ["Ophthalmologist"],
+  "aankh": ["Ophthalmologist"],
 };
 
 /**

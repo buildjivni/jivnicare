@@ -37,26 +37,54 @@ async function main() {
   // 2. TAXONOMY & KEYWORDS (Bihar specifics)
   // ============================================================================
   console.log("🏥 Seeding Specialties & Keywords...");
-  const specCardio = await prisma.specialty.upsert({
-    where: { slug: "cardiology" },
-    update: {},
-    create: { name: "Cardiology", slug: "cardiology" }
-  });
-  const specGeneral = await prisma.specialty.upsert({
-    where: { slug: "general-medicine" },
-    update: {},
-    create: { name: "General Medicine", slug: "general-medicine" }
-  });
-  const specPeds = await prisma.specialty.upsert({
-    where: { slug: "pediatrics" },
-    update: {},
-    create: { name: "Pediatrics", slug: "pediatrics" }
-  });
-  const specDerm = await prisma.specialty.upsert({
-    where: { slug: "dermatology" },
-    update: {},
-    create: { name: "Dermatology", slug: "dermatology" }
-  });
+  
+  const MASTER_SPECIALTIES_LIST = [
+    { name: "General Physician", slug: "general-physician" },
+    { name: "Dentist", slug: "dentist" },
+    { name: "Dermatologist & Cosmetologist", slug: "dermatologist-cosmetologist" },
+    { name: "Gynecologist & Obstetrician", slug: "gynecologist-obstetrician" },
+    { name: "Pediatrician", slug: "pediatrician" },
+    { name: "Orthopedic Surgeon", slug: "orthopedic-surgeon" },
+    { name: "ENT Specialist", slug: "ent-specialist" },
+    { name: "Ophthalmologist", slug: "ophthalmologist" },
+    { name: "Cardiologist", slug: "cardiologist" },
+    { name: "Diabetologist", slug: "diabetologist" },
+    { name: "Psychiatrist & Psychologist", slug: "psychiatrist-psychologist" },
+    { name: "Physiotherapist", slug: "physiotherapist" },
+    { name: "Neurologist", slug: "neurologist" },
+    { name: "Gastroenterologist", slug: "gastroenterologist" },
+    { name: "Urologist", slug: "urologist" },
+    { name: "Pulmonologist", slug: "pulmonologist" },
+    { name: "Endocrinologist", slug: "endocrinologist" },
+    { name: "Nephrologist", slug: "nephrologist" },
+    { name: "Oncologist", slug: "oncologist" },
+    { name: "Rheumatologist", slug: "rheumatologist" },
+    { name: "Dietitian & Nutritionist", slug: "dietitian-nutritionist" },
+    { name: "Sexologist", slug: "sexologist" },
+    { name: "Hair & Skin Specialist", slug: "hair-skin-specialist" },
+    { name: "Ayurvedic Doctor", slug: "ayurvedic-doctor" },
+    { name: "Homeopathic Doctor", slug: "homeopathic-doctor" },
+    { name: "Unani Specialist", slug: "unani-specialist" },
+    { name: "Siddha Specialist", slug: "siddha-specialist" },
+    { name: "Naturopath", slug: "naturopath" },
+    { name: "Geriatrician", slug: "geriatrician" },
+    { name: "Emergency Medicine Specialist", slug: "emergency-medicine-specialist" }
+  ];
+
+  const specialtyDbMap = {};
+  for (const s of MASTER_SPECIALTIES_LIST) {
+    const spec = await prisma.specialty.upsert({
+      where: { slug: s.slug },
+      update: {},
+      create: { name: s.name, slug: s.slug }
+    });
+    specialtyDbMap[s.slug] = spec;
+  }
+
+  const specCardio = specialtyDbMap["cardiologist"];
+  const specGeneral = specialtyDbMap["general-physician"];
+  const specPeds = specialtyDbMap["pediatrician"];
+  const specDerm = specialtyDbMap["dermatologist-cosmetologist"];
 
   const keywords = ["heart specialist", "dil ka doctor", "child doctor", "skin doctor", "diabetes", "fever"];
   const keywordDocs = await Promise.all(
@@ -72,7 +100,7 @@ async function main() {
   // ============================================================================
   console.log("👨‍⚕️ Seeding Doctors...");
   
-  // 3a. Doctor 1: Dr. Sanctuary (Cardiology) - APPROVED
+  // 3a. Doctor 1: Dr. Sanctuary (Cardiologist) - APPROVED
   const doc1Phone = "9999999991";
   const userDoc1 = await prisma.user.upsert({
     where: { phone: doc1Phone },
@@ -105,7 +133,7 @@ async function main() {
     }
   });
 
-  // 3b. Doctor 2: Dr. Sharma (General Medicine) - APPROVED
+  // 3b. Doctor 2: Dr. Sharma (General Physician) - APPROVED
   const doc2Phone = "9999999992";
   const userDoc2 = await prisma.user.upsert({
     where: { phone: doc2Phone },
@@ -137,7 +165,7 @@ async function main() {
     }
   });
 
-  // 3c. Doctor 3: Dr. Verma (Pediatrics) - REJECTED
+  // 3c. Doctor 3: Dr. Verma (Pediatrician) - REJECTED
   const doc3Phone = "9999999993";
   const userDoc3 = await prisma.user.upsert({
     where: { phone: doc3Phone },
@@ -164,7 +192,7 @@ async function main() {
     }
   });
 
-  // 3d. Doctor 4: Dr. Gupta (Dermatology) - SUSPENDED
+  // 3d. Doctor 4: Dr. Gupta (Dermatologist & Cosmetologist) - SUSPENDED
   const doc4Phone = "9999999994";
   const userDoc4 = await prisma.user.upsert({
     where: { phone: doc4Phone },

@@ -2,42 +2,45 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import {
-  Stethoscope, HeartPulse, Sparkles, Baby, Bone, Brain, ArrowRight
-} from "lucide-react";
+import { Stethoscope, ArrowRight } from "lucide-react";
 import { staggerContainer, itemVariants } from "@/animations/variants";
 
-interface SpecialtiesSectionProps {
-  specialties?: Array<{ name: string; id: string }>;
-}
-
-const ICONS = [
-  <Stethoscope key={0} className="w-6 h-6" />,
-  <HeartPulse  key={1} className="w-6 h-6" />,
-  <Sparkles    key={2} className="w-6 h-6" />,
-  <Baby        key={3} className="w-6 h-6" />,
-  <Bone        key={4} className="w-6 h-6" />,
-  <Brain       key={5} className="w-6 h-6" />,
-  <Stethoscope key={6} className="w-6 h-6" />,
+const PRIORITY_SPECIALTIES = [
+  { name: 'General Physician', icon: '🩺', id: 'general-physician', color: 'bg-blue-50 text-blue-600 border-blue-100/50' },
+  { name: 'Dentist', icon: '🦷', id: 'dentist', color: 'bg-sky-50 text-sky-600 border-sky-100/50' },
+  { name: 'Dermatologist & Cosmetologist', icon: '🔬', id: 'dermatologist-cosmetologist', color: 'bg-purple-50 text-purple-600 border-purple-100/50' },
+  { name: 'Gynecologist & Obstetrician', icon: '🤱', id: 'gynecologist-obstetrician', color: 'bg-rose-50 text-rose-600 border-rose-100/50' },
+  { name: 'Pediatrician', icon: '👶', id: 'pediatrician', color: 'bg-amber-50 text-amber-600 border-amber-100/50' },
+  { name: 'Orthopedic Surgeon', icon: '🦴', id: 'orthopedic-surgeon', color: 'bg-orange-50 text-orange-600 border-orange-100/50' },
+  { name: 'ENT Specialist', icon: '👂', id: 'ent-specialist', color: 'bg-indigo-50 text-indigo-600 border-indigo-100/50' },
+  { name: 'Ophthalmologist', icon: '👁️', id: 'ophthalmologist', color: 'bg-teal-50 text-teal-600 border-teal-100/50' },
+  { name: 'Cardiologist', icon: '❤️', id: 'cardiologist', color: 'bg-red-50 text-red-600 border-red-100/50' },
+  { name: 'Diabetologist', icon: '💉', id: 'diabetologist', color: 'bg-emerald-50 text-emerald-600 border-emerald-100/50' },
+  { name: 'Psychiatrist & Psychologist', icon: '💭', id: 'psychiatrist-psychologist', color: 'bg-pink-50 text-pink-600 border-pink-100/50' },
+  { name: 'Physiotherapist', icon: '🏃', id: 'physiotherapist', color: 'bg-lime-50 text-lime-600 border-lime-100/50' },
+  { name: 'Neurologist', icon: '🧠', id: 'neurologist', color: 'bg-violet-50 text-violet-600 border-violet-100/50' },
+  { name: 'Gastroenterologist', icon: '🫁', id: 'gastroenterologist', color: 'bg-yellow-50 text-yellow-700 border-yellow-100/50' },
+  { name: 'Urologist', icon: '🧬', id: 'urologist', color: 'bg-cyan-50 text-cyan-600 border-cyan-100/50' },
+  { name: 'Pulmonologist', icon: '🫀', id: 'pulmonologist', color: 'bg-rose-50 text-rose-600 border-rose-100/50' },
+  { name: 'Endocrinologist', icon: '⚗️', id: 'endocrinologist', color: 'bg-purple-50 text-purple-600 border-purple-100/50' },
+  { name: 'Nephrologist', icon: '💊', id: 'nephrologist', color: 'bg-emerald-50 text-emerald-600 border-emerald-100/50' },
+  { name: 'Oncologist', icon: '🎗️', id: 'oncologist', color: 'bg-red-50 text-red-600 border-red-100/50' },
+  { name: 'Rheumatologist', icon: '🦵', id: 'rheumatologist', color: 'bg-orange-50 text-orange-600 border-orange-100/50' },
+  { name: 'Dietitian & Nutritionist', icon: '🥗', id: 'dietitian-nutritionist', color: 'bg-green-50 text-green-600 border-green-100/50' },
+  { name: 'Sexologist', icon: '🔥', id: 'sexologist', color: 'bg-pink-50 text-pink-600 border-pink-100/50' },
+  { name: 'Hair & Skin Specialist', icon: '💇', id: 'hair-skin-specialist', color: 'bg-purple-50 text-purple-600 border-purple-100/50' },
+  { name: 'Ayurvedic Doctor', icon: '🌿', id: 'ayurvedic-doctor', color: 'bg-emerald-50 text-emerald-700 border-emerald-100/50' },
+  { name: 'Homeopathic Doctor', icon: '💧', id: 'homeopathic-doctor', color: 'bg-sky-50 text-sky-600 border-sky-100/50' },
+  { name: 'Unani Specialist', icon: '🏺', id: 'unani-specialist', color: 'bg-amber-50 text-amber-700 border-amber-100/50' },
+  { name: 'Siddha Specialist', icon: '🍂', id: 'siddha-specialist', color: 'bg-orange-50 text-orange-700 border-orange-100/50' },
+  { name: 'Naturopath', icon: '🧘', id: 'naturopath', color: 'bg-green-50 text-green-700 border-green-100/50' },
+  { name: 'Geriatrician', icon: '🧓', id: 'geriatrician', color: 'bg-indigo-50 text-indigo-600 border-indigo-100/50' },
+  { name: 'Emergency Medicine Specialist', icon: '🚨', id: 'emergency-medicine-specialist', color: 'bg-red-50 text-red-600 border-red-100/50' },
 ];
 
-const COLOR_SETS = [
-  { icon: "bg-blue-50 text-primary",   border: "border-blue-100/50"   },
-  { icon: "bg-emerald-50 text-[#258C54]", border: "border-emerald-100/50" },
-  { icon: "bg-amber-50 text-amber-600",   border: "border-amber-100/50"   },
-  { icon: "bg-purple-50 text-purple-600", border: "border-purple-100/50"  },
-  { icon: "bg-orange-50 text-orange-600", border: "border-orange-100/50"  },
-  { icon: "bg-indigo-50 text-indigo-600", border: "border-indigo-100/50"  },
-  { icon: "bg-blue-50 text-primary",   border: "border-blue-100/50"   },
-];
-
-export function SpecialtiesSection({ specialties }: SpecialtiesSectionProps) {
-  if (!specialties || specialties.length === 0) return null;
-
-  const displaySpecialties = specialties;
-
+export function SpecialtiesSection() {
   return (
-    <section className="py-10 md:py-16 bg-white border-b border-slate-100 relative" id="specialties">
+    <section className="py-12 md:py-20 bg-white border-b border-slate-100 relative" id="specialties">
       <div className="container mx-auto px-4 max-w-6xl">
         <div className="flex flex-col md:flex-row items-start md:items-end justify-between mb-12 gap-6">
           <div className="max-w-xl">
@@ -52,64 +55,58 @@ export function SpecialtiesSection({ specialties }: SpecialtiesSectionProps) {
             </p>
           </div>
           <Link
-            href="/doctors"
+            href="/specialties"
             className="hidden md:inline-flex shrink-0 items-center gap-2 font-bold text-primary hover:text-[#184a7a] transition-colors group"
           >
-            View All Departments
+            Explore Specialty Guide
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-200" />
           </Link>
         </div>
 
-        {/* Horizontal scroll — uses global scrollbar-hide utility from globals.css */}
+        {/* Specialties Grid */}
         <motion.div
           variants={staggerContainer}
           initial="hidden"
           whileInView="show"
-          viewport={{ once: true, amount: 0.1 }}
-          className="flex overflow-x-auto gap-4 md:gap-5 pb-4 md:pb-6 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0"
+          viewport={{ once: true, amount: 0.05 }}
+          className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
         >
-          {displaySpecialties.map((spec, i) => {
-            const colors = COLOR_SETS[i % COLOR_SETS.length];
-            const icon   = ICONS[i % ICONS.length];
-
-            return (
-              <motion.div
-                key={spec.id ?? i}
-                variants={itemVariants}
-                className="shrink-0 snap-start w-[85%] sm:w-[320px] md:w-[300px]"
-              >
-                <Link href={`/doctors?specialty=${spec.id}`}>
+          {PRIORITY_SPECIALTIES.map((spec, i) => (
+            <motion.div
+              key={spec.id}
+              variants={itemVariants}
+              className="group"
+            >
+              <Link href={`/doctors?speciality=${encodeURIComponent(spec.name)}`}>
+                <div
+                  className="flex items-center p-4 rounded-2xl border border-slate-100 bg-white transition-all duration-300 hover:shadow-md hover:border-primary/10 cursor-pointer h-full"
+                >
                   <div
-                    className={`group flex items-center p-4 md:p-5 rounded-2xl border bg-white transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-transparent cursor-pointer ${colors.border}`}
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105 shadow-sm text-lg ${spec.color}`}
                   >
-                    <div
-                      className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110 shadow-sm ${colors.icon}`}
-                    >
-                      {icon}
-                    </div>
-                    <div className="ml-4 md:ml-5">
-                      <h3 className="font-bold text-base md:text-lg text-slate-800 group-hover:text-slate-900 mb-0.5 md:mb-1">
-                        {spec.name}
-                      </h3>
-                      <p className="text-[10px] md:text-xs font-semibold text-slate-500 flex items-center gap-1">
-                        Book Now
-                        <ArrowRight className="w-3 h-3 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-primary" />
-                      </p>
-                    </div>
+                    {spec.icon}
                   </div>
-                </Link>
-              </motion.div>
-            );
-          })}
+                  <div className="ml-3 min-w-0 flex-1">
+                    <h3 className="font-bold text-sm text-slate-800 group-hover:text-primary transition-colors leading-tight truncate">
+                      {spec.name}
+                    </h3>
+                    <p className="text-[10px] font-semibold text-slate-400 mt-0.5">
+                      Book Visit
+                    </p>
+                  </div>
+                </div>
+              </Link>
+            </motion.div>
+          ))}
         </motion.div>
 
-        {/* Mobile "View All" CTA */}
+        {/* Mobile Guide CTA */}
         <div className="mt-8 md:hidden flex justify-center">
           <Link
-            href="/doctors"
+            href="/specialties"
             className="inline-flex items-center gap-2 font-bold text-primary bg-blue-50 hover:bg-blue-100 px-6 py-3 rounded-full transition-colors"
           >
-            View All Departments <ArrowRight className="w-5 h-5" />
+            Explore Specialty Guide <ArrowRight className="w-5 h-5" />
           </Link>
         </div>
       </div>

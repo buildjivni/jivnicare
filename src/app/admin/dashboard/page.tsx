@@ -106,7 +106,7 @@ function AdminDashboardContent() {
               email: d.user?.email || "N/A",
               phone: d.user?.phone || "N/A",
               address: d.fullAddress || "N/A",
-              patients: "0",
+              patients: String(d.jivnicarePatientsServed || 0),
               clinicName: d.clinicName || d.hospitalName || "N/A",
               timings,
               // Enriched fields
