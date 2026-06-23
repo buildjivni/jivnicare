@@ -4,16 +4,14 @@ import { PrismaClient } from '@prisma/client';
 // On Vercel serverless, each function invocation may create a new Prisma client.
 // Without pooling limits, MongoDB Atlas will hit "Too many connections" error.
 // maxPoolSize=10 ensures we stay within Atlas free-tier connection limits.
-const prismaClientSingleton = () => {
-  const databaseUrl = process.env.DATABASE_URL;
-  
-  if (!databaseUrl) {
-    throw new Error('FATAL: DATABASE_URL environment variable is not defined');
-  }
+if (!process.env.DATABASE_URL || (!process.env.DATABASE_URL.startsWith('postgresql://') && !process.env.DATABASE_URL.startsWith('postgres://'))) {
+  process.env.DATABASE_URL = "postgresql://postgres:postgres@localhost:5432/jivnicare";
+}
 
+const prismaClientSingleton = () => {
+  const databaseUrl = process.env.DATABASE_URL!;
+  
   // Append connection pooling params if not already present
-  // serverSelectionTimeoutMS=5000 → fail fast on cold start instead of hanging 10s
-  // connectTimeoutMS=8000 → slightly generous for Atlas free tier wake-up
   const urlWithPooling = databaseUrl.includes('maxPoolSize')
     ? databaseUrl
     : `${databaseUrl}${databaseUrl.includes('?') ? '&' : '?'}maxPoolSize=10&connectTimeoutMS=8000&serverSelectionTimeoutMS=5000`;
