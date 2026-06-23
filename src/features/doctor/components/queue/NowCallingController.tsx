@@ -147,9 +147,8 @@ export function QueueStatusDisplay({ currentPatient, nextPatient, waitingCount, 
 export function ClinicStatusToggle({ status, onStatusChange, isLoading }: any) {
   const statuses = [
     { id: "AVAILABLE", label: "Available", color: "emerald" },
-    { id: "LIMITED_SLOTS", label: "Busy", color: "orange" },
     { id: "SHORT_BREAK", label: "On Break", color: "amber" },
-    { id: "CLINIC_CLOSED", label: "Closed", color: "slate" },
+    { id: "CLINIC_CLOSED", label: "Offline", color: "slate" },
   ];
 
   return (

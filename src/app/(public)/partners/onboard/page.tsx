@@ -1,11 +1,10 @@
 "use client";
 import { Logo } from "@/features/marketing/components/brand/Logo";
-
-import { useState } from "react";
+import { useState, Suspense, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  ArrowRight, CheckCircle2, ShieldCheck, RefreshCw, AlertCircle, Sparkles, Lock, UserCircle, Briefcase, MapPin, Building, Activity, ArrowLeft,
-  Clock, FileText, PhoneCall
+  ArrowRight, CheckCircle2, ShieldCheck, RefreshCw, AlertCircle, Sparkles, Lock, UserCircle, Users, Briefcase, MapPin, Building, Activity, ArrowLeft,
+  Clock, FileText, PhoneCall, Calendar, Check, HelpCircle, Upload, CheckSquare
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -13,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
 import { PublicGuard } from "@/components/shared";
 import { ImageUploadField } from "@/components/shared/ImageUploadField";
+import { SessionProvider, useSession, signIn } from "next-auth/react";
 
 const STANDARD_SPECIALTIES = [
   "General Medicine", "Pediatrics", "Gynecology & Obstetrics", "Dermatology",
@@ -25,35 +25,68 @@ const MEDICAL_COUNCILS = [
   "Delhi Medical Council", "Uttar Pradesh Medical Council", "West Bengal Medical Council", "Other State Medical Council"
 ];
 
-export default function DoctorOnboardingFlow() {
-  return (
-    <PublicGuard>
-      <OnboardingContent />
-    </PublicGuard>
-  );
-}
+const DAYS_OF_WEEK = [
+  { key: "monday", label: "Monday" },
+  { key: "tuesday", label: "Tuesday" },
+  { key: "wednesday", label: "Wednesday" },
+  { key: "thursday", label: "Thursday" },
+  { key: "friday", label: "Friday" },
+  { key: "saturday", label: "Saturday" },
+  { key: "sunday", label: "Sunday" }
+];
 
-function OnboardingContent() {
+function DoctorOnboardingFlowContent() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [step, setStep] = useState(1);
   
   const [formData, setFormData] = useState({
-    fullName: "", gender: "", dateOfBirth: "", email: "", contactNumber: "", password: "",
+    fullName: "", gender: "", dateOfBirth: "", email: "", contactNumber: "",
     medicalRegistrationNumber: "", medicalCouncil: "Bihar Medical Council", registrationYear: "",
-    specialization: "", experience: "", qualifications: "",
+    speciality: "", experience: "", qualifications: "",
     practiceType: "clinic", practiceName: "", practiceAddress: "", city: "", state: "Bihar", district: "", pincode: "", locality: "",
-    bio: "", languages: "Hindi, English", fee: "",
+    bio: "", languages: "Hindi, English", fee: "400",
     profilePhotoUrl: "", clinicPhotoUrl: "", emergencyAvailable: false,
-    latitude: null as number | null, longitude: null as number | null
+    degreeCertificate: "", nmcCertificate: "",
+    clinicPhotos: [] as string[],
+    otherCertificates: [] as string[],
+    operatorName: "", operatorMobile: "",
+    receptionist1Name: "", receptionist1Phone: "",
+    receptionist2Name: "", receptionist2Phone: "",
+    receptionist3Name: "", receptionist3Phone: "",
+    latitude: null as number | null, longitude: null as number | null,
+    weeklySchedule: {
+      monday: { isOpen: true, start: "09:00", end: "17:00", maxPatients: 20 },
+      tuesday: { isOpen: true, start: "09:00", end: "17:00", maxPatients: 20 },
+      wednesday: { isOpen: true, start: "09:00", end: "17:00", maxPatients: 20 },
+      thursday: { isOpen: true, start: "09:00", end: "17:00", maxPatients: 20 },
+      friday: { isOpen: true, start: "09:00", end: "17:00", maxPatients: 20 },
+      saturday: { isOpen: true, start: "09:00", end: "17:00", maxPatients: 20 },
+      sunday: { isOpen: false, start: "", end: "", maxPatients: 0 }
+    },
+    dailyPatientLimit: "30",
+    emergencyFee: "500",
+    bookingStartTime: "08:00",
+    diseases: "",
+    procedures: ""
   });
+
+  // Prefill Google details if session is active
+  useEffect(() => {
+    if (session?.user) {
+      setFormData(prev => ({
+        ...prev,
+        email: session.user?.email || prev.email,
+        fullName: prev.fullName || session.user?.name || ""
+      }));
+    }
+  }, [session]);
 
   const [successMessage, setSuccessMessage] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [gpsLoading, setGpsLoading] = useState(false);
   const [gpsStatus, setGpsStatus] = useState<'idle' | 'success' | 'error'>('idle');
-  const [showTerms, setShowTerms] = useState(false);
-  const [showPrivacy, setShowPrivacy] = useState(false);
 
   const fetchGPSLocation = () => {
     if (!navigator.geolocation) { setGpsStatus('error'); return; }
@@ -92,64 +125,292 @@ function OnboardingContent() {
     );
   };
 
+  const handleDayToggle = (day: string) => {
+    setFormData(prev => {
+      const schedule = { ...prev.weeklySchedule } as any;
+      const current = schedule[day];
+      schedule[day] = {
+        ...current,
+        isOpen: !current.isOpen,
+        start: !current.isOpen ? "09:00" : "",
+        end: !current.isOpen ? "17:00" : "",
+        maxPatients: !current.isOpen ? 20 : 0
+      };
+      return { ...prev, weeklySchedule: schedule };
+    });
+  };
+
+  const handleTimeChange = (day: string, field: "start" | "end" | "maxPatients", value: any) => {
+    setFormData(prev => {
+      const schedule = { ...prev.weeklySchedule } as any;
+      schedule[day] = {
+        ...schedule[day],
+        [field]: field === "maxPatients" ? parseInt(value) || 0 : value
+      };
+      return { ...prev, weeklySchedule: schedule };
+    });
+  };
+
   const validateStep1 = () => {
     const newErrors: Record<string, string> = {};
     let isValid = true;
     
-    // Auth & Identity
-    if (!formData.fullName.trim() || formData.fullName.length < 3) { newErrors.fullName = "Name is required."; isValid = false; }
-    if (!formData.gender) { newErrors.gender = "Gender is required."; isValid = false; }
-    if (!formData.dateOfBirth) { newErrors.dateOfBirth = "DOB is required."; isValid = false; }
-    
-    const phoneRegex = /^[6-9]\d{9}$/;
-    if (!phoneRegex.test(formData.contactNumber)) {
-      newErrors.contactNumber = "Valid 10-digit phone number required (must start with 6, 7, 8 or 9)";
+    if (!session?.user) {
+      newErrors.google = "You must link your Google Account first.";
       isValid = false;
     }
-    
-    if (!formData.password || formData.password.length < 6) { newErrors.password = "Password must be at least 6 characters."; isValid = false; }
-    
-    // Medical
-    if (!formData.medicalRegistrationNumber.trim() || formData.medicalRegistrationNumber.length < 5) { newErrors.medicalRegistrationNumber = "Valid Registration Number is required."; isValid = false; }
-    if (!formData.registrationYear) { newErrors.registrationYear = "Year is required."; isValid = false; }
-    if (!formData.specialization) { newErrors.specialization = "Specialty is required."; isValid = false; }
-    if (!formData.experience) { newErrors.experience = "Experience is required."; isValid = false; }
-    if (!formData.qualifications.trim()) { newErrors.qualifications = "Qualifications are required."; isValid = false; }
-    
-    // Clinic
-    if (!formData.practiceName.trim()) { newErrors.practiceName = "Practice Name is required."; isValid = false; }
-    if (!formData.practiceAddress.trim()) { newErrors.practiceAddress = "Address is required."; isValid = false; }
-    if (!formData.locality.trim()) { newErrors.locality = "Locality is required."; isValid = false; }
-    if (!formData.city.trim()) { newErrors.city = "City is required."; isValid = false; }
-    if (!formData.pincode.trim() || !/^\d{6}$/.test(formData.pincode)) { newErrors.pincode = "Valid 6-digit Pincode is required."; isValid = false; }
+    if (!formData.fullName.trim() || formData.fullName.length < 3) {
+      newErrors.fullName = "Legal Name is required.";
+      isValid = false;
+    }
+    const phoneRegex = /^[6-9]\d{9}$/;
+    if (!phoneRegex.test(formData.contactNumber)) {
+      newErrors.contactNumber = "Valid 10-digit Indian mobile number required.";
+      isValid = false;
+    }
+    if (!formData.speciality) {
+      newErrors.speciality = "Specialty selection is required.";
+      isValid = false;
+    }
 
     setErrors(newErrors);
     return isValid;
   };
 
-  const submitStep1 = async () => {
-    if (!validateStep1()) {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
+  const validateStep2 = () => {
+    const newErrors: Record<string, string> = {};
+    let isValid = true;
+    
+    if (!formData.practiceName.trim()) { newErrors.practiceName = "Practice Name is required."; isValid = false; }
+    if (!formData.practiceAddress.trim()) { newErrors.practiceAddress = "Clinic Address is required."; isValid = false; }
+    if (!formData.locality.trim()) { newErrors.locality = "Locality is required."; isValid = false; }
+    if (!formData.city.trim()) { newErrors.city = "City is required."; isValid = false; }
+    if (!formData.pincode.trim() || !/^\d{6}$/.test(formData.pincode)) { newErrors.pincode = "Valid 6-digit Pincode is required."; isValid = false; }
+
+    // Operator Details Validation
+    if (!formData.operatorName.trim()) { newErrors.operatorName = "Operator / Owner Name is required."; isValid = false; }
+    const phoneRegex = /^[6-9]\d{9}$/;
+    if (!formData.operatorMobile.trim() || !phoneRegex.test(formData.operatorMobile)) { 
+      newErrors.operatorMobile = "Valid 10-digit Indian mobile number is required."; 
+      isValid = false; 
     }
-    setStep(2);
+
+    // Optional Receptionists Validation
+    if (formData.receptionist1Name.trim() || formData.receptionist1Phone.trim()) {
+      if (!formData.receptionist1Name.trim()) { newErrors.receptionist1Name = "Name is required."; isValid = false; }
+      if (!phoneRegex.test(formData.receptionist1Phone)) { newErrors.receptionist1Phone = "Valid 10-digit phone required."; isValid = false; }
+    }
+    if (formData.receptionist2Name.trim() || formData.receptionist2Phone.trim()) {
+      if (!formData.receptionist2Name.trim()) { newErrors.receptionist2Name = "Name is required."; isValid = false; }
+      if (!phoneRegex.test(formData.receptionist2Phone)) { newErrors.receptionist2Phone = "Valid 10-digit phone required."; isValid = false; }
+    }
+    if (formData.receptionist3Name.trim() || formData.receptionist3Phone.trim()) {
+      if (!formData.receptionist3Name.trim()) { newErrors.receptionist3Name = "Name is required."; isValid = false; }
+      if (!phoneRegex.test(formData.receptionist3Phone)) { newErrors.receptionist3Phone = "Valid 10-digit phone required."; isValid = false; }
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
+  const validateStep3 = () => {
+    const newErrors: Record<string, string> = {};
+    let isValid = true;
+    
+    if (!formData.medicalRegistrationNumber.trim() || formData.medicalRegistrationNumber.length < 5) {
+      newErrors.medicalRegistrationNumber = "Valid Registration Number is required.";
+      isValid = false;
+    }
+    if (!formData.registrationYear) {
+      newErrors.registrationYear = "Registration Year is required.";
+      isValid = false;
+    }
+    if (!formData.gender) {
+      newErrors.gender = "Gender is required.";
+      isValid = false;
+    }
+    if (!formData.dateOfBirth) {
+      newErrors.dateOfBirth = "Date of Birth is required.";
+      isValid = false;
+    }
+    if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = "Valid email is required.";
+      isValid = false;
+    }
+    if (!formData.experience) {
+      newErrors.experience = "Years of experience is required.";
+      isValid = false;
+    }
+    if (!formData.qualifications.trim()) {
+      newErrors.qualifications = "Qualifications are required.";
+      isValid = false;
+    }
+    if (!formData.degreeCertificate) {
+      newErrors.degreeCertificate = "Degree Certificate upload is required.";
+      isValid = false;
+    }
+    if (!formData.nmcCertificate) {
+      newErrors.nmcCertificate = "NMC Certificate upload is required.";
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
+  const validateStep4 = () => {
+    const newErrors: Record<string, string> = {};
+    let isValid = true;
+
+    if (!formData.dailyPatientLimit || parseInt(formData.dailyPatientLimit) < 1 || parseInt(formData.dailyPatientLimit) > 100) {
+      newErrors.dailyPatientLimit = "Daily patient limit must be between 1 and 100.";
+      isValid = false;
+    }
+
+    if (!formData.fee || parseInt(formData.fee) < 0 || parseInt(formData.fee) > 2000) {
+      newErrors.fee = "Consultation fee must be between ₹0 and ₹2000.";
+      isValid = false;
+    }
+
+    if (formData.emergencyAvailable) {
+      if (!formData.emergencyFee || parseInt(formData.emergencyFee) < 0 || parseInt(formData.emergencyFee) > 2000) {
+        newErrors.emergencyFee = "Emergency fee must be between ₹0 and ₹2000.";
+        isValid = false;
+      }
+    }
+
+    if (!formData.bookingStartTime) {
+      newErrors.bookingStartTime = "Booking start time is required.";
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
+  const nextStep = async (currentStep: number) => {
+    setErrors({});
+    let isValid = false;
+    if (currentStep === 1) {
+      isValid = validateStep1();
+      if (isValid) {
+        setIsSubmitting(true);
+        try {
+          const res = await fetch("/api/doctor/onboard/step1", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              fullName: formData.fullName,
+              contactNumber: formData.contactNumber,
+              speciality: formData.speciality,
+            })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "Failed to save step 1.");
+          setStep(2);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } catch (err: any) {
+          setErrors({ submit: err.message || "Failed to proceed." });
+        } finally {
+          setIsSubmitting(false);
+        }
+      }
+    } else if (currentStep === 2) {
+      isValid = validateStep2();
+      if (isValid) {
+        setIsSubmitting(true);
+        try {
+          const res = await fetch("/api/doctor/onboard/step2", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              practiceName: formData.practiceName,
+              practiceAddress: formData.practiceAddress,
+              locality: formData.locality,
+              district: formData.district,
+              city: formData.city,
+              state: formData.state,
+              pincode: formData.pincode,
+              latitude: formData.latitude,
+              longitude: formData.longitude,
+            })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "Failed to save step 2.");
+          setStep(3);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } catch (err: any) {
+          setErrors({ submit: err.message || "Failed to proceed." });
+        } finally {
+          setIsSubmitting(false);
+        }
+      }
+    } else if (currentStep === 3) {
+      isValid = validateStep3();
+      if (isValid) {
+        setIsSubmitting(true);
+        try {
+          const res = await fetch("/api/doctor/onboard/step3", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              qualifications: formData.qualifications,
+              experience: parseInt(String(formData.experience), 10),
+              medicalRegistrationNumber: formData.medicalRegistrationNumber,
+              medicalCouncil: formData.medicalCouncil,
+              registrationYear: parseInt(String(formData.registrationYear), 10),
+              specialization: formData.speciality,
+              degreeCertificate: formData.degreeCertificate,
+              nmcCertificate: formData.nmcCertificate,
+              clinicPhotos: formData.clinicPhotos,
+              otherCertificates: formData.otherCertificates,
+              languages: formData.languages,
+              bio: formData.bio,
+              gender: formData.gender || null,
+              dateOfBirth: formData.dateOfBirth || null,
+              email: session?.user?.email || formData.email || null,
+            })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "Failed to save step 3.");
+          setStep(4);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } catch (err: any) {
+          setErrors({ submit: err.message || "Failed to proceed." });
+        } finally {
+          setIsSubmitting(false);
+        }
+      }
+    }
+  };
+
+  const prevStep = () => {
+    setStep(prev => Math.max(1, prev - 1));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const finalSubmit = async () => {
+    if (!validateStep4()) return;
     setIsSubmitting(true);
     setErrors({});
     try {
-      const res = await fetch("/api/doctor/onboard", {
+      const res = await fetch("/api/doctor/onboard/step4", {
         method: "POST", 
         headers: { "Content-Type": "application/json" }, 
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          weeklySchedule: formData.weeklySchedule,
+          dailyPatientLimit: parseInt(formData.dailyPatientLimit),
+          consultationFee: parseInt(formData.fee),
+          emergencyAvailable: formData.emergencyAvailable,
+          emergencyFee: formData.emergencyAvailable ? parseInt(formData.emergencyFee) : null,
+          bookingStartTime: formData.bookingStartTime,
+        })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to submit.");
       
-      setSuccessMessage(data.message || "Registration submitted. Admin will verify within 24-48 hours.");
-      setStep(3);
+      setSuccessMessage(data.message || "Registration submitted. Our team will verify your profile within 24-48 hours.");
+      setStep(5);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err: any) {
       setErrors({ submit: err.message || "Network error. Please try again." });
@@ -175,8 +436,8 @@ function OnboardingContent() {
               <span style={{ color: '#4A90D9' }}>Jivni</span><span style={{ color: '#4A8C4A' }}>Care</span>
             </span>
           </Link>
-          <Link href="/partners/login" className="px-5 py-2.5 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-655 hover:text-[#5298D2] hover:border-sky-200 shadow-sm transition-all flex items-center gap-2">
-            Already a partner? <span className="text-[#5298D2]">Sign In</span>
+          <Link href="/partners/login" className="px-5 py-2.5 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-600 hover:text-[#5298D2] hover:border-sky-200 shadow-sm transition-all flex items-center gap-2">
+            Already a partner? <span className="text-[#5298D2] font-black">Sign In</span>
           </Link>
         </div>
       </header>
@@ -192,63 +453,110 @@ function OnboardingContent() {
             </p>
           </div>
 
-          <div className="bg-slate-50/50 border-b border-slate-100 py-6 px-8 flex justify-center">
-            <div className="flex items-center gap-4 md:gap-8 w-full max-w-xl justify-between">
-              {[
-                { num: 1, label: 'Identity & Clinic', desc: 'Basic details', icon: UserCircle },
-                { num: 2, label: 'Profile Polish', desc: 'Schedules & bio', icon: Sparkles },
-                { num: 3, label: 'Verification', desc: 'NMC verification', icon: ShieldCheck }
-              ].map((s, idx) => {
-                const Icon = s.icon;
-                const isActive = step === s.num;
-                const isCompleted = step > s.num;
-                return (
-                  <div key={s.num} className="flex items-center gap-3">
-                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs transition-all duration-300 ${
-                      isCompleted ? 'bg-[#489C66] text-white shadow-md shadow-emerald-600/10' :
-                      isActive ? 'bg-[#5298D2] text-white shadow-md shadow-sky-600/20 ring-4 ring-sky-100 scale-105' :
-                      'bg-slate-100 text-slate-400 border border-slate-200'
-                    }`}>
-                      {isCompleted ? <CheckCircle2 className="w-4.5 h-4.5 text-white" /> : <Icon className="w-4.5 h-4.5" />}
+          {/* Stepper Progress */}
+          {step <= 4 && (
+            <div className="bg-slate-50/50 border-b border-slate-100 py-6 px-8 flex justify-center overflow-x-auto">
+              <div className="flex items-center gap-2 md:gap-4 w-full max-w-3xl justify-between min-w-[500px]">
+                {[
+                  { num: 1, label: 'Google & Basic', icon: UserCircle },
+                  { num: 2, label: 'Clinic Info', icon: Building },
+                  { num: 3, label: 'Credentials', icon: Briefcase },
+                  { num: 4, label: 'Op Hours', icon: Calendar }
+                ].map((s, idx) => {
+                  const Icon = s.icon;
+                  const isActive = step === s.num;
+                  const isCompleted = step > s.num;
+                  return (
+                    <div key={s.num} className="flex items-center gap-2">
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs transition-all duration-300 ${
+                        isCompleted ? 'bg-[#489C66] text-white shadow-md shadow-emerald-600/10' :
+                        isActive ? 'bg-[#5298D2] text-white shadow-md shadow-sky-600/20 ring-4 ring-sky-100 scale-105' :
+                        'bg-slate-100 text-slate-400 border border-slate-200'
+                      }`}>
+                        {isCompleted ? <Check className="w-5 h-5 text-white" /> : <Icon className="w-4.5 h-4.5" />}
+                      </div>
+                      <div>
+                        <p className={`text-xs font-black leading-none ${
+                          isActive ? 'text-slate-800' : isCompleted ? 'text-slate-500' : 'text-slate-400'
+                        }`}>Step {s.num}</p>
+                        <p className={`text-[10px] font-semibold mt-0.5 whitespace-nowrap ${
+                          isActive ? 'text-slate-500' : isCompleted ? 'text-slate-400' : 'text-slate-350'
+                        }`}>{s.label}</p>
+                      </div>
+                      {idx < 3 && (
+                        <div className={`w-6 h-[2px] rounded ${
+                          step > s.num ? 'bg-[#489C66]' : 'bg-slate-200'
+                        } ml-2`} />
+                      )}
                     </div>
-                    <div className="hidden md:block">
-                      <p className={`text-xs font-black leading-none ${
-                        isActive ? 'text-slate-800' : isCompleted ? 'text-slate-500' : 'text-slate-400'
-                      }`}>{s.label}</p>
-                      <p className={`text-[10px] font-semibold mt-0.5 ${
-                        isActive ? 'text-slate-500' : isCompleted ? 'text-slate-400' : 'text-slate-350'
-                      }`}>{s.desc}</p>
-                    </div>
-                    {idx < 2 && (
-                      <div className={`hidden md:block w-8 h-[2px] rounded ml-2 ${
-                        step > s.num ? 'bg-[#489C66]' : 'bg-slate-200'
-                      }`} />
-                    )}
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="p-6 md:p-10">
             <AnimatePresence mode="wait">
-                {step === 1 && (
-                  <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
-                  <div className="mb-10">
+              {/* STEP 1: Basic Info & Google OAuth linking */}
+              {step === 1 && (
+                <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
+                  <div className="mb-8">
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-sky-100 text-sky-800 rounded-full text-[10px] font-black uppercase tracking-widest mb-4">
-                      <ShieldCheck className="w-3.5 h-3.5" /> Identity & Security
+                      <Lock className="w-3.5 h-3.5" /> Authentication Setup
                     </span>
-                    <h2 className="text-3xl font-black text-slate-900 tracking-tight">Create your account</h2>
-                    <p className="text-slate-500 font-medium mt-2 text-lg">We need some basic details to verify your medical identity.</p>
+                    <h2 className="text-3xl font-black text-slate-900 tracking-tight">Step 1: Account Authentication</h2>
+                    <p className="text-slate-500 font-medium mt-2">Link your Google Account. Doctors log in securely using Google OAuth.</p>
                   </div>
 
                   {errors.submit && (
-                    <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
+                    <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-center gap-3">
                       <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
                       <p className="text-sm font-bold text-rose-800">{errors.submit}</p>
                     </div>
                   )}
 
+                  {/* Google OAuth Link Card */}
+                  <div className="bg-slate-50 border border-slate-200 rounded-3xl p-6 flex flex-col sm:flex-row items-center justify-between gap-6">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-white border border-slate-200 rounded-2xl flex items-center justify-center shadow-sm shrink-0">
+                        {session?.user ? (
+                          <Check className="w-6 h-6 text-emerald-500" />
+                        ) : (
+                          <svg className="w-6 h-6 fill-current text-slate-500" viewBox="0 0 24 24">
+                            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                          </svg>
+                        )}
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-slate-900">Google OAuth Verification</h3>
+                        <p className="text-xs text-slate-500 font-medium">
+                          {session?.user 
+                            ? `Linked as ${session.user.email}` 
+                            : "Secure your clinical dashboard login"}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {!session?.user ? (
+                      <Button
+                        type="button"
+                        onClick={() => signIn("google")}
+                        className="bg-[#4285F4] hover:bg-[#357AE8] text-white font-bold rounded-xl h-11 px-5 flex items-center gap-2 shadow-md shadow-blue-500/10"
+                      >
+                        Link Google Account
+                      </Button>
+                    ) : (
+                      <span className="px-4 py-1.5 bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-full text-xs font-bold flex items-center gap-1.5">
+                        <Check className="w-3.5 h-3.5" /> Google Linked
+                      </span>
+                    )}
+                  </div>
+                  {errors.google && <p className="text-xs font-bold text-rose-500 text-center">{errors.google}</p>}
+
+                  {/* Basic User Details Form */}
                   <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
                     <div className="p-6 md:p-8 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
@@ -256,104 +564,72 @@ function OnboardingContent() {
                       </div>
                       <div>
                         <h3 className="font-bold text-slate-900">Personal Information</h3>
-                        <p className="text-xs text-slate-500 font-medium">As per your medical registration.</p>
+                        <p className="text-xs text-slate-500 font-medium">As shown in your medical council certificate.</p>
                       </div>
                     </div>
                     <div className="p-6 md:p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2 md:col-span-2">
                         <label className="text-xs font-bold text-slate-700">Full Legal Name</label>
-                        <Input placeholder="Dr. Rajesh Kumar" value={formData.fullName} onChange={(e) => { const v = e.target.value; if (/^[a-zA-Z. ]*$/.test(v)) setFormData({...formData, fullName: v}); }} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.fullName ? 'border-rose-500 focus:ring-rose-500/20' : ''}`} />
+                        <Input 
+                          placeholder="Dr. Rajesh Kumar" 
+                          value={formData.fullName} 
+                          onChange={(e) => setFormData({...formData, fullName: e.target.value.replace(/[^a-zA-Z. ]*/g, '')})} 
+                          className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.fullName ? 'border-rose-500' : ''}`} 
+                        />
                         {errors.fullName && <p className="text-[10px] font-bold text-rose-500">{errors.fullName}</p>}
                       </div>
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-700">Gender</label>
-                        <select value={formData.gender} onChange={(e) => setFormData({...formData, gender: e.target.value})} className={`h-12 w-full rounded-xl bg-slate-50 border border-slate-200 px-4 text-sm focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all ${errors.gender ? 'border-rose-500' : ''}`}>
-                          <option value="">Select Gender</option><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option>
-                        </select>
-                        {errors.gender && <p className="text-[10px] font-bold text-rose-500">{errors.gender}</p>}
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-700">Date of Birth</label>
-                        <Input type="date" value={formData.dateOfBirth} onChange={(e) => setFormData({...formData, dateOfBirth: e.target.value})} className={`h-12 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.dateOfBirth ? 'border-rose-500' : ''}`} />
-                        {errors.dateOfBirth && <p className="text-[10px] font-bold text-rose-500">{errors.dateOfBirth}</p>}
-                      </div>
-                    </div>
-                  </div>
 
-                  <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-                    <div className="p-6 md:p-8 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
-                        <Lock className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-slate-900">Account Credentials</h3>
-                        <p className="text-xs text-slate-500 font-medium">Your login details for the JivniCare platform.</p>
-                      </div>
-                    </div>
-                    <div className="p-6 md:p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-700">Mobile Number (Primary)</label>
-                        <Input placeholder="9876543210" value={formData.contactNumber} maxLength={10} onChange={(e) => setFormData({...formData, contactNumber: e.target.value.replace(/[^0-9]/g, '')})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.contactNumber ? 'border-rose-500' : ''}`} />
+                        <label className="text-xs font-bold text-slate-700">Registered Indian Mobile Number</label>
+                        <div className="relative">
+                          <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-800 text-sm">+91</span>
+                          <Input 
+                            placeholder="9876543210" 
+                            value={formData.contactNumber} 
+                            maxLength={10} 
+                            onChange={(e) => setFormData({...formData, contactNumber: e.target.value.replace(/[^0-9]/g, '')})} 
+                            className={`h-12 pl-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.contactNumber ? 'border-rose-500' : ''}`} 
+                          />
+                        </div>
                         {errors.contactNumber && <p className="text-[10px] font-bold text-rose-500">{errors.contactNumber}</p>}
                       </div>
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-700">Email Address</label>
-                        <Input type="email" placeholder="doctor@example.com" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all" />
-                      </div>
-                      <div className="space-y-2 md:col-span-2">
-                        <label className="text-xs font-bold text-slate-700">Create Secure Password</label>
-                        <Input type="password" placeholder="Min 6 characters" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.password ? 'border-rose-500' : ''}`} />
-                        {errors.password && <p className="text-[10px] font-bold text-rose-500">{errors.password}</p>}
-                      </div>
-                    </div>
-                  </div>
 
-                  <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-                    <div className="p-6 md:p-8 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
-                        <Briefcase className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-slate-900">Medical Credentials</h3>
-                        <p className="text-xs text-slate-500 font-medium">To maintain high clinical standards.</p>
-                      </div>
-                    </div>
-                    <div className="p-6 md:p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-700">Medical Registration No.</label>
-                        <Input placeholder="BMC-12345" value={formData.medicalRegistrationNumber} onChange={(e) => setFormData({...formData, medicalRegistrationNumber: e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, '')})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.medicalRegistrationNumber ? 'border-rose-500' : ''}`} />
-                        {errors.medicalRegistrationNumber && <p className="text-[10px] font-bold text-rose-500">{errors.medicalRegistrationNumber}</p>}
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-700">Medical Council</label>
-                        <select value={formData.medicalCouncil} onChange={(e) => setFormData({...formData, medicalCouncil: e.target.value})} className="h-12 w-full rounded-xl bg-slate-50 border border-slate-200 px-4 text-sm focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all">
-                          {MEDICAL_COUNCILS.map(c => <option key={c} value={c}>{c}</option>)}
-                        </select>
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-700">Registration Year</label>
-                        <Input type="number" placeholder="e.g. 2012" value={formData.registrationYear} onChange={(e) => setFormData({...formData, registrationYear: e.target.value})} className={`h-12 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.registrationYear ? 'border-rose-500' : ''}`} />
-                        {errors.registrationYear && <p className="text-[10px] font-bold text-rose-500">{errors.registrationYear}</p>}
-                      </div>
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-700">Primary Specialty</label>
-                        <select value={formData.specialization} onChange={(e) => setFormData({...formData, specialization: e.target.value})} className={`h-12 w-full rounded-xl bg-slate-50 border border-slate-200 px-4 text-sm focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all ${errors.specialization ? 'border-rose-500' : ''}`}>
+                        <select 
+                          value={formData.speciality} 
+                          onChange={(e) => setFormData({...formData, speciality: e.target.value})} 
+                          className={`h-12 w-full rounded-xl bg-slate-50 border border-slate-200 px-4 text-sm focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all ${errors.speciality ? 'border-rose-500' : ''}`}
+                        >
                           <option value="">Select Specialty</option>
                           {STANDARD_SPECIALTIES.map(s => <option key={s} value={s}>{s}</option>)}
                         </select>
-                        {errors.specialization && <p className="text-[10px] font-bold text-rose-500">{errors.specialization}</p>}
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-700">Years of Experience</label>
-                        <Input type="number" placeholder="e.g. 5" value={formData.experience} onChange={(e) => setFormData({...formData, experience: e.target.value})} className={`h-12 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.experience ? 'border-rose-500' : ''}`} />
-                        {errors.experience && <p className="text-[10px] font-bold text-rose-500">{errors.experience}</p>}
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-700">Qualifications</label>
-                        <Input placeholder="MBBS, MD" value={formData.qualifications} onChange={(e) => setFormData({...formData, qualifications: e.target.value.replace(/[^a-zA-Z0-9\s.,()&/-]/g, '')})} className={`h-12 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.qualifications ? 'border-rose-500' : ''}`} />
-                        {errors.qualifications && <p className="text-[10px] font-bold text-rose-500">{errors.qualifications}</p>}
+                        {errors.speciality && <p className="text-[10px] font-bold text-rose-500">{errors.speciality}</p>}
                       </div>
                     </div>
+                  </div>
+
+                  <div className="flex items-center justify-end pt-6">
+                    <Button 
+                      type="button" 
+                      onClick={() => nextStep(1)} 
+                      className="h-14 px-8 w-full sm:w-auto rounded-2xl font-bold bg-[#5298D2] hover:bg-[#3d83bd] text-white flex items-center justify-center gap-2 shadow-lg shadow-sky-600/10 transition-all"
+                    >
+                      Save &amp; Continue <ArrowRight className="w-5 h-5" />
+                    </Button>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* STEP 2: Clinic & Owner Information */}
+              {step === 2 && (
+                <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
+                  <div className="mb-8">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-[10px] font-black uppercase tracking-widest mb-4">
+                      <Building className="w-3.5 h-3.5" /> Practice Location
+                    </span>
+                    <h2 className="text-3xl font-black text-slate-900 tracking-tight">Step 2: Clinic Information</h2>
+                    <p className="text-slate-500 font-medium mt-2">Enter your practice address and exact coordinates to enable geolocation search.</p>
                   </div>
 
                   <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
@@ -363,8 +639,8 @@ function OnboardingContent() {
                           <Building className="w-5 h-5" />
                         </div>
                         <div>
-                          <h3 className="font-bold text-slate-900">Clinic Location</h3>
-                          <p className="text-xs text-slate-500 font-medium">Where patients will visit you.</p>
+                          <h3 className="font-bold text-slate-900">Clinic Location Details</h3>
+                          <p className="text-xs text-slate-500 font-medium">Enable GPS to automatically fill location coordinates.</p>
                         </div>
                       </div>
                       <button
@@ -386,121 +662,627 @@ function OnboardingContent() {
                         )}
                       </button>
                     </div>
+
                     <div className="p-6 md:p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2 md:col-span-2">
-                        <label className="text-xs font-bold text-slate-700">Clinic Name</label>
-                        <Input placeholder="e.g. City Care Clinic" value={formData.practiceName} onChange={(e) => setFormData({...formData, practiceName: e.target.value.replace(/[0-9]/g, '')})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.practiceName ? 'border-rose-500' : ''}`} />
+                        <label className="text-xs font-bold text-slate-700">Clinic / Practice Name</label>
+                        <Input 
+                          placeholder="e.g. City Care Clinic" 
+                          value={formData.practiceName} 
+                          onChange={(e) => setFormData({...formData, practiceName: e.target.value})} 
+                          className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.practiceName ? 'border-rose-500' : ''}`} 
+                        />
                         {errors.practiceName && <p className="text-[10px] font-bold text-rose-500">{errors.practiceName}</p>}
                       </div>
+
                       <div className="space-y-2 md:col-span-2">
                         <label className="text-xs font-bold text-slate-700">Full Address</label>
-                        <Input placeholder="e.g. Shop No. 5, Ground Floor" value={formData.practiceAddress} onChange={(e) => setFormData({...formData, practiceAddress: e.target.value})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.practiceAddress ? 'border-rose-500' : ''}`} />
+                        <Input 
+                          placeholder="e.g. Shop No. 5, Ground Floor, Boring Road" 
+                          value={formData.practiceAddress} 
+                          onChange={(e) => setFormData({...formData, practiceAddress: e.target.value})} 
+                          className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.practiceAddress ? 'border-rose-500' : ''}`} 
+                        />
                         {errors.practiceAddress && <p className="text-[10px] font-bold text-rose-500">{errors.practiceAddress}</p>}
                       </div>
+
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-700">Locality</label>
-                        <Input placeholder="e.g. Downtown" value={formData.locality} onChange={(e) => setFormData({...formData, locality: e.target.value.replace(/[0-9]/g, '')})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.locality ? 'border-rose-500' : ''}`} />
+                        <Input 
+                          placeholder="e.g. Kidwaipuri" 
+                          value={formData.locality} 
+                          onChange={(e) => setFormData({...formData, locality: e.target.value})} 
+                          className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.locality ? 'border-rose-500' : ''}`} 
+                        />
                         {errors.locality && <p className="text-[10px] font-bold text-rose-500">{errors.locality}</p>}
                       </div>
+
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-700">City</label>
-                        <Input placeholder="Enter city" value={formData.city} onChange={(e) => setFormData({...formData, city: e.target.value})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.city ? 'border-rose-500' : ''}`} />
+                        <Input 
+                          placeholder="Enter city" 
+                          value={formData.city} 
+                          onChange={(e) => setFormData({...formData, city: e.target.value})} 
+                          className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.city ? 'border-rose-500' : ''}`} 
+                        />
                         {errors.city && <p className="text-[10px] font-bold text-rose-500">{errors.city}</p>}
                       </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-700">District (Bihar)</label>
+                        <Input 
+                          placeholder="e.g. Patna" 
+                          value={formData.district} 
+                          onChange={(e) => setFormData({...formData, district: e.target.value})} 
+                          className="h-12 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all" 
+                        />
+                      </div>
+
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-700">Pincode</label>
-                        <Input placeholder="e.g. 110001" value={formData.pincode} maxLength={6} onChange={(e) => setFormData({...formData, pincode: e.target.value.replace(/[^0-9]/g, '')})} className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.pincode ? 'border-rose-500' : ''}`} />
+                        <Input 
+                          placeholder="e.g. 800001" 
+                          value={formData.pincode} 
+                          maxLength={6} 
+                          onChange={(e) => setFormData({...formData, pincode: e.target.value.replace(/[^0-9]/g, '')})} 
+                          className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.pincode ? 'border-rose-500' : ''}`} 
+                        />
                         {errors.pincode && <p className="text-[10px] font-bold text-rose-500">{errors.pincode}</p>}
                       </div>
-                    </div>
-                  </div>
 
-                  <div className="flex items-center justify-end pt-6">
-                    <Button 
-                      type="button" 
-                      onClick={submitStep1} 
-                      disabled={isSubmitting} 
-                      className="h-14 px-8 w-full sm:w-auto rounded-2xl font-bold bg-[#5298D2] hover:bg-[#3d83bd] text-white flex items-center justify-center gap-2 shadow-lg shadow-sky-600/10 transition-all hover:-translate-y-0.5"
-                    >
-                      Save & Continue <ArrowRight className="w-5 h-5" />
-                    </Button>
-                  </div>
-                </motion.div>
-                )}
-
-                {step === 2 && (
-                  <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
-                  <div className="mb-10">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-[10px] font-black uppercase tracking-widest mb-4">
-                      <Sparkles className="w-3.5 h-3.5" /> Profile Polish
-                    </span>
-                    <h2 className="text-3xl font-black text-slate-900 tracking-tight">Make your profile shine</h2>
-                    <p className="text-slate-500 font-medium mt-2 text-lg">Add details that help patients choose you.</p>
-                  </div>
-
-                  {errors.submit && (
-                    <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
-                      <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
-                      <p className="text-sm font-bold text-rose-800">{errors.submit}</p>
-                    </div>
-                  )}
-
-                  <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-                     <div className="p-6 md:p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-700">OPD Consultation Fee (₹)</label>
-                        <Input type="number" placeholder="500" value={formData.fee} onChange={(e) => setFormData({...formData, fee: e.target.value})} className="h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all" />
+                      {/* Owner / Operator Details */}
+                      <div className="col-span-1 md:col-span-2 border-t border-slate-100 pt-6 mt-4">
+                        <h4 className="text-sm font-black text-slate-800 flex items-center gap-2">
+                          <UserCircle className="w-5 h-5 text-[#5298D2]" /> Clinic Owner / Operator Details
+                        </h4>
+                        <p className="text-xs text-slate-400 font-medium mt-1">Provide the name and contact details of the primary operator responsible for this account.</p>
                       </div>
 
                       <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-700">Languages Spoken</label>
-                        <Input placeholder="Hindi, English" value={formData.languages} onChange={(e) => setFormData({...formData, languages: e.target.value})} className="h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all" />
+                        <label className="text-xs font-bold text-slate-700">Operator / Owner Full Name</label>
+                        <Input 
+                          placeholder="e.g. Rajesh Kumar" 
+                          value={formData.operatorName} 
+                          onChange={(e) => setFormData({...formData, operatorName: e.target.value})} 
+                          className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.operatorName ? 'border-rose-500' : ''}`} 
+                        />
+                        {errors.operatorName && <p className="text-[10px] font-bold text-rose-500">{errors.operatorName}</p>}
                       </div>
 
-                      <div className="space-y-2 md:col-span-2">
-                        <label className="text-xs font-bold text-slate-700">Professional Bio</label>
-                        <textarea rows={5} placeholder="I am a dedicated physician with over..." value={formData.bio} onChange={(e) => setFormData({...formData, bio: e.target.value})} className="w-full rounded-xl bg-slate-50 border border-slate-200 p-4 text-sm focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all resize-none" />
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-700">Operator / Owner Mobile No.</label>
+                        <Input 
+                          placeholder="e.g. 9876543210" 
+                          value={formData.operatorMobile} 
+                          maxLength={10}
+                          onChange={(e) => setFormData({...formData, operatorMobile: e.target.value.replace(/[^0-9]/g, '')})} 
+                          className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.operatorMobile ? 'border-rose-500' : ''}`} 
+                        />
+                        {errors.operatorMobile && <p className="text-[10px] font-bold text-rose-500">{errors.operatorMobile}</p>}
                       </div>
 
-                      <ImageUploadField
-                        label="Profile Photo"
-                        value={formData.profilePhotoUrl}
-                        onChange={(url) => setFormData({ ...formData, profilePhotoUrl: url })}
-                        filenamePrefix="doctor-profile"
-                      />
-                      <ImageUploadField
-                        label="Clinic Photo"
-                        value={formData.clinicPhotoUrl}
-                        onChange={(url) => setFormData({ ...formData, clinicPhotoUrl: url })}
-                        filenamePrefix="clinic-photo"
-                        aspectRatio={16/9}
-                      />
-
-                      <div className="space-y-3 md:col-span-2 pt-4 border-t border-slate-100">
-                        <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
-                          <span>Emergency Services</span>
-                          <div 
-                            onClick={() => setFormData({...formData, emergencyAvailable: !formData.emergencyAvailable})}
-                            className={`w-12 h-6 rounded-full p-1 cursor-pointer transition-colors ${formData.emergencyAvailable ? 'bg-rose-500' : 'bg-slate-200'}`}
-                          >
-                            <motion.div 
-                              layout 
-                              className="w-4 h-4 bg-white rounded-full shadow-sm" 
-                              animate={{ x: formData.emergencyAvailable ? 24 : 0 }} 
-                              transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                            />
-                          </div>
-                        </label>
-                        <p className="text-xs text-slate-500">I am available for emergency consultations or walk-in trauma cases.</p>
+                      {/* Receptionists Details */}
+                      <div className="col-span-1 md:col-span-2 border-t border-slate-100 pt-6 mt-4">
+                        <h4 className="text-sm font-black text-slate-800 flex items-center gap-2">
+                          <Users className="w-5 h-5 text-[#489C66]" /> Receptionists & Staff (Optional, max 3)
+                        </h4>
+                        <p className="text-xs text-slate-400 font-medium mt-1">Add details of staff members who will operate the queue manager and patient list.</p>
                       </div>
-                     </div>
+
+                      {/* Receptionist 1 */}
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-700">Receptionist 1 Name</label>
+                        <Input 
+                          placeholder="Name of staff 1" 
+                          value={formData.receptionist1Name} 
+                          onChange={(e) => setFormData({...formData, receptionist1Name: e.target.value})} 
+                          className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.receptionist1Name ? 'border-rose-500' : ''}`} 
+                        />
+                        {errors.receptionist1Name && <p className="text-[10px] font-bold text-rose-500">{errors.receptionist1Name}</p>}
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-700">Receptionist 1 Phone</label>
+                        <Input 
+                          placeholder="Phone of staff 1" 
+                          value={formData.receptionist1Phone} 
+                          maxLength={10}
+                          onChange={(e) => setFormData({...formData, receptionist1Phone: e.target.value.replace(/[^0-9]/g, '')})} 
+                          className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.receptionist1Phone ? 'border-rose-500' : ''}`} 
+                        />
+                        {errors.receptionist1Phone && <p className="text-[10px] font-bold text-rose-500">{errors.receptionist1Phone}</p>}
+                      </div>
+
+                      {/* Receptionist 2 */}
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-700">Receptionist 2 Name</label>
+                        <Input 
+                          placeholder="Name of staff 2" 
+                          value={formData.receptionist2Name} 
+                          onChange={(e) => setFormData({...formData, receptionist2Name: e.target.value})} 
+                          className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.receptionist2Name ? 'border-rose-500' : ''}`} 
+                        />
+                        {errors.receptionist2Name && <p className="text-[10px] font-bold text-rose-500">{errors.receptionist2Name}</p>}
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-700">Receptionist 2 Phone</label>
+                        <Input 
+                          placeholder="Phone of staff 2" 
+                          value={formData.receptionist2Phone} 
+                          maxLength={10}
+                          onChange={(e) => setFormData({...formData, receptionist2Phone: e.target.value.replace(/[^0-9]/g, '')})} 
+                          className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.receptionist2Phone ? 'border-rose-500' : ''}`} 
+                        />
+                        {errors.receptionist2Phone && <p className="text-[10px] font-bold text-rose-500">{errors.receptionist2Phone}</p>}
+                      </div>
+
+                      {/* Receptionist 3 */}
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-700">Receptionist 3 Name</label>
+                        <Input 
+                          placeholder="Name of staff 3" 
+                          value={formData.receptionist3Name} 
+                          onChange={(e) => setFormData({...formData, receptionist3Name: e.target.value})} 
+                          className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.receptionist3Name ? 'border-rose-500' : ''}`} 
+                        />
+                        {errors.receptionist3Name && <p className="text-[10px] font-bold text-rose-500">{errors.receptionist3Name}</p>}
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-700">Receptionist 3 Phone</label>
+                        <Input 
+                          placeholder="Phone of staff 3" 
+                          value={formData.receptionist3Phone} 
+                          maxLength={10}
+                          onChange={(e) => setFormData({...formData, receptionist3Phone: e.target.value.replace(/[^0-9]/g, '')})} 
+                          className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.receptionist3Phone ? 'border-rose-500' : ''}`} 
+                        />
+                        {errors.receptionist3Phone && <p className="text-[10px] font-bold text-rose-500">{errors.receptionist3Phone}</p>}
+                      </div>
+                    </div>
                   </div>
 
                   <div className="flex items-center justify-between pt-6">
                     <Button 
                       type="button" 
-                      onClick={() => setStep(1)} 
-                      className="h-14 px-6 rounded-xl font-bold border border-slate-200 bg-white hover:bg-slate-50 text-slate-655 flex items-center gap-2 transition-all hover:-translate-y-0.5"
+                      onClick={prevStep} 
+                      className="h-14 px-6 rounded-xl font-bold border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 flex items-center gap-2 transition-all"
+                    >
+                      <ArrowLeft className="w-5 h-5" /> Back
+                    </Button>
+                    <Button 
+                      type="button" 
+                      onClick={() => nextStep(2)} 
+                      className="h-14 px-8 w-full sm:w-auto rounded-2xl font-bold bg-[#5298D2] hover:bg-[#3d83bd] text-white flex items-center justify-center gap-2 shadow-lg shadow-sky-600/10 transition-all"
+                    >
+                      Save &amp; Continue <ArrowRight className="w-5 h-5" />
+                    </Button>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* STEP 3: Professional Credentials & Verification Documents */}
+              {step === 3 && (
+                <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
+                  <div className="mb-8">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-[10px] font-black uppercase tracking-widest mb-4">
+                      <Briefcase className="w-3.5 h-3.5" /> Professional Credentials
+                    </span>
+                    <h2 className="text-3xl font-black text-slate-900 tracking-tight">Step 3: Medical Credentials &amp; Documents</h2>
+                    <p className="text-slate-500 font-medium mt-2">Enter your license registration number and upload copy for council verification.</p>
+                  </div>
+
+                  <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div className="p-6 md:p-8 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                        <Briefcase className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-slate-900">Medical Registration Info</h3>
+                        <p className="text-xs text-slate-500 font-medium">Required for partner verification.</p>
+                      </div>
+                    </div>
+                    <div className="p-6 md:p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-700">Medical Registration No.</label>
+                        <Input 
+                          placeholder="e.g. BMC-12345" 
+                          value={formData.medicalRegistrationNumber} 
+                          onChange={(e) => setFormData({...formData, medicalRegistrationNumber: e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, '')})} 
+                          className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.medicalRegistrationNumber ? 'border-rose-500' : ''}`} 
+                        />
+                        {errors.medicalRegistrationNumber && <p className="text-[10px] font-bold text-rose-500">{errors.medicalRegistrationNumber}</p>}
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-700">Medical Council</label>
+                        <select 
+                          value={formData.medicalCouncil} 
+                          onChange={(e) => setFormData({...formData, medicalCouncil: e.target.value})} 
+                          className="h-12 w-full rounded-xl bg-slate-50 border border-slate-200 px-4 text-sm focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all"
+                        >
+                          {MEDICAL_COUNCILS.map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-700">Registration Year</label>
+                        <Input 
+                          type="number" 
+                          placeholder="e.g. 2015" 
+                          value={formData.registrationYear} 
+                          onChange={(e) => setFormData({...formData, registrationYear: e.target.value})} 
+                          className={`h-12 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.registrationYear ? 'border-rose-500' : ''}`} 
+                        />
+                        {errors.registrationYear && <p className="text-[10px] font-bold text-rose-500">{errors.registrationYear}</p>}
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-700">Gender</label>
+                        <select 
+                          value={formData.gender} 
+                          onChange={(e) => setFormData({...formData, gender: e.target.value})} 
+                          className={`h-12 w-full rounded-xl bg-slate-50 border border-slate-200 px-4 text-sm focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all ${errors.gender ? 'border-rose-500' : ''}`}
+                        >
+                          <option value="">Select Gender</option>
+                          <option value="Male">Male</option>
+                          <option value="Female">Female</option>
+                          <option value="Other">Other</option>
+                        </select>
+                        {errors.gender && <p className="text-[10px] font-bold text-rose-500">{errors.gender}</p>}
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-700">Date of Birth</label>
+                        <Input 
+                          type="date" 
+                          value={formData.dateOfBirth} 
+                          onChange={(e) => setFormData({...formData, dateOfBirth: e.target.value})} 
+                          className={`h-12 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.dateOfBirth ? 'border-rose-500' : ''}`} 
+                        />
+                        {errors.dateOfBirth && <p className="text-[10px] font-bold text-rose-500">{errors.dateOfBirth}</p>}
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-700">Contact Email</label>
+                        <Input 
+                          type="email" 
+                          placeholder="doctor@gmail.com" 
+                          value={formData.email} 
+                          onChange={(e) => setFormData({...formData, email: e.target.value})} 
+                          className={`h-12 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.email ? 'border-rose-500' : ''}`} 
+                        />
+                        {errors.email && <p className="text-[10px] font-bold text-rose-500">{errors.email}</p>}
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-700">Years of Experience</label>
+                        <Input 
+                          type="number" 
+                          placeholder="e.g. 8" 
+                          value={formData.experience} 
+                          onChange={(e) => setFormData({...formData, experience: e.target.value})} 
+                          className={`h-12 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.experience ? 'border-rose-500' : ''}`} 
+                        />
+                        {errors.experience && <p className="text-[10px] font-bold text-rose-500">{errors.experience}</p>}
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-700">Qualifications</label>
+                        <Input 
+                          placeholder="e.g. MBBS, MD" 
+                          value={formData.qualifications} 
+                          onChange={(e) => setFormData({...formData, qualifications: e.target.value})} 
+                          className={`h-12 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.qualifications ? 'border-rose-500' : ''}`} 
+                        />
+                        {errors.qualifications && <p className="text-[10px] font-bold text-rose-500">{errors.qualifications}</p>}
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-700">Languages Spoken</label>
+                        <Input 
+                          placeholder="e.g. Hindi, English" 
+                          value={formData.languages} 
+                          onChange={(e) => setFormData({...formData, languages: e.target.value})} 
+                          className="h-12 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all" 
+                        />
+                      </div>
+
+                      <div className="space-y-2 md:col-span-2">
+                        <label className="text-xs font-bold text-slate-700">Brief Bio</label>
+                        <textarea 
+                          rows={4} 
+                          placeholder="Describe your practice, expertise, and treatments..." 
+                          value={formData.bio} 
+                          onChange={(e) => setFormData({...formData, bio: e.target.value})} 
+                          className="w-full rounded-xl bg-slate-50 border border-slate-200 p-4 text-sm focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all resize-none" 
+                        />
+                      </div>
+
+                      {/* Diseases and Procedures */}
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-700">Treatments & Diseases Focus (Comma-separated)</label>
+                        <Input 
+                          placeholder="e.g. Diabetes, Hypertension, Typhoid, Fever" 
+                          value={formData.diseases} 
+                          onChange={(e) => setFormData({...formData, diseases: e.target.value})} 
+                          className="h-12 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all" 
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-700">Procedures Performed (Comma-separated)</label>
+                        <Input 
+                          placeholder="e.g. ECG, Dressing, Nebulization, Vaccination" 
+                          value={formData.procedures} 
+                          onChange={(e) => setFormData({...formData, procedures: e.target.value})} 
+                          className="h-12 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all" 
+                        />
+                      </div>
+
+                      {/* Photo Upload Fields */}
+                      <div className="col-span-1 md:col-span-2 border-t border-slate-100 pt-6 mt-4">
+                        <h4 className="text-sm font-black text-slate-800 flex items-center gap-2">
+                          Profile & Verification Documents
+                        </h4>
+                      </div>
+
+                      <ImageUploadField
+                        label="Profile Photo (Formal)"
+                        value={formData.profilePhotoUrl}
+                        onChange={(url) => setFormData({ ...formData, profilePhotoUrl: url })}
+                        filenamePrefix="doctor-profile"
+                        aspectRatio={1}
+                      />
+
+                      <ImageUploadField
+                        label="Degree Certificate (Required)"
+                        value={formData.degreeCertificate}
+                        onChange={(url) => setFormData({ ...formData, degreeCertificate: url })}
+                        filenamePrefix="degree-certificate"
+                        aspectRatio={4/3}
+                      />
+                      {errors.degreeCertificate && <p className="text-[10px] font-bold text-rose-500 col-span-1 md:col-span-2">{errors.degreeCertificate}</p>}
+
+                      <ImageUploadField
+                        label="NMC Certificate (Required)"
+                        value={formData.nmcCertificate}
+                        onChange={(url) => setFormData({ ...formData, nmcCertificate: url })}
+                        filenamePrefix="nmc-certificate"
+                        aspectRatio={4/3}
+                      />
+                      {errors.nmcCertificate && <p className="text-[10px] font-bold text-rose-500 col-span-1 md:col-span-2">{errors.nmcCertificate}</p>}
+
+                      {/* Multi Clinic Gallery Photos */}
+                      <div className="col-span-1 md:col-span-2 space-y-2 border-t border-slate-100 pt-6 mt-4">
+                        <label className="text-xs font-black text-slate-800">Clinic Board / Gallery Photos (Max 3)</label>
+                        <p className="text-xs text-slate-400 font-medium">Upload up to 3 photos of your clinic interior, exterior or board.</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-2">
+                          {[0, 1, 2].map((idx) => (
+                            <ImageUploadField
+                              key={idx}
+                              label={`Clinic Photo ${idx + 1}`}
+                              value={formData.clinicPhotos[idx] || ""}
+                              onChange={(url) => {
+                                const updated = [...formData.clinicPhotos];
+                                updated[idx] = url;
+                                setFormData({ ...formData, clinicPhotos: updated });
+                              }}
+                              filenamePrefix={`clinic-photo-${idx}`}
+                              aspectRatio={16/9}
+                            />
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Multi Other Certificates */}
+                      <div className="col-span-1 md:col-span-2 space-y-2 border-t border-slate-100 pt-6 mt-4">
+                        <label className="text-xs font-black text-slate-800">Other Certificates & Degrees (Optional, Max 10)</label>
+                        <p className="text-xs text-slate-400 font-medium">Upload copies of any other fellowships, training certificates, or awards.</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 mt-2">
+                          {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((idx) => (
+                            <ImageUploadField
+                              key={idx}
+                              label={`Cert ${idx + 1}`}
+                              value={formData.otherCertificates[idx] || ""}
+                              onChange={(url) => {
+                                const updated = [...formData.otherCertificates];
+                                updated[idx] = url;
+                                setFormData({ ...formData, otherCertificates: updated });
+                              }}
+                              filenamePrefix={`other-certificate-${idx}`}
+                              aspectRatio={4/3}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-6">
+                    <Button 
+                      type="button" 
+                      onClick={prevStep} 
+                      className="h-14 px-6 rounded-xl font-bold border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 flex items-center gap-2 transition-all"
+                    >
+                      <ArrowLeft className="w-5 h-5" /> Back
+                    </Button>
+                    <Button 
+                      type="button" 
+                      onClick={() => nextStep(3)} 
+                      className="h-14 px-8 w-full sm:w-auto rounded-2xl font-bold bg-[#5298D2] hover:bg-[#3d83bd] text-white flex items-center justify-center gap-2 shadow-lg shadow-sky-600/10 transition-all"
+                    >
+                      Save &amp; Continue <ArrowRight className="w-5 h-5" />
+                    </Button>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* STEP 4: Availability Schedule */}
+              {step === 4 && (
+                <motion.div key="step4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
+                  <div className="mb-8">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-[10px] font-black uppercase tracking-widest mb-4">
+                      <Calendar className="w-3.5 h-3.5" /> Working Schedule
+                    </span>
+                    <h2 className="text-3xl font-black text-slate-900 tracking-tight">Step 4: Availability &amp; OPD Timings</h2>
+                    <p className="text-slate-500 font-medium mt-2">Specify your clinical opening hours and patient booking limits for each day of the week.</p>
+                  </div>
+
+                  {errors.submit && (
+                    <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-center gap-3">
+                      <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
+                      <p className="text-sm font-bold text-rose-800">{errors.submit}</p>
+                    </div>
+                  )}
+
+                  {/* Weekly Hours Grid */}
+                  <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div className="p-6 md:p-8 border-b border-slate-100 bg-slate-50/50">
+                      <h3 className="font-bold text-slate-900">OPD Weekly Timings</h3>
+                      <p className="text-xs text-slate-500 font-medium">Configure days and capacity limits.</p>
+                    </div>
+
+                    <div className="divide-y divide-slate-100 p-6 md:p-8 space-y-4">
+                      {DAYS_OF_WEEK.map((day) => {
+                        const daySched = (formData.weeklySchedule as any)[day.key];
+                        return (
+                          <div key={day.key} className="flex flex-col md:flex-row md:items-center justify-between gap-4 py-4 first:pt-0 last:pb-0">
+                            <div className="flex items-center gap-3 min-w-[120px]">
+                              <input 
+                                type="checkbox"
+                                checked={daySched.isOpen}
+                                onChange={() => handleDayToggle(day.key)}
+                                className="w-5 h-5 rounded text-[#5298D2] border-slate-350 focus:ring-[#5298D2] cursor-pointer"
+                              />
+                              <span className="font-bold text-sm text-slate-800">{day.label}</span>
+                            </div>
+
+                            {daySched.isOpen ? (
+                              <div className="flex flex-wrap items-center gap-3">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Start</span>
+                                  <Input 
+                                    type="time" 
+                                    value={daySched.start} 
+                                    onChange={(e) => handleTimeChange(day.key, "start", e.target.value)} 
+                                    className="h-10 w-28 text-sm rounded-xl border-slate-200"
+                                  />
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">End</span>
+                                  <Input 
+                                    type="time" 
+                                    value={daySched.end} 
+                                    onChange={(e) => handleTimeChange(day.key, "end", e.target.value)} 
+                                    className="h-10 w-28 text-sm rounded-xl border-slate-200"
+                                  />
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Max Patients</span>
+                                  <Input 
+                                    type="number" 
+                                    value={daySched.maxPatients} 
+                                    onChange={(e) => handleTimeChange(day.key, "maxPatients", e.target.value)} 
+                                    className="h-10 w-20 text-sm rounded-xl border-slate-200 text-center"
+                                  />
+                                </div>
+                              </div>
+                            ) : (
+                              <span className="text-xs font-bold text-slate-400 bg-slate-100 px-3 py-1 rounded-lg">Closed</span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Additional Operations & Fees */}
+                  <div className="bg-white rounded-3xl border border-slate-200 p-6 md:p-8 space-y-6">
+                    <h3 className="font-bold text-slate-900 border-b border-slate-100 pb-3">Pricing &amp; Operational Rules</h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-700">Consultation Fee (₹0 - ₹2000)</label>
+                        <Input 
+                          type="number" 
+                          placeholder="e.g. 400" 
+                          value={formData.fee} 
+                          onChange={(e) => setFormData({...formData, fee: e.target.value})} 
+                          className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.fee ? 'border-rose-500' : ''}`} 
+                        />
+                        {errors.fee && <p className="text-[10px] font-bold text-rose-500">{errors.fee}</p>}
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-700">Daily Patient Limit (1 - 100)</label>
+                        <Input 
+                          type="number" 
+                          placeholder="e.g. 30" 
+                          value={formData.dailyPatientLimit} 
+                          onChange={(e) => setFormData({...formData, dailyPatientLimit: e.target.value})} 
+                          className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.dailyPatientLimit ? 'border-rose-500' : ''}`} 
+                        />
+                        {errors.dailyPatientLimit && <p className="text-[10px] font-bold text-rose-500">{errors.dailyPatientLimit}</p>}
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-700">Online Booking Start Time</label>
+                        <Input 
+                          type="time" 
+                          value={formData.bookingStartTime} 
+                          onChange={(e) => setFormData({...formData, bookingStartTime: e.target.value})} 
+                          className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.bookingStartTime ? 'border-rose-500' : ''}`} 
+                        />
+                        {errors.bookingStartTime && <p className="text-[10px] font-bold text-rose-500">{errors.bookingStartTime}</p>}
+                      </div>
+                    </div>
+
+                    <div className="border-t border-slate-100 pt-6 space-y-4">
+                      <label className="flex items-center justify-between cursor-pointer">
+                        <div>
+                          <span className="font-bold text-slate-800">Support Emergency / Trauma Consultations?</span>
+                          <p className="text-xs text-slate-500 mt-1">If enabled, emergency tokens will bypass standard queue waitlists.</p>
+                        </div>
+                        <div 
+                          onClick={() => setFormData({...formData, emergencyAvailable: !formData.emergencyAvailable})}
+                          className={`w-12 h-6 rounded-full p-1 transition-colors shrink-0 ${formData.emergencyAvailable ? 'bg-rose-500' : 'bg-slate-200'}`}
+                        >
+                          <motion.div 
+                            layout 
+                            className="w-4 h-4 bg-white rounded-full shadow-sm" 
+                            animate={{ x: formData.emergencyAvailable ? 24 : 0 }} 
+                            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                          />
+                        </div>
+                      </label>
+
+                      {formData.emergencyAvailable && (
+                        <motion.div 
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          className="pt-4 max-w-xs space-y-2"
+                        >
+                          <label className="text-xs font-bold text-slate-700">Emergency Consultation Fee (₹0 - ₹2000)</label>
+                          <Input 
+                            type="number" 
+                            placeholder="e.g. 500" 
+                            value={formData.emergencyFee} 
+                            onChange={(e) => setFormData({...formData, emergencyFee: e.target.value})} 
+                            className={`h-12 rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all ${errors.emergencyFee ? 'border-rose-500' : ''}`} 
+                          />
+                          {errors.emergencyFee && <p className="text-[10px] font-bold text-rose-500">{errors.emergencyFee}</p>}
+                        </motion.div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-6">
+                    <Button 
+                      type="button" 
+                      onClick={prevStep} 
+                      className="h-14 px-6 rounded-xl font-bold border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 flex items-center gap-2 transition-all"
                     >
                       <ArrowLeft className="w-5 h-5" /> Back
                     </Button>
@@ -508,20 +1290,21 @@ function OnboardingContent() {
                       type="button" 
                       onClick={finalSubmit} 
                       disabled={isSubmitting} 
-                      className="h-14 px-8 w-full sm:w-auto rounded-2xl font-bold bg-[#489C66] hover:bg-[#378151] text-white flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/10 transition-all hover:-translate-y-0.5"
+                      className="h-14 px-8 w-full sm:w-auto rounded-2xl font-bold bg-[#489C66] hover:bg-[#378151] text-white flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/10 transition-all"
                     >
                       {isSubmitting ? (
-                        <><RefreshCw className="w-5 h-5 animate-spin" /> Submitting...</>
+                        <><RefreshCw className="w-5 h-5 animate-spin" /> Registering...</>
                       ) : (
-                        <>Submit For Verification <CheckCircle2 className="w-5 h-5" /></>
+                        <>Register Digital Clinic <CheckCircle2 className="w-5 h-5" /></>
                       )}
                     </Button>
                   </div>
                 </motion.div>
-                )}
+              )}
 
-              {step === 3 && (
-                <motion.div key="step3" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="max-w-2xl mx-auto space-y-8">
+              {/* STEP 5: Verification Receipt */}
+              {step === 5 && (
+                <motion.div key="step5" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="max-w-2xl mx-auto space-y-8">
                   <div className="flex flex-col items-center justify-center text-center pt-8 pb-4">
                     <div className="relative mb-6">
                       <div className="w-20 h-20 bg-emerald-100 rounded-3xl flex items-center justify-center shadow-md relative z-10 border border-emerald-200">
@@ -563,7 +1346,7 @@ function OnboardingContent() {
                       </div>
                       <div className="grid grid-cols-3 py-1.5 border-b border-slate-100/70">
                         <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Specialty</span>
-                        <span className="col-span-2 text-slate-800 font-semibold">{formData.specialization || "General Physician"}</span>
+                        <span className="col-span-2 text-slate-800 font-semibold">{formData.speciality || "General Physician"}</span>
                       </div>
                       <div className="grid grid-cols-3 py-1.5 border-b border-slate-100/70">
                         <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Practice Name</span>
@@ -605,39 +1388,34 @@ function OnboardingContent() {
 
                   <div className="flex flex-col sm:flex-row gap-4 pt-2 justify-center">
                     <Link href="/" className="flex-1">
-                      <Button className="h-14 px-8 w-full rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-base shadow-lg transition-all hover:-translate-y-0.5 flex items-center justify-center gap-2">
+                      <Button className="h-14 px-8 w-full rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-base shadow-lg transition-all flex items-center justify-center gap-2">
                         Return to Homepage
                         <ArrowRight className="w-5 h-5" />
                       </Button>
                     </Link>
-                    <a href="https://wa.me/910000000000?text=JivniCare%20Doctor%20Support" target="_blank" rel="noopener noreferrer" className="h-14 px-8 rounded-2xl border border-slate-200 hover:border-slate-350 bg-white hover:bg-slate-50 text-slate-700 font-bold text-base transition-all hover:-translate-y-0.5 flex items-center justify-center gap-2">
+                    <a href="https://wa.me/910000000000?text=JivniCare%20Doctor%20Support" target="_blank" rel="noopener noreferrer" className="h-14 px-8 rounded-2xl border border-slate-200 hover:border-slate-350 bg-white hover:bg-slate-50 text-slate-700 font-bold text-base transition-all flex items-center justify-center gap-2">
                       <PhoneCall className="w-5 h-5 text-slate-400" />
                       Contact Support
                     </a>
                   </div>
                 </motion.div>
-                )}
+              )}
             </AnimatePresence>
           </div>
         </div>
       </main>
-
-      <footer className="mt-8 mb-16 text-center max-w-2xl mx-auto px-4 flex flex-col items-center gap-3 text-slate-400">
-        <div className="flex items-center gap-1.5 justify-center">
-          <ShieldCheck className="w-4 h-4 text-[#4A90D9] shrink-0" />
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600">
-            <span style={{ color: '#4A90D9' }}>Jivni</span><span style={{ color: '#4A8C4A' }}>Care</span> Platform Disclaimer
-          </span>
-        </div>
-        <p className="text-[10px] text-slate-400 leading-relaxed max-w-xl mx-auto text-center">
-          <span style={{ color: '#4A90D9' }}>Jivni</span><span style={{ color: '#4A8C4A' }}>Care</span> is a clinic queue software provider. Medical registration details are self-declared.
-        </p>
-        <div className="flex items-center gap-4 text-xs font-semibold mt-1">
-          <button onClick={() => setShowTerms(true)} className="text-[#5298D2] hover:text-[#3d83bd] hover:underline transition-all cursor-pointer bg-transparent border-none p-0 outline-none">Terms of Service</button>
-          <span className="text-slate-300">•</span>
-          <button onClick={() => setShowPrivacy(true)} className="text-[#5298D2] hover:text-[#3d83bd] hover:underline transition-all cursor-pointer bg-transparent border-none p-0 outline-none">Privacy Policy</button>
-        </div>
-      </footer>
     </div>
+  );
+}
+
+export default function DoctorOnboardingFlow() {
+  return (
+    <PublicGuard>
+      <SessionProvider>
+        <Suspense fallback={<div className="min-h-screen bg-[#F8FAFC]" />}>
+          <DoctorOnboardingFlowContent />
+        </Suspense>
+      </SessionProvider>
+    </PublicGuard>
   );
 }

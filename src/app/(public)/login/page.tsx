@@ -44,6 +44,7 @@ function PatientLoginContent() {
   const [otpVerified, setOtpVerified] = useState(false);
   const [needsProfile, setNeedsProfile] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [agreed, setAgreed] = useState(false);
 
   const finishLoginRedirect = (role?: Parameters<typeof getRoleRedirect>[0]) => {
     const target = redirectUrl || getRoleRedirect(role ?? user?.role ?? "PATIENT");
@@ -92,6 +93,10 @@ function PatientLoginContent() {
   const handleSendOtp = async (e?: React.FormEvent) => {
     e?.preventDefault();
     if (phone.length < 10 || isLoading) return;
+    if (!agreed) {
+      setError("Terms of Service aur Privacy Policy ko agree karna zaroori hai.");
+      return;
+    }
     setIsLoading(true);
     setError(null);
     setOtpVerified(false);
@@ -433,9 +438,22 @@ function PatientLoginContent() {
                       </div>
                     </div>
 
+                    <div className="flex items-start gap-3 mt-4 mb-2">
+                      <input
+                        type="checkbox"
+                        id="agree-consent"
+                        checked={agreed}
+                        onChange={(e) => setAgreed(e.target.checked)}
+                        className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary mt-1 cursor-pointer"
+                      />
+                      <label htmlFor="agree-consent" className="text-xs text-slate-500 leading-normal cursor-pointer select-none">
+                        Main JivniCare ke <Link href="/terms" className="text-primary hover:underline font-bold">Terms of Service</Link> aur <Link href="/privacy" className="text-primary hover:underline font-bold">Privacy Policy</Link> se sahmat hoon.
+                      </label>
+                    </div>
+
                     <Button
                       type="submit"
-                      disabled={isLoading || phone.length < 10}
+                      disabled={isLoading || phone.length < 10 || !agreed}
                       className="w-full h-16 rounded-2xl bg-[#205E98] hover:bg-[#1a4f82] text-white font-black text-lg shadow-[0_12px_24px_-8px_rgba(32,94,152,0.3)] hover:shadow-[0_20px_40px_-12px_rgba(32,94,152,0.4)] active:scale-[0.98] transition-all flex items-center justify-center gap-3"
                     >
                       {isLoading ? (

@@ -41,14 +41,19 @@ export default async function DistrictPage({ params }: PageProps) {
   const districtFormatted = capitalizeDistrict(district);
 
   // Fetch Real Doctors for this District
-  const dbDoctors = await prisma.doctor.findMany({
-    where: { 
-      district: { contains: districtFormatted, mode: 'insensitive' },
-      verificationStatus: 'VERIFIED'
-    },
-    take: 6,
-    include: { specialties: true, keywords: true }
-  });
+  let dbDoctors: any[] = [];
+  try {
+    dbDoctors = await prisma.doctor.findMany({
+      where: { 
+        district: { contains: districtFormatted, mode: 'insensitive' },
+        verificationStatus: 'VERIFIED'
+      },
+      take: 6,
+      include: { specialties: true, keywords: true }
+    });
+  } catch (err) {
+    console.warn("Failed to fetch doctors in district during prerender:", err);
+  }
 
   const districtDoctors = dbDoctors.map(mapPrismaDoctorToUI);
 

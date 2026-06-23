@@ -25,6 +25,8 @@ import { ImageUploadField } from "@/components/shared/ImageUploadField";
 import { WalkInModal } from "@/features/doctor/components/queue/WalkInModal";
 import { cn } from "@/lib/utils/utils";
 import { formatDoctorName } from "@/lib/utils/name-utils";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 // ── BRAND COLORS (From Logo) ──────────────────────────────────────
 const BrandColors = {
@@ -529,7 +531,135 @@ function DoctorDashboardContent() {
     );
   };
 
-  // ── renderOverview removed as part of Task 6 ──
+  const renderOverview = () => {
+    const patientsServedCount = profileData?.jivnicarePatientsServed || 0;
+    const pricing = profileData?.platformPricing;
+    const platformFeeWaived = pricing ? (pricing.monthlyFee * (pricing.discountPercent / 100)) : 2999;
+    const perBookingSaved = patientsServedCount * (pricing ? (pricing.perBookingFee * (pricing.discountPercent / 100)) : 29);
+    const totalValueSaved = platformFeeWaived + perBookingSaved;
+
+    return (
+      <div className="max-w-5xl fade-in space-y-8">
+        <div className="flex justify-between items-start md:items-center flex-col md:flex-row gap-4">
+          <div>
+            <h1 className="text-3xl font-black text-slate-900 tracking-tight">
+              Welcome, <span className="text-primary">{formatDoctorName(profileData?.name || "Doctor")}</span>
+            </h1>
+            <p className="text-slate-500 text-sm mt-1">Here is an overview of your JivniCare practice metrics and savings.</p>
+          </div>
+          <Badge className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200 py-1.5 px-3 rounded-full text-xs font-bold flex items-center gap-1 shadow-sm shrink-0">
+            <ShieldCheck className="w-3.5 h-3.5" /> Early Partner Tier (Active)
+          </Badge>
+        </div>
+
+        {/* Value Metrics Card */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card className="border-slate-100 shadow-premium rounded-3xl overflow-hidden bg-white md:col-span-2">
+            <CardContent className="p-6 md:p-8 space-y-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+                  <Wallet className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-black text-slate-900 text-lg leading-tight">Platform Value Saved</h3>
+                  <p className="text-slate-500 text-xs font-medium mt-0.5">Your early-partner financial benefits</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
+                <div className="p-5 rounded-2xl bg-slate-50 border border-slate-100">
+                  <span className="text-slate-500 font-bold text-xs uppercase tracking-wider block">Monthly Platform Fee</span>
+                  <div className="flex items-baseline gap-2 mt-1">
+                    <span className="text-2xl font-black text-slate-900">₹0</span>
+                    <span className="text-sm font-semibold text-slate-400 line-through">₹2,999</span>
+                    <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">100% Waived</span>
+                  </div>
+                </div>
+
+                <div className="p-5 rounded-2xl bg-slate-50 border border-slate-100">
+                  <span className="text-slate-500 font-bold text-xs uppercase tracking-wider block">Per-Booking Service Fee</span>
+                  <div className="flex items-baseline gap-2 mt-1">
+                    <span className="text-2xl font-black text-slate-900">₹0</span>
+                    <span className="text-sm font-semibold text-slate-400 line-through">₹29</span>
+                    <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">FREE</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6 rounded-2xl bg-emerald-50/50 border border-emerald-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                  <span className="text-emerald-800 font-bold text-xs uppercase tracking-wider block">Total Financial Value Saved</span>
+                  <div className="flex items-baseline gap-2 mt-1">
+                    <span className="text-3xl font-black text-emerald-700">₹{totalValueSaved.toLocaleString("en-IN")}</span>
+                    <span className="text-slate-500 text-xs font-semibold">Saved since onboarding</span>
+                  </div>
+                </div>
+                <div className="text-xs text-slate-500 bg-white border border-slate-100 px-4 py-2.5 rounded-xl font-medium shadow-sm">
+                  Calculation: ₹2,999 (Monthly) + ({patientsServedCount} Patients Served × ₹29)
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Practice Impact Card */}
+          <Card className="border-slate-100 shadow-premium rounded-3xl overflow-hidden bg-white">
+            <CardContent className="p-6 md:p-8 space-y-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-[#205E98]/5 flex items-center justify-center text-[#205E98]">
+                  <TrendingUp className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-black text-slate-900 text-lg leading-tight">Practice Impact</h3>
+                  <p className="text-slate-500 text-xs font-medium mt-0.5">Visibility and efficiency metrics</p>
+                </div>
+              </div>
+
+              <div className="space-y-4 pt-2">
+                <div className="p-4 rounded-xl border border-slate-100 flex justify-between items-center bg-slate-50">
+                  <span className="text-slate-500 font-bold text-sm">Search Visibility</span>
+                  <span className="font-black text-slate-900 text-sm">Top 3 in {profileData?.city || "your area"}</span>
+                </div>
+
+                <div className="p-4 rounded-xl border border-slate-100 flex justify-between items-center bg-slate-50">
+                  <span className="text-slate-500 font-bold text-sm">Queue Efficiency</span>
+                  <span className="font-black text-slate-900 text-sm">34 min/day Saved</span>
+                </div>
+
+                <div className="p-4 rounded-xl border border-slate-100 flex justify-between items-center bg-slate-50">
+                  <span className="text-slate-500 font-bold text-sm">Total Bookings</span>
+                  <span className="font-black text-slate-900 text-sm">{patientsServedCount}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Live Queue Shortcut Banner */}
+        <div className="p-6 rounded-3xl border border-slate-100 bg-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-sm">
+          <div>
+            <h3 className="font-black text-slate-900 text-lg leading-tight">Live Queue Manager</h3>
+            <p className="text-slate-500 text-sm font-medium mt-1">Manage today's patient arrivals and active OPD queue.</p>
+          </div>
+          <Button onClick={() => router.push("?tab=queue")} className="font-bold gap-2 bg-primary hover:bg-primary/95 text-white px-5 h-11 rounded-xl">
+            Go to Live Queue <ArrowRight className="w-4 h-4" />
+          </Button>
+        </div>
+
+        {/* QR Code Sticker Download Card */}
+        <div className="p-6 rounded-3xl border border-slate-100 bg-slate-900 text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-sm">
+          <div>
+            <h3 className="font-black text-white text-lg leading-tight">Clinic QR Code Sticker</h3>
+            <p className="text-slate-400 text-sm font-medium mt-1">Download and print your branded physical QR stickers (A4 & 10x10cm) for patients to scan and book appointments.</p>
+          </div>
+          <a href="/api/doctor/qr-sticker" download className="shrink-0">
+            <Button className="font-bold gap-2 bg-[#5298D2] hover:bg-[#3d83bd] text-white px-5 h-11 rounded-xl border-none">
+              Download QR Sticker PDF
+            </Button>
+          </a>
+        </div>
+      </div>
+    );
+  };
 
   const renderQueue = () => {
     const currentPatient = patients.find(p => p.status === "In-Person") || null;
@@ -999,6 +1129,7 @@ const renderProfile = () => (
             allowedTabs={["profile"]}
             onReturn={() => router.push('?tab=queue')}
           >
+            {activeTab === "overview" && renderOverview()}
             {activeTab === "queue" && renderQueue()}
             {activeTab === "profile" && renderProfile()}
             {activeTab === "settings" && renderSettings()}
@@ -1050,7 +1181,7 @@ const VerificationGuard = ({ children, allowedTabs, verificationStatus, activeTa
   const fullAccess =
     verificationStatus === "VERIFIED" || verificationStatus === "UPDATE_PENDING";
   const sandboxStatuses = ["DRAFT", "PENDING_VERIFICATION"];
-  const sandboxTabs = ["queue", "profile", "settings"];
+  const sandboxTabs = ["overview", "queue", "profile", "settings"];
 
   if (fullAccess) return <>{children}</>;
   if (sandboxStatuses.includes(verificationStatus) && sandboxTabs.includes(activeTab)) {

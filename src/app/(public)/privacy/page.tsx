@@ -10,7 +10,7 @@ const SECTIONS = [
   {
     icon: <Database className="w-5 h-5" />,
     title: "Information We Collect",
-    content: `When you use JivniCare, we collect information necessary to provide healthcare booking services. This includes your name, phone number (used for OTP-based authentication only), appointment preferences, and optional profile details you choose to provide. We do not collect payment card data directly — all payment processing is handled by certified third-party payment gateways.`,
+    content: `When you use JivniCare, we collect information necessary to provide healthcare booking services. This includes your name, phone number (used for OTP-based authentication only), appointment preferences, and optional profile details you choose to provide. We do not collect online payments or store payment credentials — all consultation fees are settled directly at the clinic/hospital counter when you visit.`,
   },
   {
     icon: <Eye className="w-5 h-5" />,

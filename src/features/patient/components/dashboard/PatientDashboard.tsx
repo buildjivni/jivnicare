@@ -184,6 +184,36 @@ export function PatientDashboard({ user, upcomingTokens, pastTokens, savedDoctor
                 <Button variant="outline" className="w-full rounded-xl font-bold">Contact Support</Button>
               </CardContent>
             </Card>
+
+            <Card className="rounded-2xl border-slate-100 shadow-sm overflow-hidden border-rose-100 bg-rose-50/5">
+              <div className="bg-rose-900 p-4 text-white">
+                <h3 className="font-bold flex items-center gap-2">Privacy &amp; DPDP</h3>
+              </div>
+              <CardContent className="p-4 space-y-4">
+                <p className="text-xs text-slate-600 font-medium leading-relaxed">Under DPDP Act 2023, you can request the permanent deletion of your personal data from JivniCare.</p>
+                <Button 
+                  variant="outline" 
+                  onClick={async () => {
+                    if (confirm("Kya aap sach mein apna data delete karna chahte hain? Yeh action permanent hai aur aapka account immediately deactivate ho jayega.")) {
+                      try {
+                        const res = await fetch("/api/patient/delete-data", { method: "POST" });
+                        if (res.ok) {
+                          alert("Data deletion request registered. Account deactivated.");
+                          window.location.href = "/";
+                        } else {
+                          alert("Failed to submit request.");
+                        }
+                      } catch {
+                        alert("Network error.");
+                      }
+                    }
+                  }}
+                  className="w-full rounded-xl font-bold border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700 transition-colors"
+                >
+                  Request Data Deletion
+                </Button>
+              </CardContent>
+            </Card>
           </div>
         </div>
       )}

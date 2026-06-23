@@ -161,6 +161,8 @@ export function mapPrismaDoctorToUI(doc: any): UIDoctor {
     tags: [
       doc.speciality || (doc.specialties?.[0]?.name),
     ].filter(Boolean),
+    diseases: doc.diseases || [],
+    procedures: doc.procedures || [],
     about: doc.bio || "",
     education: doc.education || "",
     qualifications:
@@ -168,6 +170,8 @@ export function mapPrismaDoctorToUI(doc: any): UIDoctor {
       (doc.education ? doc.education.split(",")[0].trim() : ""),
     averageConsultationTime: avgConsultTime,
     languages,
+    partnerTier: doc.platformPricing?.partnerTier || undefined,
+    gender: doc.gender || undefined,
     updatedAt: doc.updatedAt,
   };
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MapPin, CalendarDays, Lock, ChevronDown, ChevronUp } from "lucide-react";
+import { MapPin, CalendarDays, Lock, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent } from "@/components/ui/card";
@@ -67,7 +67,7 @@ export function OrderSummary({ doctor, type }: OrderSummaryProps) {
                 </span>
               </div>
             </div>
-
+ 
             <Separator className="bg-slate-100 my-5" />
             
             <div className="space-y-3">
@@ -77,11 +77,11 @@ export function OrderSummary({ doctor, type }: OrderSummaryProps) {
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-slate-500 font-medium">Service Charge</span>
-                <span className="font-bold text-slate-900 line-through opacity-40">₹50</span>
+                <span className="font-bold text-slate-900 line-through opacity-40">₹29</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-slate-500 font-medium">Platform Discount</span>
-                <span className="font-bold text-emerald-600 bg-emerald-50 px-2 rounded-md">-₹50</span>
+                <span className="font-bold text-emerald-600 bg-emerald-50 px-2 rounded-md">FREE 🎉</span>
               </div>
               <Separator className="bg-slate-100 my-4" />
               <div className="flex justify-between items-center">
@@ -97,6 +97,13 @@ export function OrderSummary({ doctor, type }: OrderSummaryProps) {
         <Lock className="w-5 h-5 text-[#205E98] shrink-0 mt-0.5" />
         <p className="text-slate-600 font-medium leading-relaxed">
           Your booking is <strong className="font-bold text-slate-900">100% secure</strong>. JivniCare guarantees your exact place in the live clinic queue.
+        </p>
+      </div>
+
+      <div className="flex items-start gap-3 p-4 rounded-2xl bg-amber-50 border border-amber-200 text-sm">
+        <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+        <p className="text-amber-800 font-bold leading-relaxed">
+          Pay at Clinic / Hospital. No online payment required. Pay directly when you visit.
         </p>
       </div>
     </div>

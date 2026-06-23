@@ -4,7 +4,7 @@ export function Logo({ size = 40, className }: { size?: number; className?: stri
   return (
     <div className={`flex items-center gap-2 ${className || ''}`}>
       <Image
-        src="/icon.png"
+        src="/brand/logo-icon-circle.png"
         alt="JivniCare"
         width={size}
         height={size}

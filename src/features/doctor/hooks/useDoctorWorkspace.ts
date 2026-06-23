@@ -30,6 +30,7 @@ const EMPTY_PROFILE: DoctorProfileView = {
   clinicImage: "",
   verificationStatus: "DRAFT",
   profileCompleteness: 0,
+  jivnicarePatientsServed: 0,
 };
 
 const EMPTY_SETTINGS: DoctorSettingsView = {
@@ -105,6 +106,8 @@ export function useDoctorWorkspace() {
           clinicImage: doctor.clinicImage || doctor.clinic?.bannerImageUrl || "",
           verificationStatus: doctor.verificationStatus || "DRAFT",
           profileCompleteness: 100, // simplified for V1
+          jivnicarePatientsServed: doctor.jivnicarePatientsServed || 0,
+          platformPricing: doctor.platformPricing || null,
         },
         settings: {
           fee: String(doctor.consultationFee || 0),

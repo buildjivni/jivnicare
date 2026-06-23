@@ -50,7 +50,7 @@
   ],
   "crons": [
     {
-      "path": "/api/cron/expire-tokens",
+      "path": "/api/cron/midnight-cleanup",
       "schedule": "30 22 * * *"
     }
   ]

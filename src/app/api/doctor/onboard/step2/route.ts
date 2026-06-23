@@ -3,9 +3,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/db/prisma';
 import { verifyToken } from '@/lib/jwt';
 import { cookies } from 'next/headers';
-import { VerificationStatus } from '@prisma/client';
 import { step2OnboardSchema, formatZodError } from '@/lib/validators/validations';
-import { normalizeLanguages } from '@/lib/utils/normalizers';
 
 export async function POST(request: Request) {
   try {
@@ -17,18 +15,13 @@ export async function POST(request: Request) {
     }
 
     const decoded = await verifyToken(token) as { id: string; doctorId?: string } | null;
-    if (!decoded?.id) {
+    if (!decoded?.id || !decoded?.doctorId) {
       return apiError('Invalid or expired session. Please log in again.', 401);
     }
 
     const doctorId = decoded.doctorId;
-    if (!doctorId) {
-      return apiError('Doctor profile not found in session.', 403);
-    }
 
     const body = await request.json();
-    if (body.fee) body.fee = parseInt(body.fee, 10);
-
     const validation = step2OnboardSchema.safeParse(body);
     if (!validation.success) {
       return apiError('Validation failed: ' + formatZodError(validation.error), 400);
@@ -36,21 +29,42 @@ export async function POST(request: Request) {
 
     const data = validation.data;
 
-    await prisma.doctor.update({
-      where: { id: doctorId },
-      data: {
-        profileImage: data.profilePhotoUrl || null,
-        clinicImage: data.clinicPhotoUrl || null,
-        bio: data.bio || null,
-        fee: data.fee || 0,
-        languages: data.languages ? normalizeLanguages(data.languages) : [],
-        emergencyAvailable: data.emergencyAvailable || false,
-        verificationStatus: VerificationStatus.PENDING_VERIFICATION,
-      }
+    // Create Clinic and link to Doctor in transaction
+    const result = await prisma.$transaction(async (tx) => {
+      const clinic = await tx.clinic.create({
+        data: {
+          name: data.practiceName,
+          city: data.city,
+          address: data.practiceAddress,
+          isActive: true,
+        }
+      });
+
+      const updatedDoctor = await tx.doctor.update({
+        where: { id: doctorId },
+        data: {
+          clinicId: clinic.id,
+          hospitalName: data.practiceName,
+          clinicName: data.practiceName,
+          fullAddress: data.practiceAddress,
+          locality: data.locality,
+          city: data.city,
+          district: data.district,
+          state: data.state,
+          pincode: data.pincode,
+          latitude: data.latitude || null,
+          longitude: data.longitude || null
+        }
+      });
+
+      return { clinic, updatedDoctor };
     });
 
-    return apiResponse({success: true,
-      message: 'Doctor profile submitted for verification.',});
+    return apiResponse({
+      success: true,
+      message: 'Step 2 complete.',
+      clinicId: result.clinic.id
+    });
 
   } catch (error: any) {
     console.error('Doctor Onboard Step 2 Error:', error);

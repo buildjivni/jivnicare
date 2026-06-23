@@ -12,31 +12,41 @@ import prisma from "@/lib/db/prisma";
 import { mapPrismaDoctorToUI } from "@/lib/utils/data-utils";
 
 async function getVerifiedDoctors() {
-  const dbDoctors = await prisma.doctor.findMany({
-    where: {
-      verificationStatus: 'VERIFIED',
-      isOnline: true,
-    },
-    include: {
-      clinic: true,
-    },
-    take: 6, // Show max 6 on homepage
-    orderBy: {
-      jivnicarePatientsServed: 'desc',
-    },
-  });
-  return dbDoctors.map(doc => mapPrismaDoctorToUI(doc));
+  try {
+    const dbDoctors = await prisma.doctor.findMany({
+      where: {
+        verificationStatus: 'VERIFIED',
+        isOnline: true,
+      },
+      include: {
+        clinic: true,
+      },
+      take: 6, // Show max 6 on homepage
+      orderBy: {
+        jivnicarePatientsServed: 'desc',
+      },
+    });
+    return dbDoctors.map(doc => mapPrismaDoctorToUI(doc));
+  } catch (err) {
+    console.warn("Failed to fetch verified doctors during homepage build:", err);
+    return [];
+  }
 }
 
 async function getSpecialities() {
-  // In V1 spec, specialties are just a string on the Doctor model.
-  // We fetch distinct values from the speciality field.
-  const doctors = await prisma.doctor.findMany({
-    where: { verificationStatus: 'VERIFIED' },
-    select: { speciality: true },
-    distinct: ['speciality'],
-  });
-  return doctors.map(d => ({ name: d.speciality, id: d.speciality.toLowerCase() }));
+  try {
+    // In V1 spec, specialties are just a string on the Doctor model.
+    // We fetch distinct values from the speciality field.
+    const doctors = await prisma.doctor.findMany({
+      where: { verificationStatus: 'VERIFIED' },
+      select: { speciality: true },
+      distinct: ['speciality'],
+    });
+    return doctors.map(d => ({ name: d.speciality, id: d.speciality.toLowerCase() }));
+  } catch (err) {
+    console.warn("Failed to fetch specialties during homepage build:", err);
+    return [];
+  }
 }
 
 export default async function Home() {

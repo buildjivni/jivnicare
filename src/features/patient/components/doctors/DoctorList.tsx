@@ -1,11 +1,137 @@
 "use client";
 
+import { useState } from "react";
+import { toast } from "sonner";
 import { DoctorCard } from "@/components/shared/DoctorCard";
 import { Button } from "@/components/ui/button";
 import type { Doctor } from "@/types";
 import { Stethoscope, SearchX, MapPin, Sparkles, RefreshCcw } from "lucide-react";
 import { motion } from "framer-motion";
 import { getStableKey } from "@/lib/getStableKey";
+
+function DoctorRequestForm() {
+  const [phone, setPhone] = useState("");
+  const [name, setName] = useState("");
+  const [city, setCity] = useState("");
+  const [specialty, setSpecialty] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (phone.length < 10) {
+      toast.error("Kripya valid 10-digit mobile number enter karein");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const res = await fetch("/api/public/lead", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone,
+          name: name.trim() || undefined,
+          city: city.trim() || undefined,
+          specialty: specialty.trim() || undefined,
+          roleInterest: "PATIENT",
+          source: "search-zero-results",
+        }),
+      });
+
+      if (!res.ok) throw new Error();
+      setIsSuccess(true);
+      toast.success("Aapki request record ho gayi hai!");
+    } catch (err) {
+      toast.error("Request submit karne mein error aayi. Kripya baad mein try karein.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (isSuccess) {
+    return (
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="p-8 rounded-[2rem] bg-emerald-50 border border-emerald-100 text-center max-w-md mx-auto mt-8"
+      >
+        <div className="w-16 h-16 bg-emerald-500 text-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-emerald-500/20">
+          <Sparkles className="w-8 h-8 text-white animate-pulse" />
+        </div>
+        <h4 className="text-lg font-black text-slate-900 mb-2">Thank you! Request recorded.</h4>
+        <p className="text-sm text-slate-600 font-medium leading-relaxed">
+          Hamein aapki details mil gayi hain. Jaise hi is specialty/locality mein doctors onboard honge, hum aapko SMS ke jariye notify karenge.
+        </p>
+      </motion.div>
+    );
+  }
+
+  return (
+    <div className="bg-slate-50/50 rounded-[2.5rem] p-6 md:p-8 border border-slate-100 max-w-md mx-auto text-left mt-10">
+      <h4 className="text-lg font-black text-slate-900 mb-2 tracking-tight">Doctor nahi mila? Hamein batayein</h4>
+      <p className="text-xs text-slate-500 font-medium mb-6 leading-relaxed">
+        Aap jis doctor ya specialty ko dhoondh rahe hain, unki details niche likhein. Hum jald se jald unhe JivniCare par lane ki koshish karenge.
+      </p>
+      
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Mobile Number (Required)</label>
+          <input
+            type="tel"
+            required
+            placeholder="e.g. 9876543210"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
+            className="w-full h-12 px-4 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:border-primary font-medium"
+          />
+        </div>
+
+        <div>
+          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Aapka Naam (Optional)</label>
+          <input
+            type="text"
+            placeholder="e.g. Amit Kumar"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full h-12 px-4 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:border-primary font-medium"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">City / locality (Optional)</label>
+            <input
+              type="text"
+              placeholder="e.g. Jamui"
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              className="w-full h-12 px-4 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:border-primary font-medium"
+            />
+          </div>
+          <div>
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Specialty (Optional)</label>
+            <input
+              type="text"
+              placeholder="e.g. Cardiologist"
+              value={specialty}
+              onChange={(e) => setSpecialty(e.target.value)}
+              className="w-full h-12 px-4 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:border-primary font-medium"
+            />
+          </div>
+        </div>
+
+        <Button
+          type="submit"
+          disabled={isSubmitting}
+          className="w-full h-12 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/10 flex items-center justify-center gap-2 mt-2 transition-all"
+        >
+          {isSubmitting ? "Submitting..." : "Submit Doctor Request"}
+        </Button>
+      </form>
+    </div>
+  );
+}
 
 interface DoctorListProps {
   doctors: Doctor[];
@@ -59,6 +185,8 @@ export function DoctorList({ doctors, onClearFilters, hasMore, isLoadingMore, on
             <RefreshCcw className="w-5 h-5" />
             Reset All Filters
           </Button>
+
+          <DoctorRequestForm />
         </div>
       ) : (
         /* ── Results Grid ────────────────────────────────────────────────────── */

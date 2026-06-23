@@ -8,17 +8,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
 
   // ── Fetch Dynamic DB Content ──────────────────────────────────
-  const [dbDoctors, dbHospitals] = await Promise.all([
-    // Slug-first: select slug for SEO-primary URLs; fallback to id
-    prisma.doctor.findMany({
-      where: { verificationStatus: "VERIFIED" },
-      select: { id: true, slug: true, updatedAt: true },
-    }),
-    prisma.hospital.findMany({
-      where: { verificationStatus: "VERIFIED" },
-      select: { slug: true, updatedAt: true },
-    }),
-  ]);
+  let dbDoctors: any[] = [];
+  let dbHospitals: any[] = [];
+  try {
+    const [doctorsRes, hospitalsRes] = await Promise.all([
+      // Slug-first: select slug for SEO-primary URLs; fallback to id
+      prisma.doctor.findMany({
+        where: { verificationStatus: "VERIFIED" },
+        select: { id: true, slug: true, updatedAt: true },
+      }),
+      prisma.hospital.findMany({
+        where: { verificationStatus: "VERIFIED" },
+        select: { slug: true, updatedAt: true },
+      }),
+    ]);
+    dbDoctors = doctorsRes;
+    dbHospitals = hospitalsRes;
+  } catch (err) {
+    console.warn("Failed to fetch dynamic content for sitemap during build:", err);
+  }
 
   // ── Static Core Pages ─────────────────────────────────────────
   const staticPages: MetadataRoute.Sitemap = [

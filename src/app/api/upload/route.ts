@@ -5,6 +5,8 @@ import { cookies } from 'next/headers';
 import * as jose from 'jose';
 import { getJwtSecret, isBlobConfigured } from '@/lib/infrastructure/env';
 import { logger } from '@/lib/infrastructure/logger';
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "../auth/[...nextauth]/route";
 
 export async function POST(request: Request): Promise<NextResponse> {
   const { searchParams } = new URL(request.url);
@@ -14,8 +16,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     return apiError('Filename is required', 400);
   }
 
-  // Validate Authentication (Temporarily bypassed for Doctor Onboarding flow pilot)
-  // In a strict production environment, we should either use presigned URLs or create the user first.
+  // Validate Authentication (Allows either custom signed token or a valid NextAuth session)
   const token = (await cookies()).get("jivnicare_token")?.value;
   let isAuthenticated = false;
 
@@ -26,6 +27,13 @@ export async function POST(request: Request): Promise<NextResponse> {
       isAuthenticated = true;
     } catch {
       // Invalid session
+    }
+  }
+
+  if (!isAuthenticated) {
+    const nextAuthSession = await getServerSession(authOptions);
+    if (nextAuthSession?.user) {
+      isAuthenticated = true;
     }
   }
 

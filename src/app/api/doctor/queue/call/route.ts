@@ -49,6 +49,24 @@ export async function PATCH(req: NextRequest) {
       return updatedToken;
     });
 
+    // Trigger queue alerts
+    if (updated) {
+      try {
+        const { triggerQueueAlerts } = require("@/lib/notifications");
+        triggerQueueAlerts(
+          queueToken.queueId,
+          {
+            tokenNumber: updated.tokenNumber,
+            patientPhone: updated.patientPhone,
+            patientId: updated.patientId,
+          },
+          queueToken.queue.doctorId
+        ).catch((err: any) => console.error("Error triggering queue alerts:", err));
+      } catch (triggerErr) {
+        console.error("Queue alerts trigger exception:", triggerErr);
+      }
+    }
+
     return apiResponse({token: updated});
   } catch (err) {
     return queueError(new Response(), err);

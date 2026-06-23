@@ -77,64 +77,78 @@ export default async function DoctorProfilePage({ params }: PageProps) {
   const { slug } = await params;
 
   // ── 1. Try finding by slug first ──────────────────────────────────────────
-  let doc = await prisma.doctor.findUnique({
-    where: { slug },
-    include: {
-      specialties: true,
-      keywords: true,
-      weeklySchedule: true,
-      clinicOperations: true,
-      dailyQueues: true,
-    },
-  });
+  let doc = null;
+  try {
+    doc = await prisma.doctor.findUnique({
+      where: { slug },
+      include: {
+        specialties: true,
+        keywords: true,
+        weeklySchedule: true,
+        clinicOperations: true,
+        dailyQueues: true,
+      },
+    });
+  } catch (err) {
+    console.warn("Failed to find doctor by slug during prerender:", err);
+  }
 
   // ── 2. Fallback: if slug param looks like a UUID, look up by ID ───────────
   if (!doc && UUID_REGEX.test(slug)) {
-    const docById = await prisma.doctor.findUnique({
-      where: { id: slug },
-      select: { slug: true },
-    });
-    if (docById?.slug) {
-      redirect(`/doctors/${docById.slug}`);
+    try {
+      const docById = await prisma.doctor.findUnique({
+        where: { id: slug },
+        select: { slug: true },
+      });
+      if (docById?.slug) {
+        redirect(`/doctors/${docById.slug}`);
+      }
+    } catch (err) {
+      console.warn("Failed to find doctor by ID during fallback prerender:", err);
     }
   }
 
   if (!doc) notFound();
 
   // Fetch up to 3 related verified doctors under the same specialty
-  const relatedPrismaDoctors = await prisma.doctor.findMany({
-    where: {
-      verificationStatus: "VERIFIED",
-      id: { not: doc.id },
-      specialties: {
-        some: {
-          id: { in: doc.specialtyIds }
+  let relatedPrismaDoctors: any[] = [];
+  try {
+    relatedPrismaDoctors = await prisma.doctor.findMany({
+      where: {
+        verificationStatus: "VERIFIED",
+        id: { not: doc.id },
+        specialties: {
+          some: {
+            id: { in: doc.specialties.map((s) => s.id) }
+          }
+        }
+      },
+      take: 3,
+      include: {
+        specialties: true,
+        keywords: true,
+        weeklySchedule: true,
+        clinicOperations: true,
+        dailyQueues: {
+          where: {
+              // Use IST logical day — never UTC midnight
+              date: resolveClinicLogicalDay(),
+            },
+          select: {
+            status: true,
+            issuedTokensCount: true,
+            cancelledCount: true,
+            noShowCount: true,
+            currentActiveToken: true,
+            maxCapacity: true,
+          },
+          take: 1,
         }
       }
-    },
-    take: 3,
-    include: {
-      specialties: true,
-      keywords: true,
-      weeklySchedule: true,
-      clinicOperations: true,
-      dailyQueues: {
-        where: {
-            // Use IST logical day — never UTC midnight
-            date: resolveClinicLogicalDay(),
-          },
-        select: {
-          status: true,
-          issuedTokensCount: true,
-          cancelledCount: true,
-          noShowCount: true,
-          currentActiveToken: true,
-          maxCapacity: true,
-        },
-        take: 1,
-      }
-    }
-  });
+    });
+  } catch (err) {
+    console.warn("Failed to fetch related doctors during prerender:", err);
+  }
 
   const relatedDoctors = (relatedPrismaDoctors || []).map(mapPrismaDoctorToUI);
   const doctor = mapPrismaDoctorToUI(doc);

@@ -73,6 +73,10 @@ export interface Doctor {
   // ── Discovery & Search ────────────────────────────────────
   tags: string[];           // Specialty + keyword tags for search
   searchableKeywords?: string[];
+  diseases?: string[];
+  procedures?: string[];
+  partnerTier?: string;
+  gender?: string;
   about: string;            // Bio / description
   averageConsultationTime?: number; // minutes
   updatedAt?: string | Date; // Cache buster timestamp

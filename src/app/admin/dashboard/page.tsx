@@ -99,7 +99,7 @@ function AdminDashboardContent() {
             return {
               id: d.id,
               name: formatDoctorName(d.user?.name),
-              specialization: d.specialties?.length ? d.specialties[0].name : (d.specialtyIds?.length ? d.specialtyIds[0] : "General"),
+              specialization: d.specialties?.length ? d.specialties[0].name : "General",
               specialties: d.specialties || [],
               experience: d.experience ? `${d.experience} Years` : "N/A",
               status: d.verificationStatus,
@@ -358,6 +358,7 @@ function AdminDashboardContent() {
       { id: "booking-monitoring", label: "Booking Monitoring", icon: Calendar },
       { id: "queue-monitor", label: "Live Queue Monitor", icon: Activity },
       { id: "lead-management", label: "Lead Management", icon: Clipboard },
+      { id: "search-insights", label: "Search Insights", icon: Search },
       { id: "trust-safety", label: "Trust & Safety", icon: ShieldAlert },
       { id: "observability", label: "System Observability", icon: Zap },
     ];
@@ -392,7 +393,11 @@ function AdminDashboardContent() {
                 <button
                   key={tab.id}
                   onClick={() => {
-                    router.push(`?tab=${tab.id}`);
+                    if (tab.id === "search-insights") {
+                      router.push("/admin/search-insights");
+                    } else {
+                      router.push(`?tab=${tab.id}`);
+                    }
                     setMobileMenuOpen(false);
                   }}
                   className={`flex items-center gap-3 px-4 py-3.5 rounded-xl font-bold transition-all duration-300 ${

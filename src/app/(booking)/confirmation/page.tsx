@@ -85,6 +85,22 @@ export default function ConfirmationPage() {
     }
   }, [mounted, currentWait]);
 
+  const handleShareWhatsApp = () => {
+    if (!token || !doctor) return;
+    const isEmergency = (token as any).tokenType === "EMERGENCY";
+    const waitLine = isEmergency
+      ? "Emergency priority"
+      : `Wait: ${currentWait} mins`;
+    const text =
+      `*JivniCare Token Detail*\n\n` +
+      `🩺 *Doctor:* ${doctor.name}\n` +
+      `🎫 *Token:* #${myToken}\n` +
+      `🕒 *Wait:* ${waitLine}\n` +
+      `📍 *Location:* ${doctor.clinic || "Clinic"}, ${doctor.location}\n\n` +
+      `📲 *Live status track karein:* ${window.location.origin}/doctors/${doctor.slug}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+  };
+
   if (timedOut && (!token || !doctor)) {
     return (
       <div className="bg-slate-50 min-h-screen flex items-center justify-center p-4">
@@ -215,6 +231,19 @@ export default function ConfirmationPage() {
               </div>
             </div>
           )}
+        </div>
+
+        {/* WhatsApp Share Button */}
+        <div className="mb-6 animate-in fade-in slide-in-from-bottom-3 duration-500 delay-150">
+          <Button
+            onClick={handleShareWhatsApp}
+            className="w-full h-14 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-lg shadow-emerald-600/10 flex items-center justify-center gap-2 transition-all duration-300 transform hover:scale-[1.01]"
+          >
+            <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+              <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.455L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.625 1.45 5.5.003 9.961-4.463 9.964-9.97.002-2.67-1.03-5.18-2.906-7.06C16.452 1.7 13.943.666 11.278.666c-5.502 0-9.972 4.47-9.975 9.979-.001 1.704.444 3.37 1.287 4.853l-1.013 3.7.3.093 3.98-1.043.201.121zM18.062 14c-.31-.156-1.838-.907-2.122-1.01-.285-.104-.492-.156-.7.156-.207.31-.8.1-.98.78-.18.207-.36.233-.67.078-.31-.156-1.309-.48-2.493-1.537-.919-.818-1.54-1.83-1.72-2.139-.18-.31-.02-.477.136-.633.14-.139.31-.36.46-.54.16-.18.21-.31.31-.52.1-.208.05-.389-.02-.54-.08-.156-.7-1.688-.96-2.307-.25-.612-.51-.53-.7-.54-.18-.011-.39-.011-.6-.011-.21 0-.55.078-.84.39-.29.311-1.11 1.09-1.11 2.66 0 1.571 1.14 3.09 1.3 3.3.16.208 2.24 3.42 5.43 4.8 1.19.52 1.94.75 2.58.91.73.18 1.4.15 1.92.07.58-.09 1.84-.75 2.1-1.48.26-.73.26-1.35.18-1.48-.08-.13-.3-.21-.61-.36z" />
+            </svg>
+            Family Ke Saath WhatsApp Share Karein
+          </Button>
         </div>
 
         {/* Clinic Info & Directions */}

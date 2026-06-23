@@ -94,10 +94,9 @@ export async function POST(request: Request) {
             where: { id: dailyQueue.id },
             data: { currentActiveToken: nextPatient.tokenNumber }
           });
-          
           let undoToken = null;
           if (currentTokenId) {
-            undoToken = signToken({
+            undoToken = await signToken({
               action: skipCurrent ? "SKIP_NEXT" : "CALL_NEXT",
               queueId: dailyQueue.id,
               fromTokenId: currentTokenId,
@@ -117,6 +116,23 @@ export async function POST(request: Request) {
 
       return { nextPatient: null, undoToken: null };
     });
+
+    if (result && result.nextPatient) {
+      try {
+        const { triggerQueueAlerts } = require("@/lib/notifications");
+        triggerQueueAlerts(
+          result.nextPatient.queueId,
+          {
+            tokenNumber: result.nextPatient.tokenNumber,
+            patientPhone: result.nextPatient.patientPhone,
+            patientId: result.nextPatient.patientId,
+          },
+          doctor.id
+        ).catch((err: any) => console.error("Error triggering queue alerts:", err));
+      } catch (triggerErr) {
+        console.error("Queue alerts trigger exception:", triggerErr);
+      }
+    }
 
     return apiResponse({success: true, data: result});
   } catch (error: any) {

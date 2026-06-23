@@ -27,6 +27,7 @@ export function PaymentForm() {
   const router = useRouter();
   const [formState, setFormState] = useState<FormState>("HYDRATING");
   const [errors, setErrors] = useState<{ submit?: string }>({});
+  const [disclaimerAgreed, setDisclaimerAgreed] = useState(false);
   const setGeneratedToken = useBookingStore((state) => state.setGeneratedToken);
   const patientDetails = useBookingStore((state) => state.patientDetails);
   const selectedDoctor = useBookingStore((state) => state.selectedDoctor);
@@ -80,6 +81,10 @@ export function PaymentForm() {
     setErrors({});
 
     // Client-side validation before hitting API
+    if (!disclaimerAgreed) {
+      setErrors({ submit: "Kripya Medical Disclaimer ko agree karein booking confirm karne ke liye." });
+      return;
+    }
     if (!patientDetails.name.trim()) {
       document.getElementById("name")?.focus();
       return;
@@ -237,11 +242,25 @@ export function PaymentForm() {
         </div>
 
         <form onSubmit={handleJoinQueue}>
+          {/* Medical Disclaimer Checkbox */}
+          <div className="flex items-start gap-3 p-4 bg-amber-50/50 rounded-2xl border border-amber-100/50 mb-6">
+            <input
+              type="checkbox"
+              id="medical-disclaimer"
+              checked={disclaimerAgreed}
+              onChange={(e) => setDisclaimerAgreed(e.target.checked)}
+              className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary mt-0.5 cursor-pointer"
+            />
+            <label htmlFor="medical-disclaimer" className="text-xs text-slate-600 leading-normal cursor-pointer select-none">
+              Main samajhta hoon ki <span className="font-bold text-slate-800">JivniCare ek booking platform hai</span>, yeh direct clinical treatment nahi pradan karta. Kisi bhi medical emergency ke liye kripya nazdiki hospital se turant sampark karein.
+            </label>
+          </div>
+
           <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-slate-100 z-50 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] md:static md:p-0 md:bg-transparent md:border-none md:shadow-none">
             <Button
               type="submit"
-              disabled={isProcessing || isSuccess}
-              className={`w-full h-14 md:h-16 rounded-2xl transition-all text-lg font-bold group disabled:opacity-90 disabled:cursor-not-allowed overflow-hidden relative min-h-[44px] shadow-xl ${
+              disabled={isProcessing || isSuccess || !disclaimerAgreed}
+              className={`w-full h-14 md:h-16 rounded-2xl transition-all text-lg font-bold group disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden relative min-h-[44px] shadow-xl ${
                 isSuccess
                   ? "bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20 text-white"
                   : "bg-primary hover:bg-primary/90 hover:brightness-105 shadow-primary/20 text-white"

@@ -1,19 +1,11 @@
 "use client";
 import { Logo } from "@/features/marketing/components/brand/Logo";
-
 import { useState, Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import {
-  ArrowRight,
-  Stethoscope,
-  RefreshCw,
-  AlertCircle,
-  Phone,
-  Lock,
-} from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { ArrowRight, Stethoscope, RefreshCw, AlertCircle, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/features/auth/store/useAuthStore";
+import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { PublicGuard } from "@/components/shared";
@@ -23,14 +15,10 @@ function DoctorLoginContent() {
   const searchParams = useSearchParams();
   const redirectUrl = searchParams.get("redirect") || "/doctor/dashboard";
 
-  const { login, isAuthenticated, user } = useAuthStore();
-
-  const [phone, setPhone] = useState("");
-  const [password, setPassword] = useState("");
+  const { isAuthenticated, user } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Already-logged-in guard
   useEffect(() => {
     if (isAuthenticated && user) {
       if (user.role === "DOCTOR") {
@@ -41,41 +29,20 @@ function DoctorLoginContent() {
     }
   }, [isAuthenticated, user, router, redirectUrl]);
 
-  // ── Phone & Password Login flow ────────────────────────────────
-  const handleLoginSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (phone.length < 10 || !password) return;
+  const handleGoogleLogin = async () => {
     setIsLoading(true);
     setError(null);
-
     try {
-      const res = await fetch("/api/auth/doctor-login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ phone, password }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Login failed.");
-
-      login(data.user);
-      router.push(data.user.role === "ADMIN" ? "/admin/dashboard" : redirectUrl);
+      await signIn("google", { callbackUrl: "/api/auth/session-callback" });
     } catch (err: any) {
-      setError(err.message || "Invalid phone number or password.");
-    } finally {
+      setError(err.message || "Google Authentication failed.");
       setIsLoading(false);
     }
   };
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-4 sm:p-6 relative overflow-hidden">
-      {process.env.NEXT_PUBLIC_ENABLE_TEST_OTP === "true" && (
-        <div className="absolute top-4 right-4 z-50 bg-slate-100/80 backdrop-blur-sm text-slate-500 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full border border-slate-200/50 shadow-sm pointer-events-none">
-          Test Mode
-        </div>
-      )}
-      {/* ── Background Aesthetics ── */}
+      {/* Background Aesthetics */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
         <div className="absolute -top-[10%] -right-[10%] w-[40%] h-[40%] rounded-full bg-emerald-100/40 blur-[120px]" />
         <div className="absolute -bottom-[10%] -left-[10%] w-[40%] h-[40%] rounded-full bg-blue-50/40 blur-[120px]" />
@@ -150,9 +117,7 @@ function DoctorLoginContent() {
                 <div className="mb-10 text-center md:text-left">
                   <h2 className="text-3xl font-black text-slate-900 tracking-tight">Partner Login</h2>
                   <p className="text-slate-500 font-bold mt-2 text-sm">
-                    {process.env.NEXT_PUBLIC_ENABLE_TEST_OTP === "true" 
-                      ? "Test mode active: enter test code to bypass password." 
-                      : "Access your clinical dashboard."}
+                    Access your clinical dashboard via Google OAuth.
                   </p>
                 </div>
 
@@ -167,57 +132,32 @@ function DoctorLoginContent() {
                   </motion.div>
                 )}
 
-                <form onSubmit={handleLoginSubmit} className="space-y-6">
-                  <div className="group">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2.5 block ml-1">
-                      Registered Mobile Number
-                    </label>
-                    <div className="relative">
-                      <div className="absolute left-5 top-1/2 -translate-y-1/2 flex items-center gap-2.5">
-                        <span className="text-slate-900 font-black text-lg">+91</span>
-                        <div className="w-px h-6 bg-slate-200" />
-                      </div>
-                      <Input
-                        type="tel"
-                        required
-                        maxLength={10}
-                        placeholder="98765 43210"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
-                        className="h-16 pl-20 rounded-2xl bg-slate-50/50 border-slate-200/60 focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary/50 font-black text-xl tracking-wide transition-all shadow-sm"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="group">
-                    <div className="flex justify-between items-center mb-2.5 px-1">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] block">Password</label>
-                      <Link href="/partners/forgot-password" className="text-[10px] font-black text-sky-600 hover:text-sky-700 tracking-wider">FORGOT?</Link>
-                    </div>
-                    <div className="relative">
-                      <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-400" />
-                      <Input
-                        type="password"
-                        required
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="h-16 pl-14 rounded-2xl bg-slate-50/50 border-slate-200/60 focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary/50 font-black text-lg transition-all shadow-sm"
-                      />
-                    </div>
-                    <p className="text-[10px] text-slate-400 font-medium mt-2 text-center md:text-left">
-                      Enter the password you created during onboarding.
-                    </p>
-                  </div>
-
+                <div className="space-y-6">
                   <Button
-                    type="submit"
-                    disabled={isLoading || phone.length < 10 || !password}
-                    className="w-full h-16 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black text-lg shadow-[0_12px_24px_-8px_var(--primary)] active:scale-[0.98] transition-all flex items-center justify-center gap-3 mt-4"
+                    onClick={handleGoogleLogin}
+                    disabled={isLoading}
+                    className="w-full h-16 rounded-2xl bg-[#4285F4] hover:bg-[#357AE8] text-white font-black text-lg shadow-xl shadow-blue-900/20 active:scale-[0.98] transition-all flex items-center justify-center gap-3 mt-4"
                   >
-                    {isLoading ? <RefreshCw className="w-6 h-6 animate-spin" /> : <>Sign In <ArrowRight className="w-5 h-5" /></>}
+                    {isLoading ? (
+                      <RefreshCw className="w-6 h-6 animate-spin" />
+                    ) : (
+                      <>
+                        <svg className="w-6 h-6 fill-current shrink-0" viewBox="0 0 24 24">
+                          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                        </svg>
+                        Sign in with Google
+                      </>
+                    )}
                   </Button>
-                </form>
+
+                  <div className="bg-slate-50 border border-slate-100 p-4 rounded-2xl flex gap-3 text-xs text-slate-500 font-medium">
+                    <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                    <span>Your Google account must be linked to your JivniCare registration. For new partnerships, please request onboarding below.</span>
+                  </div>
+                </div>
 
                 <div className="mt-12 pt-8 border-t border-slate-100 text-center">
                   <p className="text-[13px] font-bold text-slate-500">

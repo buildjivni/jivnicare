@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Doctor" ADD COLUMN "emergencyFee" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN "bookingStartTime" TEXT DEFAULT '08:00';

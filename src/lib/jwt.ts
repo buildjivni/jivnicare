@@ -49,7 +49,7 @@ export async function verifyToken(token: string): Promise<any> {
   }
 }
 
-export const AUTH_COOKIE = "jivni_token" as const;
+export const AUTH_COOKIE = "jivnicare_token" as const;
 
 export const cookieOptions = {
   httpOnly: true,

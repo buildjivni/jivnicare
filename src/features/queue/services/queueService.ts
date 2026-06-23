@@ -29,29 +29,43 @@ export class QueueService {
       // 1. Fetch or Lazy-Init Daily Queue
       const dailyQueue = await getOrCreateDailyQueue(doctorId);
 
-      // 2. Check for duplicate token
-      const existingToken = await tx.queueToken.findFirst({
-        where: {
-          queueId: dailyQueue.id,
-          patientPhone,
-          status: { in: ['BOOKED', 'READY', 'CALLED', 'IN_CONSULTATION'] },
-        },
-      });
+      // 2. Check for duplicate token: match phone AND name (case-insensitive) to support shared family phone numbers
+      // ONLY enforce duplicate hoarding check for ONLINE bookings. Walk-ins / Emergency added by operator are trusted.
+      if (tokenType === "ONLINE") {
+        const nameCondition = patientName && patientName.trim()
+          ? { patientName: { equals: patientName.trim(), mode: 'insensitive' as const } }
+          : { OR: [{ patientName: null }, { patientName: "" }] };
 
-      if (existingToken) {
-        throw new Error(`ALREADY_BOOKED:${existingToken.tokenNumber}`);
+        const existingToken = await tx.queueToken.findFirst({
+          where: {
+            queueId: dailyQueue.id,
+            patientPhone,
+            ...nameCondition,
+            status: { in: ['BOOKED', 'READY', 'CALLED', 'IN_CONSULTATION'] },
+          },
+        });
+
+        if (existingToken) {
+          throw new Error(`ALREADY_BOOKED:${existingToken.tokenNumber}`);
+        }
       }
 
       // 3. Atomic increment and issuance
+      const isEmergency = tokenType === "EMERGENCY";
       const updatedQueue = await tx.dailyQueue.update({
         where: { id: dailyQueue.id },
-        data: { currentTokenNumber: { increment: 1 } },
+        data: {
+          currentTokenNumber: { increment: 1 },
+          issuedTokensCount: { increment: 1 },
+          ...(isEmergency ? { emergencyIssuedTokensCount: { increment: 1 } } : {}),
+        },
       });
 
       const newTokenNumber = updatedQueue.currentTokenNumber;
 
-      // 4. Check daily limit
-      if (newTokenNumber > updatedQueue.dailyLimit && tokenType !== "EMERGENCY") {
+      // 4. Check daily limit based on active bookings (issued - cancelled - noShow) as per spec
+      const activeBookingsCount = updatedQueue.issuedTokensCount - updatedQueue.cancelledCount - updatedQueue.noShowCount;
+      if (activeBookingsCount > updatedQueue.dailyLimit && tokenType !== "EMERGENCY") {
         throw new Error('DAILY_LIMIT_REACHED');
       }
 

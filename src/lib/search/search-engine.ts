@@ -325,82 +325,106 @@ interface ScoredDoctor {
 }
 
 function scoreDoctor(doctor: Doctor, eq: ExpandedQuery): number {
-  let score = 0;
   const norm = eq.normalized;
-  const d = {
-    name:      normalize(doctor.name),
-    specialty: normalize(doctor.specialty),
-    clinic:    normalize(doctor.clinic),
-    location:  normalize(doctor.location),
-    about:     normalize(doctor.about),
-    education: normalize(doctor.education),
-    tags:      doctor.tags.map(normalize),
-    available: normalize(doctor.available),
-  };
+  
+  // 1. Keyword Match (Max 40 pts)
+  let keywordScore = 0;
+  if (norm.trim()) {
+    const d = {
+      name:      normalize(doctor.name),
+      specialty: normalize(doctor.specialty),
+      clinic:    normalize(doctor.clinic),
+      about:     normalize(doctor.about),
+      diseases:  (doctor.diseases || []).map(normalize),
+    };
 
-  // ── Priority 1: Exact doctor name match (100pts) ──
-  if (d.name.includes(norm)) score += 100;
-  else if (fuzzyMatch(norm, d.name)) score += 70;
+    // Calculate match scores for different fields
+    let nameMatch = 0;
+    if (d.name.includes(norm) || norm.includes(d.name)) nameMatch = 40;
+    else if (fuzzyMatch(norm, d.name)) nameMatch = 30;
 
-  // ── Priority 2: Specialty exact match (90pts) ──
-  const targetSpecs = eq.specialties.map(s => s.toLowerCase());
-  if (targetSpecs.some(s => d.specialty === s)) score += 90;
-  else if (targetSpecs.some(s => d.specialty.includes(s) || s.includes(d.specialty))) score += 70;
-  else if (targetSpecs.some(s => fuzzyMatch(s, d.specialty))) score += 50;
-
-  // ── Priority 3: Specialty partial/fuzzy (by raw terms) ──
-  for (const term of eq.terms) {
-    if (term.length < 2) continue;
-    if (d.specialty.includes(term)) score += 60;
-    else if (fuzzyMatch(term, d.specialty)) score += 35;
-  }
-
-  // ── Priority 4: Tag match (40pts each) ──
-  for (const term of eq.terms) {
-    if (d.tags.some(tag => tag.includes(term))) score += 40;
-    else if (d.tags.some(tag => fuzzyMatch(term, tag))) score += 20;
-  }
-
-  // ── Priority 5: Clinic / hospital match (35pts) ──
-  for (const term of eq.terms) {
-    if (d.clinic.includes(term)) score += 35;
-    else if (fuzzyMatch(term, d.clinic)) score += 18;
-  }
-
-  // ── Priority 6: Location / city match (30pts) ──
-  for (const term of eq.terms) {
-    if (d.location.includes(term)) score += 30;
-    else if (fuzzyMatch(term, d.location)) score += 15;
-  }
-
-  // ── Priority 7: About / education text (15pts) ──
-  for (const term of eq.terms) {
-    if (d.about.includes(term)) score += 15;
-    if (d.education.includes(term)) score += 10;
-  }
-
-  // ── Priority 8: Keyword hints from synonym map ──
-  for (const kw of eq.keywords) {
-    if (d.specialty.includes(kw) || d.about.includes(kw) || d.tags.some(t => t.includes(kw))) {
-      score += 25;
+    let specialtyMatch = 0;
+    if (d.specialty.includes(norm) || norm.includes(d.specialty)) specialtyMatch = 40;
+    else if (fuzzyMatch(norm, d.specialty)) specialtyMatch = 30;
+    
+    // Check if query maps to any matched specialties in the query expansion
+    const targetSpecs = eq.specialties.map(s => s.toLowerCase());
+    if (targetSpecs.some(s => d.specialty === s || d.specialty.includes(s) || s.includes(d.specialty))) {
+      specialtyMatch = Math.max(specialtyMatch, 40);
+    } else if (targetSpecs.some(s => fuzzyMatch(s, d.specialty))) {
+      specialtyMatch = Math.max(specialtyMatch, 30);
     }
-  }
 
-  // ── Priority 9: District / Location Boosting (Resiliency) ──
-  if (eq.district) {
-    const targetDistrict = normalize(eq.district);
-    if (d.location.includes(targetDistrict)) {
-      score += 50; // Strong boost for local doctors
+    let clinicMatch = 0;
+    if (d.clinic.includes(norm) || norm.includes(d.clinic)) clinicMatch = 30;
+    else if (fuzzyMatch(norm, d.clinic)) clinicMatch = 20;
+
+    let bioMatch = 0;
+    if (d.about.includes(norm)) bioMatch = 20;
+    else if (fuzzyMatch(norm, d.about)) bioMatch = 10;
+
+    let diseaseMatch = 0;
+    if (d.diseases.some(disease => disease.includes(norm) || norm.includes(disease))) diseaseMatch = 30;
+    else if (d.diseases.some(disease => fuzzyMatch(norm, disease))) diseaseMatch = 15;
+
+    // Additional matching based on keywords in query expansion
+    for (const kw of eq.keywords) {
+      const kwNorm = normalize(kw);
+      if (d.specialty.includes(kwNorm) || d.name.includes(kwNorm)) {
+        specialtyMatch = Math.max(specialtyMatch, 30);
+      }
+      if (d.clinic.includes(kwNorm)) {
+        clinicMatch = Math.max(clinicMatch, 20);
+      }
+      if (d.about.includes(kwNorm)) {
+        bioMatch = Math.max(bioMatch, 15);
+      }
+      if (d.diseases.some(dis => dis.includes(kwNorm))) {
+        diseaseMatch = Math.max(diseaseMatch, 25);
+      }
     }
+
+    keywordScore = Math.max(nameMatch, specialtyMatch, clinicMatch, bioMatch, diseaseMatch);
   }
 
-  // ── Availability boost ──
-  if (d.available.includes("today")) score += 5;
+  // 2. Availability (Max 25 pts)
+  let availabilityScore = 0;
+  if (doctor.isQueueActive) {
+    availabilityScore += 15;
+  }
+  if (doctor.isAvailableToday) {
+    availabilityScore += 10;
+  }
 
-  // ── Rating boost (small) ──
-  score += doctor.rating;
+  // 3. Distance (Max 20 pts)
+  let distanceScore = 0;
+  if (doctor.distanceKm !== undefined && doctor.distanceKm !== null) {
+    const dist = doctor.distanceKm;
+    if (dist <= 2) distanceScore = 20;
+    else if (dist <= 5) distanceScore = 15;
+    else if (dist <= 10) distanceScore = 10;
+    else if (dist <= 20) distanceScore = 5;
+  }
 
-  return score;
+  // 4. Profile Complete (Max 10 pts)
+  let profileCompleteScore = 0;
+  if (doctor.image && doctor.image.trim() && !doctor.image.includes("placeholder")) {
+    profileCompleteScore += 4;
+  }
+  if (doctor.about && doctor.about.trim().length > 10) {
+    profileCompleteScore += 3;
+  }
+  if (doctor.diseases && doctor.diseases.length > 0) {
+    profileCompleteScore += 3;
+  }
+
+  // 5. Early Partner (Max 5 pts)
+  let earlyPartnerScore = 0;
+  if (doctor.partnerTier === "EARLY_PARTNER") {
+    earlyPartnerScore = 5;
+  }
+
+  return keywordScore + availabilityScore + distanceScore + profileCompleteScore + earlyPartnerScore;
 }
 
 // ── 7. MAIN SEARCH FUNCTION ──────────────────────────────────────────────────
@@ -411,16 +435,37 @@ export interface SearchResult {
   expandedQuery: ExpandedQuery;
   isFuzzy: boolean;      // true if we fell back to fuzzy matching
   didYouMean?: string;
+  emptyMessage?: string;
 }
 
-const SCORE_THRESHOLD = 25; // minimum score to appear in results
+const SCORE_THRESHOLD = 15; // minimum score to appear in results
 
 export function searchDoctors(rawQuery: string, doctors: Doctor[], district: string = ""): SearchResult {
-  if (!rawQuery.trim()) {
+  const trimmedQuery = rawQuery.trim();
+
+  // Return empty + message if query is exactly 1 character
+  if (trimmedQuery.length === 1) {
     return {
-      results: doctors,
-      total: doctors.length,
-      expandedQuery: expandQuery(""),
+      results: [],
+      total: 0,
+      expandedQuery: expandQuery(rawQuery),
+      isFuzzy: false,
+      emptyMessage: "Type at least 2 characters",
+    };
+  }
+
+  // If query is empty, show all verified doctors sorted by score
+  if (!trimmedQuery) {
+    const eq = expandQuery("");
+    if (district) eq.district = district;
+    const scored = doctors
+      .map(doctor => ({ doctor, score: scoreDoctor(doctor, eq) }))
+      .sort((a, b) => b.score - a.score)
+      .map(s => s.doctor);
+    return {
+      results: scored,
+      total: scored.length,
+      expandedQuery: eq,
       isFuzzy: false,
     };
   }
@@ -438,7 +483,7 @@ export function searchDoctors(rawQuery: string, doctors: Doctor[], district: str
   if (scored.length === 0) {
     const fuzzyFallback: ScoredDoctor[] = doctors
       .map(doctor => ({ doctor, score: scoreDoctor(doctor, eq) }))
-      .filter(({ score }) => score >= 15)
+      .filter(({ score }) => score >= 5)
       .sort((a, b) => b.score - a.score);
 
     return {

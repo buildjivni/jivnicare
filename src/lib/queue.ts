@@ -1,4 +1,5 @@
 import prisma from '@/lib/db/prisma'
+import { resolveClinicLogicalDay } from '@/lib/utils/clinic-utils'
 
 /**
  * Gets today's DailyQueue for a doctor+clinic.
@@ -32,7 +33,7 @@ export async function getOrCreateDailyQueue(doctorId: string, clinicId?: string)
         currentServingToken: 0,
         dailyLimit: doctor?.dailyTokenLimit ?? 50,
         status: 'OPEN',
-        date: new Date(), // legacy compat
+        date: resolveClinicLogicalDay(), // Align with logical day
       },
     })
   }
@@ -42,19 +43,10 @@ export async function getOrCreateDailyQueue(doctorId: string, clinicId?: string)
 
 /**
  * Returns logical date string (YYYY-MM-DD)
- * Logical day starts at 4:00 AM IST (UTC+5:30)
- * So before 4 AM IST = previous calendar date
+ * Derived strictly from the India timezone-aligned resolveClinicLogicalDay()
  */
 export function getLogicalDate(): string {
-  const now = new Date()
-  // IST = UTC + 5:30 = UTC + 330 minutes
-  const istOffset = 330 * 60 * 1000
-  const istTime = new Date(now.getTime() + istOffset)
-
-  // If before 4 AM IST — use previous day
-  if (istTime.getUTCHours() < 4) {
-    istTime.setUTCDate(istTime.getUTCDate() - 1)
-  }
-
-  return istTime.toISOString().split('T')[0] // YYYY-MM-DD
+  const logicalDate = resolveClinicLogicalDay()
+  return logicalDate.toISOString().split('T')[0] // YYYY-MM-DD
 }
+

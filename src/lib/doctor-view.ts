@@ -24,6 +24,8 @@ export interface DoctorProfileView {
   clinicImage: string;
   verificationStatus: string;
   profileCompleteness: number;
+  jivnicarePatientsServed: number;
+  platformPricing?: any;
 }
 
 export interface DoctorSettingsView {
@@ -50,10 +52,7 @@ export function mapDoctorWorkspace(
 ): DoctorWorkspaceView {
   const ops = doctor.clinicOperations ?? {};
   const specialty =
-    doctor.specialties?.[0]?.name ??
-    (Array.isArray(doctor.specialtyIds) && doctor.specialtyIds[0]
-      ? String(doctor.specialtyIds[0])
-      : "");
+    doctor.specialties?.[0]?.name ?? "";
 
   const fee = doctor.fee ?? doctor.consultationFee ?? 0;
 
@@ -82,6 +81,7 @@ export function mapDoctorWorkspace(
       clinicImage: doctor.clinicImage || "",
       verificationStatus: doctor.verificationStatus || "DRAFT",
       profileCompleteness: completeness,
+      jivnicarePatientsServed: doctor.jivnicarePatientsServed || 0,
     },
     settings: {
       fee: String(fee),

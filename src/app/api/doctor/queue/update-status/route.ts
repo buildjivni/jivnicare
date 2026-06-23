@@ -84,6 +84,9 @@ export async function PUT(request: Request) {
     return apiResponse({success: true, token: result});
   } catch (error: any) {
     console.error("Update token status error:", error);
+    if (error.message && error.message.includes("Invalid status transition")) {
+      return apiError(error.message, 400);
+    }
     return apiError("Failed to update token status", 500);
   }
 }

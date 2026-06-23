@@ -5,8 +5,18 @@ import { Redis } from '@upstash/redis';
 const createRedisClient = () => {
   const url = process.env.UPSTASH_REDIS_REST_URL;
   const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  const isProd = process.env.NODE_ENV === "production" || !!process.env.VERCEL;
 
   if (!url || !token) {
+    if (isProd) {
+      // Return a proxy that throws on any method call or property access
+      // to avoid failing during build/compilation, but fail-fast at runtime.
+      return new Proxy({}, {
+        get(target, prop) {
+          throw new Error(`FATAL: Upstash Redis connection parameters (UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN) are missing in production environment. Redis operation attempted: ${String(prop)}`);
+        }
+      }) as unknown as Redis;
+    }
     // Basic mock for local dev
     const store = new Map<string, any>();
     return {

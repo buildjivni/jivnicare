@@ -7,7 +7,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mongodb"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -69,7 +69,7 @@ enum UpdateStatus {
 }
 
 model ModerationLog {
-  id         String     @id @default(uuid()) @map("_id")
+  id         String     @id @default(uuid())
   adminId    String
   admin      User       @relation(fields: [adminId], references: [id])
   action     String
@@ -80,7 +80,7 @@ model ModerationLog {
 }
 
 model Media {
-  id        String    @id @default(uuid()) @map("_id")
+  id        String    @id @default(uuid())
   url       String
   publicId  String    @unique
   type      MediaType
@@ -90,7 +90,7 @@ model Media {
 }
 
 model Clinic {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  id           String   @id @default(uuid())
   name         String
   city         String
   address      String
@@ -101,7 +101,7 @@ model Clinic {
 }
 
 model User {
-  id          String   @id @default(uuid()) @map("_id")
+  id          String   @id @default(uuid())
   firebaseUid String?
   phone       String   @unique
   email       String?
@@ -114,6 +114,9 @@ model User {
   isVerified  Boolean  @default(false)
   verificationStatus VerificationStatus @default(DRAFT)
   isActive    Boolean  @default(true)
+  totpSecret  String?
+  totpEnabled Boolean  @default(false)
+  backupCodes String[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -129,10 +132,11 @@ model User {
   notificationPreference NotificationPreference?
   queueTokens            QueueToken[]
   reportsSubmitted       Report[]
+  authSessions           AuthSession[]
 }
 
 model LeadCapture {
-  id                String     @id @default(uuid()) @map("_id")
+  id                String     @id @default(uuid())
   phone             String     @unique
   name              String?
   city              String?
@@ -149,7 +153,7 @@ model LeadCapture {
 }
 
 model PatientProfile {
-  id               String    @id @default(uuid()) @map("_id")
+  id               String    @id @default(uuid())
   userId           String    @unique
   user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   fullName         String?
@@ -162,7 +166,7 @@ model PatientProfile {
 }
 
 model ProfileUpdateLog {
-  id        String       @id @default(uuid()) @map("_id")
+  id        String       @id @default(uuid())
   doctorId  String
   doctor    Doctor       @relation(fields: [doctorId], references: [id], onDelete: Cascade)
   field     String
@@ -176,7 +180,7 @@ model ProfileUpdateLog {
 }
 
 model Doctor {
-  id                 String             @id @default(uuid()) @map("_id")
+  id                 String             @id @default(uuid())
   userId             String             @unique
   user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   
@@ -190,7 +194,7 @@ model Doctor {
   lifetimePatientsDeclaration String?  // Doctor declared
   jivnicarePatientsServed     Int      @default(0)  // System calculated
   consultationFee             Int      @default(0)
-  clinicId                    String?  @db.ObjectId
+  clinicId                    String? 
   clinic                      Clinic?  @relation(fields: [clinicId], references: [id])
   isVerified                  Boolean  @default(false)
   isOnline                    Boolean  @default(false)
@@ -200,6 +204,11 @@ model Doctor {
   dailyTokenLimit             Int                @default(50)
   isActive                    Boolean            @default(true)
   specializations             String[]           @default([])
+  diseases                    String[]           @default([])
+  procedures                  String[]           @default([])
+  clinicPhotos                String[]           @default([])
+  emergencyFee                Int                @default(0)
+  bookingStartTime            String?            @default("08:00")
 
   // Legacy/Internal Fields
   slug               String             @unique
@@ -216,10 +225,8 @@ model Doctor {
   languages          String[]           @default([])
   rating             Float              @default(0)
 
-  specialtyIds String[]
-  specialties  Specialty[]   @relation(fields: [specialtyIds], references: [id])
-  keywordIds   String[]
-  keywords     Keyword[]     @relation(fields: [keywordIds], references: [id])
+  specialties  Specialty[]
+  keywords     Keyword[]
   savedBy      SavedDoctor[]
   dailyQueues  DailyQueue[]
 
@@ -261,6 +268,7 @@ model Doctor {
   weeklySchedule   WeeklySchedule?
   clinicOperations ClinicOperations?
   updateLogs       ProfileUpdateLog[]
+  platformPricing  PlatformPricing?
 
   shortCode String?
   clinicImage String? 
@@ -279,30 +287,25 @@ model Doctor {
   @@index([rating, verificationStatus])
   @@index([city, verificationStatus, isAcceptingAppointments])
   @@index([verificationStatus, isAcceptingAppointments, createdAt])
-  @@index([specialtyIds])
 }
 
 model Specialty {
-  id          String     @id @default(uuid()) @map("_id")
+  id          String     @id @default(uuid())
   name        String     @unique
   slug        String     @unique
-  doctorIds   String[]
-  doctors     Doctor[]   @relation(fields: [doctorIds], references: [id])
-  hospitalIds String[]
-  hospitals   Hospital[] @relation(fields: [hospitalIds], references: [id])
+  doctors     Doctor[]
+  hospitals   Hospital[]
 }
 
 model Keyword {
-  id          String     @id @default(uuid()) @map("_id")
+  id          String     @id @default(uuid())
   term        String     @unique
-  doctorIds   String[]
-  doctors     Doctor[]   @relation(fields: [doctorIds], references: [id])
-  hospitalIds String[]
-  hospitals   Hospital[] @relation(fields: [hospitalIds], references: [id])
+  doctors     Doctor[]
+  hospitals   Hospital[]
 }
 
 model Hospital {
-  id                 String             @id @default(uuid()) @map("_id")
+  id                 String             @id @default(uuid())
   name               String
   slug               String             @unique
   description        String?
@@ -317,10 +320,8 @@ model Hospital {
   rating             Float              @default(0)
   images             String[]           @default([])
 
-  specialtyIds String[]
-  specialties  Specialty[] @relation(fields: [specialtyIds], references: [id])
-  keywordIds   String[]
-  keywords     Keyword[]   @relation(fields: [keywordIds], references: [id])
+  specialties  Specialty[]
+  keywords     Keyword[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -331,7 +332,7 @@ model Hospital {
 }
 
 model SearchAnalytics {
-  id              String   @id @default(uuid()) @map("_id")
+  id              String   @id @default(uuid())
   query           String
   normalizedQuery String
   district        String?
@@ -344,7 +345,7 @@ model SearchAnalytics {
 }
 
 model ProfileAnalytics {
-  id         String     @id @default(uuid()) @map("_id")
+  id         String     @id @default(uuid())
   targetType TargetType
   targetId   String
   action     String
@@ -355,7 +356,7 @@ model ProfileAnalytics {
 }
 
 model Report {
-  id          String       @id @default(uuid()) @map("_id")
+  id          String       @id @default(uuid())
   reporterId  String
   reporter    User         @relation(fields: [reporterId], references: [id], onDelete: Cascade)
   targetType  TargetType
@@ -383,7 +384,7 @@ enum NotificationType {
 }
 
 model Notification {
-  id        String           @id @default(uuid()) @map("_id")
+  id        String           @id @default(uuid())
   userId    String
   user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   type      NotificationType
@@ -400,7 +401,7 @@ model Notification {
 }
 
 model SavedDoctor {
-  id        String   @id @default(uuid()) @map("_id")
+  id        String   @id @default(uuid())
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   doctorId  String
@@ -412,7 +413,7 @@ model SavedDoctor {
 }
 
 model NotificationPreference {
-  id              String   @id @default(uuid()) @map("_id")
+  id              String   @id @default(uuid())
   userId          String   @unique
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   smsEnabled      Boolean  @default(false)
@@ -456,10 +457,10 @@ enum Gender {
 }
 
 model DailyQueue {
-  id                   String       @id @default(uuid()) @map("_id")
+  id                   String       @id @default(uuid())
   doctorId             String
   doctor               Doctor       @relation(fields: [doctorId], references: [id], onDelete: Cascade)
-  clinicId             String?      @db.ObjectId
+  clinicId             String?     
   logicalDate          String       // YYYY-MM-DD
   currentTokenNumber   Int          @default(0)
   currentServingToken  Int          @default(0)
@@ -484,7 +485,7 @@ model DailyQueue {
 }
 
 model QueueToken {
-  id           String    @id @default(uuid()) @map("_id")
+  id           String    @id @default(uuid())
   queueId      String
   queue        DailyQueue @relation(fields: [queueId], references: [id], onDelete: Cascade)
   tokenNumber  Int       
@@ -513,7 +514,7 @@ model QueueToken {
 }
 
 model WalkInEntry {
-  id          String   @id @default(uuid()) @map("_id")
+  id          String   @id @default(uuid())
   patientName String
   phoneNumber String?
   symptoms    String?
@@ -526,7 +527,7 @@ model WalkInEntry {
 }
 
 model OtpToken {
-  id        String   @id @default(uuid()) @map("_id")
+  id        String   @id @default(uuid())
   phone     String   @unique
   hashedOtp String
   expiresAt DateTime
@@ -536,7 +537,7 @@ model OtpToken {
 }
 
 model RateLimit {
-  id        String   @id @default(uuid()) @map("_id")
+  id        String   @id @default(uuid())
   ip        String   @unique
   count     Int      @default(1)
   resetTime DateTime
@@ -545,7 +546,7 @@ model RateLimit {
 }
 
 model WeeklySchedule {
-  id        String   @id @default(uuid()) @map("_id")
+  id        String   @id @default(uuid())
   doctorId  String   @unique
   doctor    Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
   monday    Json 
@@ -559,7 +560,7 @@ model WeeklySchedule {
 }
 
 model ClinicOperations {
-  id                 String       @id @default(uuid()) @map("_id")
+  id                 String       @id @default(uuid())
   doctorId           String       @unique
   doctor             Doctor       @relation(fields: [doctorId], references: [id], onDelete: Cascade)
   status             ClinicStatus @default(AVAILABLE)
@@ -573,13 +574,13 @@ model ClinicOperations {
 }
 
 model SystemCounter {
-  id    String @id @map("_id")
+  id    String @id
   count Int    @default(64000)
 }
 
 model Operator {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  doctorId  String   @db.ObjectId
+  id        String   @id @default(uuid())
+  doctorId  String
   doctor    Doctor   @relation(fields: [doctorId], references: [id])
   name      String
   phone     String
@@ -587,3 +588,77 @@ model Operator {
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
 }
+
+enum AuditAction {
+  LOGIN
+  LOGOUT
+  BAN
+  UNBAN
+  VERIFY_DOCTOR
+  UPDATE_PROFILE
+  QUEUE_MUTATION
+  SYSTEM_CLEANUP
+}
+
+model AuthSession {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([token])
+  @@map("auth_sessions")
+}
+
+model AuditLog {
+  id         String      @id @default(uuid())
+  userId     String?
+  role       Role?
+  action     AuditAction
+  entityType String
+  entityId   String?
+  oldValue   String?
+  newValue   String?
+  ipAddress  String?
+  createdAt  DateTime    @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model SearchLog {
+  id          String   @id @default(uuid())
+  query       String
+  district    String?
+  resultCount Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  @@index([query])
+  @@index([district])
+  @@index([createdAt])
+  @@map("search_logs")
+}
+
+model PlatformPricing {
+  id              String   @id @default(uuid())
+  doctorId        String   @unique
+  monthlyFee      Float    @default(2999)
+  perBookingFee   Float    @default(29)
+  discountPercent Int      @default(100)
+  partnerTier     String   @default("EARLY_PARTNER")
+  freeUntil       DateTime?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  doctor          Doctor   @relation(fields: [doctorId], references: [id])
+
+  @@map("platform_pricing")
+}
+

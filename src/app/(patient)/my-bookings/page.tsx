@@ -275,7 +275,8 @@ useEffect(() => {
       `🩺 *Doctor:* ${booking.doctorName}\n` +
       `🎫 *Token:* #${booking.tokenNumber}\n` +
       `🕒 *Wait:* ${waitLine}\n` +
-      `📍 *Location:* ${booking.clinic}, ${booking.location}`;
+      `📍 *Location:* ${booking.clinic}, ${booking.location}\n\n` +
+      `📲 *Live status track karein:* ${window.location.origin}/doctors/${booking.doctorSlug}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   };
 
