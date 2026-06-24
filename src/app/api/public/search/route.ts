@@ -61,7 +61,13 @@ export async function GET(request: NextRequest) {
 
     // Enforce district hard filter (always enforced if provided)
     if (input.district) {
-      andConditions.push({ district: { equals: input.district, mode: "insensitive" } });
+      andConditions.push({
+        OR: [
+          { district: { equals: input.district, mode: "insensitive" } },
+          { clinicDistrict: { equals: input.district, mode: "insensitive" } },
+          { clinicCity: { equals: input.district, mode: "insensitive" } }
+        ]
+      });
     }
 
     // Enforce specialty filter on DB level

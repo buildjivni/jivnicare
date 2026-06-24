@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import prisma from "@/lib/db/prisma";
 import { verifyToken } from "@/lib/jwt";
 import { logger } from "@/lib/infrastructure/logger";
+import { decrypt } from "@/lib/crypto";
 
 export async function POST(request: Request) {
   try {
@@ -57,7 +58,7 @@ export async function POST(request: Request) {
       success: true,
       user: {
         id: user.id,
-        phone: user.phone,
+        phone: decrypt(user.phone),
         name: user.name,
         role: user.role,
         location: user.location,

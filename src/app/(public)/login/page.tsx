@@ -1,8 +1,9 @@
 "use client";
 import { Logo } from "@/features/marketing/components/brand/Logo";
 
-import { useState, Suspense, useEffect } from "react";
+import { useState, Suspense, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Script from "next/script";
 import {
   ArrowLeft,
   ArrowRight,
@@ -20,6 +21,26 @@ import { motion, AnimatePresence } from "framer-motion";
 import { PublicGuard } from "@/components/shared";
 import { parseResponseJson } from "@/lib/utils/safe-json";
 import { logOnboarding } from "@/lib/auth/onboarding-log";
+
+declare global {
+  interface Window {
+    onloadTurnstileCallback?: () => void;
+    turnstile?: {
+      render: (
+        container: string | HTMLElement,
+        options: {
+          sitekey: string;
+          callback: (token: string) => void;
+          "error-callback"?: (error: any) => void;
+          "expired-callback"?: () => void;
+          theme?: "light" | "dark" | "auto";
+        }
+      ) => string;
+      reset: (widgetId?: string) => void;
+      getResponse: (widgetId?: string) => string;
+    };
+  }
+}
 
 type LoginStep = "phone" | "otp" | "identity";
 
@@ -45,6 +66,56 @@ function PatientLoginContent() {
   const [needsProfile, setNeedsProfile] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [agreed, setAgreed] = useState(false);
+
+  // Turnstile integration
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileRef = useRef<HTMLDivElement>(null);
+  const [widgetId, setWidgetId] = useState<string | null>(null);
+  const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+
+  useEffect(() => {
+    if (step !== "phone" || !siteKey || !turnstileRef.current) return;
+
+    let active = true;
+    const renderWidget = () => {
+      if (window.turnstile && turnstileRef.current && active) {
+        try {
+          if (widgetId) {
+            window.turnstile.reset(widgetId);
+            setTurnstileToken(null);
+            return;
+          }
+          const id = window.turnstile.render(turnstileRef.current, {
+            sitekey: siteKey,
+            callback: (token) => {
+              setTurnstileToken(token);
+            },
+            "expired-callback": () => {
+              setTurnstileToken(null);
+            },
+            "error-callback": () => {
+              setTurnstileToken(null);
+            },
+          });
+          setWidgetId(id);
+        } catch (err) {
+          console.error("Turnstile render error:", err);
+        }
+      }
+    };
+
+    if (window.turnstile) {
+      renderWidget();
+    } else {
+      window.onloadTurnstileCallback = () => {
+        renderWidget();
+      };
+    }
+
+    return () => {
+      active = false;
+    };
+  }, [step, siteKey, widgetId]);
 
   const finishLoginRedirect = (role?: Parameters<typeof getRoleRedirect>[0]) => {
     const target = redirectUrl || getRoleRedirect(role ?? user?.role ?? "PATIENT");
@@ -106,7 +177,7 @@ function PatientLoginContent() {
       const res = await fetch("/api/auth/send-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone }),
+        body: JSON.stringify({ phone, turnstileToken }),
       });
 
       const data = await parseResponseJson<{
@@ -138,6 +209,10 @@ function PatientLoginContent() {
       const message = err instanceof Error ? err.message : "Failed to send OTP.";
       logOnboarding("otp_send_error", { message });
       setError(message);
+      if (window.turnstile && widgetId) {
+        window.turnstile.reset(widgetId);
+        setTurnstileToken(null);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -451,9 +526,15 @@ function PatientLoginContent() {
                       </label>
                     </div>
 
+                    {siteKey && (
+                      <div className="flex justify-center my-4">
+                        <div ref={turnstileRef} />
+                      </div>
+                    )}
+
                     <Button
                       type="submit"
-                      disabled={isLoading || phone.length < 10 || !agreed}
+                      disabled={isLoading || phone.length < 10 || !agreed || (!!siteKey && !turnstileToken)}
                       className="w-full h-16 rounded-2xl bg-[#205E98] hover:bg-[#1a4f82] text-white font-black text-lg shadow-[0_12px_24px_-8px_rgba(32,94,152,0.3)] hover:shadow-[0_20px_40px_-12px_rgba(32,94,152,0.4)] active:scale-[0.98] transition-all flex items-center justify-center gap-3"
                     >
                       {isLoading ? (

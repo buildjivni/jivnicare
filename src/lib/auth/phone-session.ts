@@ -2,6 +2,7 @@ import prisma from "@/lib/db/prisma";
 import { signToken } from "@/lib/jwt";
 import { NextResponse } from "next/server";
 import { isTestOtpModeEnabled } from "@/lib/config/test-mode";
+import { encrypt, decrypt, hashPhone } from "@/lib/crypto";
 
 interface CreatePhoneSessionInput {
   phone10: string;
@@ -12,18 +13,20 @@ interface CreatePhoneSessionInput {
 
 export async function createPhoneSessionResponse(input: CreatePhoneSessionInput) {
   const { phone10, firebaseUid, name, location } = input;
+  const hashedPhone = hashPhone(phone10);
 
-  const isNewUser = !(await prisma.user.findUnique({ where: { phone: phone10 } }));
+  const isNewUser = !(await prisma.user.findUnique({ where: { phoneHash: hashedPhone } }));
 
   let user = await prisma.user.findUnique({
-    where: { phone: phone10 },
+    where: { phoneHash: hashedPhone },
     include: { doctor: true },
   });
 
   if (!user) {
     user = await prisma.user.create({
       data: {
-        phone: phone10,
+        phone: encrypt(phone10),
+        phoneHash: hashedPhone,
         firebaseUid,
         name: name?.trim() || "Patient",
         location: location?.trim() || null,
@@ -63,7 +66,7 @@ export async function createPhoneSessionResponse(input: CreatePhoneSessionInput)
     needsProfile,
     user: {
       id: user.id,
-      phone: user.phone,
+      phone: decrypt(user.phone),
       name: user.name,
       role: user.role,
       doctorId: user.doctor?.id || null,
@@ -84,3 +87,4 @@ export async function createPhoneSessionResponse(input: CreatePhoneSessionInput)
 
   return response;
 }
+

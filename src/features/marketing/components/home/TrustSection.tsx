@@ -66,7 +66,7 @@ export function TrustSection() {
                   </div>
                   <div>
                     <h4 className="text-slate-900 font-black text-xl leading-tight">Patient Stories</h4>
-                    <p className="text-slate-400 text-sm font-bold uppercase tracking-wider"> Bihar&apos;s Voice</p>
+                    <p className="text-slate-400 text-sm font-bold uppercase tracking-wider"> Patient Voices</p>
                   </div>
                 </div>
                 

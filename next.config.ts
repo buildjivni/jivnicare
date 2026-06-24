@@ -3,7 +3,12 @@ import type { NextConfig } from "next";
 import withPWA from 'next-pwa';
 
 // ── Startup Environment Validation ──────────────────────────────────────────
+import { withSentryConfig } from "@sentry/nextjs";
+
 const requiredEnvVars = ["JWT_SECRET", "DATABASE_URL"];
+if (process.env.NODE_ENV === "production") {
+  requiredEnvVars.push("ENCRYPTION_KEY", "HMAC_SECRET_KEY");
+}
 const missingEnvVars = requiredEnvVars.filter((envVar) => !process.env[envVar]);
 
 if (missingEnvVars.length > 0) {
@@ -27,11 +32,6 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'res.cloudinary.com',
-        pathname: '/jivnicare/**',
-      },
-      {
-        protocol: 'https',
-        hostname: '*.public.blob.vercel-storage.com',
         pathname: '/**',
       },
     ],
@@ -40,7 +40,6 @@ const nextConfig: NextConfig = {
 
   // ── TypeScript ─────────────────────────────────────────────────────────────
   typescript: {
-    // TSC passes cleanly — keep this false in production for correctness
     ignoreBuildErrors: false,
   },
 
@@ -65,13 +64,11 @@ const nextConfig: NextConfig = {
           },
         ],
       },
-      // NOTE: Do NOT set Cache-Control for /_next/static in dev — it breaks Turbopack HMR.
-      // In production (Vercel/CDN), these are handled automatically with content-hashing.
     ];
   },
 
   // ── External Server Packages (Prisma, bcryptjs) ────────────────────────────
-  serverExternalPackages: ["@prisma/client", "bcryptjs", "firebase-admin"],
+  serverExternalPackages: ["@prisma/client", "bcryptjs"],
 
   // ── Turbopack Compatibility ─────────────────────────────────────────────
   turbopack: {},
@@ -84,4 +81,13 @@ const pwaConfig = withPWA({
   skipWaiting: true,
 });
 
-export default pwaConfig(nextConfig);
+export default withSentryConfig(
+  pwaConfig(nextConfig),
+  {
+    org: "jivnicare",
+    project: "jivnicare-nextjs",
+    silent: true,
+    widenClientFileUpload: true,
+  }
+);
+

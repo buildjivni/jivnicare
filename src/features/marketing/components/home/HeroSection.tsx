@@ -116,7 +116,7 @@ export function HeroSection({ featuredDoctor }: { featuredDoctor?: any }) {
               className="flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50 border border-emerald-100 text-secondary text-[11px] font-black uppercase tracking-widest shadow-sm w-fit"
             >
               <ShieldCheck className="w-4 h-4" />
-              Bihar&apos;s Trusted Healthcare Network
+              Verified Doctor OPD Network
             </motion.div>
 
             <motion.h1 

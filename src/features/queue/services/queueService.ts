@@ -1,6 +1,7 @@
 import prisma from "@/lib/db/prisma";
 import { resolveClinicCurrentTime } from "@/lib/utils/clinic-utils";
 import { getOrCreateDailyQueue, getLogicalDate } from "@/lib/queue";
+import { hashPhone } from "@/lib/crypto";
 
 export class QueueService {
   /**
@@ -16,6 +17,22 @@ export class QueueService {
     prismaTx?: any
   ) {
     const coreLogic = async (tx: any) => {
+      // Walk-in Auto-linking: Lookup user by phoneHash if userId is null
+      let resolvedUserId = userId;
+      if (!resolvedUserId && patientPhone) {
+        const phone10 = patientPhone.replace(/\D/g, "").slice(-10);
+        if (phone10.length === 10) {
+          const hashedPhone = hashPhone(phone10);
+          const matchedUser = await tx.user.findUnique({
+            where: { phoneHash: hashedPhone },
+            select: { id: true }
+          });
+          if (matchedUser) {
+            resolvedUserId = matchedUser.id;
+          }
+        }
+      }
+
       // 0. Ensure Doctor exists and is VERIFIED
       const doctor = await tx.doctor.findUnique({ 
         where: { id: doctorId },
@@ -102,7 +119,7 @@ export class QueueService {
           queueId: dailyQueue.id,
           tokenNumber: newTokenNumber,
           patientPhone,
-          patientId: userId,
+          patientId: resolvedUserId,
           patientName,
           tokenType,
           status: 'BOOKED',

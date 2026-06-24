@@ -326,7 +326,3 @@ export function getPostBySlug(slug: string) {
   return BLOG_POSTS.find((post) => post.slug === slug);
 }
 
-export function getPostsByCategory(category: string) {
-  if (category === "All") return BLOG_POSTS;
-  return BLOG_POSTS.filter((post) => post.category === category);
-}

@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/db/prisma";
 import { verifyToken } from "@/lib/jwt";
 import { cookies } from "next/headers";
+import { decrypt, hashPhone } from "@/lib/crypto";
 
 export async function GET(req: Request) {
   try {
@@ -24,12 +25,15 @@ export async function GET(req: Request) {
     const limit = parseInt(url.searchParams.get("limit") || "50", 10);
     const skip = (page - 1) * limit;
 
+    const cleanPhone = search.replace(/\D/g, "").slice(-10);
+    const hashedPhone = cleanPhone.length === 10 ? hashPhone(cleanPhone) : null;
+
     const whereClause: any = {
       role: "PATIENT",
       ...(search && {
         OR: [
           { name: { contains: search, mode: 'insensitive' } },
-          { phone: { contains: search, mode: 'insensitive' } }
+          ...(hashedPhone ? [{ phoneHash: hashedPhone }] : [])
         ]
       })
     };
@@ -55,9 +59,14 @@ export async function GET(req: Request) {
 
     const totalPages = Math.ceil(totalCount / limit);
 
+    const decryptedPatients = patients.map(p => ({
+      ...p,
+      phone: decrypt(p.phone)
+    }));
+
     return NextResponse.json({ 
       success: true, 
-      patients,
+      patients: decryptedPatients,
       pagination: {
         page,
         limit,

@@ -103,6 +103,3 @@ export const operationalCounters: OperationalCounters = {
   uploadFailures: 0,
   sseDisconnects: 0,
 };
-export function incrementCounter(counter: keyof OperationalCounters) {
-  operationalCounters[counter]++;
-}

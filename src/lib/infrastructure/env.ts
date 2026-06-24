@@ -41,7 +41,12 @@ export function getTwoFactorApiKey(): string {
   return key;
 }
 
-export function isBlobConfigured(): boolean {
-  return !!process.env.BLOB_READ_WRITE_TOKEN?.trim();
+export function isCloudinaryConfigured(): boolean {
+  return !!(
+    process.env.CLOUDINARY_CLOUD_NAME?.trim() &&
+    process.env.CLOUDINARY_API_KEY?.trim() &&
+    process.env.CLOUDINARY_API_SECRET?.trim()
+  );
 }
+
 

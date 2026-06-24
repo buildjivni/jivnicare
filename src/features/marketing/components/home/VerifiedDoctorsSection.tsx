@@ -24,11 +24,11 @@ export function VerifiedDoctorsSection({ doctors }: VerifiedDoctorsSectionProps)
               <ShieldCheck className="w-4 h-4" /> 100% Verified Specialists
             </div>
             <h2 className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tight text-slate-900 mb-6 leading-[1.05]">
-              Bihar&apos;s Most <br />
-              <span className="text-primary">Trusted Doctors.</span>
+              Connect With <br />
+              <span className="text-primary">Verified Doctors.</span>
             </h2>
             <p className="text-xl md:text-2xl text-slate-700 font-bold max-w-xl leading-relaxed">
-              Book instant appointments with top-rated medical professionals across Bihar. Verified degrees, verified clinics.
+              Book instant appointments with verified medical professionals. Verified degrees, verified clinics.
             </p>
           </div>
           <Link href="/doctors" className="hidden md:flex text-base font-black text-white items-center gap-3 bg-primary hover:bg-primary/90 px-8 py-5 rounded-2xl shadow-floating hover:shadow-premium transition-all">

@@ -103,7 +103,8 @@ model Clinic {
 model User {
   id          String   @id @default(uuid())
   firebaseUid String?
-  phone       String   @unique
+  phone       String
+  phoneHash   String?  @unique
   email       String?
   name        String?
   password    String?
@@ -262,6 +263,9 @@ model Doctor {
   city                           String?
   state                          String?
   pincode                        String?
+  clinicCity                     String?
+  clinicDistrict                 String?
+  clinicState                    String?
   latitude                       Float?
   longitude                      Float?
 

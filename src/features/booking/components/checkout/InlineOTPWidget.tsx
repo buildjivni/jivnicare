@@ -1,12 +1,33 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Phone, ShieldCheck, RefreshCw, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuthStore } from "@/features/auth/store/useAuthStore";
 import { trackOperationalEvent } from "@/lib/telemetry/client";
 import { parseResponseJson } from "@/lib/utils/safe-json";
+import Script from "next/script";
+
+declare global {
+  interface Window {
+    onloadTurnstileCallback?: () => void;
+    turnstile?: {
+      render: (
+        container: string | HTMLElement,
+        options: {
+          sitekey: string;
+          callback: (token: string) => void;
+          "error-callback"?: (error: any) => void;
+          "expired-callback"?: () => void;
+          theme?: "light" | "dark" | "auto";
+        }
+      ) => string;
+      reset: (widgetId?: string) => void;
+      getResponse: (widgetId?: string) => string;
+    };
+  }
+}
 
 type OTPStep = "PHONE" | "OTP" | "IDENTITY";
 
@@ -33,6 +54,56 @@ export function InlineOTPWidget({ onVerified }: InlineOTPWidgetProps) {
   const [error, setError] = useState<string | null>(null);
   const [resendTimer, setResendTimer] = useState(30);
   const [canResend, setCanResend] = useState(false);
+
+  // Turnstile integration
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileRef = useRef<HTMLDivElement>(null);
+  const [widgetId, setWidgetId] = useState<string | null>(null);
+  const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+
+  useEffect(() => {
+    if (step !== "PHONE" || !siteKey || !turnstileRef.current) return;
+
+    let active = true;
+    const renderWidget = () => {
+      if (window.turnstile && turnstileRef.current && active) {
+        try {
+          if (widgetId) {
+            window.turnstile.reset(widgetId);
+            setTurnstileToken(null);
+            return;
+          }
+          const id = window.turnstile.render(turnstileRef.current, {
+            sitekey: siteKey,
+            callback: (token) => {
+              setTurnstileToken(token);
+            },
+            "expired-callback": () => {
+              setTurnstileToken(null);
+            },
+            "error-callback": () => {
+              setTurnstileToken(null);
+            },
+          });
+          setWidgetId(id);
+        } catch (err) {
+          console.error("Turnstile render error in checkout:", err);
+        }
+      }
+    };
+
+    if (window.turnstile) {
+      renderWidget();
+    } else {
+      window.onloadTurnstileCallback = () => {
+        renderWidget();
+      };
+    }
+
+    return () => {
+      active = false;
+    };
+  }, [step, siteKey, widgetId]);
 
   // Load from sessionStorage on mount
   useEffect(() => {
@@ -74,7 +145,7 @@ export function InlineOTPWidget({ onVerified }: InlineOTPWidgetProps) {
       const res = await fetch("/api/auth/send-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: phone10 }),
+        body: JSON.stringify({ phone: phone10, turnstileToken }),
       });
       const data = await parseResponseJson<{
         error?: string;
@@ -105,6 +176,10 @@ export function InlineOTPWidget({ onVerified }: InlineOTPWidgetProps) {
 
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to send OTP.");
+      if (window.turnstile && widgetId) {
+        window.turnstile.reset(widgetId);
+        setTurnstileToken(null);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -223,9 +298,16 @@ export function InlineOTPWidget({ onVerified }: InlineOTPWidgetProps) {
               className="h-14 pl-24 rounded-2xl bg-slate-50 border-slate-200 focus:border-primary font-bold text-lg tracking-wider"
             />
           </div>
+
+          {siteKey && (
+            <div className="flex justify-center my-2">
+              <div ref={turnstileRef} />
+            </div>
+          )}
+
           <Button
             type="submit"
-            disabled={phone.replace(/\D/g, "").length < 10 || isLoading}
+            disabled={phone.replace(/\D/g, "").length < 10 || isLoading || (!!siteKey && !turnstileToken)}
             className="w-full h-14 rounded-2xl bg-primary hover:bg-primary/90 text-white font-bold text-base shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2"
           >
             {isLoading ? <><RefreshCw className="w-5 h-5 animate-spin" /> Sending...</> : <>Send OTP <ArrowRight className="w-5 h-5" /></>}
@@ -290,6 +372,13 @@ export function InlineOTPWidget({ onVerified }: InlineOTPWidgetProps) {
         <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
         Your data is secure and never shared
       </p>
+      <Script
+        src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
+        strategy="afterInteractive"
+        onLoad={() => {
+          if (window.onloadTurnstileCallback) window.onloadTurnstileCallback();
+        }}
+      />
     </div>
   );
 }

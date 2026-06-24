@@ -109,33 +109,6 @@ export const step4OnboardSchema = z.object({
   bookingStartTime: z.string(),
 });
 
-// Doctor Settings Update Schema
-export const doctorSettingsSchema = z.object({
-  bio: z.string().max(1000, "Bio is too long").optional().nullable(),
-  fee: z.number().int("Fee must be a whole number").min(0, "Fee cannot be negative").max(5000, "Fee cannot exceed 5000 rupees").optional(),
-  averageConsultationTime: z.number().int().min(5).max(180).optional(),
-  name: z.string().min(3, "Name must be at least 3 characters").max(60, "Name is too long").regex(/^[a-zA-Z\s\.]+$/, "Name can only contain letters, spaces, and periods").optional(),
-  regNumber: z.string().min(5, "Registration number must be at least 5 characters").max(30, "Registration number is too long").regex(/^[a-zA-Z0-9\-\/\.\s]+$/, "Letters, numbers, hyphens, slashes, spaces and periods only").optional(),
-  isClosedToday: z.boolean().optional(),
-  maxCapacity: z.number().int().min(0).max(1000).optional(),
-  pauseOnlineBooking: z.boolean().optional(),
-  emergencySlots: z.number().int().min(0).max(100).optional(),
-  emergencyAvailable: z.boolean().optional(),
-  onlineConsultationAvailable: z.boolean().optional(),
-  emergencyConsultationAvailable: z.boolean().optional(),
-  status: z.enum(["AVAILABLE", "LIMITED_SLOTS", "SHORT_BREAK", "EMERGENCY_ONLY", "FULLY_BOOKED_AUTO", "CLINIC_CLOSED"]).optional(),
-  statusReason: z.string().max(150, "Reason is too long").optional().nullable(),
-  breakDuration: z.number().int().min(5).max(120).optional().nullable(),
-  hospitalName: z.string().max(150).optional().nullable(),
-  city: z.string().max(100).optional().nullable(),
-  address: z.string().max(300).optional().nullable(),
-  experience: z.number().int().min(0).max(65).optional().nullable(),
-  qualifications: z.string()
-    .max(300)
-    .regex(/[a-zA-Z]/, "Please enter valid medical qualifications (must contain letters).")
-    .optional()
-    .nullable(),
-});
 
 export const verifyDoctorSchema = z.object({
   doctorId: idSchema,

@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db/prisma";
 import { verifyToken } from "@/lib/jwt";
 import { cookies } from "next/headers";
+import { decrypt, hashPhone } from "@/lib/crypto";
 import { resolveClinicLogicalDay } from "@/lib/utils/clinic-utils";
 
 export async function GET(request: NextRequest) {
@@ -27,14 +28,17 @@ export async function GET(request: NextRequest) {
 
     let whereClause: any = {};
     if (search) {
+      const cleanPhone = search.replace(/\D/g, "").slice(-10);
+      const hashedPhone = cleanPhone.length === 10 ? hashPhone(cleanPhone) : null;
+
       whereClause = {
         OR: [
           { id: { contains: search, mode: "insensitive" } },
-          { user: { phone: { contains: search, mode: "insensitive" } } },
           { user: { name: { contains: search, mode: "insensitive" } } },
           { walkInEntry: { patientName: { contains: search, mode: "insensitive" } } },
           { queue: { doctor: { name: { contains: search, mode: "insensitive" } } } },
           { queue: { doctor: { clinicName: { contains: search, mode: "insensitive" } } } },
+          ...(hashedPhone ? [{ user: { phoneHash: hashedPhone } }] : [])
         ]
       };
       
@@ -69,7 +73,7 @@ export async function GET(request: NextRequest) {
       id: b.id, // Support might need full ID
       shortId: b.id.slice(-8).toUpperCase(),
       patient: b.patient?.name || b.walkInEntry?.patientName || "Walk-in Patient",
-      phone: b.patient?.phone || "N/A",
+      phone: b.patient?.phone ? decrypt(b.patient.phone) : "N/A",
       tokenNumber: b.tokenNumber,
       doctor: b.queue.doctor.name,
       clinic: b.queue.doctor.clinicName || b.queue.doctor.hospitalName,

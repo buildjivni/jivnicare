@@ -6,6 +6,7 @@ import { signToken } from '@/lib/jwt';
 import { cookies } from 'next/headers';
 import { isTestOtpModeEnabled, getTestOtpNumbers, getTestOtpCode } from '@/lib/config/test-mode';
 import { logger } from '@/lib/infrastructure/logger';
+import { decrypt, hashPhone } from '@/lib/crypto';
 
 export async function POST(request: Request) {
   try {
@@ -15,9 +16,13 @@ export async function POST(request: Request) {
       return apiError('Phone number and password are required', 400);
     }
 
-    // Find the user by phone
+    // Normalize and hash the phone number for lookup
+    const phone10 = phone.replace(/\D/g, '').slice(-10);
+    const hashedPhone = phone10.length === 10 ? hashPhone(phone10) : hashPhone(phone);
+    
+    // Find the user by phoneHash
     const user = await prisma.user.findUnique({
-      where: { phone },
+      where: { phoneHash: hashedPhone },
       include: { doctor: true }
     });
 
@@ -31,7 +36,6 @@ export async function POST(request: Request) {
 
     // ── Lightweight Test OTP Mode for Doctors ─────────────────────────
     let passwordMatch = false;
-    const phone10 = phone.replace(/\D/g, '').slice(-10);
 
     if (isTestOtpModeEnabled() && getTestOtpNumbers().includes(phone10)) {
       if (password === getTestOtpCode()) {
@@ -87,7 +91,7 @@ export async function POST(request: Request) {
       user: {
         id: user.id,
         name: user.name,
-        phone: user.phone,
+        phone: decrypt(user.phone),
         role: user.role,
         doctorId: user.doctor.id,
       }

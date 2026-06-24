@@ -6,6 +6,7 @@ import { redis } from "@/lib/db/redis";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import { Role } from "@prisma/client";
+import { encrypt, decrypt } from "@/lib/crypto";
 
 export async function POST(request: NextRequest) {
   try {
@@ -66,7 +67,7 @@ export async function POST(request: NextRequest) {
         await prisma.user.update({
           where: { id: userId },
           data: {
-            totpSecret: pendingSecret,
+            totpSecret: encrypt(pendingSecret),
             totpEnabled: true,
             backupCodes: hashedBackupCodes,
           },
@@ -79,7 +80,7 @@ export async function POST(request: NextRequest) {
       }
     } else {
       // 2. Subsequent logins
-      isVerified = verifyAdminTOTP(code, dbUser.totpSecret || undefined);
+      isVerified = verifyAdminTOTP(code, dbUser.totpSecret ? decrypt(dbUser.totpSecret) : undefined);
 
       if (!isVerified && dbUser.backupCodes.length > 0) {
         // Check if code matches one of the backup codes

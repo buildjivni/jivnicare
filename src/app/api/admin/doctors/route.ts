@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/db/prisma";
 import { verifyToken } from "@/lib/jwt";
 import { cookies } from "next/headers";
+import { decrypt } from "@/lib/crypto";
 
 export async function GET(req: Request) {
   try {
@@ -82,6 +83,7 @@ export async function GET(req: Request) {
 
     const enrichedDoctors = doctors.map((d) => ({
       ...d,
+      user: d.user ? { ...d.user, phone: decrypt(d.user.phone) } : null,
       moderationHistory: logsByDoctor[d.id] || [],
     }));
 

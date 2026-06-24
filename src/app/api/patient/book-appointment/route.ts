@@ -4,6 +4,7 @@ import prisma from "@/lib/db/prisma";
 import { redis } from "@/lib/db/redis";
 import { verifyToken } from "@/lib/jwt";
 import { cookies } from "next/headers";
+import { decrypt } from "@/lib/crypto";
 import { QueueService } from "@/features/queue/services/queueService";
 import { bookAppointmentSchema, formatZodError } from "@/lib/validators/validations";
 import { bookingRatelimit, checkUpstashRateLimit } from "@/lib/ratelimit";
@@ -71,11 +72,13 @@ export async function POST(request: Request) {
       return apiError("User not found", 404);
     }
 
+    const decryptedPhone = decrypt(user.phone);
+
     // Call service layer (V1 refactored)
     const { token: newQueueToken } = await QueueService.issueToken(
       doctorId, 
       payload.id, 
-      user.phone,
+      decryptedPhone,
       isEmergency ? "EMERGENCY" : "ONLINE",
       user.name || undefined
     );

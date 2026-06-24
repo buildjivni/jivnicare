@@ -69,7 +69,7 @@ export default function PartnersPage() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#5298D2] opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-[#5298D2]"></span>
               </span>
-              Bihar&apos;s Elite Clinical Infrastructure Network
+              Verified Clinical Infrastructure Network
             </motion.div>
 
             {/* Typography Hierarchy */}

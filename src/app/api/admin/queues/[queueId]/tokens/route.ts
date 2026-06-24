@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db/prisma";
 import { verifyToken } from "@/lib/jwt";
 import { cookies } from "next/headers";
+import { decrypt } from "@/lib/crypto";
 
 export async function GET(
   request: NextRequest,
@@ -49,7 +50,7 @@ export async function GET(
       id: t.id,
       tokenNumber: t.tokenNumber,
       patientName: t.patient?.name || t.walkInEntry?.patientName || "Walk-in Patient",
-      phone: t.patient?.phone || t.walkInEntry?.phoneNumber || "N/A",
+      phone: (t.patient?.phone ? decrypt(t.patient.phone) : null) || t.walkInEntry?.phoneNumber || "N/A",
       status: t.status,
       type: t.tokenType,
       issuedAt: t.bookedAt.toISOString(),

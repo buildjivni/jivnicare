@@ -4,6 +4,7 @@ import { verifyToken } from "@/lib/jwt";
 import prisma from "@/lib/db/prisma";
 import { PatientDashboard } from "@/features/patient/components/dashboard/PatientDashboard";
 import type { Metadata } from "next";
+import { decrypt } from "@/lib/crypto";
 
 export const metadata: Metadata = {
   title: "My Dashboard | JivniCare",
@@ -30,6 +31,11 @@ export default async function PatientDashboardPage() {
   if (!user) {
     redirect("/login");
   }
+
+  const decryptedUser = {
+    ...user,
+    phone: decrypt(user.phone)
+  };
 
   // Fetch all tokens for this user
   const rawQueueTokens = await prisma.queueToken.findMany({
@@ -82,7 +88,7 @@ export default async function PatientDashboardPage() {
 
   return (
     <PatientDashboard
-      user={user}
+      user={decryptedUser}
       upcomingTokens={upcomingTokens}
       pastTokens={pastTokens}
       savedDoctors={savedDocs}

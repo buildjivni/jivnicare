@@ -1,12 +1,40 @@
 import { apiResponse, apiError } from '@/lib/utils/api-response';
-import { put } from '@vercel/blob';
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import * as jose from 'jose';
-import { getJwtSecret, isBlobConfigured } from '@/lib/infrastructure/env';
+import { getJwtSecret, isCloudinaryConfigured } from '@/lib/infrastructure/env';
 import { logger } from '@/lib/infrastructure/logger';
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../auth/[...nextauth]/route";
+import { cloudinary } from '@/lib/cloudinary';
+
+function transformCloudinaryUrl(url: string, filename: string): string {
+  if (filename.toLowerCase().endsWith('.pdf')) {
+    return url;
+  }
+  const uploadToken = '/upload/';
+  const index = url.indexOf(uploadToken);
+  if (index === -1) return url;
+  
+  let transform = 'f_auto,q_auto';
+  if (filename.startsWith('doctor-profile')) {
+    transform = 'w_400,h_400,c_fill,f_auto,q_auto';
+  } else if (filename.startsWith('clinic-photo')) {
+    transform = 'w_800,c_limit,f_auto,q_auto';
+  }
+  
+  return url.substring(0, index + uploadToken.length) + transform + '/' + url.substring(index + uploadToken.length);
+}
+
+const uploadFromBuffer = (buffer: Buffer, options: any): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(options, (error, result) => {
+      if (error) reject(error);
+      else resolve(result);
+    });
+    uploadStream.end(buffer);
+  });
+};
 
 export async function POST(request: Request): Promise<NextResponse> {
   const { searchParams } = new URL(request.url);
@@ -41,9 +69,9 @@ export async function POST(request: Request): Promise<NextResponse> {
     return apiError("Unauthorized", 401);
   }
 
-  if (!isBlobConfigured()) {
+  if (!isCloudinaryConfigured()) {
     return NextResponse.json(
-      { error: 'Upload storage is not configured (BLOB_READ_WRITE_TOKEN).' },
+      { error: 'Upload storage is not configured (Cloudinary keys are missing).' },
       { status: 503 }
     );
   }
@@ -77,11 +105,27 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   try {
-    const blob = await put(filename, request.body as any, {
-      access: 'public',
-    });
+    const arrayBuffer = await request.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
 
-    return NextResponse.json(blob);
+    const isPdf = extLower === 'pdf';
+    const publicId = name.replace(/[^a-zA-Z0-9-_]/g, '_') + '_' + Date.now();
+    
+    const options = {
+      folder: 'jivnicare',
+      public_id: publicId,
+      resource_type: isPdf ? 'raw' : 'image',
+    };
+
+    const uploadResult = await uploadFromBuffer(buffer, options);
+    const originalUrl = uploadResult.secure_url;
+    const transformedUrl = transformCloudinaryUrl(originalUrl, filename);
+
+    return NextResponse.json({
+      url: transformedUrl,
+      original_url: originalUrl,
+      public_id: uploadResult.public_id,
+    });
   } catch (error) {
     logger.error({
       category: 'API_EXCEPTION',
@@ -92,3 +136,4 @@ export async function POST(request: Request): Promise<NextResponse> {
     return apiError('Upload failed', 500);
   }
 }
+

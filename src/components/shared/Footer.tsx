@@ -8,8 +8,8 @@ const FOOTER_SECTIONS = [
     title: "For Patients",
     links: [
       { label: "Find a Doctor", href: "/doctors" },
-      { label: "Top Clinics in Patna", href: "/doctors" },
-      { label: "Browse by District", href: "/districts" },
+      { label: "Partner Clinics", href: "/doctors" },
+      { label: "Browse Locations", href: "/districts" },
       { label: "Health Articles", href: "/blog" },
       { label: "How It Works", href: "/#how-it-works" },
     ],
@@ -54,7 +54,7 @@ export function Footer() {
           <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
             <div className="flex flex-col items-center lg:items-start gap-4 text-center lg:text-left">
               <h2 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight">
-                Are you a clinic in Bihar? Digitize your OPD today.
+                Are you a clinic? Digitize your OPD today.
               </h2>
               <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 md:gap-6 text-sm font-semibold text-slate-600">
                 <span className="flex items-center gap-1.5"><ShieldCheck className="w-4 h-4 text-emerald-600" /> Verified Doctors</span>
@@ -85,7 +85,7 @@ export function Footer() {
               </div>
               <div className="flex flex-col -space-y-1">
                  <Logo variant="wordmark" className="text-xl md:text-2xl font-black tracking-tight leading-none" />
-                 <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] pl-0.5">Bihar</span>
+                 <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] pl-0.5">OPD Network</span>
               </div>
             </Link>
 
@@ -153,7 +153,7 @@ export function Footer() {
                 </div>
                 <div>
                   <h4 className="font-bold text-slate-800 text-sm mb-1">Headquarters</h4>
-                  <p className="text-sm text-slate-500">4th Floor, Tech Hub<br/>Boring Road, Patna 800001</p>
+                  <p className="text-sm text-slate-500">Tech Hub, India</p>
                 </div>
              </div>
              <div className="flex items-start gap-4 p-4 rounded-xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100">
@@ -183,7 +183,7 @@ export function Footer() {
           <div className="flex flex-col md:flex-row items-center gap-3">
             <p>© {new Date().getFullYear()} JivniCare. All rights reserved.</p>
             <p className="hidden md:block text-slate-300">|</p>
-            <p>Made with <Heart className="w-3 h-3 inline text-rose-500 mx-0.5" /> in Bihar, India.</p>
+            <p>Made with <Heart className="w-3 h-3 inline text-rose-500 mx-0.5" /> in India.</p>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-6">
             <Link href="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>

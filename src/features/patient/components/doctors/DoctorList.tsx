@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { DoctorCard } from "@/components/shared/DoctorCard";
 import { Button } from "@/components/ui/button";
@@ -8,14 +8,24 @@ import type { Doctor } from "@/types";
 import { Stethoscope, SearchX, MapPin, Sparkles, RefreshCcw } from "lucide-react";
 import { motion } from "framer-motion";
 import { getStableKey } from "@/lib/getStableKey";
+import { useSearchParams } from "next/navigation";
 
 function DoctorRequestForm() {
+  const searchParams = useSearchParams();
+  const searchedDistrict = searchParams.get("district") || "";
+
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
-  const [city, setCity] = useState("");
+  const [city, setCity] = useState(searchedDistrict);
   const [specialty, setSpecialty] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+
+  useEffect(() => {
+    if (searchedDistrict) {
+      setCity(searchedDistrict);
+    }
+  }, [searchedDistrict]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,7 +45,7 @@ function DoctorRequestForm() {
           city: city.trim() || undefined,
           specialty: specialty.trim() || undefined,
           roleInterest: "PATIENT",
-          source: "search-zero-results",
+          source: searchedDistrict ? "coming-soon-location" : "search-zero-results",
         }),
       });
 
@@ -54,24 +64,29 @@ function DoctorRequestForm() {
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="p-8 rounded-[2rem] bg-emerald-50 border border-emerald-100 text-center max-w-md mx-auto mt-8"
+        className="p-8 rounded-[2rem] bg-emerald-50 border border-emerald-100 text-center max-w-md mx-auto mt-8 shadow-sm"
       >
         <div className="w-16 h-16 bg-emerald-500 text-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-emerald-500/20">
           <Sparkles className="w-8 h-8 text-white animate-pulse" />
         </div>
         <h4 className="text-lg font-black text-slate-900 mb-2">Thank you! Request recorded.</h4>
         <p className="text-sm text-slate-600 font-medium leading-relaxed">
-          Hamein aapki details mil gayi hain. Jaise hi is specialty/locality mein doctors onboard honge, hum aapko SMS ke jariye notify karenge.
+          Hamein aapki details mil gayi hain. Jaise hi verified doctors onboard honge, hum aapko SMS ke jariye notify karenge.
         </p>
       </motion.div>
     );
   }
 
   return (
-    <div className="bg-slate-50/50 rounded-[2.5rem] p-6 md:p-8 border border-slate-100 max-w-md mx-auto text-left mt-10">
-      <h4 className="text-lg font-heading font-black text-slate-900 mb-2 tracking-tight">Doctor nahi mila? Hamein batayein</h4>
+    <div className="bg-slate-50/50 rounded-[2.5rem] p-6 md:p-8 border border-slate-100 max-w-md mx-auto text-left mt-10 shadow-inner">
+      <h4 className="text-lg font-heading font-black text-slate-900 mb-2 tracking-tight">
+        {searchedDistrict ? `JivniCare is coming to ${searchedDistrict}` : "Doctor nahi mila? Hamein batayein"}
+      </h4>
       <p className="text-xs text-slate-500 font-bold mb-6 leading-relaxed">
-        Aap jis doctor ya specialty ko dhoondh rahe hain, unki details niche likhein. Hum jald se jald unhe JivniCare par lane ki koshish karenge.
+        {searchedDistrict 
+          ? `Hum jald hi ${searchedDistrict} mein launch ho rahe hain. Niche apni details enter karein taaki launch hote hi hum aapko notify kar sakein.`
+          : "Aap jis doctor ya specialty ko dhoondh rahe hain, unki details niche likhein. Hum jald se jald unhe platform par lane ki koshish karenge."
+        }
       </p>
       
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -100,10 +115,11 @@ function DoctorRequestForm() {
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">City / locality (Optional)</label>
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">City / locality (Required)</label>
             <input
               type="text"
-              placeholder="e.g. Jamui"
+              required
+              placeholder="e.g. Patna"
               value={city}
               onChange={(e) => setCity(e.target.value)}
               className="w-full h-12 px-4 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary font-bold transition-all"
@@ -126,7 +142,7 @@ function DoctorRequestForm() {
           disabled={isSubmitting}
           className="w-full h-14 rounded-2xl bg-primary hover:bg-[#184a7a] text-white font-black text-lg shadow-xl shadow-primary/10 flex items-center justify-center gap-2 mt-2 transition-all active:scale-[0.98]"
         >
-          {isSubmitting ? "Submitting..." : "Submit Doctor Request"}
+          {isSubmitting ? "Submitting..." : searchedDistrict ? "Notify Me On Launch" : "Submit Doctor Request"}
         </Button>
       </form>
     </div>

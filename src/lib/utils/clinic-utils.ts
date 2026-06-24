@@ -94,7 +94,7 @@ export function getUnifiedQueueCapacity(
   return total > 0 ? total : 40;
 }
 
-export const EMERGENCY_TOKEN_BASE = 9000;
+const EMERGENCY_TOKEN_BASE = 9000;
 
 export function isEmergencyToken(t: {
   tokenNumber: number;
@@ -142,21 +142,3 @@ export function getApproximateWaitTime(
   return "> 2 hours";
 }
 
-/**
- * Normalizes emergency state across Doctor and ClinicOperations.
- * If emergency is disabled by the doctor, slots MUST be 0.
- * This ensures no cross-dashboard contradictions.
- */
-export function normalizeEmergencyConfig(
-  emergencyAvailable: boolean | undefined | null,
-  emergencySlots: number | undefined | null
-): { emergencyAvailable: boolean; emergencySlots: number } {
-  const isAvailable = Boolean(emergencyAvailable);
-  const slots = Math.max(0, parseInt(String(emergencySlots)) || 0);
-
-  if (!isAvailable) {
-    return { emergencyAvailable: false, emergencySlots: 0 };
-  }
-  
-  return { emergencyAvailable: true, emergencySlots: slots };
-}

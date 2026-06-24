@@ -4,6 +4,7 @@ import prisma from '@/lib/db/prisma';
 import { isTestOtpModeEnabled } from '@/lib/config/test-mode';
 import { signToken } from '@/lib/jwt';
 import { cookies } from 'next/headers';
+import { encrypt, hashPhone } from '@/lib/crypto';
 import { VerificationStatus } from '@prisma/client';
 import { step1OnboardSchema, formatZodError } from '@/lib/validators/validations';
 import { generateSequentialDoctorCode, generateShortCode } from '@/lib/utils/slug';
@@ -21,7 +22,8 @@ export async function POST(request: Request) {
     const phone10 = data.contactNumber.replace(/\D/g, "").slice(-10);
 
     // 1. Check if phone is already registered
-    let user = await prisma.user.findUnique({ where: { phone: phone10 } });
+    const hashedPhone = hashPhone(phone10);
+    let user = await prisma.user.findUnique({ where: { phoneHash: hashedPhone } });
     if (user && user.role === 'DOCTOR') {
       return apiError('Phone number is already registered as a Partner. Please login.', 409);
     }
@@ -31,11 +33,11 @@ export async function POST(request: Request) {
       if (user) {
         user = await tx.user.update({
           where: { id: user.id },
-          data: { role: 'DOCTOR', name: data.fullName }
+          data: { role: 'DOCTOR', name: data.fullName, phone: encrypt(phone10), phoneHash: hashedPhone }
         });
       } else {
         user = await tx.user.create({
-          data: { phone: phone10, role: 'DOCTOR', name: data.fullName }
+          data: { phone: encrypt(phone10), phoneHash: hashedPhone, role: 'DOCTOR', name: data.fullName }
         });
       }
 

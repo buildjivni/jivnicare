@@ -1,13 +1,21 @@
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/db/prisma";
 import { signToken } from "@/lib/jwt";
+import { hashPhone } from "@/lib/crypto";
+
 export class AuthService {
   static async login(identifier: string, password: string, role: "DOCTOR" | "ADMIN") {
     const expiresIn = role === "ADMIN" ? "1d" : "7d";
 
+    const cleanPhone = identifier.replace(/\D/g, "").slice(-10);
+    const hashedPhone = cleanPhone.length === 10 ? hashPhone(cleanPhone) : hashPhone(identifier);
+
     const user = await prisma.user.findFirst({
       where: {
-        OR: [{ phone: identifier }, { email: identifier }],
+        OR: [
+          { phoneHash: hashedPhone },
+          { email: identifier }
+        ],
         role,
       },
     });

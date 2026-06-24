@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/db/prisma";
 import { verifyToken } from "@/lib/jwt";
 import { cookies } from "next/headers";
+import { decrypt } from "@/lib/crypto";
 import { getOrCreateDailyQueue, getLogicalDate } from "@/lib/queue";
 import {
   resolveClinicLogicalDay,
@@ -63,10 +64,15 @@ export async function GET(request: Request) {
       avgWaitTime: tokens.filter(t => t.status === "WAITING").length * (doctor.averageConsultationMinutes || 10),
     };
 
+    const decryptedTokens = tokens.map(t => ({
+      ...t,
+      patient: t.patient ? { ...t.patient, phone: decrypt(t.patient.phone) } : null
+    }));
+
     return NextResponse.json({ 
       success: true, 
       queue: dailyQueue, 
-      tokens,
+      tokens: decryptedTokens,
       stats,
       doctor: {
         averageConsultationTime: doctor.averageConsultationMinutes

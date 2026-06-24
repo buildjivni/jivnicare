@@ -32,13 +32,6 @@ export function trackPageview(url: string) {
   // TODO: Implement PostHog / GA4 pageview tracking
 }
 
-export function identifyUser(userId: string, traits?: Record<string, any>) {
-  if (IS_DEV) {
-    console.log(`[Analytics] Identify User: ${userId}`, traits);
-  }
-  
-  // TODO: Implement PostHog identify
-}
 
 /**
  * Initializes global error tracking for runtime observability.

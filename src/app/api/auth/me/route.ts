@@ -4,6 +4,7 @@ import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/jwt';
 import prisma from '@/lib/db/prisma';
 import { logger } from '@/lib/infrastructure/logger';
+import { decrypt } from '@/lib/crypto';
 
 /**
  * GET /api/auth/me
@@ -71,7 +72,7 @@ export async function GET() {
     return NextResponse.json({
       user: {
         id: user.id,
-        phone: user.phone,
+        phone: decrypt(user.phone),
         name: user.name,
         location: user.location,
         role: user.role,

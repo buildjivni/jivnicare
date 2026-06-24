@@ -2,6 +2,7 @@ import { apiResponse, apiError } from '@/lib/utils/api-response';
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/db/prisma';
 import bcrypt from 'bcryptjs';
+import { encrypt, hashPhone } from '@/lib/crypto';
 
 export async function POST(request: NextRequest) {
   try {
@@ -41,7 +42,8 @@ export async function POST(request: NextRequest) {
     }
 
     // 2. Check duplicate
-    const existing = await prisma.user.findUnique({ where: { phone: phone10 } });
+    const hashedPhone = hashPhone(phone10);
+    const existing = await prisma.user.findUnique({ where: { phoneHash: hashedPhone } });
     if (existing) {
       return apiError('Is number se already account hai', 409);
     }
@@ -52,7 +54,8 @@ export async function POST(request: NextRequest) {
       const user = await tx.user.create({
         data: {
           name: fullName,
-          phone: phone10,
+          phone: encrypt(phone10),
+          phoneHash: hashedPhone,
           email: email,
           role: 'DOCTOR',
         }

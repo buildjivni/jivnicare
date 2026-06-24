@@ -25,8 +25,3 @@ export function logOnboarding(
   );
 }
 
-export function isPlaceholderPatientName(name: string | null | undefined): boolean {
-  if (!name) return true;
-  const n = name.trim().toLowerCase();
-  return n === "patient" || n === "user" || n.length < 2;
-}
