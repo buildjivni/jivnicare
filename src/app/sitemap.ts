@@ -42,8 +42,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/security`,            lastModified: now, changeFrequency: "yearly",  priority: 0.3  },
   ];
 
-  // ── All 38 Bihar District Discovery Pages ────────────────────
-  const districtPages: MetadataRoute.Sitemap = BIHAR_DISTRICTS.map((district) => ({
+  // ── All District Discovery Pages (Bihar + Launch Locations) ──
+  const allDistricts = [...BIHAR_DISTRICTS, "Deoghar"];
+  const districtPages: MetadataRoute.Sitemap = allDistricts.map((district) => ({
     url: `${BASE}/districts/${district.toLowerCase().replace(/\s+/g, "-")}`,
     lastModified: now,
     changeFrequency: "weekly" as const,

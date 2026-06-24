@@ -1,11 +1,11 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Find Doctors in Bihar | JivniCare",
-  description: "Search and book appointments with verified doctors and specialists near you in Bihar.",
+  title: "Find Verified Doctors & Specialists | JivniCare",
+  description: "Search and book appointments with verified doctors and specialists in your city.",
   openGraph: {
-    title: "Find Doctors in Bihar | JivniCare",
-    description: "Search and book appointments with verified doctors and specialists near you in Bihar.",
+    title: "Find Verified Doctors & Specialists | JivniCare",
+    description: "Search and book appointments with verified doctors and specialists in your city.",
     type: "website",
   }
 };

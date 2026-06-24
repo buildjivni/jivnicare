@@ -236,7 +236,7 @@ interface ExpandedQuery {
   district?: string;            // location boost target
 }
 
-import { HEALTHCARE_SPECIALTIES } from "@/lib/seo/metadata";
+import { HEALTHCARE_SPECIALTIES, ACTIVE_LAUNCH_DISTRICTS, FUTURE_EXPANSION_DISTRICTS } from "@/lib/seo/metadata";
 
 // Known specialty names for "did you mean" correction
 const KNOWN_SPECIALTIES = HEALTHCARE_SPECIALTIES;
@@ -306,6 +306,12 @@ function expandQuery(raw: string): ExpandedQuery {
     }
   }
 
+  // Auto-detect district from the text query if not already set
+  const allDistricts = [...ACTIVE_LAUNCH_DISTRICTS, ...FUTURE_EXPANSION_DISTRICTS];
+  const detectedDistrict = allDistricts.find(d => 
+    norm.split(" ").some(word => word === d.toLowerCase())
+  );
+
   return {
     original: raw,
     normalized: norm,
@@ -313,6 +319,7 @@ function expandQuery(raw: string): ExpandedQuery {
     specialties: [...specialties],
     keywords: [...keywords],
     didYouMean,
+    district: detectedDistrict,
   };
 }
 
@@ -384,7 +391,16 @@ function scoreDoctor(doctor: Doctor, eq: ExpandedQuery): number {
       }
     }
 
-    keywordScore = Math.max(nameMatch, specialtyMatch, clinicMatch, bioMatch, diseaseMatch);
+    let locationMatch = 0;
+    const docDistrict = normalize(doctor.location);
+    const docLocality = normalize(doctor.locality);
+    if (docDistrict && (norm.includes(docDistrict) || docDistrict.includes(norm))) {
+      locationMatch = 40;
+    } else if (docLocality && norm.includes(docLocality)) {
+      locationMatch = 30;
+    }
+
+    keywordScore = Math.max(nameMatch, specialtyMatch, clinicMatch, bioMatch, diseaseMatch, locationMatch);
   }
 
   // 2. Availability (Max 25 pts)
@@ -424,7 +440,17 @@ function scoreDoctor(doctor: Doctor, eq: ExpandedQuery): number {
     earlyPartnerScore = 5;
   }
 
-  return keywordScore + availabilityScore + distanceScore + profileCompleteScore + earlyPartnerScore;
+  // 6. District Boost (Max 50 pts)
+  let districtBoost = 0;
+  if (eq.district) {
+    const targetDistrict = normalize(eq.district);
+    const docDistrict = normalize(doctor.location);
+    if (docDistrict && docDistrict === targetDistrict) {
+      districtBoost = 50;
+    }
+  }
+
+  return keywordScore + availabilityScore + distanceScore + profileCompleteScore + earlyPartnerScore + districtBoost;
 }
 
 // ── 7. MAIN SEARCH FUNCTION ──────────────────────────────────────────────────

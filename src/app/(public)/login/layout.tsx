@@ -8,7 +8,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Sign In — JivniCare",
-  description: "Sign in to access JivniCare — healthcare made simple for Bihar.",
+  description: "Sign in to access JivniCare — healthcare made simple.",
 };
 
 export default function AuthLayout({

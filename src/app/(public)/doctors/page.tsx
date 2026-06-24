@@ -224,7 +224,7 @@ function DoctorListingContent() {
               <div className="flex items-center justify-between">
                 <div>
                   <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-                    {query ? `Search results for "${query}"` : effectiveDistrict ? `Doctors in ${effectiveDistrict}` : 'Showing doctors across Bihar'}
+                    {query ? `Search results for "${query}"` : effectiveDistrict ? `Doctors in ${effectiveDistrict}` : 'Showing all verified doctors'}
                   </h1>
                   <p className="text-sm font-medium text-slate-500 mt-0.5" aria-live="polite" aria-atomic="true">
                     {isLoading ? 'Searching...' : isError ? 'Search unavailable' : `${searchResult?.results?.length ?? 0} specialists found`}
@@ -290,7 +290,7 @@ function DoctorListingContent() {
                   </div>
                   {!effectiveDistrict && !latitude && (
                     <div className="md:ml-auto mt-2 md:mt-0 text-[11px] font-bold text-red-700 bg-red-100/50 px-2 py-1 rounded-md border border-red-200/50">
-                      Location not set: Showing all emergency facilities in Bihar.
+                      Location not set: Showing all active emergency facilities.
                     </div>
                   )}
                   {latitude && longitude && (

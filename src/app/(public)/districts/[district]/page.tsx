@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { MapPin, Stethoscope, Building2, Zap, ChevronRight, Star, ArrowRight, ShieldCheck } from "lucide-react";
-import { BIHAR_DISTRICTS, generateDistrictMetadata, capitalizeDistrict, HEALTHCARE_SPECIALTIES } from "@/lib/seo/metadata";
+import { ACTIVE_LAUNCH_DISTRICTS, FUTURE_EXPANSION_DISTRICTS, generateDistrictMetadata, capitalizeDistrict, HEALTHCARE_SPECIALTIES, BIHAR_DISTRICTS } from "@/lib/seo/metadata";
 import { districtHealthcareSchema, breadcrumbSchema, faqSchema } from "@/lib/seo/jsonld";
 import { JsonLd } from "@/components/seo/JsonLd";
 import prisma from "@/lib/db/prisma";
@@ -11,18 +11,22 @@ import { getCanonicalImageUrl } from "@/lib/imageHelper";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 
+import { ComingSoonLeadForm } from "@/components/shared/ComingSoonLeadForm";
+
 interface PageProps {
   params: Promise<{ district: string }>;
 }
 
 export async function generateStaticParams() {
-  return BIHAR_DISTRICTS.map((d) => ({ district: d.toLowerCase().replace(/\s+/g, "-") }));
+  const all = [...ACTIVE_LAUNCH_DISTRICTS, ...FUTURE_EXPANSION_DISTRICTS];
+  return all.map((d) => ({ district: d.toLowerCase().replace(/\s+/g, "-") }));
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { district } = await params;
+  const all = [...ACTIVE_LAUNCH_DISTRICTS, ...FUTURE_EXPANSION_DISTRICTS];
 
-  if (!BIHAR_DISTRICTS.some((d) => d.toLowerCase().replace(/\s+/g, "-") === district)) {
+  if (!all.some((d) => d.toLowerCase().replace(/\s+/g, "-") === district)) {
     return { title: "District Not Found | JivniCare" };
   }
 
@@ -32,13 +36,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function DistrictPage({ params }: PageProps) {
   const { district } = await params;
   const districtKey = district.toLowerCase().replace(/\s+/g, "-");
-  const isValidDistrict = BIHAR_DISTRICTS.some(
+  const all = [...ACTIVE_LAUNCH_DISTRICTS, ...FUTURE_EXPANSION_DISTRICTS];
+  const isValidDistrict = all.some(
     (d) => d.toLowerCase().replace(/\s+/g, "-") === districtKey
   );
 
   if (!isValidDistrict) notFound();
 
   const districtFormatted = capitalizeDistrict(district);
+  const isDeoghar = districtKey === "deoghar";
+  const state = isDeoghar ? "Jharkhand" : "Bihar";
+  const isActive = ACTIVE_LAUNCH_DISTRICTS.some(d => d.toLowerCase() === districtKey);
 
   // Fetch Real Doctors for this District
   let dbDoctors: any[] = [];
@@ -59,12 +67,12 @@ export default async function DistrictPage({ params }: PageProps) {
 
   const faqs = [
     {
-      question: `How do I book a doctor in ${districtFormatted}, Bihar?`,
+      question: `How do I book a doctor in ${districtFormatted}, ${state}?`,
       answer: `Search for doctors on JivniCare, filter by ${districtFormatted}, choose your specialist, and book an appointment instantly — online or in-clinic.`,
     },
     {
       question: `Which are the best hospitals in ${districtFormatted}?`,
-      answer: `JivniCare lists verified and top-rated hospitals in ${districtFormatted}, Bihar. Use our hospital search to find the right facility for your needs.`,
+      answer: `JivniCare lists verified and top-rated hospitals in ${districtFormatted}, ${state}. Use our hospital search to find the right facility for your needs.`,
     },
     {
       question: `Is there emergency healthcare available in ${districtFormatted}?`,
@@ -84,7 +92,7 @@ export default async function DistrictPage({ params }: PageProps) {
         schema={breadcrumbSchema([
           { name: "Home", url: "https://jivnicare.in" },
           { name: "Districts", url: "https://jivnicare.in/districts" },
-          { name: `${districtFormatted}, Bihar`, url: `https://jivnicare.in/districts/${districtKey}` },
+          { name: `${districtFormatted}, ${state}`, url: `https://jivnicare.in/districts/${districtKey}` },
         ])}
       />
       <JsonLd schema={faqSchema(faqs)} />
@@ -106,7 +114,16 @@ export default async function DistrictPage({ params }: PageProps) {
               <MapPin className="w-6 h-6 text-white" />
             </div>
             <div>
-              <p className="text-white/70 text-sm font-medium uppercase tracking-wider mb-1">Bihar Healthcare</p>
+              <div className="flex flex-wrap items-center gap-2 mb-1">
+                <span className="text-white/70 text-xs font-bold uppercase tracking-wider">{state} Healthcare</span>
+                <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md border ${
+                  isActive 
+                    ? "bg-emerald-500/20 border-emerald-400/30 text-emerald-300" 
+                    : "bg-amber-500/20 border-amber-400/30 text-amber-300"
+                }`}>
+                  {isActive ? "Active Launch Location" : "Upcoming Expansion"}
+                </span>
+              </div>
               <h1 className="text-3xl md:text-5xl font-black leading-tight">
                 Doctors &amp; Hospitals in{" "}
                 <span className="text-[#7EC8E3]">{districtFormatted}</span>
@@ -116,7 +133,7 @@ export default async function DistrictPage({ params }: PageProps) {
 
           <p className="text-white/80 text-base md:text-lg max-w-2xl mt-4 leading-relaxed">
             Find verified doctors, top-rated hospitals, and emergency services in{" "}
-            {districtFormatted}, Bihar. Book same-day appointments on JivniCare.
+            {districtFormatted}, {state}. Book same-day appointments on JivniCare.
           </p>
 
           <div className="flex flex-wrap gap-3 mt-8">
@@ -236,6 +253,10 @@ export default async function DistrictPage({ params }: PageProps) {
                 </p>
               </Link>
             ))}
+          </div>
+        ) : !isActive ? (
+          <div className="max-w-md mx-auto">
+            <ComingSoonLeadForm defaultCity={districtFormatted} source="coming-soon-location" />
           </div>
         ) : (
           <div className="bg-white rounded-3xl border border-slate-100 p-12 text-center">

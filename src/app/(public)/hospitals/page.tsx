@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { SITE_CONFIG } from "@/lib/seo/metadata";
 
 export const metadata = {
-  title: "Hospitals in Bihar",
+  title: "Hospitals & Clinics | JivniCare",
   description: "Hospital listings on JivniCare are coming soon. Find verified doctors and clinics available today.",
 };
 
@@ -18,7 +18,7 @@ export default function HospitalsPage() {
         Hospital Directory — Coming Soon
       </h1>
       <p className="text-slate-600 font-medium leading-relaxed mb-8">
-        {SITE_CONFIG.name} is focused on verified doctor discovery and live OPD queues across Bihar.
+        {SITE_CONFIG.name} is focused on verified doctor discovery and live OPD queues across active regions.
         Full hospital listings will be added in a future release.
       </p>
       <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -29,7 +29,7 @@ export default function HospitalsPage() {
         </Link>
         <Link href="/districts">
           <Button variant="outline" className="h-12 px-8 rounded-xl font-bold">
-            Browse by District
+            Browse Locations
           </Button>
         </Link>
       </div>

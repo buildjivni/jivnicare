@@ -4,7 +4,7 @@ export const BIHAR_DISTRICTS = [
   "Katihar", "Khagaria", "Kishanganj", "Lakhisarai", "Madhepura", "Madhubani", "Munger",
   "Muzaffarpur", "Nalanda", "Nawada", "Patna", "Purnia", "Rohtas", "Saharsa",
   "Samastipur", "Saran", "Sheikhpura", "Sheohar", "Sitamarhi", "Siwan", "Supaul",
-  "Vaishali", "West Champaran"
+  "Vaishali", "West Champaran", "Deoghar"
 ];
 
 export function normalizeDistrict(d: string | null | undefined): string {

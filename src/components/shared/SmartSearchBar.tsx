@@ -441,7 +441,7 @@ export function SmartSearchBar({
             <div>
               <div className="flex items-center gap-1.5 px-5 pt-3.5 pb-2">
                 <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Trending in Bihar</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Trending Searches</p>
               </div>
               <div className="flex flex-wrap gap-2 px-5 pb-4">
                 {trending.map((t, i) => (
@@ -484,7 +484,7 @@ export function SmartSearchBar({
                 <MapPin className="w-3.5 h-3.5 text-primary" />
                 <p className="text-xs text-primary font-semibold">Searching in {district}</p>
               </div>
-              <p className="text-[10px] text-slate-400">Bihar, India</p>
+              <p className="text-[10px] text-slate-400">{district.toLowerCase() === "deoghar" ? "Jharkhand, India" : "Bihar, India"}</p>
             </div>
           )}
 

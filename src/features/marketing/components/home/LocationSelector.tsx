@@ -122,6 +122,34 @@ export function LocationSelector({
           )}
         </button>
       </div>
+      <div className="flex flex-wrap items-center gap-1.5 mt-2 ml-1 text-xs">
+        <span className="text-slate-400 font-medium">Active Locations:</span>
+        <button
+          type="button"
+          onClick={() => {
+            setInputValue("Jamui");
+            setDistrict("Jamui");
+            if (onSelectAction) onSelectAction();
+            else if (window.location.pathname === "/") router.push("/doctors");
+          }}
+          className="text-primary font-bold hover:underline"
+        >
+          Jamui
+        </button>
+        <span className="text-slate-300 font-medium">•</span>
+        <button
+          type="button"
+          onClick={() => {
+            setInputValue("Deoghar");
+            setDistrict("Deoghar");
+            if (onSelectAction) onSelectAction();
+            else if (window.location.pathname === "/") router.push("/doctors");
+          }}
+          className="text-primary font-bold hover:underline"
+        >
+          Deoghar
+        </button>
+      </div>
     </div>
   );
 }

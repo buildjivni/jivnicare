@@ -6,3 +6,4 @@ export * from './DoctorCard';
 export * from './NotificationPanel';
 export * from './PublicGuard';
 export * from './RoleGuard';
+export * from './ComingSoonLeadForm';

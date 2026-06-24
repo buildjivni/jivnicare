@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
   title: "About JivniCare — Our Mission & Story",
-  description: "JivniCare is Bihar's emerging digital healthcare platform on a mission to make quality, verified healthcare accessible to every family across Patna and beyond.",
+  description: "JivniCare is an emerging digital healthcare platform on a mission to make quality, verified healthcare accessible to every family in our active and expanding locations.",
 };
 
 const MISSION_PILLARS = [
@@ -30,8 +30,8 @@ const MISSION_PILLARS = [
   {
     icon: <MapPin className="w-6 h-6" />,
     color: "text-blue-500 bg-blue-50 border-blue-100",
-    title: "Bihar First",
-    desc: "We are building for Bihar's reality — low-bandwidth devices, tier-2 city needs, and the unique trust dynamics of our healthcare ecosystem. This isn't a copy-paste startup.",
+    title: "Regional Focus",
+    desc: "We are building for the local realities of our launch geographies — low-bandwidth devices, tier-2 city needs, and the unique trust dynamics of our healthcare ecosystem. This isn't a copy-paste startup.",
   },
 ];
 
@@ -54,7 +54,7 @@ export default function AboutPage() {
             <Heart className="w-4 h-4 text-rose-400" /> Our Story
           </div>
           <h1 className="text-4xl md:text-6xl font-black tracking-tight leading-tight mb-8">
-            We're building Bihar's <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">healthcare future.</span>
+            We're building a smarter <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">healthcare future.</span>
           </h1>
           <p className="text-lg md:text-xl text-slate-300 leading-relaxed max-w-2xl mx-auto font-medium">
             JivniCare was born from a simple frustration: why should a family in Muzaffarpur have to wait 3 hours to see a doctor when the right tool can fix this in minutes?
@@ -83,11 +83,11 @@ export default function AboutPage() {
             <Eye className="w-3.5 h-3.5" /> The Problem We Saw
           </div>
           <h2 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight mb-8">
-            Bihar has world-class doctors. The system fails to connect them with patients.
+            Our regions have world-class doctors. The system fails to connect them with patients.
           </h2>
           <div className="space-y-6 text-slate-600 leading-relaxed text-lg">
             <p>
-              In Bihar's tier-2 cities, a routine specialist appointment can mean an entire day lost. Patients travel for hours, wait in crowded OPDs, and often leave without the care they needed — simply because they couldn't reach the right doctor at the right time.
+              In tier-2 and tier-3 cities, a routine specialist appointment can mean an entire day lost. Patients travel for hours, wait in crowded OPDs, and often leave without the care they needed — simply because they couldn't reach the right doctor at the right time.
             </p>
             <p>
               Meanwhile, talented, qualified doctors struggle to build their digital reputation. Their only channel for new patients is word-of-mouth and physical footfall — both unpredictable and hard to scale.
@@ -132,7 +132,7 @@ export default function AboutPage() {
             <Stethoscope className="w-3.5 h-3.5 text-emerald-400" /> Digital OPD Vision
           </div>
           <h2 className="text-3xl md:text-5xl font-black tracking-tight mb-8">
-            Imagine a Bihar where <span className="text-emerald-400">no patient ever waits unnecessarily.</span>
+            Imagine a future where <span className="text-emerald-400">no patient ever waits unnecessarily.</span>
           </h2>
           <p className="text-lg text-slate-300 leading-relaxed max-w-2xl mx-auto mb-12 font-medium">
             That's our vision. A digitally connected healthcare system where smart queues, live token tracking, and verified doctor profiles mean that patients get care faster, and doctors practice more efficiently. JivniCare is the infrastructure that makes this real — one verified appointment at a time.

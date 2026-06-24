@@ -401,7 +401,7 @@ function PatientLoginContent() {
                 <span className="text-2xl font-black text-white leading-none">
                    <span style={{ color: '#4A90D9' }}>Jivni</span><span style={{ color: '#4A8C4A' }}>Care</span>
                 </span>
-                <span className="text-[10px] font-bold text-blue-200 uppercase tracking-widest mt-1">BIHAR HEALTHCARE</span>
+                <span className="text-[10px] font-bold text-blue-200 uppercase tracking-widest mt-1">OPD NETWORK</span>
               </div>
             </Link>
 
@@ -411,7 +411,7 @@ function PatientLoginContent() {
                 <span className="text-blue-200">Fully Protected.</span>
               </h1>
               <p className="text-blue-100 font-medium text-lg max-w-xs leading-relaxed opacity-90">
-                Bihar mein doctors ko instantly book karein
+                Doctors ko instantly book karein
               </p>
             </div>
           </div>
@@ -427,7 +427,7 @@ function PatientLoginContent() {
               </div>
             </div>
             <p className="text-[11px] text-blue-300/80 font-bold uppercase tracking-widest text-center">
-              Bihar ka Trusted Healthcare Platform
+              Aapka Trusted Healthcare Platform
             </p>
           </div>
         </div>

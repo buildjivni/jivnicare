@@ -15,6 +15,8 @@ export const SITE_CONFIG = {
   themeColor: "#205E98",
 };
 
+export const ACTIVE_LAUNCH_DISTRICTS = ["Jamui", "Deoghar"];
+
 export const BIHAR_DISTRICTS = [
   "Patna", "Gaya", "Muzaffarpur", "Bhagalpur", "Darbhanga",
   "Purnia", "Araria", "Arwal", "Aurangabad", "Banka",
@@ -25,6 +27,8 @@ export const BIHAR_DISTRICTS = [
   "Samastipur", "Saran", "Sheikhpura", "Sheohar", "Sitamarhi",
   "Siwan", "Supaul", "Vaishali", "West Champaran", "East Champaran",
 ];
+
+export const FUTURE_EXPANSION_DISTRICTS = BIHAR_DISTRICTS.filter(d => d !== "Jamui");
 
 export const HEALTHCARE_SPECIALTIES = [
   "General Physician",
@@ -185,8 +189,9 @@ function generateHospitalMetadata(hospital: {
 // ── District Metadata ────────────────────────────────────────
 export function generateDistrictMetadata(district: string) {
   const districtFormatted = capitalizeDistrict(district);
-  const title = `Doctors & Hospitals in ${districtFormatted}, Bihar | JivniCare`;
-  const description = `Find verified doctors, hospitals, and emergency services in ${districtFormatted}, Bihar. Book same-day appointments with top specialists on JivniCare.`;
+  const state = district.toLowerCase() === "deoghar" ? "Jharkhand" : "Bihar";
+  const title = `Doctors & Hospitals in ${districtFormatted}, ${state} | JivniCare`;
+  const description = `Find verified doctors, hospitals, and emergency services in ${districtFormatted}, ${state}. Book same-day appointments with top specialists on JivniCare.`;
 
   return {
     title,

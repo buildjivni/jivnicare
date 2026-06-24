@@ -213,7 +213,7 @@ export function Header() {
                        <span className="text-[20px] md:text-2xl font-bold tracking-tight leading-none">
                           <span style={{ color: '#4A90D9' }}>Jivni</span><span style={{ color: '#4A8C4A' }}>Care</span>
                        </span>
-                       <span className="text-[9px] md:text-[10px] font-bold text-slate-500 uppercase tracking-[0.25em] pl-0.5 mt-0.5">Bihar</span>
+                       <span className="text-[9px] md:text-[10px] font-bold text-slate-500 uppercase tracking-[0.25em] pl-0.5 mt-0.5">OPD Network</span>
                     </div>
                   </Link>
                 </div>
