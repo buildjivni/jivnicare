@@ -6,9 +6,6 @@ import withPWA from 'next-pwa';
 import { withSentryConfig } from "@sentry/nextjs";
 
 const requiredEnvVars = ["JWT_SECRET", "DATABASE_URL"];
-if (process.env.NODE_ENV === "production") {
-  requiredEnvVars.push("ENCRYPTION_KEY", "HMAC_SECRET_KEY");
-}
 const missingEnvVars = requiredEnvVars.filter((envVar) => !process.env[envVar]);
 
 if (missingEnvVars.length > 0) {

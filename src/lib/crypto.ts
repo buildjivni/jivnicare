@@ -5,8 +5,10 @@ const isProd = process.env.NODE_ENV === 'production';
 const ENCRYPTION_KEY_RAW = process.env.ENCRYPTION_KEY;
 const HMAC_SECRET_KEY_RAW = process.env.HMAC_SECRET_KEY;
 
-if (isProd && (!ENCRYPTION_KEY_RAW || !HMAC_SECRET_KEY_RAW)) {
-  throw new Error("CRITICAL SECURITY ERROR: ENCRYPTION_KEY and HMAC_SECRET_KEY must be set in production!");
+function assertKeys() {
+  if (isProd && (!ENCRYPTION_KEY_RAW || !HMAC_SECRET_KEY_RAW)) {
+    throw new Error("CRITICAL SECURITY ERROR: ENCRYPTION_KEY and HMAC_SECRET_KEY must be set in production!");
+  }
 }
 
 if (!isProd && (!ENCRYPTION_KEY_RAW || !HMAC_SECRET_KEY_RAW)) {
@@ -28,6 +30,7 @@ const IV_LENGTH = 12;
  */
 export function encrypt(text: string): string {
   if (!text) return "";
+  assertKeys();
   const iv = crypto.randomBytes(IV_LENGTH);
   const cipher = crypto.createCipheriv(ALGORITHM, encryptionKey, iv);
   let encrypted = cipher.update(text, 'utf8', 'hex');
@@ -42,6 +45,7 @@ export function encrypt(text: string): string {
  */
 export function decrypt(ciphertext: string): string {
   if (!ciphertext) return "";
+  assertKeys();
   try {
     const parts = ciphertext.split(':');
     if (parts.length !== 3) {
@@ -67,6 +71,7 @@ export function decrypt(ciphertext: string): string {
  */
 export function hashPhone(phone: string): string {
   if (!phone) return "";
+  assertKeys();
   const normalized = phone.replace(/\D/g, "").slice(-10);
   if (normalized.length !== 10) {
     return crypto.createHmac('sha256', hmacKey).update(phone).digest('hex');
