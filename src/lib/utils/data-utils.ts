@@ -67,14 +67,22 @@ function getAvailability(
 }
 
 export function mapPrismaDoctorToUI(doc: any): UIDoctor {
-  const clinicOps = doc.clinicOperations ?? null;
-  const todayQueue = Array.isArray(doc.dailyQueues)
-    ? doc.dailyQueues[0] ?? null
+  const isEmergencyOnly = !doc.isAcceptingBookings && doc.isEmergencyEnabled;
+  const isClosedToday = doc.availabilityStatus === "OFFLINE";
+  const clinicOps = {
+    isClosedToday,
+    status: isEmergencyOnly ? "EMERGENCY_ONLY" : (isClosedToday ? "CLINIC_CLOSED" : doc.availabilityStatus),
+    pauseOnlineBooking: !doc.isAcceptingBookings,
+    emergencySlots: doc.emergencyCapacity || 0,
+  };
+
+  const todayQueue = Array.isArray(doc.queues)
+    ? doc.queues[0] ?? null
     : null;
   const avgConsultTime = doc.averageConsultationMinutes || doc.averageConsultationTime || 15;
 
   // Queue state — V1 use isOnline
-  const isQueueActive = doc.isOnline;
+  const isQueueActive = doc.isEmergencyEnabled || doc.availabilityStatus === "AVAILABLE";
 
   // Availability from schedule (India TZ aware)
   const { isAvailableToday, available, nextSlotTime } = getAvailability(
@@ -84,7 +92,7 @@ export function mapPrismaDoctorToUI(doc: any): UIDoctor {
 
   let availableSlots = 0;
   if (isAvailableToday && todayQueue) {
-    availableSlots = Math.max(0, (doc.dailyTokenLimit || 50) - (todayQueue.issuedTokensCount || 0));
+    availableSlots = Math.max(0, (doc.dailyTokenLimit || 50) - (todayQueue.totalTokens || 0));
   } else if (isAvailableToday && !todayQueue) {
     availableSlots = doc.dailyTokenLimit || 50; 
   }
@@ -104,8 +112,8 @@ export function mapPrismaDoctorToUI(doc: any): UIDoctor {
   const feeFormatted = `₹${rawFee}`;
 
   // Images — never inject fake external URLs
-  const profileImage = doc.profileImage || "";
-  const clinicImage = doc.clinicImage || (doc.clinic as any)?.bannerImageUrl || "";
+  const profileImage = doc.profilePhoto || doc.profileImage || "";
+  const clinicImage = doc.clinicImage || "";
 
   // Languages — handle both string CSV and array
   const rawLangs = doc.languages;
@@ -122,15 +130,15 @@ export function mapPrismaDoctorToUI(doc: any): UIDoctor {
     id: doc.id,
     name: doc.name,
     slug: doc.slug || doc.id,
-    specialty: doc.speciality || doc.specialties?.[0]?.name || "General Physician",
-    clinic: doc.hospitalName || doc.clinic?.name || "",
-    location: doc.city || doc.district || doc.clinic?.city || "",
+    specialty: doc.speciality || "General Physician",
+    clinic: doc.clinicName || doc.hospitalName || "",
+    location: doc.clinicCity || doc.city || doc.district || "",
     locality: doc.locality || "",
     landmark: doc.landmark || undefined,
-    fullAddress: doc.fullAddress || doc.clinic?.address || undefined,
-    pincode: doc.pincode || undefined,
-    latitude: doc.latitude ?? null,
-    longitude: doc.longitude ?? null,
+    fullAddress: doc.clinicAddress || undefined,
+    pincode: doc.clinicPincode || doc.pincode || undefined,
+    latitude: doc.clinicLatitude ?? doc.latitude ?? null,
+    longitude: doc.clinicLongitude ?? doc.longitude ?? null,
     // Distance only set when provided by geo-aware search; never hardcoded
     distance: doc.distance || undefined,
     distanceStr: (doc as any).distanceStr || undefined,
@@ -138,7 +146,7 @@ export function mapPrismaDoctorToUI(doc: any): UIDoctor {
     rating: 0, // No rating in V1
     reviewCount: 0, // No reviews in V1
     reviews: 0,
-    totalConsultations: doc.jivnicarePatientsServed || 0,
+    totalConsultations: doc.jivnicarePatientsServed || doc.lifetimePatientsServed || 0,
     lifetimePatientsDeclaration: doc.lifetimePatientsDeclaration || undefined,
     experience: String(doc.experienceYears || doc.experience || 0),
     fee: feeFormatted,
@@ -157,9 +165,9 @@ export function mapPrismaDoctorToUI(doc: any): UIDoctor {
     nextAvailable: nextSlotTime || (isAvailableToday ? "Today" : ""),
     verifiedBadgeLabel:
       doc.verifiedBadgeLabel ||
-      ((doc.experienceYears || doc.experience) >= 10 ? "Experienced Partner" : "Verified Doctor"),
+      ((doc.experienceYears || doc.experience || 0) >= 10 ? "Experienced Partner" : "Verified Doctor"),
     tags: [
-      doc.speciality || (doc.specialties?.[0]?.name),
+      doc.speciality,
     ].filter(Boolean),
     diseases: doc.diseases || [],
     procedures: doc.procedures || [],
@@ -170,10 +178,10 @@ export function mapPrismaDoctorToUI(doc: any): UIDoctor {
       (doc.education ? doc.education.split(",")[0].trim() : ""),
     averageConsultationTime: avgConsultTime,
     languages,
-    partnerTier: doc.platformPricing?.partnerTier || undefined,
+    partnerTier: doc.platformPricing?.partnerTier || doc.partnerTier || undefined,
     gender: doc.gender || undefined,
-    emergencyAvailable: doc.emergencyAvailable || doc.isEmergencySupported || false,
-    isEmergencySupported: doc.isEmergencySupported || doc.emergencyAvailable || false,
+    emergencyAvailable: doc.isEmergencyEnabled || false,
+    isEmergencySupported: doc.isEmergencyEnabled || false,
     updatedAt: doc.updatedAt,
   };
 }

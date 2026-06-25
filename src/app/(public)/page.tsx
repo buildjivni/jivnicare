@@ -16,10 +16,11 @@ async function getVerifiedDoctors() {
     const dbDoctors = await prisma.doctor.findMany({
       where: {
         verificationStatus: 'VERIFIED',
-        isOnline: true,
+        availabilityStatus: 'AVAILABLE',
       },
       include: {
-        clinic: true,
+        queues: true,
+        platformPricing: true,
       },
       take: 6, // Show max 6 on homepage
       orderBy: {

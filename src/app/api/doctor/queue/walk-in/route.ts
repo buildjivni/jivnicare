@@ -51,18 +51,6 @@ export async function POST(request: Request) {
 
       try {
         const result = await prisma.$transaction(async (tx) => {
-          // Create WalkInEntry
-          const walkInEntry = await tx.walkInEntry.create({
-            data: {
-              patientName: patientName || "Patient",
-              phoneNumber: phoneNumber || null,
-              symptoms: symptoms || null,
-              age: age || null,
-              gender: gender || null,
-              isEmergency: isEmergency || false,
-            }
-          });
-
           // Use Service for sequential token issuing and capacity checks.
           const { token: newQueueToken } = await QueueService.issueToken(
             doctor.id, 
@@ -73,13 +61,19 @@ export async function POST(request: Request) {
             tx
           );
           
-          // Update WalkInEntry if needed (audit tags removed in V1)
-          
-          // Link the walk-in entry to the token
+          const notesObj = {
+            symptoms: symptoms || null,
+            age: age || null,
+            gender: gender || null,
+          };
+
+          // Link the walk-in details to the token
           const updatedToken = await tx.queueToken.update({
             where: { id: newQueueToken.id },
-            data: { walkInEntryId: walkInEntry.id },
-            include: { walkInEntry: true }
+            data: {
+              walkinAddress: location || null,
+              internalNotes: JSON.stringify(notesObj)
+            }
           });
 
           return updatedToken;

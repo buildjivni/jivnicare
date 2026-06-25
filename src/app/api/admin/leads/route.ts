@@ -18,24 +18,46 @@ export async function GET() {
       return apiError("Forbidden: Admin access only", 403);
     }
 
-    // Fetch all leads ordered by recency
-    const leads = await prisma.leadCapture.findMany({
+    // Fetch all doctor requests ordered by recency
+    const requests = await prisma.doctorRequest.findMany({
       orderBy: { createdAt: "desc" },
       take: 100, // Pilot scale — top 100 most recent
-      select: {
-        id: true,
-        phone: true,
-        name: true,
-        city: true,
-        roleInterest: true,
-        specialty: true,
-        clinicName: true,
-        source: true,
-        lastStepCompleted: true,
-        status: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+    });
+
+    const leads = requests.map((req) => {
+      let city = req.district;
+      let roleInterest = "DOCTOR"; // default
+      let source = "";
+      let lastStepCompleted = "";
+
+      if (req.notes) {
+        try {
+          const parsed = JSON.parse(req.notes);
+          if (parsed && typeof parsed === "object") {
+            city = parsed.city || city;
+            roleInterest = parsed.roleInterest || roleInterest;
+            source = parsed.source || source;
+            lastStepCompleted = parsed.lastStepCompleted || lastStepCompleted;
+          }
+        } catch (e) {
+          // not json, leave as default
+        }
+      }
+
+      return {
+        id: req.id,
+        phone: req.phone,
+        name: req.name,
+        city,
+        roleInterest,
+        specialty: req.speciality,
+        clinicName: "",
+        source,
+        lastStepCompleted,
+        status: req.contacted ? "CONTACTED" : "PENDING",
+        createdAt: req.createdAt,
+        updatedAt: req.createdAt,
+      };
     });
 
     // Aggregate specialty demand

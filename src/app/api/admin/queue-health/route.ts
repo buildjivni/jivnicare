@@ -52,12 +52,9 @@ export async function GET(request: NextRequest) {
             select: {
               id: true,
               name: true,
-              hospitalName: true,
               clinicName: true,
-              district: true,
-              averageConsultationTime: true,
+              clinicDistrict: true,
               verificationStatus: true,
-              clinicOperations: true,
               weeklySchedule: true,
               user: { select: { name: true } }
             }
@@ -65,7 +62,7 @@ export async function GET(request: NextRequest) {
           _count: {
             select: {
               tokens: {
-                where: { status: "WAITING" }
+                where: { status: "BOOKED" }
               }
             }
           }
@@ -81,19 +78,19 @@ export async function GET(request: NextRequest) {
 
     const formattedQueues = activeQueues.map(q => {
       // PR-ADMIN-1: Admin must consume QueueService truth only
-      const dynamicStatus = QueueService.calculateDynamicStatus({ doctor: q.doctor, todayQueue: q });
+      const dynamicStatus = QueueService.calculateDynamicStatus({ doctor: q.doctor as any, todayQueue: q as any });
       const waiting = q._count.tokens;
       
       return {
         id: q.id,
-        clinicName: q.doctor.clinicName || q.doctor.hospitalName || "N/A",
+        clinicName: q.doctor.clinicName || "N/A",
         doctorName: q.doctor.name,
         verificationStatus: q.doctor.verificationStatus,
-        servingToken: dynamicStatus.activeTokenNumber || q.currentActiveToken,
+        servingToken: dynamicStatus.activeTokenNumber || q.currentToken,
         waitingCount: waiting,
         estimatedWait: dynamicStatus.estimatedWaitMinutes || 0,
         status: dynamicStatus.status, 
-        district: q.doctor.district,
+        district: q.doctor.clinicDistrict,
         isHighLoad: waiting > 15
       };
     });

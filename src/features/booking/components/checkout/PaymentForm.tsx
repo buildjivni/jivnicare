@@ -6,6 +6,7 @@ import { ArrowRight, ShieldCheck, Activity, CheckCircle2 } from "lucide-react";
 import { PatientDetailsForm } from "./PatientDetailsForm";
 import { InlineOTPWidget } from "./InlineOTPWidget";
 import { trackOperationalEvent } from "@/lib/telemetry/client";
+import { motion, AnimatePresence } from "framer-motion";
 
 import { useBookingStore } from "@/features/booking/store/useBookingStore";
 import { useAuthStore } from "@/features/auth/store/useAuthStore";
@@ -20,6 +21,7 @@ import { Button } from "@/components/ui/button";
  *   AUTHED_FORM   → authenticated patient; show PatientDetailsForm + submit button
  *   PROCESSING    → API call in-flight
  *   SUCCESS       → redirect to /confirmation
+ *   QUEUE_FULL    → slots are full for today
  */
 type FormState = "HYDRATING" | "AUTH_GATE" | "AUTHED_FORM" | "PROCESSING" | "SUCCESS" | "QUEUE_FULL";
 
@@ -32,6 +34,12 @@ export function PaymentForm() {
   const patientDetails = useBookingStore((state) => state.patientDetails);
   const selectedDoctor = useBookingStore((state) => state.selectedDoctor);
   const { isAuthenticated, _hasHydrated } = useAuthStore();
+
+  // Emergency Queue States
+  const [isEmergencyQueue, setIsEmergencyQueue] = useState(false);
+  const [emergencyFee, setEmergencyFee] = useState<number | null>(null);
+  const [isEmergencyConfirmed, setIsEmergencyConfirmed] = useState(false);
+  const [showEmergencyModal, setShowEmergencyModal] = useState(false);
 
   const hasIntentRef = useRef(false);
   const isSuccessRef = useRef(false);
@@ -55,6 +63,23 @@ export function PaymentForm() {
       setFormState("AUTH_GATE");
     }
   }, [_hasHydrated, isAuthenticated]);
+
+  // Fetch clinic status to detect Emergency Only queue
+  useEffect(() => {
+    if (selectedDoctor?.slug) {
+      fetch(`/api/public/clinic-status/${selectedDoctor.slug}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && data.status === "EMERGENCY_ONLY") {
+            setIsEmergencyQueue(true);
+            if (data.emergencyFee) {
+              setEmergencyFee(data.emergencyFee);
+            }
+          }
+        })
+        .catch((err) => console.error("Error fetching clinic status:", err));
+    }
+  }, [selectedDoctor]);
 
   // Track checkout started (once, after hydration resolves)
   useEffect(() => {
@@ -99,6 +124,24 @@ export function PaymentForm() {
       return;
     }
 
+    if (isEmergencyQueue && !isEmergencyConfirmed) {
+      setShowEmergencyModal(true);
+      return;
+    }
+
+    await executeBooking(isEmergencyQueue);
+  };
+
+  const confirmEmergencyAndBook = async () => {
+    setIsEmergencyConfirmed(true);
+    setShowEmergencyModal(false);
+    // Trigger the actual booking call after a tiny transition delay
+    setTimeout(() => {
+      executeBooking(true);
+    }, 100);
+  };
+
+  const executeBooking = async (isEmergency: boolean) => {
     setFormState("PROCESSING");
 
     try {
@@ -109,6 +152,7 @@ export function PaymentForm() {
           doctorId: selectedDoctor?.id,
           location: patientDetails.location,
           requestId: requestIdRef.current,
+          isEmergency,
         }),
       });
 
@@ -289,6 +333,77 @@ export function PaymentForm() {
           </div>
         </form>
       </section>
+
+      {/* ── Emergency Confirmation Modal (Flow P3.1) ── */}
+      <AnimatePresence>
+        {showEmergencyModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowEmergencyModal(false)}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+            />
+            
+            {/* Modal Card */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ type: "spring", duration: 0.3 }}
+              className="relative w-full max-w-md bg-white rounded-3xl p-6 md:p-8 shadow-2xl border border-slate-100 text-center space-y-6 z-10"
+            >
+              <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto text-red-600 animate-pulse border border-red-100">
+                <Activity className="w-8 h-8" />
+              </div>
+              
+              <div className="space-y-2">
+                <h3 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">
+                  🚨 Emergency Booking Alert
+                </h3>
+                <p className="text-xs font-bold text-red-700 bg-red-50 px-3 py-1 rounded-full w-fit mx-auto">
+                  Clinic is in Emergency-Only Mode
+                </p>
+              </div>
+
+              <div className="text-slate-600 text-sm leading-relaxed space-y-3 px-1">
+                <p>
+                  Yeh doctor abhi sirf <span className="font-extrabold text-slate-900">emergency cases</span> ke liye available hain. Regular bookings temporarily closed hain.
+                </p>
+                <p className="text-xs text-slate-500">
+                  This clinic is operating in emergency-only mode. Regular appointments are temporarily paused.
+                </p>
+              </div>
+
+              <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl">
+                <span className="text-slate-500 font-bold text-xs uppercase tracking-wider block">Emergency Consultation Fee</span>
+                <span className="text-3xl font-black text-slate-900 block mt-1">
+                  ₹{emergencyFee || (selectedDoctor?.fee ? parseInt(selectedDoctor.fee.replace(/\D/g, "")) : 0)}
+                </span>
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mt-1">Paid directly at clinic counter</span>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                <Button
+                  onClick={() => setShowEmergencyModal(false)}
+                  variant="outline"
+                  className="w-full h-12 rounded-xl font-bold border-slate-200 text-slate-700 hover:bg-slate-50 order-2 sm:order-1"
+                >
+                  Go Back / Cancel
+                </Button>
+                <Button
+                  onClick={confirmEmergencyAndBook}
+                  className="w-full h-12 rounded-xl font-black bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-600/25 order-1 sm:order-2"
+                >
+                  Yes, Confirm &amp; Book
+                </Button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

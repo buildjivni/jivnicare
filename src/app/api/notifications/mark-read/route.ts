@@ -28,8 +28,8 @@ export async function PATCH(request: Request) {
     const { ids } = body;
 
     const updateData = {
-      isRead: true,
       readAt: new Date(),
+      status: "READ" as any,
     };
 
     if (Array.isArray(ids) && ids.length > 0) {
@@ -44,7 +44,7 @@ export async function PATCH(request: Request) {
       await prisma.notification.updateMany({
         where: {
           userId: payload.id,
-          isRead: false,
+          readAt: null,
         },
         data: updateData,
       });

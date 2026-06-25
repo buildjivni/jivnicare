@@ -6,6 +6,7 @@ import { cookies } from "next/headers";
 import { checkRateLimit } from "@/lib/infrastructure/rate-limit";
 import { logger } from "@/lib/infrastructure/logger";
 import { incrementTelemetryCounter } from "@/lib/telemetry/redis";
+import { decrypt } from "@/lib/crypto";
 
 export async function POST(request: Request) {
   try {
@@ -59,16 +60,21 @@ export async function POST(request: Request) {
       return apiError("Aapko iska access nahi hai", 403);
     }
 
-    const now = new Date();
+    // Fetch doctor name for notification context
+    const doctor = await prisma.doctor.findUnique({
+      where: { id: queueToken.queue.doctorId },
+      select: { name: true }
+    });
+    const doctorName = doctor?.name || "Doctor";
 
-    // Atomic transaction: lock token, check state, cancel, free capacity
-    const result = await prisma.$transaction(async (tx) => {
+    // Atomic transaction: cancel token and mark top 2 waitlisted entries as notified
+    const cancelResult = await prisma.$transaction(async (tx) => {
       // 1. Fetch token strictly inside transaction
       const tokenInTx = await tx.queueToken.findUnique({
         where: { id: tokenId },
       });
 
-      if (!tokenInTx || tokenInTx.status !== "WAITING") {
+      if (!tokenInTx || tokenInTx.status !== "BOOKED") {
         throw new Error("INVALID_STATE");
       }
 
@@ -77,25 +83,74 @@ export async function POST(request: Request) {
         where: { id: tokenId },
         data: {
           status: "CANCELLED",
+          cancelledAt: new Date(),
         },
       });
 
-      // 3. Atomically increment cancelledCount to free capacity
-      await tx.dailyQueue.update({
-        where: { id: queueToken.queueId },
-        data: { cancelledCount: { increment: 1 } },
+      // 3. Find top 2 waitlisted patients (notified: false) in FIFO order
+      const waitlistEntries = await tx.waitlist.findMany({
+        where: {
+          doctorId: queueToken.queue.doctorId,
+          notified: false
+        },
+        orderBy: { createdAt: "asc" },
+        take: 2,
+        include: { user: { select: { phone: true } } }
       });
 
-      return true;
+      // 4. Mark waitlisted patients as notified in the DB
+      const notifiedEntries = [];
+      for (const entry of waitlistEntries) {
+        const updatedEntry = await tx.waitlist.update({
+          where: { id: entry.id },
+          data: {
+            notified: true,
+            notifiedAt: new Date()
+          }
+        });
+        notifiedEntries.push({
+          ...updatedEntry,
+          user: entry.user
+        });
+      }
+
+      return { notifiedEntries };
     });
+
+    // Send transactional claiming SMS to notified waitlist patients (outside transaction)
+    if (cancelResult.notifiedEntries.length > 0) {
+      try {
+        const { sendTransactionalSms } = require("@/lib/sms");
+        const broadcastMessage = `A slot just opened with Dr. ${doctorName}. Tap to book it now — first to confirm gets it.`;
+
+        for (const entry of cancelResult.notifiedEntries) {
+          let phone = entry.phone;
+          if (entry.user?.phone) {
+            try {
+              phone = decrypt(entry.user.phone);
+            } catch (e) {
+              phone = entry.phone;
+            }
+          }
+          if (phone) {
+            await sendTransactionalSms(phone, broadcastMessage).catch((err: any) => {
+              logger.error({ category: "CANCELLATION", message: "Failed to send waitlist claiming SMS alert", error: err });
+            });
+          }
+        }
+      } catch (smsErr) {
+        logger.error({ category: "CANCELLATION", message: "SMS dispatch failed during waitlist broadcast", error: smsErr });
+      }
+    }
 
     logger.info({
       category: "CANCELLATION",
-      message: "Patient cancelled booking",
+      message: "Patient cancelled booking and waitlist was broadcasted",
       metadata: {
         tokenId,
         tokenNumber: queueToken.tokenNumber,
         queueId: queueToken.queueId,
+        notifiedCount: cancelResult.notifiedEntries.length,
       },
     });
 

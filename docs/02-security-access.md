@@ -451,7 +451,7 @@ export function verifyAdminTOTP(token: string): boolean {
 }
 
 ### Admin Authentication (V1 — Single Admin)
-- The platform uses a single admin account in V1. There is no private/unguessable login URL; the Admin logs in at `/admin/login` using Google OAuth.
+- The platform uses a single admin account in V1. The Admin logs in at `/admin/jvc-26` using Google OAuth.
 - **First-Time Login Setup:** Upon first successful Google OAuth login, the admin is presented with a TOTP setup page displaying a QR code (and manual secret key fallback). After the admin enters the 6-digit TOTP code to confirm, the setup generates 10 backup codes (shown exactly once, requiring explicit "I've saved these, continue" acknowledgment).
 - **Subsequent Logins:** Requires either the Google OAuth login + a 6-digit TOTP code, or a single-use backup code.
 - **Backup Code Recovery:** Admin can use one unused backup code to authenticate. Login via backup code marks that code as used (`used = true`). The admin can regenerate backup codes in settings, which requires re-entering the current active TOTP code.

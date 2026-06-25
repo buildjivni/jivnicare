@@ -3,54 +3,72 @@ import React from "react";
 export function Logo({ 
   size = 40, 
   variant = "full", 
-  className 
+  className,
+  src
 }: { 
   size?: number; 
   variant?: "full" | "primary" | "wordmark" | "icon" | "circle"; 
   className?: string;
+  src?: string;
 }) {
-  if (variant === "wordmark") {
+  // If an external src is provided explicitly, render it directly
+  if (src) {
     return (
-      <span className={`font-black tracking-tight ${className || ""}`}>
-        <span className="text-[#205E98]">Jivni</span>
-        <span className="text-[#4A8C4A]">Care</span>
-      </span>
+      <img
+        src={src}
+        alt="JivniCare Logo"
+        className={className}
+        style={!className ? { height: size, width: "auto" } : undefined}
+      />
     );
   }
 
-  // Otherwise return the premium SVG icon
-  return (
-    <svg
-      viewBox="0 0 100 100"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className={className}
-      style={!className ? { width: size, height: size } : undefined}
-    >
-      <defs>
-        <linearGradient id="logoBlue" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#4A90D9" />
-          <stop offset="100%" stopColor="#205E98" />
-        </linearGradient>
-        <linearGradient id="logoGreen" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#8ED98E" />
-          <stop offset="100%" stopColor="#4A8C4A" />
-        </linearGradient>
-      </defs>
-      {/* Background Rounded Shield/Square */}
-      <rect x="2" y="2" width="96" height="96" rx="28" fill="url(#logoBlue)" />
-      
-      {/* White Medical Cross */}
-      <rect x="42" y="22" width="16" height="56" rx="8" fill="white" />
-      <rect x="22" y="42" width="56" height="16" rx="8" fill="white" />
-      
-      {/* Overlapping Leaf/Heart accent on the top right */}
-      <path
-        d="M55 25 C75 25, 78 40, 55 65 C45 55, 48 30, 55 25 Z"
-        fill="url(#logoGreen)"
-        opacity="0.9"
+  if (variant === "wordmark") {
+    return (
+      <img
+        src="/brand/logo-horizontal-wordmark.png"
+        alt="JivniCare"
+        className={className}
+        style={!className ? { height: size, width: "auto" } : undefined}
       />
-    </svg>
+    );
+  }
+
+  if (variant === "icon") {
+    return (
+      <img
+        src="/brand/logo-icon-master-transparent.png"
+        alt="JivniCare Icon"
+        className={className}
+        style={!className ? { height: size, width: size } : undefined}
+      />
+    );
+  }
+
+  if (variant === "circle") {
+    return (
+      <div 
+        className="rounded-full bg-white flex items-center justify-center shadow-sm border border-slate-100"
+        style={{ width: size, height: size }}
+      >
+        <img
+          src="/brand/logo-icon-master-transparent.png"
+          alt="JivniCare Icon"
+          className="object-contain"
+          style={{ height: size * 0.7, width: size * 0.7 }}
+        />
+      </div>
+    );
+  }
+
+  // Default / variant === "full" / variant === "primary"
+  // This renders the horizontal icon + text combined logo provided by the client.
+  return (
+    <img
+      src="/brand/logo-full.png"
+      alt="JivniCare Logo"
+      className={className}
+      style={!className ? { height: size, width: "auto" } : undefined}
+    />
   );
 }
-

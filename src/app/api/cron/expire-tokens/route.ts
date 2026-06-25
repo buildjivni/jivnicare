@@ -14,7 +14,7 @@ export async function GET(request: Request) {
 
     const result = await prisma.queueToken.updateMany({
       where: {
-        status: { in: ['WAITING', 'PAYMENT_PENDING', 'READY'] },
+        status: { in: ['BOOKED', 'PAYMENT_PENDING', 'READY'] as any },
         bookedAt: { lt: cutoffDate }
       },
       data: { status: 'EXPIRED' }

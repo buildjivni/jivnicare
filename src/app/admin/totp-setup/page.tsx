@@ -118,7 +118,7 @@ export default function AdminTOTPSetup() {
               </div>
               <h2 className="text-2xl font-black text-slate-900">Setup Failed</h2>
               <p className="text-slate-500 font-medium mt-2 mb-6">{error}</p>
-              <Button onClick={() => router.push("/admin/login")} className="rounded-xl">
+              <Button onClick={() => router.push("/admin/jvc-26")} className="rounded-xl">
                 Return to Login
               </Button>
             </motion.div>

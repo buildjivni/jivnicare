@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowRight, ShieldCheck, Star, Users } from "lucide-react";
+import { ArrowRight, ShieldCheck, Star, Users, Stethoscope, Building2 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/features/marketing/components/brand/Logo";
@@ -14,61 +14,104 @@ const TRUST_STATS = [
 
 export function CtaBannerSection() {
   return (
-    <section className="py-12 md:py-20 relative overflow-hidden bg-white">
-      <div className="absolute inset-0 bg-gradient-to-b from-slate-50 to-white pointer-events-none" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(32,94,152,0.04)_0%,_transparent_70%)] pointer-events-none" />
-
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.6 }}
-        className="container mx-auto px-4 max-w-4xl text-center relative z-10"
-      >
-        <div className="inline-block mb-6">
-          <Logo className="h-10 w-10 md:h-14 md:w-14" />
+    <section className="py-16 md:py-24 relative overflow-hidden bg-white border-t border-slate-100">
+      <div className="absolute inset-0 bg-gradient-to-b from-slate-50/50 to-white pointer-events-none" />
+      
+      <div className="container mx-auto px-4 max-w-6xl relative z-10 space-y-12">
+        
+        {/* Eyebrow centered logo placement */}
+        <div className="flex justify-center">
+          <div className="bg-slate-50 border border-slate-100 rounded-3xl p-3 shadow-sm select-none">
+            <Logo variant="full" className="h-10 md:h-12 w-auto" />
+          </div>
         </div>
 
-        {/* Social proof bar */}
-        <div className="flex flex-wrap items-center justify-center gap-4 md:gap-8 mb-8">
-          {TRUST_STATS.map((s, i) => (
-            <div key={i} className="flex items-center gap-2">
-              {s.icon}
-              <span className="font-black text-slate-900 text-sm">{s.value}</span>
-              <span className="text-slate-400 text-xs font-medium">{s.label}</span>
+        {/* Separated Audience Cards */}
+        <div className="grid md:grid-cols-2 gap-8 items-stretch">
+          
+          {/* Card 1: Patients Block */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="bg-white border border-slate-100/80 rounded-[2rem] p-8 shadow-soft flex flex-col justify-between space-y-8"
+          >
+            <div className="space-y-4">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-primary text-xs font-black uppercase tracking-wider">
+                <Stethoscope className="w-3.5 h-3.5" /> For Patients
+              </span>
+              <h3 className="text-3xl font-black text-slate-900 tracking-tight leading-tight">
+                Ready to See a <br />Doctor Today?
+              </h3>
+              <p className="text-slate-500 font-medium text-sm md:text-base leading-relaxed">
+                Find local verified doctors, view real-time availability, and book your appointment instantly. Free, fast, and secure.
+              </p>
             </div>
-          ))}
+
+            <div className="space-y-6 pt-4 border-t border-slate-50">
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Link href="/doctors" className="flex-1">
+                  <Button className="w-full h-12 rounded-xl bg-primary hover:bg-primary/95 text-white font-bold text-sm shadow-md transition-all">
+                    Find a Doctor Now
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </Link>
+                <Link href="/doctors" className="flex-1">
+                  <Button variant="outline" className="w-full h-12 rounded-xl border-slate-200 text-slate-700 font-bold text-sm hover:bg-slate-50">
+                    Browse Specialties
+                  </Button>
+                </Link>
+              </div>
+
+              {/* Patient Trust strip */}
+              <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
+                {TRUST_STATS.map((s, i) => (
+                  <div key={i} className="flex items-center gap-1.5">
+                    {s.icon}
+                    <span className="font-extrabold text-slate-800 text-xs">{s.value}</span>
+                    <span className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">{s.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Card 2: Clinics / Doctors Block */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="bg-[#F4F9F4] border border-emerald-100/50 rounded-[2rem] p-8 shadow-soft flex flex-col justify-between space-y-8"
+          >
+            <div className="space-y-4">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-100 text-[#4A8C4A] text-xs font-black uppercase tracking-wider">
+                <Building2 className="w-3.5 h-3.5" /> For Clinics & Doctors
+              </span>
+              <h3 className="text-3xl font-black text-slate-900 tracking-tight leading-tight">
+                Are You a Clinic? <br />Digitize Your OPD.
+              </h3>
+              <p className="text-slate-500 font-medium text-sm md:text-base leading-relaxed">
+                Reduce patient wait times, manage live walk-in queues from a tablet, digitize prescriptions, and grow your clinic's patient bookings.
+              </p>
+            </div>
+
+            <div className="space-y-4 pt-4 border-t border-emerald-100/40">
+              <Link href="/partners/onboard" className="block w-full">
+                <Button className="w-full h-12 rounded-xl bg-[#4A8C4A] hover:bg-[#3c723c] text-white font-bold text-sm shadow-md transition-all">
+                  Partner With Us
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </Link>
+              <p className="text-center text-[11px] text-slate-400 font-bold uppercase tracking-wider">
+                Zero setup cost for early partners
+              </p>
+            </div>
+          </motion.div>
+
         </div>
-
-        <h2 className="text-4xl md:text-6xl font-black tracking-tight mb-5 text-slate-900 leading-[1.1]">
-          Ready to See a Doctor<br className="hidden md:block" /> Today?
-        </h2>
-        <p className="text-lg md:text-xl text-slate-600 mb-3 max-w-2xl mx-auto leading-relaxed">
-          Join the <strong className="text-slate-900">growing network</strong> of patients who trust <Logo variant="wordmark" className="font-bold" />. Book in under 60 seconds — free, fast, and fully secure.
-        </p>
-        <p className="text-sm text-emerald-700 font-bold mb-10 flex items-center justify-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse inline-block" />
-          Doctors accepting appointments right now
-        </p>
-
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Link href="/doctors">
-            <Button className="h-14 px-10 rounded-full bg-primary hover:bg-primary/90 text-white font-bold text-lg shadow-xl shadow-primary/20 transition-all hover:scale-105 group w-full sm:w-auto">
-              Find a Doctor Now
-              <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-            </Button>
-          </Link>
-          <Link href="/#specialties">
-            <Button variant="outline" className="h-14 px-8 rounded-full border-slate-200 text-slate-700 font-bold text-base hover:bg-slate-50 w-full sm:w-auto">
-              Browse by Specialty
-            </Button>
-          </Link>
-        </div>
-
-        <p className="mt-6 text-xs text-slate-400 font-medium">
-          No registration required for browsing. Book with OTP verification in 60 seconds.
-        </p>
-      </motion.div>
+      </div>
     </section>
   );
 }

@@ -1,19 +1,21 @@
 import prisma from '@/lib/db/prisma'
 import { resolveClinicLogicalDay } from '@/lib/utils/clinic-utils'
+import { QueueStatus } from '@prisma/client'
 
 /**
- * Gets today's DailyQueue for a doctor+clinic.
+ * Gets today's DailyQueue for a doctor.
  * Creates it if it does not exist yet.
  * Logical day = 4:00 AM IST
  */
-export async function getOrCreateDailyQueue(doctorId: string, clinicId?: string) {
-  const logicalDate = getLogicalDate()
+export async function getOrCreateDailyQueue(doctorId: string, type: "REGULAR" | "EMERGENCY" = "REGULAR") {
+  const today = resolveClinicLogicalDay()
 
   // Try to find existing
   let queue = await prisma.dailyQueue.findFirst({
     where: {
       doctorId,
-      logicalDate,
+      date: today,
+      type,
     },
   })
 
@@ -21,19 +23,19 @@ export async function getOrCreateDailyQueue(doctorId: string, clinicId?: string)
   if (!queue) {
     const doctor = await prisma.doctor.findUnique({
       where: { id: doctorId },
-      select: { dailyTokenLimit: true, clinicId: true },
+      select: { dailyTokenLimit: true, emergencyCapacity: true },
     })
 
     queue = await prisma.dailyQueue.create({
       data: {
         doctorId,
-        clinicId: clinicId || doctor?.clinicId || null,
-        logicalDate,
-        currentTokenNumber: 0,
-        currentServingToken: 0,
-        dailyLimit: doctor?.dailyTokenLimit ?? 50,
-        status: 'OPEN',
-        date: resolveClinicLogicalDay(), // Align with logical day
+        date: today,
+        type,
+        totalTokens: 0,
+        currentToken: 0,
+        dailyLimit: doctor?.dailyTokenLimit ?? 30,
+        emergencySlots: doctor?.emergencyCapacity ?? 0,
+        status: QueueStatus.ACTIVE,
       },
     })
   }
@@ -49,4 +51,5 @@ export function getLogicalDate(): string {
   const logicalDate = resolveClinicLogicalDay()
   return logicalDate.toISOString().split('T')[0] // YYYY-MM-DD
 }
+
 

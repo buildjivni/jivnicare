@@ -33,9 +33,11 @@ export async function GET(
     const doctor = await prisma.doctor.findUnique({
       where: { id: doctorId },
       select: {
-        averageConsultationTime: true,
-        clinicOperations: true,
         weeklySchedule: true,
+        isAcceptingBookings: true,
+        isEmergencyEnabled: true,
+        emergencyCapacity: true,
+        availabilityStatus: true,
       }
     });
 
@@ -45,23 +47,23 @@ export async function GET(
 
     const queue = await prisma.dailyQueue.findUnique({
       where: {
-        doctorId_date: {
+        doctorId_date_type: {
           doctorId,
           date: today,
+          type: "REGULAR",
         }
       },
       include: {
         _count: {
           select: {
             tokens: {
-              where: { status: "WAITING" }
+              where: { status: "BOOKED" }
             }
           }
         }
       }
     });
 
-    const currentActiveToken = queue?.currentActiveToken || 0;
     const totalInQueue = queue?._count.tokens || 0;
     
     // Import dynamically so it's isolated
@@ -71,17 +73,20 @@ export async function GET(
     const currentDayName = today.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
     const daySchedule: any = (doctor.weeklySchedule as any)?.[currentDayName] || { isOpen: true };
 
+    const isEmergencyOnly = !doctor.isAcceptingBookings && doctor.isEmergencyEnabled;
+    const isClosedToday = doctor.availabilityStatus === "OFFLINE" || !daySchedule.isOpen;
+
     const queueData = {
       currentToken: dynamicData.activeTokenNumber || 0,
       totalInQueue,
       estimatedWait: dynamicData.estimatedWaitMinutes || 0,
-      avgTime: doctor.averageConsultationTime || 15,
+      avgTime: 15,
       status: dynamicData.status,
       message: dynamicData.message,
       isBookableOnline: dynamicData.isBookableOnline,
-      isClosedToday: doctor.clinicOperations?.isClosedToday || !daySchedule.isOpen,
-      pauseOnlineBooking: doctor.clinicOperations?.pauseOnlineBooking || false,
-      emergencySlots: doctor.clinicOperations?.emergencySlots || 0,
+      isClosedToday,
+      pauseOnlineBooking: !doctor.isAcceptingBookings,
+      emergencySlots: doctor.emergencyCapacity || 0,
       timings: daySchedule.isOpen ? `${daySchedule.start} - ${daySchedule.end}` : "Closed Today",
     };
 

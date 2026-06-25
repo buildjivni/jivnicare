@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/db/prisma';
 import { requireSession } from "@/lib/auth/session";
+import { Role, AuditAction, AvailabilityStatus } from "@prisma/client";
 
 export async function PUT(request: NextRequest) {
   try {
@@ -17,8 +18,7 @@ export async function PUT(request: NextRequest) {
     } = body;
 
     const doctor = await prisma.doctor.findUnique({
-      where: { userId: payload.id },
-      include: { clinicOperations: true }
+      where: { userId: payload.id }
     });
 
     if (!doctor) {
@@ -26,56 +26,62 @@ export async function PUT(request: NextRequest) {
     }
 
     const doctorUpdates: any = {};
-    const opsUpdates: any = {};
     const sensitiveLogs: any[] = [];
-
-    // isOnline
-    if (typeof isOnline === 'boolean') {
-      doctorUpdates.isOnline = isOnline;
-    }
 
     // name
     if (name !== undefined && name !== doctor.name) {
       sensitiveLogs.push({
-        doctorId: doctor.id,
-        field: 'name',
-        oldValue: doctor.name || null,
-        newValue: String(name),
-        status: 'PENDING'
+        userId: payload.id,
+        role: Role.DOCTOR,
+        action: AuditAction.UPDATE,
+        entityType: "Doctor",
+        entityId: doctor.id,
+        oldValue: { name: doctor.name || null },
+        newValue: { name: String(name) },
       });
+      doctorUpdates.name = name;
     }
 
-    // regNumber (medicalRegistrationNumber)
-    if (regNumber !== undefined && regNumber !== doctor.medicalRegistrationNumber) {
+    // regNumber (registrationNumber)
+    if (regNumber !== undefined && regNumber !== doctor.registrationNumber) {
       sensitiveLogs.push({
-        doctorId: doctor.id,
-        field: 'medicalRegistrationNumber',
-        oldValue: doctor.medicalRegistrationNumber || null,
-        newValue: String(regNumber),
-        status: 'PENDING'
+        userId: payload.id,
+        role: Role.DOCTOR,
+        action: AuditAction.UPDATE,
+        entityType: "Doctor",
+        entityId: doctor.id,
+        oldValue: { registrationNumber: doctor.registrationNumber || null },
+        newValue: { registrationNumber: String(regNumber) },
       });
+      doctorUpdates.registrationNumber = String(regNumber);
     }
 
-    // hospitalName
-    if (hospitalName !== undefined && hospitalName !== doctor.hospitalName) {
+    // hospitalName -> clinicName
+    if (hospitalName !== undefined && hospitalName !== doctor.clinicName) {
       sensitiveLogs.push({
-        doctorId: doctor.id,
-        field: 'hospitalName',
-        oldValue: doctor.hospitalName || null,
-        newValue: String(hospitalName),
-        status: 'PENDING'
+        userId: payload.id,
+        role: Role.DOCTOR,
+        action: AuditAction.UPDATE,
+        entityType: "Doctor",
+        entityId: doctor.id,
+        oldValue: { clinicName: doctor.clinicName || null },
+        newValue: { clinicName: String(hospitalName) },
       });
+      doctorUpdates.clinicName = String(hospitalName);
     }
 
-    // district
-    if (district !== undefined && district !== doctor.district) {
+    // district -> clinicDistrict
+    if (district !== undefined && district !== doctor.clinicDistrict) {
       sensitiveLogs.push({
-        doctorId: doctor.id,
-        field: 'district',
-        oldValue: doctor.district || null,
-        newValue: String(district),
-        status: 'PENDING'
+        userId: payload.id,
+        role: Role.DOCTOR,
+        action: AuditAction.UPDATE,
+        entityType: "Doctor",
+        entityId: doctor.id,
+        oldValue: { clinicDistrict: doctor.clinicDistrict || null },
+        newValue: { clinicDistrict: String(district) },
       });
+      doctorUpdates.clinicDistrict = String(district);
     }
 
     // bio
@@ -83,77 +89,67 @@ export async function PUT(request: NextRequest) {
       doctorUpdates.bio = bio;
     }
 
-    // city
+    // city -> clinicCity
     if (city !== undefined) {
-      doctorUpdates.city = city;
+      doctorUpdates.clinicCity = city;
     }
 
-    // address
+    // address -> clinicAddress
     if (address !== undefined) {
-      doctorUpdates.fullAddress = address;
+      doctorUpdates.clinicAddress = address;
     }
 
-    // experience
+    // experience -> experienceYears
     if (experience !== undefined) {
       const exp = parseInt(String(experience), 10) || 0;
-      doctorUpdates.experience = exp;
       doctorUpdates.experienceYears = exp;
     }
 
-    // fee
+    // fee -> consultationFee
     if (fee !== undefined) {
       const parsedFee = parseInt(String(fee), 10) || 0;
-      doctorUpdates.fee = parsedFee;
       doctorUpdates.consultationFee = parsedFee;
     }
 
     // qualifications
     if (qualifications !== undefined) {
-      doctorUpdates.qualifications = qualifications;
-      doctorUpdates.qualification = qualifications;
+      doctorUpdates.qualifications = Array.isArray(qualifications) 
+        ? qualifications 
+        : typeof qualifications === "string" 
+        ? [qualifications] 
+        : [];
     }
 
     // lifetimePatientsDeclaration
     if (lifetimePatientsDeclaration !== undefined) {
-      doctorUpdates.lifetimePatientsDeclaration = lifetimePatientsDeclaration !== null ? String(lifetimePatientsDeclaration) : null;
+      doctorUpdates.lifetimePatientsServed = parseInt(String(lifetimePatientsDeclaration), 10) || 0;
     }
 
-    // averageConsultationTime
-    if (averageConsultationTime !== undefined) {
-      const avgTime = parseInt(String(averageConsultationTime), 10) || 15;
-      doctorUpdates.averageConsultationTime = avgTime;
-      doctorUpdates.averageConsultationMinutes = avgTime;
-    }
-
-    // maxCapacity
+    // maxCapacity -> dailyTokenLimit
     if (maxCapacity !== undefined) {
-      const cap = parseInt(String(maxCapacity), 10) || 40;
-      doctorUpdates.dailyTokenLimit = cap;
-      opsUpdates.walkInLimit = Math.floor(cap / 2);
-      opsUpdates.onlineLimit = cap - opsUpdates.walkInLimit;
+      doctorUpdates.dailyTokenLimit = parseInt(String(maxCapacity), 10) || 30;
     }
 
-    // emergencySlots
+    // emergencySlots -> emergencyCapacity
     if (emergencySlots !== undefined) {
-      opsUpdates.emergencySlots = parseInt(String(emergencySlots), 10) || 0;
+      const emgCap = parseInt(String(emergencySlots), 10) || 0;
+      doctorUpdates.emergencyCapacity = emgCap;
+      doctorUpdates.isEmergencyEnabled = emgCap > 0;
     }
 
-    // status / ClinicOperations status settings
+    // status / availabilityStatus / isAcceptingBookings settings
     if (status) {
-      let statusExpiresAt: Date | null = null;
-      if (status === "SHORT_BREAK" && breakDuration) {
-        statusExpiresAt = new Date(Date.now() + parseInt(String(breakDuration), 10) * 60 * 1000);
-      }
-      opsUpdates.status = status;
-      opsUpdates.statusReason = statusReason || null;
-      opsUpdates.statusExpiresAt = statusExpiresAt;
-      opsUpdates.isClosedToday = status === "CLINIC_CLOSED";
-      opsUpdates.pauseOnlineBooking = status === "SHORT_BREAK" || status === "CLINIC_CLOSED" || status === "EMERGENCY_ONLY";
-
       if (status === "CLINIC_CLOSED") {
-        doctorUpdates.isOnline = false;
+        doctorUpdates.availabilityStatus = AvailabilityStatus.OFFLINE;
+        doctorUpdates.isAcceptingBookings = false;
+      } else if (status === "SHORT_BREAK") {
+        doctorUpdates.availabilityStatus = AvailabilityStatus.ON_BREAK;
+        doctorUpdates.isAcceptingBookings = false;
+      } else if (status === "EMERGENCY_ONLY") {
+        doctorUpdates.isAcceptingBookings = false;
       } else if (status === "AVAILABLE") {
-        doctorUpdates.isOnline = true;
+        doctorUpdates.availabilityStatus = AvailabilityStatus.AVAILABLE;
+        doctorUpdates.isAcceptingBookings = true;
       }
     }
 
@@ -167,34 +163,15 @@ export async function PUT(request: NextRequest) {
         });
       }
 
-      // 2. Update ClinicOperations
-      if (Object.keys(opsUpdates).length > 0 || status) {
-        await tx.clinicOperations.upsert({
-          where: { doctorId: doctor.id },
-          update: opsUpdates,
-          create: {
-            doctorId: doctor.id,
-            status: opsUpdates.status || "AVAILABLE",
-            statusReason: opsUpdates.statusReason || null,
-            statusExpiresAt: opsUpdates.statusExpiresAt || null,
-            isClosedToday: opsUpdates.isClosedToday || false,
-            pauseOnlineBooking: opsUpdates.pauseOnlineBooking || false,
-            walkInLimit: opsUpdates.walkInLimit || 10,
-            onlineLimit: opsUpdates.onlineLimit || 20,
-            emergencySlots: opsUpdates.emergencySlots || 0,
-          }
-        });
-      }
-
-      // 3. Sensitive Logs
+      // 2. Sensitive Logs -> AuditLog
       if (sensitiveLogs.length > 0) {
-        await tx.profileUpdateLog.createMany({
+        await tx.auditLog.createMany({
           data: sensitiveLogs
         });
       }
     });
 
-    // 4. Trigger proactive notifications to active patients for breaks/closures
+    // 3. Trigger proactive notifications to active patients for breaks/closures
     if (status === "SHORT_BREAK" || status === "CLINIC_CLOSED") {
       try {
         const { triggerClinicStatusAlerts } = require("@/lib/notifications");
@@ -206,7 +183,11 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({ success: true, isOnline, status }, { status: 200 });
+    return NextResponse.json({ 
+      success: true, 
+      isOnline: doctorUpdates.availabilityStatus === AvailabilityStatus.AVAILABLE, 
+      status 
+    }, { status: 200 });
   } catch (error) {
     console.error('[DOCTOR_SETTINGS_ERROR]', error);
     return NextResponse.json({ error: 'Update failed' }, { status: 500 });

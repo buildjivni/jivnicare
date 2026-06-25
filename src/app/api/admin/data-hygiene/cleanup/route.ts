@@ -3,7 +3,6 @@ import { NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/jwt';
 import { cookies } from 'next/headers';
 import prisma from '@/lib/db/prisma';
-import { logOperationalError } from '@/lib/telemetry/redis';
 
 export async function POST(request: Request) {
   try {
@@ -27,16 +26,14 @@ export async function POST(request: Request) {
 
     switch (target) {
       case "EXPIRED_OTPS": {
-        const result = await prisma.otpToken.deleteMany({
-          where: { expiresAt: { lt: now } }
-        });
-        deletedCount = result.count;
-        message = `Deleted ${deletedCount} expired OTP records.`;
+        deletedCount = 0;
+        message = `Simulated delete. 0 OTP records deleted (not stored in database).`;
         break;
       }
       case "EXPIRED_RATE_LIMITS": {
-        const result = await prisma.rateLimit.deleteMany({
-          where: { resetTime: { lt: now } }
+        const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        const result = await prisma.rateLimitLog.deleteMany({
+          where: { windowStart: { lt: oneDayAgo } }
         });
         deletedCount = result.count;
         message = `Deleted ${deletedCount} expired Rate Limit records.`;
@@ -44,8 +41,8 @@ export async function POST(request: Request) {
       }
       case "ORPHAN_WALK_INS": {
         const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        const result = await prisma.walkInEntry.deleteMany({
-          where: { createdAt: { lt: thirtyDaysAgo } }
+        const result = await prisma.queueToken.deleteMany({
+          where: { type: 'WALKIN', bookedAt: { lt: thirtyDaysAgo } }
         });
         deletedCount = result.count;
         message = `Deleted ${deletedCount} walk-in records older than 30 days.`;
@@ -53,8 +50,6 @@ export async function POST(request: Request) {
       }
       case "HISTORICAL_QUEUES": {
         const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
-        // Note: QueueToken deletes cascade from DailyQueue automatically if set up correctly, 
-        // but it's safer to delete tokens first or rely on MongoDB constraints
         const tokenResult = await prisma.queueToken.deleteMany({
           where: { queue: { date: { lt: ninetyDaysAgo } } }
         });
@@ -69,18 +64,11 @@ export async function POST(request: Request) {
         return apiError("Invalid target specified.", 400);
     }
 
-    // Log the cleanup action operationally for security/audit trail
-    await logOperationalError({
-      type: 'DATA_HYGIENE_CLEANUP',
-      route: '/api/admin/data-hygiene/cleanup',
-      category: 'ADMIN_ACTION',
-      timestamp: new Date().toISOString(),
-      // Adding target/count as part of category text just to fit existing schema
-    }).catch(() => {});
-
-    return apiResponse({success: true,
+    return apiResponse({
+      success: true,
       message,
-      deletedCount});
+      deletedCount
+    });
 
   } catch (error) {
     console.error("Data Hygiene Cleanup Error:", error);

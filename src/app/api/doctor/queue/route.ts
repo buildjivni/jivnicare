@@ -48,20 +48,19 @@ export async function GET(request: Request) {
     const tokens = await prisma.queueToken.findMany({
       where: { queueId: dailyQueue.id },
       include: {
-        patient: { select: { name: true, phone: true } },
-        walkInEntry: true
+        patient: { select: { name: true, phone: true } }
       },
       orderBy: { tokenNumber: 'asc' }
     });
 
     // V1 Stats
     const stats = {
-      total: dailyQueue.currentTokenNumber,
-      waiting: tokens.filter(t => t.status === "WAITING" || t.status === "READY").length,
-      emergencyWaiting: tokens.filter(t => t.tokenType === "EMERGENCY" && t.status === "WAITING").length,
+      total: dailyQueue.totalTokens,
+      waiting: tokens.filter(t => t.status === "BOOKED" || t.status === "READY").length,
+      emergencyWaiting: dailyQueue.type === "EMERGENCY" ? tokens.filter(t => t.status === "BOOKED" || t.status === "READY").length : 0,
       completed: tokens.filter(t => t.status === "COMPLETED").length,
-      currentActive: dailyQueue.currentServingToken,
-      avgWaitTime: tokens.filter(t => t.status === "WAITING").length * (doctor.averageConsultationMinutes || 10),
+      currentActive: dailyQueue.currentToken,
+      avgWaitTime: tokens.filter(t => t.status === "BOOKED").length * 10,
     };
 
     const decryptedTokens = tokens.map(t => ({
@@ -75,7 +74,7 @@ export async function GET(request: Request) {
       tokens: decryptedTokens,
       stats,
       doctor: {
-        averageConsultationTime: doctor.averageConsultationMinutes
+        averageConsultationTime: 10
       }
     });
   } catch (error: any) {

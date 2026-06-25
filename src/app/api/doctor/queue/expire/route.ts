@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
       const updated = await tx.queueToken.updateMany({
         where: {
           queueId,
-          status: "WAITING",
+          status: { in: ["BOOKED", "READY"] },
         },
         data: {
           status: "EXPIRED",

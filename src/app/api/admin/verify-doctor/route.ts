@@ -6,6 +6,7 @@ import { verifyToken } from '@/lib/jwt';
 import { cookies } from 'next/headers';
 import { verifyDoctorSchema, formatZodError } from '@/lib/validators/validations';
 import { generateSequentialDoctorCode } from '@/lib/utils/slug';
+import { AuditAction } from '@prisma/client';
 
 export async function POST(request: Request) {
   try {
@@ -48,34 +49,32 @@ export async function POST(request: Request) {
     // 4. Update Doctor Status atomically
     const result = await prisma.$transaction(async (tx) => {
       // Allocate code atomically on verification if missing
-      let doctorCode = doctor.doctorCode;
-      if (status === 'VERIFIED' && !doctorCode) {
+      let doctorCode = doctor.internalDoctorId;
+      if (status === 'VERIFIED' && (!doctorCode || doctorCode === "Pending")) {
         doctorCode = await generateSequentialDoctorCode(tx);
       }
 
-      const updatedDoctor = await tx.doctor.update({
+      await tx.doctor.update({
         where: { id: doctorId },
         data: {
           verificationStatus: status as any,
-          doctorCode,
+          internalDoctorId: doctorCode,
+          verificationNote: adminNotes || null,
+          canShowOnPublic: status === 'VERIFIED', // Safeguard: only show on public search if verified
         }
       });
 
       // Send the appropriate notification depending on the new status
-      let notificationType: any = "ADMIN_ALERT";
       let title = "Verification Update";
       let message = "Your clinical verification request has been updated.";
 
       if (status === "VERIFIED") {
-        notificationType = "VERIFICATION_APPROVED";
         title = "Account Verified Successfully";
         message = "Congratulations! Your professional doctor profile has been successfully verified by our clinical audit team.";
       } else if (status === "REJECTED") {
-        notificationType = "VERIFICATION_REJECTED";
         title = "Profile Verification Declined";
         message = `Your registration request has been declined. Reason: ${adminNotes || "Information could not be verified."}`;
       } else if (status === "SUSPENDED") {
-        notificationType = "VERIFICATION_SUSPENDED";
         title = "Account Temporarily Suspended";
         message = `Your professional doctor account has been suspended. Reason: ${adminNotes || "Under administrative review."}`;
       }
@@ -83,23 +82,23 @@ export async function POST(request: Request) {
       await tx.notification.create({
         data: {
           userId: doctor.userId,
-          type: notificationType,
+          type: "VERIFICATION_STATUS",
           title,
           message,
-          metadata: { doctorId, status, adminNotes }
         }
       });
 
       // Write immutable audit log entry
       const adminUser = await tx.user.findFirst({ where: { role: 'ADMIN' } });
       if (adminUser) {
-        await tx.moderationLog.create({
+        await tx.auditLog.create({
           data: {
-            adminId: adminUser.id,
-            action: `VERIFICATION_${status}`,
-            targetType: 'DOCTOR',
-            targetId: doctorId,
-            reason: adminNotes || null,
+            userId: adminUser.id,
+            role: 'ADMIN',
+            action: (status === 'VERIFIED' ? AuditAction.VERIFY : AuditAction.REJECT),
+            entityType: 'Doctor',
+            entityId: doctorId,
+            newValue: JSON.stringify({ status, adminNotes })
           }
         });
       }
@@ -114,13 +113,12 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: `Doctor successfully updated to ${status}.`,
-      doctor: { id: doctorId, status: result.status, doctorCode: result.doctorCode },
-      auditLogged: true,
+      message: `Doctor verification status updated to ${status}.`,
+      data: result
     });
 
   } catch (error: any) {
-    console.error('Admin Doctor Verification Error:', error);
+    console.error('Verify Doctor Error:', error);
     return apiError('Internal server error.', 500);
   }
 }

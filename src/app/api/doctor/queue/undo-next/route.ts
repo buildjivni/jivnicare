@@ -51,25 +51,25 @@ export async function POST(request: Request) {
 
       // 2. Strict validation: Ensure NO newer queue transition exists.
       // If the doctor has already called someone else after the mistake, we cannot undo.
-      if (dailyQueue.currentActiveToken !== toTokenNumber) {
+      if (dailyQueue.currentToken !== toTokenNumber) {
         throw new Error("CONCURRENCY_CONFLICT_RETRY");
       }
 
-      // 3. Revert the "new" patient (toTokenId) from IN_CONSULTATION back to WAITING
+      // 3. Revert the "new" patient (toTokenId) from IN_CONSULTATION back to BOOKED
       const revertActiveResult = await tx.queueToken.updateMany({
         where: { 
           id: toTokenId,
           status: "IN_CONSULTATION" 
         },
-        data: { status: "WAITING" }
+        data: { status: "BOOKED" }
       });
 
       if (revertActiveResult.count === 0) {
         throw new Error("CONCURRENCY_CONFLICT_RETRY");
       }
 
-      // 4. Revert the "old" patient (fromTokenId) from COMPLETED/SKIPPED back to IN_CONSULTATION
-      const expectedOldStatus = action === "CALL_NEXT" ? "COMPLETED" : "SKIPPED";
+      // 4. Revert the "old" patient (fromTokenId) from COMPLETED/NO_SHOW back to IN_CONSULTATION
+      const expectedOldStatus = action === "CALL_NEXT" ? "COMPLETED" : "NO_SHOW";
       const revertOldResult = await tx.queueToken.updateMany({
         where: { 
           id: fromTokenId,
@@ -85,7 +85,7 @@ export async function POST(request: Request) {
       // 5. Revert DailyQueue active token
       await tx.dailyQueue.update({
         where: { id: queueId },
-        data: { currentActiveToken: fromTokenNumber }
+        data: { currentToken: fromTokenNumber }
       });
 
       return { success: true };

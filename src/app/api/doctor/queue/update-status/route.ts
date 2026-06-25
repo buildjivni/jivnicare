@@ -50,7 +50,17 @@ export async function PUT(request: Request) {
     // Use Prisma transaction to atomically update both the token status and the daily queue's active token
     const result = await prisma.$transaction(async (tx) => {
       // Phase 5: Strict Transition Validation
-      const currentStatus = queueToken.status;
+      const currentStatusMap: Record<string, string> = {
+        "BOOKED": "WAITING",
+        "AWAITING_ARRIVAL": "SKIPPED",
+        "IN_CONSULTATION": "IN_CONSULTATION",
+        "COMPLETED": "COMPLETED",
+        "CANCELLED": "CANCELLED",
+        "NO_SHOW": "NO_SHOW",
+        "READY": "WAITING",
+      };
+
+      const currentStatus = currentStatusMap[queueToken.status] || queueToken.status;
       const allowedTransitions: Record<string, string[]> = {
         "WAITING": ["IN_CONSULTATION", "SKIPPED", "CANCELLED", "NO_SHOW"],
         "IN_CONSULTATION": ["COMPLETED", "SKIPPED", "WAITING"], // Allow reverting to WAITING if accidental
@@ -64,10 +74,15 @@ export async function PUT(request: Request) {
         throw new Error(`Invalid status transition from ${currentStatus} to ${status}`);
       }
 
+      // Map incoming status to DB status
+      let dbStatus = status;
+      if (status === "WAITING") dbStatus = "BOOKED";
+      if (status === "SKIPPED") dbStatus = "AWAITING_ARRIVAL";
+
       // 1. Update the token status
       const updatedToken = await tx.queueToken.update({
         where: { id: tokenId },
-        data: { status }
+        data: { status: dbStatus as any }
       });
 
       // Increment patients served counter if status resolves to COMPLETED
@@ -78,11 +93,11 @@ export async function PUT(request: Request) {
         });
       }
 
-      // 2. If marked as IN_CONSULTATION, atomically update the currentActiveToken in DailyQueue
+      // 2. If marked as IN_CONSULTATION, atomically update the currentToken in DailyQueue
       if (status === "IN_CONSULTATION") {
         await tx.dailyQueue.update({
           where: { id: queueToken.queueId },
-          data: { currentActiveToken: updatedToken.tokenNumber }
+          data: { currentToken: updatedToken.tokenNumber }
         });
       }
       

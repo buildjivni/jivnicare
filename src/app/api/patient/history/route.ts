@@ -28,19 +28,19 @@ export async function GET(req: NextRequest) {
           id: true,
           tokenNumber: true,
           status: true,
-          tokenType: true,
+          type: true,
           bookedAt: true,
           queue: {
             select: {
-              logicalDate: true,
+              date: true,
               doctor: {
                 select: {
                   name: true,
                   slug: true,
                   clinicName: true,
-                  district: true,
-                  city: true,
-                  profileImage: true,
+                  clinicDistrict: true,
+                  clinicCity: true,
+                  profilePhoto: true,
                 },
               },
             },

@@ -25,8 +25,16 @@ export async function POST(request: NextRequest) {
       where: { id: userId },
     });
 
-    if (!dbUser || dbUser.role !== "ADMIN") {
+    if (!dbUser || dbUser.role !== "ADMIN" || !dbUser.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const adminRecord = await prisma.admin.findUnique({
+      where: { email: dbUser.email },
+    });
+
+    if (!adminRecord) {
+      return NextResponse.json({ error: "Admin record not found" }, { status: 404 });
     }
 
     const body = await request.json();
@@ -39,7 +47,7 @@ export async function POST(request: NextRequest) {
     let isVerified = false;
     let newBackupCodes: string[] = [];
 
-    if (!dbUser.totpEnabled) {
+    if (!adminRecord.totpEnabled) {
       // 1. First-time setup verification
       let pendingSecret: string | null = null;
       if (redis) {
@@ -58,19 +66,25 @@ export async function POST(request: NextRequest) {
       if (isVerified) {
         // Generate backup codes
         const plainBackupCodes = generateBackupCodes();
-        // Hash backup codes for secure storage
-        const hashedBackupCodes = await Promise.all(
-          plainBackupCodes.map((c) => bcrypt.hash(c, 10))
-        );
 
-        // Update user
-        await prisma.user.update({
-          where: { id: userId },
-          data: {
-            totpSecret: encrypt(pendingSecret),
-            totpEnabled: true,
-            backupCodes: hashedBackupCodes,
-          },
+        // Update Admin in a transaction
+        await prisma.$transaction(async (tx) => {
+          await tx.admin.update({
+            where: { id: adminRecord.id },
+            data: {
+              totpSecret: encrypt(pendingSecret!),
+              totpEnabled: true,
+            },
+          });
+
+          // Create backup codes records
+          await tx.backupCode.createMany({
+            data: plainBackupCodes.map((bc) => ({
+              adminId: adminRecord.id,
+              codeHash: bcrypt.hashSync(bc, 10),
+              used: false,
+            })),
+          });
         });
 
         newBackupCodes = plainBackupCodes;
@@ -80,29 +94,31 @@ export async function POST(request: NextRequest) {
       }
     } else {
       // 2. Subsequent logins
-      isVerified = verifyAdminTOTP(code, dbUser.totpSecret ? decrypt(dbUser.totpSecret) : undefined);
+      isVerified = verifyAdminTOTP(code, adminRecord.totpSecret ? decrypt(adminRecord.totpSecret) : undefined);
 
-      if (!isVerified && dbUser.backupCodes.length > 0) {
-        // Check if code matches one of the backup codes
-        let matchedIndex = -1;
-        for (let i = 0; i < dbUser.backupCodes.length; i++) {
-          const isMatch = await bcrypt.compare(code, dbUser.backupCodes[i]);
+      if (!isVerified) {
+        // Check if code matches one of the active backup codes
+        const activeBackupCodes = await prisma.backupCode.findMany({
+          where: { adminId: adminRecord.id, used: false },
+        });
+
+        let matchedId = null;
+        for (const bc of activeBackupCodes) {
+          const isMatch = await bcrypt.compare(code, bc.codeHash);
           if (isMatch) {
-            matchedIndex = i;
+            matchedId = bc.id;
             break;
           }
         }
 
-        if (matchedIndex !== -1) {
+        if (matchedId !== null) {
           isVerified = true;
-          // Remove used backup code from array
-          const updatedBackupCodes = dbUser.backupCodes.filter(
-            (_, idx) => idx !== matchedIndex
-          );
-          await prisma.user.update({
-            where: { id: userId },
+          // Mark used backup code
+          await prisma.backupCode.update({
+            where: { id: matchedId },
             data: {
-              backupCodes: updatedBackupCodes,
+              used: true,
+              usedAt: new Date(),
             },
           });
         }

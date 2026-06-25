@@ -46,7 +46,7 @@ export async function POST(request: Request) {
     const regNumberUpper = data.medicalRegistrationNumber.toUpperCase();
     const existingReg = await prisma.doctor.findFirst({
       where: {
-        medicalRegistrationNumber: regNumberUpper,
+        registrationNumber: regNumberUpper,
         id: { not: doctorId }
       }
     });
@@ -68,14 +68,12 @@ export async function POST(request: Request) {
 
     const doctorRecord = await prisma.doctor.findUnique({
       where: { id: doctorId },
-      select: { name: true, city: true, district: true, state: true, locality: true }
+      select: { name: true, clinicCity: true, clinicDistrict: true }
     });
 
     if (doctorRecord) {
-      if (doctorRecord.city) rawKeywordTerms.add(doctorRecord.city.toLowerCase());
-      if (doctorRecord.district) rawKeywordTerms.add(doctorRecord.district.toLowerCase());
-      if (doctorRecord.locality) rawKeywordTerms.add(doctorRecord.locality.toLowerCase());
-      if (doctorRecord.state) rawKeywordTerms.add(doctorRecord.state.toLowerCase());
+      if (doctorRecord.clinicCity) rawKeywordTerms.add(doctorRecord.clinicCity.toLowerCase());
+      if (doctorRecord.clinicDistrict) rawKeywordTerms.add(doctorRecord.clinicDistrict.toLowerCase());
 
       const firstName = doctorRecord.name.replace(/^Dr\.?\s*/i, '').split(' ')[0];
       if (firstName) rawKeywordTerms.add(firstName.toLowerCase());
@@ -90,49 +88,26 @@ export async function POST(request: Request) {
 
     // Save in transaction
     await prisma.$transaction(async (tx) => {
-      const specialtyRecord = await tx.specialty.upsert({
+      await tx.speciality.upsert({
         where: { name: normalizedSpec },
         update: {},
-        create: { name: normalizedSpec, slug: specialtySlug }
+        create: { name: normalizedSpec }
       });
 
-      const keywordIds: string[] = [];
-      for (const term of rawKeywordTerms) {
-        if (!term || term.length < 2) continue;
-        const kw = await tx.keyword.upsert({
-          where: { term },
-          update: {},
-          create: { term }
-        });
-        keywordIds.push(kw.id);
-      }
+      const qualificationsArray = quals.split(',').map(q => q.trim()).filter(Boolean);
 
       await tx.doctor.update({
         where: { id: doctorId },
         data: {
           speciality: normalizedSpec,
-          qualification: quals,
-          qualifications: quals,
-          education: quals,
-          experience: data.experience,
+          qualifications: qualificationsArray,
           experienceYears: data.experience,
-          medicalRegistrationNumber: regNumberUpper,
-          medicalCouncil: data.medicalCouncil,
-          registrationYear: data.registrationYear,
+          registrationNumber: regNumberUpper,
           languages: data.languages ? data.languages.split(',').map(l => l.trim()).filter(Boolean) : [],
           bio: data.bio || "",
           clinicPhotos: data.clinicPhotos || [],
-          clinicImage: data.clinicPhotos && data.clinicPhotos.length > 0 ? data.clinicPhotos[0] : null,
-          verificationDocuments: documentsArray,
-          specialties: {
-            connect: [{ id: specialtyRecord.id }],
-          },
-          keywords: {
-            connect: keywordIds.map(id => ({ id })),
-          },
-          gender: data.gender || undefined,
-          dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : undefined,
-          lifetimePatientsDeclaration: data.lifetimePatientsDeclaration !== undefined ? (data.lifetimePatientsDeclaration !== null ? String(data.lifetimePatientsDeclaration) : null) : undefined,
+          documents: documentsArray,
+          gender: data.gender ? (data.gender.toUpperCase() as any) : undefined,
         }
       });
 

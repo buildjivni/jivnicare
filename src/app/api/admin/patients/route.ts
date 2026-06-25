@@ -45,8 +45,7 @@ export async function GET(req: Request) {
           id: true,
           name: true,
           phone: true,
-          createdAt: true,
-          verificationStatus: true
+          createdAt: true
         },
         orderBy: {
           createdAt: 'desc'

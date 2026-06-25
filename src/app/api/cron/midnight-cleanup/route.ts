@@ -17,50 +17,40 @@ export async function GET(request: Request) {
       expiredTokensResult,
       closedQueuesResult,
       resetDoctorsResult,
-      deletedLogsResult,
-      deletedAnalyticsResult
+      deletedLogsResult
     ] = await prisma.$transaction([
-      // 1. Expire stale tokens (WAITING, PAYMENT_PENDING, READY, CALLED, IN_CONSULTATION, BOOKED)
+      // 1. Expire stale tokens
       prisma.queueToken.updateMany({
         where: {
-          status: { in: ['WAITING', 'PAYMENT_PENDING', 'READY', 'CALLED', 'IN_CONSULTATION', 'BOOKED'] }
+          status: { in: ['PAYMENT_PENDING', 'READY', 'CALLED', 'IN_CONSULTATION', 'BOOKED'] }
         },
         data: {
-          status: 'EXPIRED',
-          tokenStatus: 'EXPIRED'
+          status: 'EXPIRED'
         }
       }),
 
-      // 2. Close active queues
+      // 2. Close active/paused queues
       prisma.dailyQueue.updateMany({
         where: {
-          status: 'OPEN'
+          status: { in: ['ACTIVE', 'PAUSED'] }
         },
         data: {
-          status: 'CLOSED',
-          queueStatus: 'COMPLETED'
+          status: 'CLOSED'
         }
       }),
 
-      // 3. Reset doctor status (set isOnline to false)
+      // 3. Reset doctor status (set availabilityStatus to OFFLINE)
       prisma.doctor.updateMany({
         where: {
-          isOnline: true
+          availabilityStatus: { in: ['AVAILABLE', 'ON_BREAK'] }
         },
         data: {
-          isOnline: false
+          availabilityStatus: 'OFFLINE'
         }
       }),
 
       // 4. Delete old search logs (older than 90 days)
       prisma.searchLog.deleteMany({
-        where: {
-          createdAt: { lt: ninetyDaysAgo }
-        }
-      }),
-
-      // 5. Delete old search analytics (older than 90 days)
-      prisma.searchAnalytics.deleteMany({
         where: {
           createdAt: { lt: ninetyDaysAgo }
         }
@@ -70,13 +60,13 @@ export async function GET(request: Request) {
     // Record cleanup metrics in AuditLog
     await prisma.auditLog.create({
       data: {
-        action: AuditAction.SYSTEM_CLEANUP,
+        action: AuditAction.DELETE,
         entityType: 'SYSTEM',
         newValue: JSON.stringify({
           expiredTokens: expiredTokensResult.count,
           closedQueues: closedQueuesResult.count,
           resetDoctors: resetDoctorsResult.count,
-          deletedLogs: deletedLogsResult.count + deletedAnalyticsResult.count,
+          deletedLogs: deletedLogsResult.count,
         })
       }
     });
@@ -87,7 +77,7 @@ export async function GET(request: Request) {
         expiredTokens: expiredTokensResult.count,
         closedQueues: closedQueuesResult.count,
         resetDoctors: resetDoctorsResult.count,
-        deletedLogs: deletedLogsResult.count + deletedAnalyticsResult.count,
+        deletedLogs: deletedLogsResult.count,
       }
     });
   } catch (error) {

@@ -22,23 +22,18 @@ export async function POST(request: Request) {
     }
 
     const doctor = await prisma.doctor.findUnique({
-      where: { id: doctorId },
-      include: { clinicOperations: true }
+      where: { id: doctorId }
     });
 
     if (!doctor) return apiError("Doctor not found", 404);
 
-    await prisma.$transaction([
-      prisma.clinicOperations.upsert({
-        where: { doctorId },
-        create: { doctorId, status: 'AVAILABLE', emergencySlots: enableEmergency ? 2 : 0 },
-        update: { emergencySlots: enableEmergency ? 2 : 0 }
-      }),
-      prisma.doctor.update({
-        where: { id: doctorId },
-        data: { emergencyAvailable: enableEmergency }
-      })
-    ]);
+    await prisma.doctor.update({
+      where: { id: doctorId },
+      data: {
+        isEmergencyEnabled: enableEmergency,
+        offersEmergency: enableEmergency
+      }
+    });
 
     return apiResponse({ success: true });
   } catch (error) {

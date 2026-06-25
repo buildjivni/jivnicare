@@ -21,20 +21,19 @@ export async function GET(request: Request) {
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
-    // 1. Audit OTPs
-    const expiredOtps = await prisma.otpToken.count({
-      where: { expiresAt: { lt: now } }
-    });
+    // 1. Audit OTPs (simulated as 0 since not stored in DB)
+    const expiredOtps = 0;
 
     // 2. Audit Rate Limits
-    const expiredRateLimits = await prisma.rateLimit.count({
-      where: { resetTime: { lt: now } }
+    const expiredRateLimits = await prisma.rateLimitLog.count({
+      where: { windowStart: { lt: oneDayAgo } }
     });
 
-    // 3. Audit Walk-In Entries (> 30 days)
-    const orphanWalkIns = await prisma.walkInEntry.count({
-      where: { createdAt: { lt: thirtyDaysAgo } }
+    // 3. Audit Walk-In Tokens (> 30 days)
+    const orphanWalkIns = await prisma.queueToken.count({
+      where: { type: 'WALKIN', bookedAt: { lt: thirtyDaysAgo } }
     });
 
     // 4. Audit Historical Queues (> 90 days)
@@ -58,7 +57,7 @@ export async function GET(request: Request) {
           historicalQueues,
           historicalTokens
         },
-        estimatedStorageWaste: `${(expiredOtps * 0.5 + expiredRateLimits * 0.3 + historicalTokens * 1.2) / 1024} MB` // Rough estimation
+        estimatedStorageWaste: `${(expiredOtps * 0.5 + expiredRateLimits * 0.3 + historicalTokens * 1.2) / 1024} MB`
       }
     });
   } catch (error) {

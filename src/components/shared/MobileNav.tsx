@@ -95,6 +95,7 @@ export function MobileNav({ isOpen, setIsOpen, isLoggedIn, pathname, navLinks, o
                 .filter(link => link.label === "My Bookings" ? isLoggedIn : true)
                 .map((link, i) => {
                   const isActive = pathname === link.href || (pathname.startsWith("/doctors") && link.href === "/doctors");
+                  const isHighlighted = (link as any).highlight;
                   return (
                     <motion.div
                       key={link.label}
@@ -108,12 +109,17 @@ export function MobileNav({ isOpen, setIsOpen, isLoggedIn, pathname, navLinks, o
                         className={`flex items-center gap-3.5 px-4 py-3.5 text-[15px] font-semibold rounded-2xl transition-all duration-200 active:scale-[0.97] ${
                           isActive
                             ? "text-primary bg-primary/8 ring-1 ring-primary/12"
+                            : isHighlighted
+                            ? "text-rose-600 bg-rose-50 border border-rose-100 hover:bg-rose-105 hover:text-rose-700 animate-pulse"
                             : "text-slate-600 hover:text-primary hover:bg-slate-50"
                         }`}
                       >
-                        <span className={`shrink-0 ${isActive ? "text-primary" : "text-slate-400"}`}>{link.icon}</span>
+                        <span className={`shrink-0 ${isActive ? "text-primary" : isHighlighted ? "text-rose-500 animate-pulse" : "text-slate-400"}`}>{link.icon}</span>
                         <span className="flex-1">{link.label}</span>
                         {isActive && <span className="w-2 h-2 rounded-full bg-primary shrink-0" />}
+                        {!isActive && isHighlighted && (
+                          <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse shrink-0" />
+                        )}
                       </Link>
                     </motion.div>
                   );
@@ -129,14 +135,14 @@ export function MobileNav({ isOpen, setIsOpen, isLoggedIn, pathname, navLinks, o
             >
               {!isLoggedIn ? (
                 <div className="flex flex-col gap-2.5">
-                  <Link href="/login" onClick={() => setIsOpen(false)} className="block w-full">
+                  <Link href={pathname === "/partners" ? "/partners/login" : "/login"} onClick={() => setIsOpen(false)} className="block w-full">
                     <Button variant="outline" className="w-full h-12 font-semibold border-slate-200 text-slate-700 rounded-2xl">
-                      Log In
+                      {pathname === "/partners" ? "Doctor Sign In" : "Log In"}
                     </Button>
                   </Link>
-                  <Link href="/doctors" onClick={() => setIsOpen(false)} className="block w-full">
-                    <Button className="w-full h-12 font-bold rounded-2xl shadow-lg shadow-primary/25">
-                      Book Appointment
+                  <Link href={pathname === "/partners" ? "/partners/onboard" : "/doctors"} onClick={() => setIsOpen(false)} className="block w-full">
+                    <Button className={`w-full h-12 font-bold rounded-2xl shadow-lg ${pathname === "/partners" ? "bg-gradient-to-r from-[#205E98] to-[#4A8C4A] border-none text-white hover:opacity-90 shadow-emerald-500/10" : "shadow-primary/25"}`}>
+                      {pathname === "/partners" ? "Join Partner Network" : "Book Appointment"}
                     </Button>
                   </Link>
                 </div>

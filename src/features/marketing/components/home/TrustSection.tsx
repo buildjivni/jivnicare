@@ -104,9 +104,19 @@ export function TrustSection() {
                 
                 <div className="pt-6 border-t border-slate-200 flex items-center justify-between">
                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Join Our Growing Network</p>
-                   <div className="flex -space-x-3">
-                     {[1,2,3,4].map(i => (
-                       <div key={i} className="w-9 h-9 rounded-full border-2 border-slate-50 bg-slate-200 shadow-sm" />
+                   <div className="flex -space-x-2">
+                     {[
+                       { char: "M", bg: "bg-primary text-white" },
+                       { char: "S", bg: "bg-[#4A8C4A] text-white" },
+                       { char: "A", bg: "bg-amber-500 text-white" },
+                       { char: "R", bg: "bg-purple-500 text-white" }
+                     ].map((item, idx) => (
+                       <div 
+                         key={idx} 
+                         className={`w-9 h-9 rounded-full border-2 border-white ${item.bg} shadow-sm flex items-center justify-center text-[11px] font-black select-none`}
+                       >
+                         {item.char}
+                       </div>
                      ))}
                    </div>
                 </div>

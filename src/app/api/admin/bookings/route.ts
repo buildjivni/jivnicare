@@ -58,28 +58,44 @@ export async function GET(request: NextRequest) {
           queue: {
             include: {
               doctor: {
-                select: { name: true, hospitalName: true, clinicName: true }
+                select: { name: true, clinicName: true }
               }
             }
           },
-          patient: { select: { name: true, phone: true } },
-          walkInEntry: { select: { patientName: true } }
+          patient: { select: { name: true, phone: true } }
         }
       }),
       prisma.queueToken.count({ where: whereClause })
     ]);
 
-    const formattedBookings = recentBookings.map(b => ({
-      id: b.id, // Support might need full ID
-      shortId: b.id.slice(-8).toUpperCase(),
-      patient: b.patient?.name || b.walkInEntry?.patientName || "Walk-in Patient",
-      phone: b.patient?.phone ? decrypt(b.patient.phone) : "N/A",
-      tokenNumber: b.tokenNumber,
-      doctor: b.queue.doctor.name,
-      clinic: b.queue.doctor.clinicName || b.queue.doctor.hospitalName,
-      issuedAt: b.bookedAt.toISOString(),
-      status: b.status,
-    }));
+    const formattedBookings = recentBookings.map(b => {
+      let name = "Walk-in Patient";
+      let phone = "N/A";
+      if (b.type === "WALKIN") {
+        name = b.walkinName || "Walk-in Patient";
+        phone = b.walkinPhone || "N/A";
+      } else if (b.patient) {
+        name = b.patient.name || "Patient";
+        if (b.patient.phone) {
+          try {
+            phone = decrypt(b.patient.phone);
+          } catch (e) {
+            phone = b.patient.phone;
+          }
+        }
+      }
+      return {
+        id: b.id, // Support might need full ID
+        shortId: b.id.slice(-8).toUpperCase(),
+        patient: name,
+        phone,
+        tokenNumber: b.tokenNumber,
+        doctor: b.queue.doctor.name,
+        clinic: b.queue.doctor.clinicName,
+        issuedAt: b.bookedAt.toISOString(),
+        status: b.status,
+      };
+    });
 
     return NextResponse.json({ 
       success: true, 

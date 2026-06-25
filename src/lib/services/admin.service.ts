@@ -1,6 +1,8 @@
 import prisma from "@/lib/db/prisma";
 import { AuditAction } from "@prisma/client";
 
+import { PartnerTier } from "@prisma/client";
+
 export async function updateDoctorPricing(
   adminId: string,
   doctorId: string,
@@ -8,7 +10,7 @@ export async function updateDoctorPricing(
     monthlyFee: number;
     perBookingFee: number;
     discountPercent: number;
-    partnerTier: string;
+    partnerTier: PartnerTier;
     freeUntil?: Date | null;
   }
 ) {
@@ -50,7 +52,7 @@ export async function updateDoctorPricing(
     data: {
       userId: adminId,
       role: "ADMIN",
-      action: AuditAction.UPDATE_PROFILE,
+      action: AuditAction.UPDATE,
       entityType: "PlatformPricing",
       entityId: result.id,
       newValue: JSON.stringify(pricing),

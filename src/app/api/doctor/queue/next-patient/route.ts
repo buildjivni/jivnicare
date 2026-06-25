@@ -51,7 +51,7 @@ export async function POST(request: Request) {
             id: currentTokenId,
             status: "IN_CONSULTATION" // Must currently be in consultation
           },
-          data: { status: skipCurrent ? "SKIPPED" : "COMPLETED" }
+          data: { status: skipCurrent ? "AWAITING_ARRIVAL" : "COMPLETED" }
         });
 
         if (updateRes.count > 0 && !skipCurrent) {
@@ -62,11 +62,11 @@ export async function POST(request: Request) {
         }
       }
 
-      // 2. Find the next WAITING patient in strict sequential order
+      // 2. Find the next BOOKED patient in strict sequential order
       const today = resolveClinicLogicalDay();
 
-      const dailyQueue = await tx.dailyQueue.findUnique({
-        where: { doctorId_date: { doctorId: doctor.id, date: today } }
+      const dailyQueue = await tx.dailyQueue.findFirst({
+        where: { doctorId: doctor.id, date: today }
       });
 
       if (!dailyQueue) {
@@ -76,10 +76,9 @@ export async function POST(request: Request) {
       const nextPatient = await tx.queueToken.findFirst({
         where: { 
           queueId: dailyQueue.id, 
-          status: "WAITING" 
+          status: "BOOKED" 
         },
         orderBy: [
-          { isEmergency: "desc" },
           { tokenNumber: "asc" }
         ]
       });
@@ -90,7 +89,7 @@ export async function POST(request: Request) {
         const updateResult = await tx.queueToken.updateMany({
           where: { 
             id: nextPatient.id,
-            status: "WAITING" // Crucial concurrency lock
+            status: "BOOKED" // Crucial concurrency lock
           },
           data: { status: "IN_CONSULTATION" }
         });
@@ -99,7 +98,7 @@ export async function POST(request: Request) {
         if (updateResult.count > 0) {
           await tx.dailyQueue.update({
             where: { id: dailyQueue.id },
-            data: { currentActiveToken: nextPatient.tokenNumber }
+            data: { currentToken: nextPatient.tokenNumber }
           });
           let undoToken = null;
           if (currentTokenId) {
@@ -107,21 +106,39 @@ export async function POST(request: Request) {
               action: skipCurrent ? "SKIP_NEXT" : "CALL_NEXT",
               queueId: dailyQueue.id,
               fromTokenId: currentTokenId,
-              fromTokenNumber: dailyQueue.currentActiveToken, // from before the update
+              fromTokenNumber: dailyQueue.currentToken, // from before the update
               toTokenId: nextPatient.id,
               toTokenNumber: nextPatient.tokenNumber,
               timestamp: Date.now()
             }, "30s");
           }
+
+          let patientPhone = "";
+          if (nextPatient.type === "WALKIN") {
+            patientPhone = nextPatient.walkinPhone || "";
+          } else if (nextPatient.patientId) {
+            const user = await tx.user.findUnique({
+              where: { id: nextPatient.patientId },
+              select: { phone: true }
+            });
+            if (user?.phone) {
+              try {
+                const { decrypt } = require("@/lib/crypto");
+                patientPhone = decrypt(user.phone);
+              } catch (e) {
+                patientPhone = user.phone;
+              }
+            }
+          }
           
-          return { nextPatient: { ...nextPatient, status: "IN_CONSULTATION" }, undoToken };
+          return { nextPatient: { ...nextPatient, status: "IN_CONSULTATION" }, patientPhone, undoToken };
         } else {
           // A concurrent request beat us to it, throw an error to retry or abort cleanly
           throw new Error("CONCURRENCY_CONFLICT_RETRY");
         }
       }
 
-      return { nextPatient: null, undoToken: null };
+      return { nextPatient: null, undoToken: null, patientPhone: "" };
     });
 
     if (result && result.nextPatient) {
@@ -131,7 +148,7 @@ export async function POST(request: Request) {
           result.nextPatient.queueId,
           {
             tokenNumber: result.nextPatient.tokenNumber,
-            patientPhone: result.nextPatient.patientPhone,
+            patientPhone: (result as any).patientPhone,
             patientId: result.nextPatient.patientId,
           },
           doctor.id
@@ -141,7 +158,7 @@ export async function POST(request: Request) {
       }
     }
 
-    return apiResponse({success: true, data: result});
+    return apiResponse({success: true, data: { nextPatient: result.nextPatient, undoToken: result.undoToken }});
   } catch (error: any) {
     console.error("Next patient operation error:", error);
     if (error.message === "CONCURRENCY_CONFLICT_RETRY") {

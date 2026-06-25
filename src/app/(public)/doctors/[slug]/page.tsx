@@ -51,12 +51,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   try {
     let doc = await prisma.doctor.findUnique({
       where: { slug },
-      include: { specialties: true, dailyQueues: true },
+      include: { queues: true, platformPricing: true },
     });
     if (!doc && UUID_REGEX.test(slug)) {
       doc = await prisma.doctor.findUnique({
         where: { id: slug },
-        include: { specialties: true, dailyQueues: true },
+        include: { queues: true, platformPricing: true },
       });
     }
     if (!doc) return { title: "Doctor Not Found | JivniCare" };
@@ -82,11 +82,8 @@ export default async function DoctorProfilePage({ params }: PageProps) {
     doc = await prisma.doctor.findUnique({
       where: { slug },
       include: {
-        specialties: true,
-        keywords: true,
-        weeklySchedule: true,
-        clinicOperations: true,
-        dailyQueues: true,
+        queues: true,
+        platformPricing: true,
       },
     });
   } catch (err) {
@@ -110,37 +107,27 @@ export default async function DoctorProfilePage({ params }: PageProps) {
 
   if (!doc) notFound();
 
-  // Fetch up to 3 related verified doctors under the same specialty
   let relatedPrismaDoctors: any[] = [];
   try {
     relatedPrismaDoctors = await prisma.doctor.findMany({
       where: {
         verificationStatus: "VERIFIED",
         id: { not: doc.id },
-        specialties: {
-          some: {
-            id: { in: doc.specialties.map((s) => s.id) }
-          }
-        }
+        speciality: doc.speciality,
       },
       take: 3,
       include: {
-        specialties: true,
-        keywords: true,
-        weeklySchedule: true,
-        clinicOperations: true,
-        dailyQueues: {
+        platformPricing: true,
+        queues: {
           where: {
-              // Use IST logical day — never UTC midnight
-              date: resolveClinicLogicalDay(),
-            },
+            // Use IST logical day — never UTC midnight
+            date: resolveClinicLogicalDay(),
+          },
           select: {
             status: true,
-            issuedTokensCount: true,
-            cancelledCount: true,
-            noShowCount: true,
-            currentActiveToken: true,
-            maxCapacity: true,
+            currentToken: true,
+            totalTokens: true,
+            dailyLimit: true,
           },
           take: 1,
         }

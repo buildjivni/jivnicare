@@ -117,7 +117,7 @@ export default function AdminTOTPVerify() {
           </div>
 
           <button
-            onClick={() => router.push("/admin/login")}
+            onClick={() => router.push("/admin/jvc-26")}
             className="text-xs font-bold text-slate-400 hover:text-slate-600 transition-colors uppercase tracking-widest block mx-auto"
           >
             Cancel and Sign Out

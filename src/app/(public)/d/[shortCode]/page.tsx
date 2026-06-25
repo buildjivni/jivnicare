@@ -49,7 +49,7 @@ export default async function QRRedirectPage({ params }: PageProps) {
 
   // Resolve shortCode → doctor slug (case-insensitive lookup)
   const doctor = await prisma.doctor.findFirst({
-    where: { shortCode: shortCode.toUpperCase() },
+    where: { internalDoctorId: shortCode.toUpperCase() },
     select: { slug: true, verificationStatus: true },
   });
 
@@ -78,13 +78,13 @@ export async function generateStaticParams() {
     const doctors = await prisma.doctor.findMany({
       where: {
         verificationStatus: "VERIFIED",
-        shortCode: { not: null },
+        internalDoctorId: { not: "" },
       },
-      select: { shortCode: true },
+      select: { internalDoctorId: true },
     });
     return doctors
-      .filter((d): d is { shortCode: string } => d.shortCode !== null)
-      .map(d => ({ shortCode: d.shortCode }));
+      .filter((d): d is { internalDoctorId: string } => d.internalDoctorId !== "")
+      .map(d => ({ shortCode: d.internalDoctorId }));
   } catch {
     return [];
   }

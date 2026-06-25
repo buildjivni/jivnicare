@@ -39,8 +39,16 @@ export async function GET(request: NextRequest) {
 
     if (search) {
       whereClause.OR = [
-        { patientName: { contains: search, mode: "insensitive" } },
-        { patientPhone: { contains: search } }
+        { walkinName: { contains: search, mode: "insensitive" } },
+        { walkinPhone: { contains: search } },
+        {
+          patient: {
+            OR: [
+              { name: { contains: search, mode: "insensitive" } },
+              { phone: { contains: search } }
+            ]
+          }
+        }
       ];
     }
 
@@ -50,7 +58,13 @@ export async function GET(request: NextRequest) {
         include: {
           queue: {
             select: {
-              logicalDate: true
+              date: true
+            }
+          },
+          patient: {
+            select: {
+              name: true,
+              phone: true
             }
           }
         },
@@ -63,17 +77,35 @@ export async function GET(request: NextRequest) {
       prisma.queueToken.count({ where: whereClause })
     ]);
 
-    const patients = tokens.map(t => ({
-      id: t.id,
-      tokenNumber: t.tokenNumber,
-      patientName: t.patientName || "Walk-in Patient",
-      patientPhone: t.patientPhone,
-      status: t.status,
-      type: t.tokenType,
-      date: t.queue.logicalDate,
-      bookedAt: t.bookedAt.toISOString(),
-      completedAt: t.completedAt ? t.completedAt.toISOString() : null,
-    }));
+    const { decrypt } = require("@/lib/crypto");
+    const patients = tokens.map(t => {
+      let name = "Walk-in Patient";
+      let phone = "";
+      if (t.type === "WALKIN") {
+        name = t.walkinName || "Walk-in Patient";
+        phone = t.walkinPhone || "";
+      } else if (t.patient) {
+        name = t.patient.name || "Patient";
+        if (t.patient.phone) {
+          try {
+            phone = decrypt(t.patient.phone);
+          } catch (e) {
+            phone = t.patient.phone;
+          }
+        }
+      }
+      return {
+        id: t.id,
+        tokenNumber: t.tokenNumber,
+        patientName: name,
+        patientPhone: phone,
+        status: t.status,
+        type: t.type,
+        date: t.queue.date,
+        bookedAt: t.bookedAt.toISOString(),
+        completedAt: t.completedAt ? t.completedAt.toISOString() : null,
+      };
+    });
 
     return NextResponse.json({
       success: true,

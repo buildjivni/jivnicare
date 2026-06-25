@@ -49,57 +49,18 @@ export async function POST(request: Request) {
         where: { id: doctorId },
         data: {
           consultationFee: data.consultationFee,
-          fee: data.consultationFee,
           dailyTokenLimit: data.dailyPatientLimit,
-          emergencyAvailable: data.emergencyAvailable,
-          emergencyConsultationAvailable: data.emergencyAvailable,
+          isEmergencyEnabled: data.emergencyAvailable,
+          offersEmergency: data.emergencyAvailable,
           emergencyFee: data.emergencyFee || 0,
-          bookingStartTime: data.bookingStartTime,
-          verificationStatus: VerificationStatus.PENDING_VERIFICATION, // maps to PENDING_REVIEW
+          bookingWindowStart: data.bookingStartTime,
+          weeklySchedule: data.weeklySchedule as any,
+          verificationStatus: VerificationStatus.PENDING_REVIEW,
+          registrationComplete: true, // Mark registration complete on step 4 submit
         }
       });
 
-      // 2. Upsert Weekly Schedule
-      await tx.weeklySchedule.upsert({
-        where: { doctorId: doctorId },
-        update: {
-          monday: data.weeklySchedule.monday,
-          tuesday: data.weeklySchedule.tuesday,
-          wednesday: data.weeklySchedule.wednesday,
-          thursday: data.weeklySchedule.thursday,
-          friday: data.weeklySchedule.friday,
-          saturday: data.weeklySchedule.saturday,
-          sunday: data.weeklySchedule.sunday,
-        },
-        create: {
-          doctorId: doctorId,
-          monday: data.weeklySchedule.monday,
-          tuesday: data.weeklySchedule.tuesday,
-          wednesday: data.weeklySchedule.wednesday,
-          thursday: data.weeklySchedule.thursday,
-          friday: data.weeklySchedule.friday,
-          saturday: data.weeklySchedule.saturday,
-          sunday: data.weeklySchedule.sunday,
-        }
-      });
-
-      // 3. Upsert ClinicOperations
-      await tx.clinicOperations.upsert({
-        where: { doctorId: doctorId },
-        update: {
-          walkInLimit: data.dailyPatientLimit,
-          onlineLimit: data.dailyPatientLimit,
-          status: 'AVAILABLE'
-        },
-        create: {
-          doctorId: doctorId,
-          walkInLimit: data.dailyPatientLimit,
-          onlineLimit: data.dailyPatientLimit,
-          status: 'AVAILABLE'
-        }
-      });
-
-      // 4. Upsert default PlatformPricing
+      // 2. Upsert default PlatformPricing
       await tx.platformPricing.upsert({
         where: { doctorId: doctorId },
         update: {},

@@ -24,7 +24,7 @@ export async function POST() {
         data: {
           userId: payload.id,
           role: "PATIENT",
-          action: "UPDATE_PROFILE",
+          action: "UPDATE",
           entityType: "User",
           entityId: payload.id,
           newValue: "REQUEST_DATA_DELETION",

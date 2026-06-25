@@ -19,7 +19,9 @@ import {
   Settings,
   Clock,
   ArrowLeft,
-  Search as SearchIcon
+  Search as SearchIcon,
+  Building2,
+  Zap
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -116,6 +118,13 @@ export function Header() {
 
   // Dynamic navigation links based on user role and auth state
   const getNavLinks = () => {
+    if (pathname === "/partners") {
+      return [
+        { label: "Why Partner", href: "#why-partner", icon: <Building2 className="w-4 h-4" /> },
+        { label: "How It Works", href: "#how-it-works", icon: <Zap className="w-4 h-4" /> },
+      ];
+    }
+
     if (!isLoggedIn || !user) {
       return [
         { label: "Find Doctors", href: "/doctors", icon: <Stethoscope className="w-4.5 h-4.5" /> },
@@ -149,11 +158,17 @@ export function Header() {
 
   const navLinks = getNavLinks();
 
-  // Mobile menu links mapping (always contains Find Doctors and Articles when logged out)
   const getMobileNavLinks = () => {
+    if (pathname === "/partners") {
+      return [
+        { label: "Why Partner", href: "#why-partner", icon: <Building2 className="w-4 h-4" /> },
+        { label: "How It Works", href: "#how-it-works", icon: <Zap className="w-4 h-4" /> },
+      ];
+    }
     if (!isLoggedIn) {
       return [
         { label: "Find Doctors", href: "/doctors", icon: <Stethoscope className="w-4.5 h-4.5" /> },
+        { label: "Emergency Care", href: "/doctors?emergency=true", icon: <AlertTriangle className="w-4.5 h-4.5" />, highlight: true },
         { label: "Articles", href: "/blog", icon: <Newspaper className="w-4.5 h-4.5" /> },
       ];
     }
@@ -207,14 +222,8 @@ export function Header() {
 
                 {/* Logo and Brand Title (Always visible unless search is expanded on mobile) */}
                 <div className="flex items-center shrink-0 transition-all">
-                  <Link href="/" className="flex items-center gap-2.5 md:gap-3.5 group shrink min-w-0">
-                    <Logo className="h-11 w-11 md:h-14 md:w-14 shrink-0 transition-transform duration-300 group-hover:scale-[1.02]" />
-                    <div className="flex flex-col -space-y-0.5 md:-space-y-1 pt-0.5">
-                       <span className="text-[20px] md:text-2xl font-bold tracking-tight leading-none">
-                          <span style={{ color: '#4A90D9' }}>Jivni</span><span style={{ color: '#4A8C4A' }}>Care</span>
-                       </span>
-                       <span className="text-[9px] md:text-[10px] font-bold text-slate-500 uppercase tracking-[0.25em] pl-0.5 mt-0.5">OPD Network</span>
-                    </div>
+                  <Link href="/" className="flex items-center group shrink min-w-0">
+                    <Logo variant="full" className="h-9 md:h-12 w-auto shrink-0 transition-transform duration-300 group-hover:scale-[1.02]" />
                   </Link>
                 </div>
               </div>
@@ -323,9 +332,9 @@ export function Header() {
               </>
             ) : (
               <div className="flex items-center gap-2">
-                <Link href="/login">
+                <Link href={pathname === "/partners" ? "/partners/login" : "/login"}>
                   <button className="bg-[#205E98] hover:bg-[#1a4c7a] text-white font-bold text-sm md:text-base px-6 py-2.5 md:px-8 md:py-3.5 rounded-full transition-all duration-200 active:scale-[0.97] shadow-sm select-none shrink-0 outline-none">
-                    Sign In
+                    {pathname === "/partners" ? "Doctor Sign In" : "Sign In"}
                   </button>
                 </Link>
               </div>

@@ -37,52 +37,29 @@ export async function POST(request: Request) {
       return apiError('Invalid update payload.', 400);
     }
 
-    // Define sensitive vs safe fields based on architecture plan
-    const sensitiveFields = ['name', 'hospitalName', 'district', 'medicalRegistrationNumber'];
-    const safeDoctorFields = ['bio', 'experience', 'fee', 'gender', 'profileImage', 'clinicImage', 'education', 'qualifications'];
-    
     const safeUpdates: any = {};
-    const sensitiveLogs: any[] = [];
 
     for (const [key, value] of Object.entries(updates)) {
-      if (sensitiveFields.includes(key)) {
-        // Log sensitive changes instead of updating immediately
-        const oldValue = (doctor as any)[key]?.toString() || null;
-        if (oldValue !== value) {
-          sensitiveLogs.push({
-            doctorId: doctor.id,
-            field: key,
-            oldValue,
-            newValue: String(value),
-            status: 'PENDING'
-          });
-        }
-      } else if (safeDoctorFields.includes(key)) {
-        // Parse numbers if needed
-        if (key === 'experience' || key === 'fee') {
-          safeUpdates[key] = parseInt(String(value)) || 0;
-        } else {
-          safeUpdates[key] = value;
-        }
-      }
+      if (key === 'name') safeUpdates.name = value;
+      else if (key === 'hospitalName') safeUpdates.clinicName = value;
+      else if (key === 'district') safeUpdates.clinicDistrict = value;
+      else if (key === 'medicalRegistrationNumber') safeUpdates.registrationNumber = value;
+      else if (key === 'bio') safeUpdates.bio = value;
+      else if (key === 'experience') safeUpdates.experienceYears = parseInt(String(value)) || 0;
+      else if (key === 'fee') safeUpdates.consultationFee = parseInt(String(value)) || 0;
+      else if (key === 'gender') safeUpdates.gender = value ? (String(value).toUpperCase() as any) : undefined;
+      else if (key === 'profileImage') safeUpdates.profilePhoto = value;
+      else if (key === 'clinicImage') safeUpdates.clinicPhotos = Array.isArray(value) ? value : [value];
+      else if (key === 'clinicPhotos') safeUpdates.clinicPhotos = value;
+      else if (key === 'qualifications') safeUpdates.qualifications = Array.isArray(value) ? value : [value];
     }
 
-    await prisma.$transaction(async (tx) => {
-      // 1. Apply Safe Updates directly to Doctor Profile
-      if (Object.keys(safeUpdates).length > 0) {
-        await tx.doctor.update({
-          where: { id: doctor.id },
-          data: safeUpdates
-        });
-      }
-
-      // 2. Queue Sensitive Updates to ProfileUpdateLog
-      if (sensitiveLogs.length > 0) {
-        await tx.profileUpdateLog.createMany({
-          data: sensitiveLogs
-        });
-      }
-    });
+    if (Object.keys(safeUpdates).length > 0) {
+      await prisma.doctor.update({
+        where: { id: doctor.id },
+        data: safeUpdates
+      });
+    }
 
     try {
       revalidatePath(`/doctors/${doctor.slug || doctor.id}`);
@@ -92,13 +69,11 @@ export async function POST(request: Request) {
       console.error("Revalidation failed", e);
     }
 
-    return apiResponse({success: true,
-      message: sensitiveLogs.length > 0 
-        ? 'Profile updated. Sensitive changes require admin verification.' 
-        : 'Profile updated successfully.',
-      safeUpdatesApplied: Object.keys(safeUpdates),
-      pendingReviewFields: sensitiveLogs.map(l => l.field)});
-
+    return apiResponse({
+      success: true,
+      message: 'Profile updated successfully.',
+      updatesApplied: Object.keys(safeUpdates)
+    });
   } catch (error: any) {
     console.error('Doctor Profile Update Error:', error);
     return apiError('Internal server error.', 500);

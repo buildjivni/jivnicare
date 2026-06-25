@@ -9,21 +9,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // ── Fetch Dynamic DB Content ──────────────────────────────────
   let dbDoctors: any[] = [];
-  let dbHospitals: any[] = [];
   try {
-    const [doctorsRes, hospitalsRes] = await Promise.all([
-      // Slug-first: select slug for SEO-primary URLs; fallback to id
-      prisma.doctor.findMany({
-        where: { verificationStatus: "VERIFIED" },
-        select: { id: true, slug: true, updatedAt: true },
-      }),
-      prisma.hospital.findMany({
-        where: { verificationStatus: "VERIFIED" },
-        select: { slug: true, updatedAt: true },
-      }),
-    ]);
-    dbDoctors = doctorsRes;
-    dbHospitals = hospitalsRes;
+    // Slug-first: select slug for SEO-primary URLs; fallback to id
+    dbDoctors = await prisma.doctor.findMany({
+      where: { verificationStatus: "VERIFIED" },
+      select: { id: true, slug: true, updatedAt: true },
+    });
   } catch (err) {
     console.warn("Failed to fetch dynamic content for sitemap during build:", err);
   }
@@ -32,7 +23,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPages: MetadataRoute.Sitemap = [
     { url: BASE,                          lastModified: now, changeFrequency: "weekly",  priority: 1.0  },
     { url: `${BASE}/doctors`,             lastModified: now, changeFrequency: "daily",   priority: 0.95 },
-    { url: `${BASE}/hospitals`,           lastModified: now, changeFrequency: "daily",   priority: 0.9  },
     { url: `${BASE}/districts`,           lastModified: now, changeFrequency: "weekly",  priority: 0.85 },
     { url: `${BASE}/blog`,                lastModified: now, changeFrequency: "daily",   priority: 0.8  },
     { url: `${BASE}/about`,               lastModified: now, changeFrequency: "monthly", priority: 0.6  },
@@ -63,14 +53,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.85,
   }));
 
-  // ── Hospital Pages ───────────────────────────────────────────
-  const hospitalPages: MetadataRoute.Sitemap = dbHospitals.map((hosp) => ({
-    url: `${BASE}/hospitals/${hosp.slug}`,
-    lastModified: hosp.updatedAt,
-    changeFrequency: "monthly" as const,
-    priority: 0.8,
-  }));
-
   // ── Specialty Search Pages (SEO landing pages) ────────────────
   const specialtyPages: MetadataRoute.Sitemap = HEALTHCARE_SPECIALTIES.map((s) => ({
     url: `${BASE}/doctors?specialty=${encodeURIComponent(s)}`,
@@ -83,7 +65,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...staticPages,
     ...districtPages,
     ...doctorPages,
-    ...hospitalPages,
     ...specialtyPages,
   ];
 }

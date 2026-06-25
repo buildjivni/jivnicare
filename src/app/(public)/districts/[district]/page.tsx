@@ -53,11 +53,14 @@ export default async function DistrictPage({ params }: PageProps) {
   try {
     dbDoctors = await prisma.doctor.findMany({
       where: { 
-        district: { contains: districtFormatted, mode: 'insensitive' },
+        clinicDistrict: { contains: districtFormatted, mode: 'insensitive' },
         verificationStatus: 'VERIFIED'
       },
-      take: 6,
-      include: { specialties: true, keywords: true }
+      include: {
+        queues: true,
+        platformPricing: true,
+      },
+      take: 6
     });
   } catch (err) {
     console.warn("Failed to fetch doctors in district during prerender:", err);

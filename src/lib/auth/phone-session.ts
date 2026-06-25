@@ -6,13 +6,13 @@ import { encrypt, decrypt, hashPhone } from "@/lib/crypto";
 
 interface CreatePhoneSessionInput {
   phone10: string;
-  firebaseUid: string;
+  firebaseUid?: string;
   name?: string;
   location?: string;
 }
 
 export async function createPhoneSessionResponse(input: CreatePhoneSessionInput) {
-  const { phone10, firebaseUid, name, location } = input;
+  const { phone10, name } = input;
   const hashedPhone = hashPhone(phone10);
 
   const isNewUser = !(await prisma.user.findUnique({ where: { phoneHash: hashedPhone } }));
@@ -27,11 +27,9 @@ export async function createPhoneSessionResponse(input: CreatePhoneSessionInput)
       data: {
         phone: encrypt(phone10),
         phoneHash: hashedPhone,
-        firebaseUid,
         name: name?.trim() || "Patient",
-        location: location?.trim() || null,
-        verificationStatus: 'VERIFIED',
         role: "PATIENT",
+        authProvider: "PATIENT_OTP",
       },
       include: { doctor: true },
     });
@@ -39,10 +37,7 @@ export async function createPhoneSessionResponse(input: CreatePhoneSessionInput)
     user = await prisma.user.update({
       where: { id: user.id },
       data: {
-        firebaseUid: user.firebaseUid || firebaseUid,
-        verificationStatus: 'VERIFIED',
         ...(name?.trim() && !user.name ? { name: name.trim() } : {}),
-        ...(location?.trim() && !user.location ? { location: location.trim() } : {}),
       },
       include: { doctor: true },
     });
@@ -57,8 +52,7 @@ export async function createPhoneSessionResponse(input: CreatePhoneSessionInput)
   const needsProfile =
     isNewUser ||
     !user.name?.trim() ||
-    user.name.trim().toLowerCase() === "patient" ||
-    !user.location?.trim();
+    user.name.trim().toLowerCase() === "patient";
 
   const response = NextResponse.json({
     message: "Phone verified successfully",
@@ -70,8 +64,8 @@ export async function createPhoneSessionResponse(input: CreatePhoneSessionInput)
       name: user.name,
       role: user.role,
       doctorId: user.doctor?.id || null,
-      latitude: user.latitude ?? null,
-      longitude: user.longitude ?? null,
+      latitude: null,
+      longitude: null,
     },
   });
 
@@ -87,4 +81,5 @@ export async function createPhoneSessionResponse(input: CreatePhoneSessionInput)
 
   return response;
 }
+
 

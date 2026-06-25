@@ -11,7 +11,7 @@ export async function verifyQueueOwnership(
 ): Promise<{ doctorId: string; maxCapacity: number; status: string }> {
   const queue = await db.dailyQueue.findUnique({
     where: { id: queueId },
-    select: { doctorId: true, maxCapacity: true, status: true },
+    select: { doctorId: true, dailyLimit: true, status: true },
   });
   if (!queue) {
     throw { status: 404, message: "Queue not found" };
@@ -23,7 +23,11 @@ export async function verifyQueueOwnership(
   if (!doctor || queue.doctorId !== doctor.id) {
     throw { status: 403, message: "You do not own this queue" };
   }
-  return { ...queue };
+  return {
+    doctorId: queue.doctorId,
+    maxCapacity: queue.dailyLimit,
+    status: queue.status,
+  };
 }
 
 /**

@@ -31,7 +31,7 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
-    const updated = await db.$transaction(async (tx) => {
+    const result = await db.$transaction(async (tx) => {
       const updatedToken = await tx.queueToken.update({
         where: { id: tokenId },
         data: {
@@ -42,23 +42,41 @@ export async function PATCH(req: NextRequest) {
       await tx.dailyQueue.update({
         where: { id: queueToken.queueId },
         data: {
-          currentActiveToken: updatedToken.tokenNumber,
+          currentToken: updatedToken.tokenNumber,
         },
       });
 
-      return updatedToken;
+      let patientPhone = "";
+      if (updatedToken.type === "WALKIN") {
+        patientPhone = updatedToken.walkinPhone || "";
+      } else if (updatedToken.patientId) {
+        const patientUser = await tx.user.findUnique({
+          where: { id: updatedToken.patientId },
+          select: { phone: true }
+        });
+        if (patientUser?.phone) {
+          try {
+            const { decrypt } = require("@/lib/crypto");
+            patientPhone = decrypt(patientUser.phone);
+          } catch (e) {
+            patientPhone = patientUser.phone;
+          }
+        }
+      }
+
+      return { updatedToken, patientPhone };
     });
 
     // Trigger queue alerts
-    if (updated) {
+    if (result && result.updatedToken) {
       try {
         const { triggerQueueAlerts } = require("@/lib/notifications");
         triggerQueueAlerts(
           queueToken.queueId,
           {
-            tokenNumber: updated.tokenNumber,
-            patientPhone: updated.patientPhone,
-            patientId: updated.patientId,
+            tokenNumber: result.updatedToken.tokenNumber,
+            patientPhone: result.patientPhone,
+            patientId: result.updatedToken.patientId,
           },
           queueToken.queue.doctorId
         ).catch((err: any) => console.error("Error triggering queue alerts:", err));
@@ -67,7 +85,7 @@ export async function PATCH(req: NextRequest) {
       }
     }
 
-    return apiResponse({token: updated});
+    return apiResponse({token: result.updatedToken});
   } catch (err) {
     return queueError(new Response(), err);
   }

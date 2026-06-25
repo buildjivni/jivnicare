@@ -20,16 +20,24 @@ export async function GET(request: NextRequest) {
     where: { id: userId },
   });
 
-  if (!dbUser || dbUser.role !== "ADMIN") {
+  if (!dbUser || dbUser.role !== "ADMIN" || !dbUser.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (dbUser.totpEnabled) {
+  const adminRecord = await prisma.admin.findUnique({
+    where: { email: dbUser.email },
+  });
+
+  if (!adminRecord) {
+    return NextResponse.json({ error: "Admin record not found" }, { status: 404 });
+  }
+
+  if (adminRecord.totpEnabled) {
     return NextResponse.json({ error: "TOTP already set up" }, { status: 400 });
   }
 
   const secret = generateTOTPSecret();
-  const uri = getTOTPUri(secret, dbUser.email || "admin@jivnicare.com");
+  const uri = getTOTPUri(secret, adminRecord.email);
 
   if (redis) {
     await redis.set(`pending_totp_secret:${userId}`, secret, { ex: 600 });

@@ -28,7 +28,7 @@ export async function GET(
       where: { id: queueId },
       include: {
         doctor: {
-          select: { name: true, clinicName: true, hospitalName: true }
+          select: { name: true, clinicName: true }
         }
       }
     });
@@ -41,26 +41,42 @@ export async function GET(
       where: { queueId },
       orderBy: { tokenNumber: 'asc' },
       include: {
-        patient: { select: { name: true, phone: true } },
-        walkInEntry: { select: { patientName: true, phoneNumber: true } }
+        patient: { select: { name: true, phone: true } }
       }
     });
 
-    const formattedTokens = tokens.map(t => ({
-      id: t.id,
-      tokenNumber: t.tokenNumber,
-      patientName: t.patient?.name || t.walkInEntry?.patientName || "Walk-in Patient",
-      phone: (t.patient?.phone ? decrypt(t.patient.phone) : null) || t.walkInEntry?.phoneNumber || "N/A",
-      status: t.status,
-      type: t.tokenType,
-      issuedAt: t.bookedAt.toISOString(),
-      isEmergency: t.tokenType === "EMERGENCY",
-    }));
+    const formattedTokens = tokens.map(t => {
+      let name = "Walk-in Patient";
+      let phone = "N/A";
+      if (t.type === "WALKIN") {
+        name = t.walkinName || "Walk-in Patient";
+        phone = t.walkinPhone || "N/A";
+      } else if (t.patient) {
+        name = t.patient.name || "Patient";
+        if (t.patient.phone) {
+          try {
+            phone = decrypt(t.patient.phone);
+          } catch (e) {
+            phone = t.patient.phone;
+          }
+        }
+      }
+      return {
+        id: t.id,
+        tokenNumber: t.tokenNumber,
+        patientName: name,
+        phone,
+        status: t.status,
+        type: t.type,
+        issuedAt: t.bookedAt.toISOString(),
+        isEmergency: dailyQueue.type === "EMERGENCY",
+      };
+    });
 
     // Identify the exact current active token record if it exists
     const currentActiveRecord = formattedTokens.find(
-      t => t.tokenNumber === dailyQueue.currentActiveToken && 
-           (t.status === "WAITING" || t.status === "IN_CONSULTATION")
+      t => t.tokenNumber === dailyQueue.currentToken && 
+           (t.status === "BOOKED" || t.status === "READY" || t.status === "IN_CONSULTATION")
     );
 
     return NextResponse.json({
@@ -68,8 +84,8 @@ export async function GET(
       queue: {
         id: dailyQueue.id,
         doctorName: dailyQueue.doctor.name,
-        clinicName: dailyQueue.doctor.clinicName || dailyQueue.doctor.hospitalName,
-        currentActiveToken: dailyQueue.currentActiveToken,
+        clinicName: dailyQueue.doctor.clinicName,
+        currentActiveToken: dailyQueue.currentToken,
         status: dailyQueue.status,
         date: dailyQueue.date.toISOString(),
       },

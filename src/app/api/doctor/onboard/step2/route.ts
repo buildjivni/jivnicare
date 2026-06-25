@@ -29,41 +29,24 @@ export async function POST(request: Request) {
 
     const data = validation.data;
 
-    // Create Clinic and link to Doctor in transaction
-    const result = await prisma.$transaction(async (tx) => {
-      const clinic = await tx.clinic.create({
-        data: {
-          name: data.practiceName,
-          city: data.city,
-          address: data.practiceAddress,
-          isActive: true,
-        }
-      });
-
-      const updatedDoctor = await tx.doctor.update({
-        where: { id: doctorId },
-        data: {
-          clinicId: clinic.id,
-          hospitalName: data.practiceName,
-          clinicName: data.practiceName,
-          fullAddress: data.practiceAddress,
-          locality: data.locality,
-          city: data.city,
-          district: data.district,
-          state: data.state,
-          pincode: data.pincode,
-          latitude: data.latitude || null,
-          longitude: data.longitude || null
-        }
-      });
-
-      return { clinic, updatedDoctor };
+    // Update Doctor record directly (clinic is flattened on Doctor model)
+    const updatedDoctor = await prisma.doctor.update({
+      where: { id: doctorId },
+      data: {
+        clinicName: data.practiceName,
+        clinicAddress: data.practiceAddress,
+        clinicCity: data.city,
+        clinicDistrict: data.district,
+        clinicPincode: data.pincode,
+        clinicLatitude: data.latitude || null,
+        clinicLongitude: data.longitude || null
+      }
     });
 
     return apiResponse({
       success: true,
       message: 'Step 2 complete.',
-      clinicId: result.clinic.id
+      clinicId: updatedDoctor.id // return doctor id as clinic id placeholder to avoid breaking UI response expectations
     });
 
   } catch (error: any) {

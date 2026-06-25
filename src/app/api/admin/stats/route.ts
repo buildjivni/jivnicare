@@ -40,7 +40,7 @@ export async function GET() {
 
     tokenAggregations.forEach(group => {
       todayTotal += group._count.id;
-      if (group.status === "WAITING") todayWaiting = group._count.id;
+      if (group.status === "BOOKED" || group.status === "READY") todayWaiting += group._count.id;
       if (group.status === "IN_CONSULTATION") todayInConsultation = group._count.id;
       if (group.status === "COMPLETED") todayCompleted = group._count.id;
       if (group.status === "NO_SHOW") todayNoShow = group._count.id;

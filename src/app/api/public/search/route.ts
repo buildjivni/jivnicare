@@ -53,8 +53,8 @@ export async function GET(request: NextRequest) {
 
     // Layer 2: PostgreSQL query
     const where: any = {
-      isVerified: true,
-      isActive: true,
+      verificationStatus: "VERIFIED",
+      canShowOnPublic: true,
     };
 
     const andConditions: any[] = [];
@@ -123,7 +123,6 @@ export async function GET(request: NextRequest) {
           { clinicName: { contains: term, mode: "insensitive" } },
           { hospitalName: { contains: term, mode: "insensitive" } },
           { bio: { contains: term, mode: "insensitive" } },
-          { qualifications: { contains: term, mode: "insensitive" } },
           { locality: { contains: term, mode: "insensitive" } },
           { diseases: { has: term } },
           { procedures: { has: term } }
@@ -139,11 +138,8 @@ export async function GET(request: NextRequest) {
     const dbDoctors = await prisma.doctor.findMany({
       where,
       include: {
-        clinic: true,
-        weeklySchedule: true,
-        clinicOperations: true,
         platformPricing: true,
-        dailyQueues: {
+        queues: {
           take: 1,
           orderBy: {
             createdAt: "desc",
@@ -157,10 +153,10 @@ export async function GET(request: NextRequest) {
     let uiDoctors = dbDoctors.map((doc) => {
       const mapped = mapPrismaDoctorToUI(doc);
       // Inject coordinates if present
-      if (input.lat && input.lng && doc.latitude !== null && doc.longitude !== null) {
+      if (input.lat && input.lng && doc.clinicLatitude !== null && doc.clinicLongitude !== null) {
         const userLat = parseFloat(input.lat);
         const userLng = parseFloat(input.lng);
-        const dist = calculateHaversineDistance(userLat, userLng, doc.latitude, doc.longitude);
+        const dist = calculateHaversineDistance(userLat, userLng, doc.clinicLatitude, doc.clinicLongitude);
         mapped.distanceKm = dist;
         mapped.distanceStr = `${dist.toFixed(1)} km`;
         mapped.distance = `${dist.toFixed(1)} km away`;

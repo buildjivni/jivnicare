@@ -48,8 +48,25 @@ export async function GET(request: NextRequest) {
       where: { id: userId },
     });
 
-    if (!dbUser) {
-      return NextResponse.redirect(new URL("/admin/login", request.url));
+    if (!dbUser || !dbUser.email) {
+      return NextResponse.redirect(new URL("/admin/jvc-26", request.url));
+    }
+
+    // Query Admin table
+    let adminRecord = await prisma.admin.findUnique({
+      where: { email: dbUser.email },
+    });
+
+    if (!adminRecord) {
+      // Bootstrap Admin record if user has ADMIN role but no Admin record
+      adminRecord = await prisma.admin.create({
+        data: {
+          email: dbUser.email,
+          name: dbUser.name || "Admin",
+          totpSecret: "",
+          totpEnabled: false,
+        },
+      });
     }
 
     const tempJwt = await signToken(
@@ -61,7 +78,7 @@ export async function GET(request: NextRequest) {
       "10m"
     );
 
-    const targetUrl = dbUser.totpEnabled
+    const targetUrl = adminRecord.totpEnabled
       ? "/admin/totp-verify"
       : "/admin/totp-setup";
 

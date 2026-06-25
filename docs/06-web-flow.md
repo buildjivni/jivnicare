@@ -254,7 +254,7 @@ Empty state:
   [Find a Doctor] button → Search page
 ```
 
-### Flow P8 — Waitlist Flow
+### Flow P8 — Waitlist Flow & Claim Process
 
 ```
 Queue full → Patient clicks [Join Waitlist]
@@ -271,7 +271,20 @@ System checks same-speciality doctors:
     [Join Waitlist]
         ↓
 Saved in waitlist table
-Notified via push notification when doctor comes AVAILABLE
+        ↓
+When a slot opens (N=1 cancellation):
+  1. Top 2 waitlisted patients (FIFO order) are marked as notified: true.
+  2. Transactional SMS is broadcasted:
+     "A slot just opened with Dr. [Name]. Tap to book it now — first to confirm gets it."
+  3. Patients must click the SMS/notification link to claim the slot.
+        ↓
+Claim Resolution (POST /api/patient/queue/claim-waitlist):
+  First patient to claim:
+    - Atomically checked against daily queue limits.
+    - If slot is free: Queue token is booked, waitlist entry deleted.
+  Slower claimant(s):
+    - Claim fails with SLOT_TAKEN ("Yeh slot abhi kisi aur ne le liya hai...").
+    - Waitlist entry is reset to notified: false and notifiedAt: null (eligible for future slots).
 ```
 
 ---
@@ -480,6 +493,31 @@ Both pages contain:
 PDF downloads automatically
 ```
 
+### Flow D7 — Operator/Receptionist Delegation
+
+```
+Doctor shares credentials or phone OTP with operator/receptionist
+        ↓
+Operator/receptionist logs into doctor portal
+        ↓
+Authorized access to doctor dashboard
+        ↓
+Can perform:
+  • Queue management (arrive, call next, complete, no-show)
+  • Walk-in registration (adding walk-in tokens)
+  • Status toggling (Available, On Break, Offline)
+  • View patient details (name, phone, token number)
+Cannot perform:
+  • Profile credential changes (password, email, phone verification)
+  • Banking or payment details modification
+  • Delete doctor profile or account
+```
+
+**Security & Operational Boundaries:**
+* **Login & Authentication:** In V1, there are no independent login credentials for operators or receptionists. They log in by sharing the doctor's phone number + SMS OTP, or linked Google account.
+* **Delegation Scope:** Once logged in, the operator/receptionist possesses full access to the doctor's dashboard. This is designed to reduce doctor cognitive load during busy OPD sessions, allowing the receptionist to operate the queue (calling patients, marking arrivals, adding walk-ins) at the reception desk while the doctor focuses on clinical consultations.
+* **Prohibited Actions:** Critical operations (such as changing registration credentials, bank details, or deleting the account) are restricted or require secondary verification.
+
 ---
 
 ## 3. ADMIN FLOWS
@@ -487,10 +525,11 @@ PDF downloads automatically
 ### Flow A1 — Admin Login
 
 ```
-Admin goes to jivnicare.com/admin
+Admin goes to jivnicare.com/admin/jvc-26
         ↓
 Admin login page (NOT same as patient login)
-  Enter phone → OTP → verify
+  Google OAuth Login
+```
         ↓
 TOTP prompt:
   "Enter 6-digit code from Google Authenticator"

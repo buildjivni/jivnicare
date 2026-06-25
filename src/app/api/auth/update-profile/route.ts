@@ -43,16 +43,22 @@ export async function POST(request: Request) {
 
     const user = await prisma.user.update({
       where: { id: payload.id },
-      data: { name, location },
+      data: { name },
       select: {
         id: true,
         phone: true,
         name: true,
         role: true,
-        location: true,
         doctor: { select: { id: true } },
       },
     });
+
+    if (payload.role === "DOCTOR" && user.doctor?.id) {
+      await prisma.doctor.update({
+        where: { id: user.doctor.id },
+        data: { clinicCity: location }
+      });
+    }
 
     return NextResponse.json({
       success: true,
@@ -61,7 +67,7 @@ export async function POST(request: Request) {
         phone: decrypt(user.phone),
         name: user.name,
         role: user.role,
-        location: user.location,
+        location: location,
         doctorId: user.doctor?.id ?? null,
       },
     });

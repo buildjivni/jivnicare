@@ -42,12 +42,12 @@ export function HelpEcosystem({ className }: { className?: string }) {
         </div>
         
         <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-          <a href="tel:+918000000000" className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm transition-colors shadow-sm w-full sm:w-auto">
+          <a href="tel:8235351897" className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm transition-colors shadow-sm w-full sm:w-auto">
             <Phone className="w-4 h-4" /> Call Support
           </a>
-          <button className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-sm transition-colors border border-emerald-200 w-full sm:w-auto">
+          <a href="https://wa.me/918235351897" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-sm transition-colors border border-emerald-200 w-full sm:w-auto">
             <MessageCircle className="w-4 h-4" /> WhatsApp Us
-          </button>
+          </a>
         </div>
       </div>
 

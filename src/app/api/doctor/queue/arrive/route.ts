@@ -22,10 +22,10 @@ export async function PATCH(req: NextRequest) {
 
     const queueToken = await verifyTokenOwnership(tokenId, user);
 
-    if (queueToken.status !== "WAITING") {
+    if (queueToken.status !== "BOOKED") {
       return Response.json(
         {
-          error: `Token is not in WAITING status. Current status: ${queueToken.status}`,
+          error: `Token is not in BOOKED status. Current status: ${queueToken.status}`,
         },
         { status: 409 }
       );

@@ -17,15 +17,26 @@ export async function POST(request: Request) {
       return apiError('Authentication required', 401);
     }
 
-    const payload = await verifyToken(token) as { id: string } | null;
+    const payload = await verifyToken(token) as { id: string; role?: string } | null;
     if (!payload?.id) {
       return apiError('Invalid token', 401);
     }
 
-    await prisma.user.update({
-      where: { id: payload.id },
-      data: { latitude, longitude },
-    });
+    if (payload.role === 'DOCTOR') {
+      const doctor = await prisma.doctor.findUnique({
+        where: { userId: payload.id },
+        select: { id: true }
+      });
+      if (doctor) {
+        await prisma.doctor.update({
+          where: { id: doctor.id },
+          data: {
+            clinicLatitude: latitude,
+            clinicLongitude: longitude
+          }
+        });
+      }
+    }
 
     return apiResponse({message: 'Location saved'}, 200);
   } catch (error) {

@@ -7,7 +7,7 @@ import { cookies } from 'next/headers';
 import { encrypt, hashPhone } from '@/lib/crypto';
 import { VerificationStatus } from '@prisma/client';
 import { step1OnboardSchema, formatZodError } from '@/lib/validators/validations';
-import { generateSequentialDoctorCode, generateShortCode } from '@/lib/utils/slug';
+import { generateSequentialDoctorCode } from '@/lib/utils/slug';
 
 export async function POST(request: Request) {
   try {
@@ -45,14 +45,7 @@ export async function POST(request: Request) {
       const doctorCode = await generateSequentialDoctorCode(tx);
       const cleanName = data.fullName.replace(/^(dr\.?\s*|prof\.?\s*|mr\.?\s*|ms\.?\s*|mrs\.?\s*)/i, '');
       const nameSlug = cleanName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-      let doctorSlug = `dr-${nameSlug}-${doctorCode.toLowerCase()}`;
-      
-      let shortCode = generateShortCode();
-      for (let attempt = 0; attempt < 5; attempt++) {
-        const exists = await tx.doctor.findFirst({ where: { shortCode } });
-        if (!exists) break;
-        shortCode = generateShortCode();
-      }
+      const doctorSlug = `dr-${nameSlug}-${doctorCode.toLowerCase()}`;
 
       const doctor = await tx.doctor.create({
         data: {
@@ -60,24 +53,19 @@ export async function POST(request: Request) {
           name: data.fullName,
           phone: phone10,
           speciality: data.speciality,
-          qualification: "Pending",
+          qualifications: ["Pending"],
           slug: doctorSlug,
-          shortCode,
-          doctorCode,
-          experience: 0,
+          internalDoctorId: doctorCode,
           experienceYears: 0,
-          district: "Pending", // Required non-nullable field
-          hospitalName: "Pending",
+          clinicDistrict: "Pending", // Required non-nullable fields
           clinicName: "Pending",
-          fullAddress: "",
-          locality: "",
-          city: "Pending",
-          state: "Bihar",
-          pincode: "",
-          verificationStatus: VerificationStatus.DRAFT,
-          isOnline: false,
+          clinicAddress: "",
+          clinicCity: "Pending",
+          operatorName: "",
+          operatorMobile: "",
+          registrationNumber: "Pending",
+          verificationStatus: VerificationStatus.PENDING_ACTIVATION,
           jivnicarePatientsServed: 0,
-          averageConsultationMinutes: 10,
           dailyTokenLimit: 50,
         }
       });

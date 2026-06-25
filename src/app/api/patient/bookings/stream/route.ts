@@ -34,14 +34,13 @@ export async function GET(request: Request) {
               select: {
                 slug: true,
                 clinicName: true,
-                district: true,
-                averageConsultationTime: true,
+                clinicDistrict: true,
                 user: { select: { name: true } },
               },
             },
             tokens: {
-              where: { status: "WAITING" },
-              select: { tokenNumber: true, status: true, isEmergency: true },
+              where: { status: "BOOKED" },
+              select: { tokenNumber: true, status: true },
             },
           },
         },

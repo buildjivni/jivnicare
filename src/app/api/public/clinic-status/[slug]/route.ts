@@ -13,32 +13,42 @@ export async function GET(
 
     const doctor = await db.doctor.findUnique({
       where: { slug },
-      select: { id: true },
+      select: {
+        id: true,
+        availabilityStatus: true,
+        isAcceptingBookings: true,
+        isEmergencyEnabled: true,
+        emergencyFee: true,
+        consultationFee: true,
+        weeklySchedule: true,
+      },
     });
 
     if (!doctor) {
       return apiError("Doctor not found", 404);
     }
 
-    const ops = await db.clinicOperations.findUnique({
-      where: { doctorId: doctor.id },
-      select: {
-        status: true,
-        isClosedToday: true,
-        pauseOnlineBooking: true,
-        walkInLimit: true,
-        onlineLimit: true,
-      },
-    });
-
-    if (!ops) {
-      // No ClinicOperations record means clinic is available by default
-      return apiResponse({status: "AVAILABLE",
-        isClosedToday: false,
-        pauseOnlineBooking: false,});
+    const todayKey = new Date()
+      .toLocaleDateString("en-US", { weekday: "long", timeZone: "Asia/Kolkata" })
+      .toLowerCase();
+    
+    let isClosedToday = false;
+    if (doctor.weeklySchedule && typeof doctor.weeklySchedule === "object") {
+      const schedule = doctor.weeklySchedule as any;
+      if (schedule[todayKey]?.isOpen === false) {
+        isClosedToday = true;
+      }
     }
 
-    return Response.json(ops);
+    const isEmergencyOnly = !doctor.isAcceptingBookings && doctor.isEmergencyEnabled;
+
+    return Response.json({
+      status: isEmergencyOnly ? "EMERGENCY_ONLY" : (isClosedToday ? "CLINIC_CLOSED" : doctor.availabilityStatus),
+      isClosedToday,
+      pauseOnlineBooking: !doctor.isAcceptingBookings,
+      emergencyFee: doctor.emergencyFee ?? doctor.consultationFee,
+      isEmergencyEnabled: doctor.isEmergencyEnabled,
+    });
   } catch (err) {
     console.error("[GET /api/public/clinic-status]", err);
     return apiError("Internal server error", 500);

@@ -55,12 +55,10 @@ export async function GET() {
         id: true,
         phone: true,
         name: true,
-        location: true,
         role: true,
-        verificationStatus: true,
         // Linked doctor record (null for PATIENT/ADMIN)
         doctor: {
-          select: { id: true },
+          select: { id: true, verificationStatus: true },
         },
       },
     });
@@ -74,9 +72,8 @@ export async function GET() {
         id: user.id,
         phone: decrypt(user.phone),
         name: user.name,
-        location: user.location,
         role: user.role,
-        verified: (user as any).verificationStatus === 'VERIFIED',
+        verified: user.doctor?.verificationStatus === 'VERIFIED',
         doctorId: user.doctor?.id ?? null,
       },
     });

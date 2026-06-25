@@ -221,7 +221,8 @@ export async function GET(request: NextRequest) {
         queue: { doctorId: doctor.id }
       },
       include: {
-        queue: { select: { logicalDate: true } }
+        queue: { select: { date: true } },
+        patient: { select: { name: true, phone: true } }
       },
       orderBy: {
         bookedAt: "desc"
@@ -229,13 +230,31 @@ export async function GET(request: NextRequest) {
       take: 50 // Limit to last 50 for page size comfort on A4
     });
 
-    patientsData = tokens.map(t => ({
-      tokenNumber: t.tokenNumber,
-      patientName: t.patientName || "Walk-in Patient",
-      patientPhone: t.patientPhone,
-      date: t.queue.logicalDate,
-      status: t.status,
-    }));
+    const { decrypt } = require("@/lib/crypto");
+    patientsData = tokens.map(t => {
+      let name = "Walk-in Patient";
+      let phone = "";
+      if (t.type === "WALKIN") {
+        name = t.walkinName || "Walk-in Patient";
+        phone = t.walkinPhone || "";
+      } else if (t.patient) {
+        name = t.patient.name || "Patient";
+        if (t.patient.phone) {
+          try {
+            phone = decrypt(t.patient.phone);
+          } catch (e) {
+            phone = t.patient.phone;
+          }
+        }
+      }
+      return {
+        tokenNumber: t.tokenNumber,
+        patientName: name,
+        patientPhone: phone,
+        date: t.queue.date,
+        status: t.status,
+      };
+    });
   } catch (error) {
     console.error("[EXPORT_PDF_API_ERROR]", error);
     return NextResponse.json({ error: "Failed to generate report PDF" }, { status: 500 });

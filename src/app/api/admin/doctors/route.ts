@@ -43,11 +43,6 @@ export async function GET(req: Request) {
               phone: true,
               role: true,
             },
-          },
-          clinicOperations: true,
-          specialties: { select: { name: true, slug: true } },
-          updateLogs: {
-            where: { status: "PENDING" }
           }
         },
         orderBy: { createdAt: "desc" },
@@ -57,26 +52,28 @@ export async function GET(req: Request) {
       prisma.doctor.count({ where: whereClause })
     ]);
 
-    // Fetch moderation logs separately and merge ONLY for the paginated subset
+    // Fetch moderation logs (from AuditLog) separately and merge ONLY for the paginated subset
     const doctorIds = doctors.map((d) => d.id);
     const logsByDoctor: Record<string, any[]> = {};
 
     if (doctorIds.length > 0) {
-      const moderationLogs = await prisma.moderationLog.findMany({
-        where: { targetId: { in: doctorIds }, targetType: "DOCTOR" },
+      const moderationLogs = await prisma.auditLog.findMany({
+        where: { entityId: { in: doctorIds }, entityType: "Doctor" },
         orderBy: { createdAt: "desc" },
-        include: { admin: { select: { name: true } } },
+        include: { user: { select: { name: true } } },
       });
 
       for (const log of moderationLogs) {
-        if (!logsByDoctor[log.targetId]) logsByDoctor[log.targetId] = [];
-        if (logsByDoctor[log.targetId].length < 3) {
-          logsByDoctor[log.targetId].push({
-            action: log.action,
-            reason: log.reason,
-            createdAt: log.createdAt,
-            adminName: log.admin?.name || "Admin",
-          });
+        if (log.entityId) {
+          if (!logsByDoctor[log.entityId]) logsByDoctor[log.entityId] = [];
+          if (logsByDoctor[log.entityId].length < 3) {
+            logsByDoctor[log.entityId].push({
+              action: log.action,
+              reason: log.newValue ? String(log.newValue) : "",
+              createdAt: log.createdAt,
+              adminName: log.user?.name || "Admin",
+            });
+          }
         }
       }
     }
@@ -98,11 +95,11 @@ export async function GET(req: Request) {
         totalCount,
         totalPages,
         hasNextPage: page < totalPages,
-        hasPreviousPage: page > 1
+        hasPrevPage: page > 1
       }
     });
   } catch (error) {
-    console.error("GET Admin Doctors Error:", error);
+    console.error("Admin Doctors API Error:", error);
     return apiError("Internal Server Error", 500);
   }
 }

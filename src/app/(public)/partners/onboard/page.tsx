@@ -483,7 +483,7 @@ function DoctorOnboardingFlowContent() {
 
           {/* Stepper Progress */}
           {step <= 4 && (
-            <div className="bg-slate-50/50 border-b border-slate-100 py-6 px-8 flex justify-center overflow-x-auto">
+            <div className="bg-slate-50/50 border-b border-slate-100 py-6 px-6 md:px-8 flex justify-start md:justify-center overflow-x-auto">
               <div className="flex items-center gap-2 md:gap-4 w-full max-w-3xl justify-between min-w-[500px]">
                 {[
                   { num: 1, label: 'Google & Basic', icon: UserCircle },
@@ -533,7 +533,7 @@ function DoctorOnboardingFlowContent() {
                       <Lock className="w-3.5 h-3.5" /> Authentication Setup
                     </span>
                     <h2 className="text-3xl font-black text-slate-900 tracking-tight">Step 1: Account Authentication</h2>
-                    <p className="text-slate-500 font-medium mt-2">Link your Google Account. Doctors log in securely using Google OAuth.</p>
+                    <p className="text-slate-500 font-medium mt-2">Link your Google Account for secure sign-in.</p>
                   </div>
 
                   {errors.submit && (
@@ -572,7 +572,7 @@ function DoctorOnboardingFlowContent() {
                       <Button
                         type="button"
                         onClick={() => signIn("google")}
-                        className="bg-[#4285F4] hover:bg-[#357AE8] text-white font-bold rounded-xl h-11 px-5 flex items-center gap-2 shadow-md shadow-blue-500/10"
+                        className="bg-[#205E98] hover:bg-[#1a4d7d] text-white font-bold rounded-xl h-11 px-5 flex items-center gap-2 shadow-md shadow-[#205E98]/10 transition-all"
                       >
                         Link Google Account
                       </Button>
@@ -657,7 +657,7 @@ function DoctorOnboardingFlowContent() {
                       <Building className="w-3.5 h-3.5" /> Practice Location
                     </span>
                     <h2 className="text-3xl font-black text-slate-900 tracking-tight">Step 2: Clinic Information</h2>
-                    <p className="text-slate-500 font-medium mt-2">Enter your practice address and exact coordinates to enable geolocation search.</p>
+                    <p className="text-slate-500 font-medium mt-2">Enter your practice location details to enable patient search.</p>
                   </div>
 
                   <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
@@ -898,7 +898,7 @@ function DoctorOnboardingFlowContent() {
                       <Briefcase className="w-3.5 h-3.5" /> Professional Credentials
                     </span>
                     <h2 className="text-3xl font-black text-slate-900 tracking-tight">Step 3: Medical Credentials &amp; Documents</h2>
-                    <p className="text-slate-500 font-medium mt-2">Enter your license registration number and upload copy for council verification.</p>
+                    <p className="text-slate-500 font-medium mt-2">Provide your license registration details for council verification.</p>
                   </div>
 
                   <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
@@ -1166,7 +1166,7 @@ function DoctorOnboardingFlowContent() {
                       <Calendar className="w-3.5 h-3.5" /> Working Schedule
                     </span>
                     <h2 className="text-3xl font-black text-slate-900 tracking-tight">Step 4: Availability &amp; OPD Timings</h2>
-                    <p className="text-slate-500 font-medium mt-2">Specify your clinical opening hours and patient booking limits for each day of the week.</p>
+                    <p className="text-slate-500 font-medium mt-2">Set your clinical opening hours and daily patient limits.</p>
                   </div>
 
                   {errors.submit && (
@@ -1432,7 +1432,7 @@ function DoctorOnboardingFlowContent() {
                         <ArrowRight className="w-5 h-5" />
                       </Button>
                     </Link>
-                    <a href="https://wa.me/910000000000?text=JivniCare%20Doctor%20Support" target="_blank" rel="noopener noreferrer" className="h-14 px-8 rounded-2xl border border-slate-200 hover:border-slate-350 bg-white hover:bg-slate-50 text-slate-700 font-bold text-base transition-all flex items-center justify-center gap-2">
+                    <a href="https://wa.me/918235351897?text=JivniCare%20Doctor%20Support" target="_blank" rel="noopener noreferrer" className="h-14 px-8 rounded-2xl border border-slate-200 hover:border-slate-350 bg-white hover:bg-slate-50 text-slate-700 font-bold text-base transition-all flex items-center justify-center gap-2">
                       <PhoneCall className="w-5 h-5 text-slate-400" />
                       Contact Support
                     </a>

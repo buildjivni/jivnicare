@@ -61,7 +61,7 @@ export async function POST(request: Request) {
         throw new Error("INVALID_STATE");
       }
 
-      const validFromStates = ["WAITING", "SKIPPED"];
+      const validFromStates = ["BOOKED", "READY", "CALLED", "IN_CONSULTATION"];
       if (!validFromStates.includes(tokenInTx.status)) {
         throw new Error("INVALID_STATE");
       }
@@ -72,12 +72,6 @@ export async function POST(request: Request) {
         data: {
           status: "NO_SHOW",
         },
-      });
-
-      // 3. Atomically increment noShowCount to free capacity
-      await tx.dailyQueue.update({
-        where: { id: queueToken.queueId },
-        data: { noShowCount: { increment: 1 } },
       });
 
       return true;

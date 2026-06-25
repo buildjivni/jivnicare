@@ -1,7 +1,32 @@
 import prisma from "@/lib/db/prisma";
 import { sendTransactionalSms } from "@/lib/sms";
 import { logger } from "./infrastructure/logger";
-import { getLogicalDate } from "./queue";
+import { resolveClinicLogicalDay } from "@/lib/utils/clinic-utils";
+import { decrypt } from "@/lib/crypto";
+import { NotificationType, TokenStatus } from "@prisma/client";
+
+function getPhoneAndName(token: any): { phone: string; name: string } {
+  if (token.type === "WALKIN") {
+    return {
+      phone: token.walkinPhone || "",
+      name: token.walkinName || "Patient"
+    };
+  }
+  
+  let decryptedPhone = "";
+  if (token.patient?.phone) {
+    try {
+      decryptedPhone = decrypt(token.patient.phone);
+    } catch (e) {
+      decryptedPhone = token.patient.phone;
+    }
+  }
+  
+  return {
+    phone: decryptedPhone,
+    name: token.patient?.name || "Patient"
+  };
+}
 
 /**
  * Triggers alerts for patients when the queue progresses.
@@ -27,7 +52,7 @@ export async function triggerQueueAlerts(
       await prisma.notification.create({
         data: {
           userId: activeToken.patientId,
-          type: "PLATFORM_ALERT",
+          type: NotificationType.TOKEN_CALLED,
           title: "Your turn has arrived!",
           message: calledMessage
         }
@@ -39,7 +64,12 @@ export async function triggerQueueAlerts(
     const waitingTokens = await prisma.queueToken.findMany({
       where: {
         queueId: queueId,
-        status: { in: ["WAITING", "READY"] }
+        status: { in: [TokenStatus.BOOKED, TokenStatus.READY] }
+      },
+      include: {
+        patient: {
+          select: { phone: true, name: true }
+        }
       },
       orderBy: { tokenNumber: "asc" },
       take: 2
@@ -49,34 +79,44 @@ export async function triggerQueueAlerts(
     if (waitingTokens.length > 0) {
       const nextToken = waitingTokens[0];
       const nextMessage = `Aap agle hain! Token #${nextToken.tokenNumber} — 1 patient aapke aage hain Dr. ${doctorName} ke paas. Kripya ready rahein.`;
+      
+      const { phone: nextPhone } = getPhoneAndName(nextToken);
+      
       if (nextToken.patientId) {
         await prisma.notification.create({
           data: {
             userId: nextToken.patientId,
-            type: "ENGAGEMENT_ALERT",
+            type: NotificationType.QUEUE_UPDATE,
             title: "You are next!",
             message: nextMessage
           }
         }).catch(() => {});
       }
-      await sendTransactionalSms(nextToken.patientPhone, nextMessage).catch(() => {});
+      if (nextPhone) {
+        await sendTransactionalSms(nextPhone, nextMessage).catch(() => {});
+      }
     }
 
     // 4. Notify the third patient (2 patients ahead)
     if (waitingTokens.length > 1) {
       const thirdToken = waitingTokens[1];
       const thirdMessage = `Aapka turn aane wala hai! Token #${thirdToken.tokenNumber} — 2 patients aapke aage hain Dr. ${doctorName} ke paas. Kripya prepare rahein.`;
+      
+      const { phone: thirdPhone } = getPhoneAndName(thirdToken);
+      
       if (thirdToken.patientId) {
         await prisma.notification.create({
           data: {
             userId: thirdToken.patientId,
-            type: "ENGAGEMENT_ALERT",
+            type: NotificationType.QUEUE_UPDATE,
             title: "Your turn is coming!",
             message: thirdMessage
           }
         }).catch(() => {});
       }
-      await sendTransactionalSms(thirdToken.patientPhone, thirdMessage).catch(() => {});
+      if (thirdPhone) {
+        await sendTransactionalSms(thirdPhone, thirdMessage).catch(() => {});
+      }
     }
   } catch (error) {
     logger.error({ category: "QUEUE", message: "Failed to trigger queue progression alerts", error });
@@ -98,14 +138,18 @@ export async function triggerClinicStatusAlerts(
       where: { id: doctorId },
       select: { name: true }
     });
+
     if (!doctor) return;
 
     const doctorName = doctor.name;
-    const logicalDate = getLogicalDate();
+    const today = resolveClinicLogicalDay();
 
     // Find the daily queue for today
-    const dailyQueue = await prisma.dailyQueue.findUnique({
-      where: { doctorId_logicalDate: { doctorId, logicalDate } }
+    const dailyQueue = await prisma.dailyQueue.findFirst({
+      where: {
+        doctorId,
+        date: today
+      }
     });
 
     if (!dailyQueue) return;
@@ -114,7 +158,12 @@ export async function triggerClinicStatusAlerts(
     const activeTokens = await prisma.queueToken.findMany({
       where: {
         queueId: dailyQueue.id,
-        status: { in: ["WAITING", "READY"] }
+        status: { in: [TokenStatus.BOOKED, TokenStatus.READY] }
+      },
+      include: {
+        patient: {
+          select: { phone: true, name: true }
+        }
       }
     });
 
@@ -143,19 +192,22 @@ export async function triggerClinicStatusAlerts(
     // Send notifications to all active patients
     for (const token of activeTokens) {
       const message = messageTemplate.replace("#[TOKEN]", token.tokenNumber.toString());
+      const { phone } = getPhoneAndName(token);
 
       if (token.patientId) {
         await prisma.notification.create({
           data: {
             userId: token.patientId,
-            type: "PLATFORM_ALERT",
+            type: NotificationType.DOCTOR_STATUS_CHANGE,
             title,
             message
           }
         }).catch(() => {});
       }
 
-      await sendTransactionalSms(token.patientPhone, message).catch(() => {});
+      if (phone) {
+        await sendTransactionalSms(phone, message).catch(() => {});
+      }
     }
   } catch (error) {
     logger.error({ category: "SYSTEM", message: "Failed to trigger clinic status alerts", error });

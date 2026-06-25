@@ -88,16 +88,16 @@ export async function POST(request: Request) {
       const { sendTransactionalSms } = require("@/lib/sms");
       const doctorDetails = await prisma.doctor.findUnique({
         where: { id: doctorId },
-        select: { name: true, clinicName: true, hospitalName: true }
+        select: { name: true, clinicName: true }
       });
       const doctorName = doctorDetails?.name || "Doctor";
-      const clinicName = doctorDetails?.clinicName || doctorDetails?.hospitalName || "Clinic";
+      const clinicName = doctorDetails?.clinicName || "Clinic";
 
       // 1. Create in-app notification
       await prisma.notification.create({
         data: {
           userId: payload.id,
-          type: "PLATFORM_ALERT",
+          type: "BOOKING_CONFIRMED",
           title: "Booking Confirmed!",
           message: `Token #${newQueueToken.tokenNumber} with Dr. ${doctorName}. Visit ${clinicName} today.`,
         }
@@ -107,7 +107,7 @@ export async function POST(request: Request) {
 
       // 2. Send SMS
       const smsMessage = `Good news — your slot with Dr. ${doctorName} is confirmed today, Token #${newQueueToken.tokenNumber}. Cancel from the app if you can't make it.`;
-      await sendTransactionalSms(user.phone, smsMessage).catch((err: any) => {
+      await sendTransactionalSms(decryptedPhone, smsMessage).catch((err: any) => {
         logger.error({ category: 'BOOKING', message: 'SMS confirmation trigger failed', error: err });
       });
     } catch (notifErr) {

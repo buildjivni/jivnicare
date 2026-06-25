@@ -31,22 +31,26 @@ export async function GET(req: NextRequest) {
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
 
-    const [todayQueue, periodTokens] = await Promise.all([
-      // Today's queue summary
-      db.dailyQueue.findFirst({
-        where: {
-          doctorId: doctor.id,
-          date: { gte: todayStart },
-        },
-        select: {
-          issuedTokensCount: true,
-          cancelledCount: true,
-          noShowCount: true,
-          currentActiveToken: true,
-          status: true,
-        },
-      }),
-      // Last N days tokens
+    const todayQueue = await db.dailyQueue.findFirst({
+      where: {
+        doctorId: doctor.id,
+        date: { gte: todayStart },
+      },
+      select: {
+        id: true,
+        totalTokens: true,
+        currentToken: true,
+        status: true,
+      },
+    });
+
+    const [todayTokens, periodTokens] = await Promise.all([
+      todayQueue
+        ? db.queueToken.findMany({
+            where: { queueId: todayQueue.id },
+            select: { status: true },
+          })
+        : Promise.resolve([]),
       db.queueToken.findMany({
         where: {
           queue: { doctorId: doctor.id },
@@ -55,10 +59,15 @@ export async function GET(req: NextRequest) {
         select: {
           status: true,
           bookedAt: true,
-          tokenType: true,
+          type: true,
         },
       }),
     ]);
+
+    const todayIssued = todayQueue?.totalTokens ?? 0;
+    const todayCancelled = todayTokens.filter((t) => t.status === "CANCELLED").length;
+    const todayNoShows = todayTokens.filter((t) => t.status === "NO_SHOW").length;
+    const todayCurrent = todayQueue?.currentToken ?? 0;
 
     // Compute stats
     const completed = periodTokens.filter((t) => t.status === "COMPLETED").length;
@@ -69,15 +78,15 @@ export async function GET(req: NextRequest) {
     const avgWaitMinutes = null;
 
     // Bookings by source
-    const onlineCount = periodTokens.filter((t) => t.tokenType === "ONLINE").length;
-    const walkInCount = periodTokens.filter((t) => t.tokenType === "WALKIN").length;
+    const onlineCount = periodTokens.filter((t) => t.type === "ONLINE").length;
+    const walkInCount = periodTokens.filter((t) => t.type === "WALKIN").length;
 
     return Response.json({
       today: {
-        issued: todayQueue?.issuedTokensCount ?? 0,
-        cancelled: todayQueue?.cancelledCount ?? 0,
-        noShows: todayQueue?.noShowCount ?? 0,
-        currentToken: todayQueue?.currentActiveToken ?? 0,
+        issued: todayIssued,
+        cancelled: todayCancelled,
+        noShows: todayNoShows,
+        currentToken: todayCurrent,
         queueStatus: todayQueue?.status ?? "NOT_STARTED",
       },
       period: {

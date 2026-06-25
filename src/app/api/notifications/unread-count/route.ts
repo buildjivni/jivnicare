@@ -21,7 +21,7 @@ export async function GET() {
     const unreadCount = await prisma.notification.count({
       where: {
         userId: payload.id,
-        isRead: false,
+        readAt: null,
       },
     });
 

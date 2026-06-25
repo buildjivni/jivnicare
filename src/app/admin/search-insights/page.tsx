@@ -34,7 +34,7 @@ export default function AdminSearchInsights() {
   useEffect(() => {
     if (_hasHydrated) {
       if (!isAuthenticated || user?.role !== "ADMIN") {
-        router.replace("/admin/login");
+        router.replace("/admin/jvc-26");
       }
     }
   }, [_hasHydrated, isAuthenticated, user, router]);
