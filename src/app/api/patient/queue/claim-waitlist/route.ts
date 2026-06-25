@@ -45,25 +45,26 @@ export async function POST(request: Request) {
         // 1. Fetch current daily queue inside transaction (lazy-create if needed)
         const dailyQueue = await getOrCreateDailyQueue(doctorId, "REGULAR");
 
-        // 2. Count active BOOKED tokens to see if there is an available slot under dailyLimit
-        const activeTokensCount = await tx.queueToken.count({
-          where: {
-            queueId: dailyQueue.id,
-            status: { in: ['BOOKED', 'READY', 'CALLED', 'IN_CONSULTATION'] }
-          }
-        });
+        // 2. Atomic conditional update to claim slot
+        const affectedRows = await tx.$executeRaw`
+          UPDATE "daily_queues"
+          SET "totalTokens" = "totalTokens" + 1
+          WHERE id = ${dailyQueue.id} AND "totalTokens" < "dailyLimit"
+        `;
 
-        if (activeTokensCount >= dailyQueue.dailyLimit) {
+        if (affectedRows === 0) {
           throw new Error("SLOT_TAKEN");
         }
 
-        // 3. Atomically increment totalTokens
-        const updatedQueue = await tx.dailyQueue.update({
+        // 3. Fetch the updated queue to retrieve the newly assigned tokenNumber
+        const updatedQueue = await tx.dailyQueue.findUnique({
           where: { id: dailyQueue.id },
-          data: {
-            totalTokens: { increment: 1 }
-          }
+          select: { totalTokens: true }
         });
+
+        if (!updatedQueue) {
+          throw new Error("QUEUE_NOT_FOUND");
+        }
 
         // 4. Create the token
         const newTokenNumber = updatedQueue.totalTokens;
