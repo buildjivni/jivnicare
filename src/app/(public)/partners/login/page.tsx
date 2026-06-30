@@ -112,9 +112,18 @@ function DoctorLoginContent() {
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.3 }}
               >
-                <div className="mb-10 text-center md:text-left">
-                  <h2 className="text-3xl font-heading font-black text-slate-900 tracking-tight">Partner Login</h2>
-                  <p className="text-slate-500 font-bold mt-2 text-sm">
+                <div className="mb-10 text-center md:text-left flex flex-col items-center md:items-start">
+                  <div className="md:hidden flex flex-col items-center gap-2 mb-8 group">
+                    <div className="w-12 h-12 bg-white border border-slate-100 rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform duration-300">
+                      <Logo variant="icon" size={32} />
+                    </div>
+                    <Logo variant="wordmark" className="h-6 w-auto" />
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mt-1">
+                      Partner Portal
+                    </span>
+                  </div>
+                  <h2 className="text-3xl font-heading font-black text-slate-900 tracking-tight text-center md:text-left">Partner Login</h2>
+                  <p className="text-slate-500 font-bold mt-2 text-sm text-center md:text-left">
                     Access your clinical dashboard via Google OAuth.
                   </p>
                 </div>
