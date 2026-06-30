@@ -71,9 +71,9 @@ function DoctorLoginContent() {
               <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-xl group-hover:scale-105 transition-transform duration-300">
                 <Logo variant="icon" size={32} />
               </div>
-              <div className="flex flex-col">
-                <Logo variant="wordmark" className="text-2xl leading-none" />
-                <span className="text-[10px] font-bold text-sky-200 uppercase tracking-widest mt-1">Partner Portal</span>
+              <div className="flex flex-col gap-1">
+                <Logo variant="wordmark" className="h-6 w-auto brightness-0 invert" />
+                <span className="text-[10px] font-bold text-sky-200 uppercase tracking-widest leading-none">Partner Portal</span>
               </div>
             </Link>
  

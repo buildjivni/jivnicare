@@ -33,11 +33,9 @@ export default function AdminLogin() {
           <div className="relative z-10">
             <div className="flex items-center gap-3 mb-8">
               <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-lg">
-                 <Logo className="w-8 h-8" />
+                 <Logo variant="icon" size={32} />
               </div>
-              <h2 className="text-3xl font-bold tracking-tight leading-none">
-                <span style={{ color: '#4A90D9' }}>Jivni</span><span style={{ color: '#529C60' }}>Care</span>
-              </h2>
+              <Logo variant="wordmark" className="h-6 w-auto brightness-0 invert" />
             </div>
             <h1 className="text-4xl font-black text-white leading-tight mt-10">
               Command <br />Center
@@ -64,7 +62,7 @@ export default function AdminLogin() {
         <div className="w-full md:w-1/2 p-12 lg:p-20 flex flex-col justify-center bg-white relative">
           <div className="max-w-sm w-full mx-auto">
             <div className="mb-10 text-center md:text-left flex flex-col items-center md:items-start">
-              <Logo className="w-16 h-16 object-contain mb-4 md:hidden" />
+              <Logo variant="primary" className="h-16 w-auto mb-4 md:hidden" />
               <h2 className="text-3xl font-black text-slate-900">Admin Login</h2>
               <p className="text-slate-500 font-medium mt-2">Sign in using your Google account to access the dashboard.</p>
             </div>

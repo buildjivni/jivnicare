@@ -223,7 +223,7 @@ export function Header() {
                 {/* Logo and Brand Title (Always visible unless search is expanded on mobile) */}
                 <div className="flex items-center shrink-0 transition-all">
                   <Link href="/" className="flex items-center group shrink min-w-0">
-                    <Logo variant="full" className="h-9 md:h-12 w-auto shrink-0 transition-transform duration-300 group-hover:scale-[1.02]" />
+                    <Logo variant="primary" className="h-10 lg:h-14 w-auto shrink-0 transition-transform duration-300 group-hover:scale-[1.02]" />
                   </Link>
                 </div>
               </div>

@@ -19,12 +19,7 @@ export function CtaBannerSection() {
       
       <div className="container mx-auto px-4 max-w-6xl relative z-10 space-y-12">
         
-        {/* Eyebrow centered logo placement */}
-        <div className="flex justify-center">
-          <div className="bg-slate-50 border border-slate-100 rounded-3xl p-3 shadow-sm select-none">
-            <Logo variant="full" className="h-10 md:h-12 w-auto" />
-          </div>
-        </div>
+
 
         {/* Separated Audience Cards */}
         <div className="grid md:grid-cols-2 gap-8 items-stretch">

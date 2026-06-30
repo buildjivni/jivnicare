@@ -46,7 +46,7 @@ const FOOTER_SECTIONS = [
 
 export function Footer() {
   return (
-    <footer className="bg-gradient-to-br from-[#254693] to-[#469D72] text-white/80 border-t border-white/10 relative overflow-hidden">
+    <footer className="bg-[#5696C7] text-white/80 border-t border-white/10 relative overflow-hidden">
       
       <div className="container mx-auto px-4 md:px-6 max-w-7xl pt-16 md:pt-20 pb-12 relative z-10">
 
@@ -55,11 +55,8 @@ export function Footer() {
 
           {/* Brand & Mission */}
           <div className="lg:col-span-4 space-y-6 pr-0 lg:pr-10">
-            <Link href="/" className="flex items-center gap-3 group w-fit">
-              {/* White badge to protect logo visibility on dark gradient background */}
-              <div className="bg-white px-4 py-2.5 rounded-2xl flex items-center justify-center shadow-md border border-white/10 group-hover:scale-105 transition-all duration-300">
-                <Logo variant="full" className="h-8 md:h-10 w-auto shrink-0" />
-              </div>
+            <Link href="/" className="flex items-center group w-fit">
+              <Logo variant="primary-white" className="h-10 md:h-14 w-auto shrink-0 transition-transform duration-300 group-hover:scale-[1.02]" />
             </Link>
 
             <p className="text-white/90 text-[14px] font-medium leading-relaxed max-w-xs">

@@ -83,11 +83,9 @@ export default function AuthErrorPage() {
       {/* Brand Header */}
       <div className="mb-8 flex items-center gap-3 relative z-10">
         <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-md border border-slate-100">
-          <Logo className="w-6 h-6" />
+          <Logo variant="icon" size={24} className="w-6 h-6 object-contain" />
         </div>
-        <span className="text-xl font-black tracking-tight leading-none">
-          <span style={{ color: '#5696C7' }}>Jivni</span><span style={{ color: '#529C60' }}>Care</span>
-        </span>
+        <Logo variant="wordmark" className="h-5 w-auto" />
       </div>
 
       <Suspense

@@ -402,17 +402,16 @@ function PatientLoginContent() {
               <rect width="100%" height="100%" fill="url(#grid)" />
             </svg>
           </div>
-
           <div className="relative z-10">
             <Link href="/" className="flex items-center gap-3 mb-12 group">
               <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-xl group-hover:scale-105 transition-transform duration-300">
-                <Logo size={48} className="w-12 h-12" />
+                <Logo variant="icon" size={48} className="w-12 h-12 object-contain" />
               </div>
-              <div className="flex flex-col">
-                <span className="text-2xl font-black text-white leading-none">
-                   <span style={{ color: '#4A90D9' }}>Jivni</span><span style={{ color: '#529C60' }}>Care</span>
+              <div className="flex flex-col gap-1">
+                <Logo variant="wordmark" className="h-6 w-auto brightness-0 invert" />
+                <span className="text-[10px] font-bold text-blue-200 uppercase tracking-widest leading-none">
+                  Secure Healthcare Access
                 </span>
-                <span className="text-[10px] font-bold text-blue-200 uppercase tracking-widest mt-1">OPD NETWORK</span>
               </div>
             </Link>
 
@@ -754,9 +753,8 @@ function PatientLoginContent() {
                 &bull;{" "}
                 <Link href="/terms" className="hover:text-slate-600">Terms</Link>
               </p>
-              <div className="mt-4 flex items-center justify-center gap-2 opacity-30 grayscale">
-                <Logo className="h-4 w-auto" />
-                <span className="text-[10px] font-black text-slate-900">JivniCare Health System</span>
+              <div className="mt-4 flex items-center justify-center opacity-30 grayscale">
+                <Logo variant="primary" className="h-5 w-auto" />
               </div>
             </div>
           </div>
