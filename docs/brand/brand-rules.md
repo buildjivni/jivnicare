@@ -1,365 +1,48 @@
 # JivniCare Brand Rules
 
-Version: 1.0
-
-This document defines the mandatory branding rules for every designer, developer, AI agent, automation system, and implementation workflow.
-
-These rules are mandatory.
-
-No rule may be ignored.
+**Version:** 1.0  
+This document defines the mandatory design constraints and rendering rules for the JivniCare brand. All designers, developers, and implementation systems must follow these rules without exception.
 
 ---
 
-# Golden Rule
+## 1. Core Principles
 
-Branding is not decoration.
-
-Every logo or icon must have a functional purpose.
-
-Never place branding simply because there is empty space.
+*   **Golden Rule:** Branding is functional, not decorative. Every logo or icon placement must have a clear identity or navigational purpose. Never place branding merely to fill empty space; empty space must remain empty.
+*   **Consistency Over Creativity:** The JivniCare Brand System always overrides personal design preferences. Guessing or making ad-hoc variations is strictly prohibited.
 
 ---
 
-# Source of Truth
+## 2. Color Rules
 
-Only assets located inside
-
-/docs/brand/
-
-are official.
-
-Never use
-
-- screenshots
-- cropped images
-- preview images
-- recreated logos
-- AI generated replacements
+*   **Official Palette:** Use only the official brand colors:
+    *   Primary Blue: `#5696C7`
+    *   Primary Green: `#529C60`
+    *   White: `#FFFFFF`
+    *   Black: `#000000`
+*   **Prohibition:** Never sample colors from rasterized images. Never modify, recolor, or change the opacity of the brand colors.
 
 ---
 
-# Asset Priority
+## 3. Asset Integrity & Rendering Rules
 
-Always use
-
-SVG
-
-↓
-
-PNG
-
-↓
-
-Never use screenshots.
+*   **Master Asset Rule:** SVG (Scalable Vector Graphics) is the only master source of truth. All platform-specific PNG assets must be programmatically generated from the master SVG to maintain vector sharpness.
+*   **Safe Scaling Rule:** When scaling assets, aspect ratios must be strictly locked. Safe padding defined within the master assets must be preserved. Never stretch, squish, crop, rotate, skew, or distort the logos.
+*   **Export Rule:** Platform-specific PNGs must only be exported directly from the approved master SVGs.
+*   **No Placeholders Rule:** Do not use temporary or placeholder logos in any public or staging builds.
+*   **No Artificial Container Rule:** Do not enclose logos or brand icons in artificial boundaries (such as custom borders, shadowed boxes, or circular wraps) unless explicitly specified in the component mapping.
+*   **Prohibited Effects:** Never apply shadows, outlines, glow, filters, or opacity modifiers to any logo or icon.
 
 ---
 
-# Official Brand Colors
+## 4. Layout & Positioning Rules
 
-Primary Blue
-
-#5696C7
-
-Primary Green
-
-#529C60
-
-White
-
-#FFFFFF
-
-Black
-
-#000000
-
-Never sample colors from images.
-
-Never modify brand colors.
+*   **Asset-Driven Layout Rule:** The layout must adapt to the official brand assets. Never resize or distort the logo to fit a poorly designed layout container; fix the container dimensions to accommodate the logo's native aspect ratio.
+*   **Dynamic Layout Rule:** Layouts containing brand assets must scale elegantly and dynamically across mobile, tablet, and desktop viewports, maintaining proper margins and alignment without breaking the branding elements.
+*   **Duplication Restriction:** Maximum of one branding element per logical section and one primary logo per viewport. Never display the Primary Logo and the Brand Icon together in the same logical container.
 
 ---
 
-# Logo Hierarchy
+## 5. Specific Component Applications
 
-Primary Logo
-
-↓
-
-Brand Icon
-
-↓
-
-Wordmark
-
-↓
-
-App Icon
-
-↓
-
-Favicon
-
-Never replace a higher priority asset with a lower priority asset.
-
----
-
-# Placement Rules
-
-Header
-
-Primary Logo
-
-Footer
-
-Primary Logo
-
-Login
-
-Primary Logo
-
-Signup
-
-Primary Logo
-
-Sidebar Expanded
-
-Primary Logo
-
-Sidebar Collapsed
-
-Brand Icon
-
-Loader
-
-Brand Icon
-
-Loading Screen
-
-Brand Icon
-
-Browser Tab
-
-Favicon
-
-PWA
-
-App Icon
-
-Avatar
-
-Brand Icon
-
----
-
-# Shape Rules
-
-Horizontal Area
-
-↓
-
-Primary Logo
-
-Circle
-
-↓
-
-Brand Icon
-
-Rounded Square
-
-↓
-
-App Icon
-
-Very Small
-
-↓
-
-Favicon
-
-Never place a horizontal logo inside a circular container.
-
-Never place an icon inside a horizontal logo container.
-
----
-
-# Logo Duplication
-
-One component
-
-↓
-
-Maximum
-
-One branding element
-
-One section
-
-↓
-
-Maximum
-
-One branding element
-
-One viewport
-
-↓
-
-Maximum
-
-One primary logo
-
-Never repeat branding.
-
----
-
-# Layout Rules
-
-The layout must adapt to the logo.
-
-The logo must never adapt to the layout.
-
-Never shrink the logo to fit a bad container.
-
-Never stretch the logo.
-
-Create the correct container first.
-
----
-
-# Empty Space Rule
-
-Empty space must remain empty.
-
-Do not fill empty space with logos.
-
-Branding must never be decorative.
-
----
-
-# Safe Area
-
-App Icons
-
-Safe padding may be adjusted.
-
-Logo artwork may not.
-
-Favicons
-
-Safe padding may be adjusted.
-
-Logo artwork may not.
-
----
-
-# Export Rules
-
-Always export from SVG.
-
-Never export from screenshots.
-
-Never export from preview images.
-
-Never redraw assets.
-
----
-
-# Image Rules
-
-Never
-
-Rotate
-
-Stretch
-
-Compress
-
-Crop
-
-Recolor
-
-Add Shadows
-
-Add Borders
-
-Add Glow
-
-Add Effects
-
-Modify Opacity
-
-Modify Aspect Ratio
-
----
-
-# Responsive Rules
-
-Desktop
-
-Use Primary Logo
-
-Tablet
-
-Use Primary Logo
-
-Mobile
-
-Use Primary Logo
-
-Collapsed Navigation
-
-Use Brand Icon
-
----
-
-# Accessibility
-
-Logo must remain sharp.
-
-Never blur.
-
-Never compress.
-
-Always preserve vector quality.
-
----
-
-# AI Rules
-
-If any rule is missing,
-
-STOP.
-
-Do not guess.
-
-Read
-
-README.md
-
-brand-assets.json
-
-brand-rules.md
-
-before continuing.
-
-Implementation must never rely on assumptions.
-
----
-
-# Approval Rule
-
-Every branding decision must be explainable.
-
-If the reason cannot be explained,
-
-the branding must not be implemented.
-
----
-
-# Final Principle
-
-Less branding is better branding.
-
-Consistency is more important than decoration.
-
-The official JivniCare Brand System always takes priority over personal design preferences.
+*   **Footer Branding Rule:** The website footer must render the Primary Logo on the official footer background color (`#5696C7`).
+*   **Approved App Icon Safe Area:** All app icons must use **Variation 10** (which enforces an 11% safe padding margin inside the master `10.svg`) to prevent clipping during platform-specific cropping (circle, squircle, or rounded square).

@@ -1,8 +1,6 @@
 {
   "$schema": "https://jivnicare.com/brand-assets.schema.json",
-
   "version": "1.0.0",
-
   "brand": {
     "name": "JivniCare",
     "officialColors": {
@@ -12,135 +10,54 @@
       "black": "#000000"
     }
   },
-
-  "assets": {
-    "primaryLogo": {
-      "default": "primary-logo/primary-logo.svg",
-      "white": "primary-logo/primary-logo-white.svg",
-      "black": "primary-logo/primary-logo-black.svg",
-      "vertical": "primary-logo/primary-logo-vertical.svg"
+  "masterAssets": {
+    "appIconMaster": {
+      "path": "app-icon/app-icon-master.svg",
+      "description": "Official master app icon SVG conforming to safe-area Variation 10 (11% margin). Used to programmatically generate launcher and installation PNG assets.",
+      "approvedReference": "Variation 10"
     },
-
-    "brandIcon": {
-      "default": "brand-icon/brand-icon.svg",
-      "white": "brand-icon/brand-icon-white.svg",
-      "black": "brand-icon/brand-icon-black.svg"
-    },
-
-    "wordmark": {
-      "default": "wordmark/wordmark.svg"
-    },
-
+    "faviconMaster": {
+      "path": "favicon/favicon.svg",
+      "description": "Official master favicon SVG. Used to programmatically generate 32x32 and 16x16 PNG browser icons."
+    }
+  },
+  "targetPlatformAssets": {
     "appIcon": {
       "1024": "app-icon/app-icon-1024.png",
       "512": "app-icon/app-icon-512.png",
       "256": "app-icon/app-icon-256.png",
       "192": "app-icon/app-icon-192.png",
-      "180": "app-icon/app-icon-180.png"
+      "180": "app-icon/app-icon-180.png",
+      "note": "All png files are programmatically compiled from appIconMaster and are not manually maintained in git."
     },
-
     "favicon": {
       "svg": "favicon/favicon.svg",
       "32": "favicon/favicon-32.png",
-      "16": "favicon/favicon-16.png"
+      "16": "favicon/favicon-16.png",
+      "note": "All png files are programmatically compiled from faviconMaster and are not manually maintained in git."
     }
   },
-
   "componentMapping": {
-
     "websiteHeader": "primaryLogo",
-
     "websiteFooter": "primaryLogo",
-
     "loginPage": "primaryLogo",
-
     "signupPage": "primaryLogo",
-
-    "landingHero": "primaryLogo",
-
+    "landingHero": "No Branding",
     "emailHeader": "primaryLogo",
-
     "pdfHeader": "primaryLogo",
-
     "mobileHeader": "primaryLogo",
-
     "sidebarCollapsed": "brandIcon",
-
     "sidebarExpanded": "primaryLogo",
-
     "loader": "brandIcon",
-
     "loadingScreen": "brandIcon",
-
     "avatar": "brandIcon",
-
     "profilePlaceholder": "brandIcon",
-
     "emptyState": "brandIcon",
-
     "browserTab": "favicon",
-
     "browserBookmark": "favicon",
-
     "pwa": "appIcon",
-
     "android": "appIcon",
-
     "ios": "appIcon",
-
     "desktopShortcut": "appIcon"
-  },
-
-  "backgroundRules": {
-
-    "lightBackground": {
-      "logo": "primaryLogo.default",
-      "icon": "brandIcon.default"
-    },
-
-    "darkBackground": {
-      "logo": "primaryLogo.white",
-      "icon": "brandIcon.white"
-    },
-
-    "print": {
-      "logo": "primaryLogo.black",
-      "icon": "brandIcon.black"
-    }
-  },
-
-  "restrictions": [
-
-    "Never recreate logos.",
-
-    "Never redraw logos.",
-
-    "Never recolor logos.",
-
-    "Never rotate logos.",
-
-    "Never stretch logos.",
-
-    "Never crop logos.",
-
-    "Never distort logos.",
-
-    "Never add shadows.",
-
-    "Never add outlines.",
-
-    "Never separate icon and wordmark.",
-
-    "Never use screenshots as assets.",
-
-    "Always prefer SVG over PNG.",
-
-    "Use PNG only when SVG is not supported.",
-
-    "App icons may adjust safe padding only.",
-
-    "Favicons may adjust safe padding only.",
-
-    "Logo artwork must never be modified."
-  ]
+  }
 }
