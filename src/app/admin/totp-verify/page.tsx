@@ -45,7 +45,7 @@ export default function AdminTOTPVerify() {
 
         <div className="flex justify-center mb-6">
           <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center shadow-md">
-            <Logo className="w-10 h-10" />
+            <Logo variant="icon" size={40} className="w-10 h-10 object-contain" />
           </div>
         </div>
 

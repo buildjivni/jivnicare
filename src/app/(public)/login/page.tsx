@@ -467,7 +467,7 @@ function PatientLoginContent() {
                       </Link>
                     </div>
 
-                    <Logo className="h-16 w-auto object-contain mb-6" />
+                    <Logo variant="primary" className="h-16 w-auto object-contain mb-6" />
                     <h2 className="text-4xl font-black text-slate-900 tracking-tight">Welcome</h2>
                     <p className="text-slate-500 font-bold mt-3 text-base">Enter your mobile number to log in or sign up safely.</p>
                   </div>
@@ -581,7 +581,7 @@ function PatientLoginContent() {
                       </button>
                     </div>
 
-                    <Logo className="h-16 w-auto object-contain mb-6" />
+                    <Logo variant="primary" className="h-16 w-auto object-contain mb-6" />
                     <h2 className="text-3xl font-black text-slate-900 tracking-tight">Complete Your Profile</h2>
                     <p className="text-slate-500 font-bold mt-2 text-base italic">
                       Verified <span className="text-primary">+91 {phone}</span> — add your details
@@ -663,7 +663,7 @@ function PatientLoginContent() {
                       </button>
                     </div>
 
-                    <Logo className="h-16 w-auto object-contain mb-6" />
+                    <Logo variant="primary" className="h-16 w-auto object-contain mb-6" />
                     <h2 className="text-4xl font-black text-slate-900 tracking-tight">Verify OTP</h2>
                     <p className="text-slate-500 font-bold mt-2 text-base leading-relaxed">
                       Enter the 6-digit code sent to{" "}
