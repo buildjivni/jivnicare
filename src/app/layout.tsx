@@ -57,9 +57,9 @@ export const metadata: Metadata = {
     description: SITE_CONFIG.description,
     images: [
       {
-        url: "/icon.svg",
-        width: 1200,
-        height: 630,
+        url: "/brand/app-icon-512.png",
+        width: 512,
+        height: 512,
         alt: "JivniCare — Healthcare Discovery & Verified Doctor Booking",
       },
     ],
@@ -70,7 +70,7 @@ export const metadata: Metadata = {
     creator: SITE_CONFIG.twitterHandle,
     title: `${SITE_CONFIG.name} — Book Verified Doctors & Specialists`,
     description: SITE_CONFIG.description,
-    images: ["/icon.svg"],
+    images: ["/brand/app-icon-512.png"],
   },
   alternates: {
     canonical: SITE_CONFIG.baseUrl,
@@ -80,9 +80,9 @@ export const metadata: Metadata = {
     // google: "your-verification-token",
   },
   icons: {
-    icon: "/icon.svg",
-    apple: "/icon.svg",
-    shortcut: "/icon.svg",
+    icon: "/brand/favicon.svg",
+    apple: "/brand/app-icon-180.png",
+    shortcut: "/brand/favicon-32.png",
   },
 };
 
