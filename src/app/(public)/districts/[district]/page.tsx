@@ -101,7 +101,7 @@ export default async function DistrictPage({ params }: PageProps) {
       <JsonLd schema={faqSchema(faqs)} />
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-[#205E98] via-[#1a4f82] to-[#13365a] text-white py-14 md:py-20 px-4">
+      <section className="bg-gradient-to-br from-[#5696C7] via-[#1a4f82] to-[#13365a] text-white py-14 md:py-20 px-4">
         <div className="container mx-auto max-w-5xl">
           {/* Breadcrumb */}
           <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-white/60 text-xs mb-6">

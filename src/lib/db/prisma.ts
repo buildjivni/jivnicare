@@ -14,7 +14,7 @@ const prismaClientSingleton = () => {
   // Append connection pooling params if not already present
   const urlWithPooling = databaseUrl.includes('maxPoolSize')
     ? databaseUrl
-    : `${databaseUrl}${databaseUrl.includes('?') ? '&' : '?'}maxPoolSize=10&connectTimeoutMS=8000&serverSelectionTimeoutMS=5000`;
+    : `${databaseUrl}${databaseUrl.includes('?') ? '&' : '?'}maxPoolSize=3&connectTimeoutMS=8000&serverSelectionTimeoutMS=5000`;
 
   return new PrismaClient({
     log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],

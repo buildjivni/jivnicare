@@ -84,9 +84,9 @@ export function ProductDemosSection() {
                   
                   {/* Doctor */}
                   {/* Head */}
-                  <circle cx="114" cy="72" r="9" fill="#F1F5F9" stroke="#205E98" strokeWidth="2" />
+                  <circle cx="114" cy="72" r="9" fill="#F1F5F9" stroke="#5696C7" strokeWidth="2" />
                   {/* Body/Coat */}
-                  <path d="M102,90 C102,90 106,81 114,81 C122,81 126,90 126,90 L123,130 L105,130 Z" fill="white" stroke="#205E98" strokeWidth="1.8" />
+                  <path d="M102,90 C102,90 106,81 114,81 C122,81 126,90 126,90 L123,130 L105,130 Z" fill="white" stroke="#5696C7" strokeWidth="1.8" />
                   {/* Stethoscope */}
                   <path d="M110,79 C110,86 118,86 118,79" stroke="#3B82F6" strokeWidth="1.5" fill="none" />
                   <line x1="114" y1="84" x2="114" y2="88" stroke="#3B82F6" strokeWidth="1.5" />

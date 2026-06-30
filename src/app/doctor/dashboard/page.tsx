@@ -606,7 +606,7 @@ function DoctorDashboardContent() {
           <Card className="border-slate-100 shadow-premium rounded-3xl overflow-hidden bg-white">
             <CardContent className="p-6 md:p-8 space-y-6">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-[#205E98]/5 flex items-center justify-center text-[#205E98]">
+                <div className="w-12 h-12 rounded-2xl bg-[#5696C7]/5 flex items-center justify-center text-[#5696C7]">
                   <TrendingUp className="w-6 h-6" />
                 </div>
                 <div>

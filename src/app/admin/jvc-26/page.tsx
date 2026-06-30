@@ -36,7 +36,7 @@ export default function AdminLogin() {
                  <Logo className="w-8 h-8" />
               </div>
               <h2 className="text-3xl font-bold tracking-tight leading-none">
-                <span style={{ color: '#4A90D9' }}>Jivni</span><span style={{ color: '#4A8C4A' }}>Care</span>
+                <span style={{ color: '#4A90D9' }}>Jivni</span><span style={{ color: '#529C60' }}>Care</span>
               </h2>
             </div>
             <h1 className="text-4xl font-black text-white leading-tight mt-10">

@@ -33,7 +33,6 @@ export async function GET(request: NextRequest) {
       doctorWhereClause = {
         OR: [
           { clinicName: { contains: search, mode: "insensitive" } },
-          { hospitalName: { contains: search, mode: "insensitive" } },
           { name: { contains: search, mode: "insensitive" } },
         ]
       };

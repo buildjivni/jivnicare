@@ -90,6 +90,10 @@ enum QueueStatus {
   EXPIRED
 }
 
+// NOTE: EMERGENCY_ONLY is NOT a database QueueStatus enum value. 
+// It is a derived clinic/queue state evaluated at runtime as:
+// !doctor.isAcceptingBookings && doctor.isEmergencyEnabled.
+
 enum TokenStatus {
   BOOKED
   AWAITING_ARRIVAL

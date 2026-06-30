@@ -128,7 +128,7 @@ export function Header() {
     if (!isLoggedIn || !user) {
       return [
         { label: "Find Doctors", href: "/doctors", icon: <Stethoscope className="w-4.5 h-4.5" /> },
-        { label: "Emergency Care", href: "/doctors?emergency=true", icon: <AlertTriangle className="w-4.5 h-4.5" />, highlight: true },
+        { label: "Emergency Care", href: "/doctors?isEmergency=true", icon: <AlertTriangle className="w-4.5 h-4.5" />, highlight: true },
       ];
     }
 
@@ -151,7 +151,7 @@ export function Header() {
       default:
         return [
           { label: "Find Doctors", href: "/doctors", icon: <Stethoscope className="w-4.5 h-4.5" /> },
-          { label: "Emergency Care", href: "/doctors?emergency=true", icon: <AlertTriangle className="w-4.5 h-4.5" />, highlight: true },
+          { label: "Emergency Care", href: "/doctors?isEmergency=true", icon: <AlertTriangle className="w-4.5 h-4.5" />, highlight: true },
         ];
     }
   };
@@ -168,7 +168,7 @@ export function Header() {
     if (!isLoggedIn) {
       return [
         { label: "Find Doctors", href: "/doctors", icon: <Stethoscope className="w-4.5 h-4.5" /> },
-        { label: "Emergency Care", href: "/doctors?emergency=true", icon: <AlertTriangle className="w-4.5 h-4.5" />, highlight: true },
+        { label: "Emergency Care", href: "/doctors?isEmergency=true", icon: <AlertTriangle className="w-4.5 h-4.5" />, highlight: true },
         { label: "Articles", href: "/blog", icon: <Newspaper className="w-4.5 h-4.5" /> },
       ];
     }
@@ -243,11 +243,11 @@ export function Header() {
                             link.highlight
                               ? "text-rose-600 bg-rose-50 hover:bg-rose-100/80 border border-rose-100 animate-pulse shadow-sm"
                               : isActive 
-                              ? "text-[#205E98] bg-white shadow-sm ring-1 ring-slate-100" 
+                              ? "text-[#5696C7] bg-white shadow-sm ring-1 ring-slate-100" 
                               : "text-slate-500 hover:text-slate-800 hover:bg-slate-100/50"
                           )}
                         >
-                          <span className={cn("shrink-0", link.highlight ? "text-rose-500 animate-pulse" : isActive ? "text-[#205E98]" : "text-slate-500")}>
+                          <span className={cn("shrink-0", link.highlight ? "text-rose-500 animate-pulse" : isActive ? "text-[#5696C7]" : "text-slate-500")}>
                             {link.icon}
                           </span>
                           {link.label}
@@ -317,7 +317,7 @@ export function Header() {
                     onClick={() => setProfileOpen(!profileOpen)}
                     className="flex items-center gap-2 px-3.5 py-2 rounded-full border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all active:scale-[0.97] outline-none select-none bg-white shadow-sm shrink-0 min-h-[44px]"
                   >
-                    <div className="w-7.5 h-7.5 rounded-full bg-[#205E98]/10 text-[#205E98] font-black text-sm flex items-center justify-center border border-[#205E98]/20">
+                    <div className="w-7.5 h-7.5 rounded-full bg-[#5696C7]/10 text-[#5696C7] font-black text-sm flex items-center justify-center border border-[#5696C7]/20">
                       {user?.name ? user.name[0].toUpperCase() : "U"}
                     </div>
                     <span className="text-sm font-bold text-slate-700 hidden sm:block truncate max-w-[90px] xl:max-w-[120px]">
@@ -333,7 +333,7 @@ export function Header() {
             ) : (
               <div className="flex items-center gap-2">
                 <Link href={pathname === "/partners" ? "/partners/login" : "/login"}>
-                  <button className="bg-[#205E98] hover:bg-[#1a4c7a] text-white font-bold text-sm md:text-base px-6 py-2.5 md:px-8 md:py-3.5 rounded-full transition-all duration-200 active:scale-[0.97] shadow-sm select-none shrink-0 outline-none">
+                  <button className="bg-[#5696C7] hover:bg-[#1a4c7a] text-white font-bold text-sm md:text-base px-6 py-2.5 md:px-8 md:py-3.5 rounded-full transition-all duration-200 active:scale-[0.97] shadow-sm select-none shrink-0 outline-none">
                     {pathname === "/partners" ? "Doctor Sign In" : "Sign In"}
                   </button>
                 </Link>

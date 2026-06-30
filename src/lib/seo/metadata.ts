@@ -12,7 +12,7 @@ export const SITE_CONFIG = {
   locale: "en_IN",
   twitterHandle: "@JivniCare",
   ogImage: "/og-default.png",
-  themeColor: "#205E98",
+  themeColor: "#5696C7",
 };
 
 export const ACTIVE_LAUNCH_DISTRICTS = ["Jamui", "Deoghar"];

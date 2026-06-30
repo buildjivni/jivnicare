@@ -461,7 +461,7 @@ function DoctorOnboardingFlowContent() {
               <Logo className="w-8 h-8" />
             </div>
             <span className="text-xl font-black tracking-tight leading-none">
-              <span style={{ color: '#4A90D9' }}>Jivni</span><span style={{ color: '#4A8C4A' }}>Care</span>
+              <span style={{ color: '#4A90D9' }}>Jivni</span><span style={{ color: '#529C60' }}>Care</span>
             </span>
           </Link>
           <Link href="/partners/login" className="px-5 py-2.5 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-600 hover:text-[#5298D2] hover:border-sky-200 shadow-sm transition-all flex items-center gap-2">
@@ -572,7 +572,7 @@ function DoctorOnboardingFlowContent() {
                       <Button
                         type="button"
                         onClick={() => signIn("google")}
-                        className="bg-[#205E98] hover:bg-[#1a4d7d] text-white font-bold rounded-xl h-11 px-5 flex items-center gap-2 shadow-md shadow-[#205E98]/10 transition-all"
+                        className="bg-[#5696C7] hover:bg-[#1a4d7d] text-white font-bold rounded-xl h-11 px-5 flex items-center gap-2 shadow-md shadow-[#5696C7]/10 transition-all"
                       >
                         Link Google Account
                       </Button>

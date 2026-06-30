@@ -411,7 +411,7 @@ useEffect(() => {
                             <div className="mt-6 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                               <Button
                                 onClick={() => router.push(`/confirmation`)}
-                                className="rounded-xl bg-[#205E98] text-white hover:bg-[#205E98]/90 font-bold gap-1.5 h-12 md:h-10 w-full sm:w-auto shadow-md shadow-blue-900/20"
+                                className="rounded-xl bg-[#5696C7] text-white hover:bg-[#5696C7]/90 font-bold gap-1.5 h-12 md:h-10 w-full sm:w-auto shadow-md shadow-blue-900/20"
                               >
                                 Live Queue Track Karo <ChevronRight className="w-4 h-4 md:w-3.5 md:h-3.5" />
                               </Button>

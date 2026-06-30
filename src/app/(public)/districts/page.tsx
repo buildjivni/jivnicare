@@ -24,7 +24,7 @@ export default function DistrictsIndexPage() {
   return (
     <main className="min-h-screen bg-[#f7f9fc] pb-20">
       {/* Hero */}
-      <section className="bg-gradient-to-br from-[#205E98] to-[#13365a] text-white py-14 px-4">
+      <section className="bg-gradient-to-br from-[#5696C7] to-[#13365a] text-white py-14 px-4">
         <div className="container mx-auto max-w-4xl text-center">
           <div className="inline-flex items-center gap-2 bg-white/15 px-4 py-1.5 rounded-full text-sm font-medium mb-5">
             <MapPin className="w-4 h-4" /> Operational Status

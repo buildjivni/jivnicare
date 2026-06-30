@@ -1106,7 +1106,7 @@ function AdminDashboardContent() {
       {/* Summary cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {[
-          { label: "Total Leads", value: leads?.total || 0, color: "bg-blue-50 border-blue-100", textColor: "text-[#205E98]" },
+          { label: "Total Leads", value: leads?.total || 0, color: "bg-blue-50 border-blue-100", textColor: "text-[#5696C7]" },
           { label: "Doctor Leads", value: leads?.doctorLeads || 0, color: "bg-emerald-50 border-emerald-100", textColor: "text-emerald-700" },
           { label: "Patient Leads", value: leads?.patientLeads || 0, color: "bg-purple-50 border-purple-100", textColor: "text-purple-700" },
           { label: "New (7 days)", value: platformStats?.leads?.newLast7Days || 0, color: "bg-amber-50 border-amber-100", textColor: "text-amber-700" },

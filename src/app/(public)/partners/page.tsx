@@ -27,7 +27,7 @@ export default function PartnersPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#F4F9FD] via-[#FBFDFE] to-[#F4F9FD] text-slate-800 font-sans selection:bg-[#205E98]/20 selection:text-[#205E98] relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-b from-[#F4F9FD] via-[#FBFDFE] to-[#F4F9FD] text-slate-800 font-sans selection:bg-[#5696C7]/20 selection:text-[#5696C7] relative overflow-hidden">
       
       {/* ── BACKGROUND SYSTEM ──────────────────────────────────────────────── */}
       <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-0">
@@ -42,8 +42,8 @@ export default function PartnersPage() {
         </svg>
 
         {/* Ambient Calming Glow Orbs */}
-        <div className="absolute top-[-10%] right-[-10%] w-[800px] h-[800px] rounded-full bg-gradient-to-br from-[#205E98]/8 to-[#4A8C4A]/4 blur-[130px] opacity-70 animate-pulse duration-[8000ms]" />
-        <div className="absolute bottom-[10%] left-[-15%] w-[700px] h-[700px] rounded-full bg-gradient-to-tr from-[#205E98]/6 to-emerald-500/3 blur-[120px] opacity-60 animate-pulse duration-[12000ms]" />
+        <div className="absolute top-[-10%] right-[-10%] w-[800px] h-[800px] rounded-full bg-gradient-to-br from-[#5696C7]/8 to-[#529C60]/4 blur-[130px] opacity-70 animate-pulse duration-[8000ms]" />
+        <div className="absolute bottom-[10%] left-[-15%] w-[700px] h-[700px] rounded-full bg-gradient-to-tr from-[#5696C7]/6 to-emerald-500/3 blur-[120px] opacity-60 animate-pulse duration-[12000ms]" />
       </div>
 
       {/* ── HERO SECTION ──────────────────────────────────────────────────── */}
@@ -63,11 +63,11 @@ export default function PartnersPage() {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#205E98]/8 border border-[#205E98]/15 text-[#205E98] text-[10px] font-black uppercase tracking-[0.2em] shadow-sm bg-white/50 backdrop-blur-sm"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#5696C7]/8 border border-[#5696C7]/15 text-[#5696C7] text-[10px] font-black uppercase tracking-[0.2em] shadow-sm bg-white/50 backdrop-blur-sm"
             >
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#205E98] opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#205E98]"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#5696C7] opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#5696C7]"></span>
               </span>
               Verified Clinical Infrastructure Network
             </motion.div>
@@ -81,7 +81,7 @@ export default function PartnersPage() {
                 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.1] text-slate-900"
               >
                 A Modern Platform <br />
-                for <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#205E98] to-[#4A8C4A] drop-shadow-sm">Trusted Doctors.</span>
+                for <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#5696C7] to-[#529C60] drop-shadow-sm">Trusted Doctors.</span>
               </motion.h1>
               
               <motion.p 
@@ -102,13 +102,13 @@ export default function PartnersPage() {
               className="flex flex-col sm:flex-row gap-4 pt-2 max-w-md sm:max-w-none"
             >
               <Link href="/partners/onboard" className="flex-1 sm:flex-initial">
-                <Button className="w-full sm:min-w-[220px] h-14 rounded-2xl bg-gradient-to-r from-[#205E98] to-[#4A8C4A] hover:from-[#1a4c7a] hover:to-[#3c723c] text-white font-bold text-sm shadow-lg shadow-emerald-500/10 hover:shadow-emerald-500/15 transition-all hover:-translate-y-0.5 active:translate-y-0 duration-300 flex items-center justify-center gap-2 border-none">
+                <Button className="w-full sm:min-w-[220px] h-14 rounded-2xl bg-gradient-to-r from-[#5696C7] to-[#529C60] hover:from-[#1a4c7a] hover:to-[#3c723c] text-white font-bold text-sm shadow-lg shadow-emerald-500/10 hover:shadow-emerald-500/15 transition-all hover:-translate-y-0.5 active:translate-y-0 duration-300 flex items-center justify-center gap-2 border-none">
                   Join Partner Network
                   <ArrowRight className="w-4 h-4" />
                 </Button>
               </Link>
               <Link href="/partners/login" className="flex-1 sm:flex-initial">
-                <Button className="w-full sm:min-w-[185px] h-14 rounded-2xl bg-white/80 hover:bg-white border border-[#205E98]/20 hover:border-[#205E98]/35 text-[#205E98] font-bold text-sm hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 flex items-center justify-center gap-2 shadow-sm backdrop-blur-md">
+                <Button className="w-full sm:min-w-[185px] h-14 rounded-2xl bg-white/80 hover:bg-white border border-[#5696C7]/20 hover:border-[#5696C7]/35 text-[#5696C7] font-bold text-sm hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 flex items-center justify-center gap-2 shadow-sm backdrop-blur-md">
                   Doctor Sign In
                 </Button>
               </Link>
@@ -121,8 +121,8 @@ export default function PartnersPage() {
               transition={{ delay: 0.4 }}
               className="flex flex-wrap items-center gap-6 text-[10px] font-black text-slate-500 uppercase tracking-widest pt-2"
             >
-              <div className="flex items-center gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-[#4A8C4A]" /> Unified Doctor Onboarding</div>
-              <div className="flex items-center gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-[#4A8C4A]" /> Professional Queue Suite</div>
+              <div className="flex items-center gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-[#529C60]" /> Unified Doctor Onboarding</div>
+              <div className="flex items-center gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-[#529C60]" /> Professional Queue Suite</div>
             </motion.div>
 
           </div>
@@ -140,24 +140,24 @@ export default function PartnersPage() {
                 }}
               >
                 {/* Radial Blur Backdrop */}
-                <div className="absolute top-[25%] left-[25%] w-[200px] h-[200px] rounded-full bg-[#205E98]/15 blur-[45px] -z-10 animate-pulse" />
+                <div className="absolute top-[25%] left-[25%] w-[200px] h-[200px] rounded-full bg-[#5696C7]/15 blur-[45px] -z-10 animate-pulse" />
 
                 {/* Decorative Circle Orbits */}
                 <div className="absolute inset-[-10px] rounded-full border border-dashed border-slate-200/40 animate-[spin_100s_linear_infinite] pointer-events-none" />
-                <div className="absolute inset-[-30px] rounded-full border border-dotted border-[#205E98]/8 animate-[spin_150s_linear_infinite] pointer-events-none" />
+                <div className="absolute inset-[-30px] rounded-full border border-dotted border-[#5696C7]/8 animate-[spin_150s_linear_infinite] pointer-events-none" />
 
                 {/* LAYER 1: Verified Doctor Profile Card (Center Layer) */}
                 <motion.div 
                   initial={{ opacity: 0, scale: 0.95, y: 15 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   transition={{ duration: 0.8, delay: 0.1 }}
-                  className="absolute top-[12%] left-[8%] w-[84%] bg-white/90 backdrop-blur-2xl rounded-3xl border border-white/60 p-6 shadow-[0_25px_50px_rgba(32,94,152,0.08)] z-20 hover:border-[#205E98]/20 transition-colors"
+                  className="absolute top-[12%] left-[8%] w-[84%] bg-white/90 backdrop-blur-2xl rounded-3xl border border-white/60 p-6 shadow-[0_25px_50px_rgba(32,94,152,0.08)] z-20 hover:border-[#5696C7]/20 transition-colors"
                   style={{ transform: "translateZ(30px)" }}
                 >
                   <div className="flex items-center gap-4">
                     <div className="relative">
-                      <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center border border-[#205E98]/10">
-                        <Stethoscope className="w-6 h-6 text-[#205E98]" />
+                      <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center border border-[#5696C7]/10">
+                        <Stethoscope className="w-6 h-6 text-[#5696C7]" />
                       </div>
                       <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full" />
                     </div>
@@ -166,8 +166,8 @@ export default function PartnersPage() {
                         <h3 className="font-bold text-slate-800 text-sm sm:text-base tracking-tight leading-none">
                           Dr. Aman Raj, MD
                         </h3>
-                        <span className="inline-flex items-center justify-center w-4 h-4 bg-[#205E98]/10 rounded-full shrink-0">
-                          <Check className="w-2.5 h-2.5 text-[#205E98]" />
+                        <span className="inline-flex items-center justify-center w-4 h-4 bg-[#5696C7]/10 rounded-full shrink-0">
+                          <Check className="w-2.5 h-2.5 text-[#5696C7]" />
                         </span>
                       </div>
                       <p className="text-slate-500 text-[10px] sm:text-xs font-semibold mt-1">General Medicine &bull; Patna City</p>
@@ -177,10 +177,10 @@ export default function PartnersPage() {
                   {/* Registry Details */}
                   <div className="mt-5 pt-4 border-t border-slate-100/80 flex items-center justify-between text-[11px] sm:text-xs text-slate-500">
                     <div className="flex items-center gap-1.5">
-                      <Award className="w-3.5 h-3.5 text-[#205E98]" />
+                      <Award className="w-3.5 h-3.5 text-[#5696C7]" />
                       <span>NMC ID: <span className="font-bold text-slate-700">84729-BR</span></span>
                     </div>
-                    <span className="px-2 py-0.5 bg-emerald-50 border border-emerald-100 text-[#4A8C4A] rounded text-[9px] font-bold">
+                    <span className="px-2 py-0.5 bg-emerald-50 border border-emerald-100 text-[#529C60] rounded text-[9px] font-bold">
                       ACTIVE REGISTRY
                     </span>
                   </div>
@@ -196,10 +196,10 @@ export default function PartnersPage() {
                 >
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">OPD Queue</span>
-                    <span className="px-2 py-0.5 bg-[#205E98]/10 border border-[#205E98]/20 text-[#205E98] rounded-full text-[9px] font-bold flex items-center gap-1">
+                    <span className="px-2 py-0.5 bg-[#5696C7]/10 border border-[#5696C7]/20 text-[#5696C7] rounded-full text-[9px] font-bold flex items-center gap-1">
                       <span className="relative flex h-1.5 w-1.5">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#205E98] opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#205E98]"></span>
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#5696C7] opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#5696C7]"></span>
                       </span>
                       LIVE
                     </span>
@@ -212,10 +212,10 @@ export default function PartnersPage() {
                     ].map((p, idx) => (
                       <div key={idx} className={`p-2 rounded-xl border flex items-center justify-between transition-all duration-200 ${p.active ? 'bg-sky-50/40 border-sky-100' : 'bg-slate-50/50 border-slate-100/85'}`}>
                         <div className="flex items-center gap-1.5 min-w-0">
-                          <span className={`text-[8px] sm:text-[9px] font-bold px-1 py-0.5 rounded shrink-0 ${p.active ? 'bg-[#205E98]/10 text-[#205E98]' : 'bg-slate-200/50 text-slate-500'}`}>{p.token}</span>
+                          <span className={`text-[8px] sm:text-[9px] font-bold px-1 py-0.5 rounded shrink-0 ${p.active ? 'bg-[#5696C7]/10 text-[#5696C7]' : 'bg-slate-200/50 text-slate-500'}`}>{p.token}</span>
                           <span className={`text-[10px] sm:text-[11px] font-bold truncate ${p.active ? 'text-slate-800' : 'text-slate-500'}`}>{p.name}</span>
                         </div>
-                        <span className={`text-[8px] sm:text-[9px] font-bold shrink-0 ${p.active ? 'text-[#4A8C4A] animate-pulse' : 'text-slate-400'}`}>{p.time}</span>
+                        <span className={`text-[8px] sm:text-[9px] font-bold shrink-0 ${p.active ? 'text-[#529C60] animate-pulse' : 'text-slate-400'}`}>{p.time}</span>
                       </div>
                     ))}
                   </div>
@@ -231,14 +231,14 @@ export default function PartnersPage() {
                 >
                   <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">OPD Load</span>
-                    <span className="text-[10px] font-bold text-[#4A8C4A] flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3 text-[#4A8C4A]" /> Balanced
+                    <span className="text-[10px] font-bold text-[#529C60] flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3 text-[#529C60]" /> Balanced
                     </span>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div className="p-2 rounded-xl bg-slate-50/60 border border-slate-100 text-left">
                       <p className="text-[8px] text-slate-450 font-bold uppercase">Avg Wait</p>
-                      <p className="text-xs font-extrabold text-[#205E98] mt-0.5">8 Mins</p>
+                      <p className="text-xs font-extrabold text-[#5696C7] mt-0.5">8 Mins</p>
                     </div>
                     <div className="p-2 rounded-xl bg-slate-50/60 border border-slate-100 text-left">
                       <p className="text-[8px] text-slate-450 font-bold uppercase">Patient Flow</p>
@@ -252,14 +252,14 @@ export default function PartnersPage() {
                   initial={{ opacity: 0, scale: 0.85 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.8, delay: 0.5 }}
-                  className="absolute bottom-[18%] right-[-6%] z-40 bg-white border border-[#205E98]/20 backdrop-blur-2xl rounded-2xl p-3 flex items-center gap-2.5 shadow-lg text-left"
+                  className="absolute bottom-[18%] right-[-6%] z-40 bg-white border border-[#5696C7]/20 backdrop-blur-2xl rounded-2xl p-3 flex items-center gap-2.5 shadow-lg text-left"
                   style={{ transform: "translateZ(90px)" }}
                 >
                   <div className="w-8 h-8 rounded-xl bg-sky-50 border border-sky-100 flex items-center justify-center">
-                    <ShieldCheck className="w-4 h-4 text-[#205E98]" />
+                    <ShieldCheck className="w-4 h-4 text-[#5696C7]" />
                   </div>
                   <div>
-                    <p className="text-[8px] font-bold text-[#205E98] uppercase tracking-wider">Verification</p>
+                    <p className="text-[8px] font-bold text-[#5696C7] uppercase tracking-wider">Verification</p>
                     <p className="text-[10px] font-bold text-slate-800">State Validated</p>
                   </div>
                 </motion.div>
@@ -298,7 +298,7 @@ export default function PartnersPage() {
       <section id="why-partner" className="py-20 md:py-28 relative z-10 px-4 border-b border-slate-100/80 bg-white/20">
         <div className="max-w-6xl mx-auto">
           <div className="text-center max-w-2xl mx-auto mb-16 space-y-4">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 border border-blue-200/50 text-[#205E98] rounded-full text-[10px] font-bold uppercase tracking-widest bg-white">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 border border-blue-200/50 text-[#5696C7] rounded-full text-[10px] font-bold uppercase tracking-widest bg-white">
               WHY DOCTORS CHOOSE JIVNICARE
             </span>
             <h2 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight">
@@ -312,13 +312,13 @@ export default function PartnersPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8">
             {[
               {
-                icon: <Users className="w-5 h-5 text-[#205E98]" />,
+                icon: <Users className="w-5 h-5 text-[#5696C7]" />,
                 title: "Quiet Your Front Desk",
                 desc: "End the constant barrage of phone calls and check-in chaos. Our automated patient flow keeps your lobby peaceful and organized.",
                 iconBg: "bg-blue-50 border-blue-100"
               },
               {
-                icon: <Eye className="w-5 h-5 text-[#4A8C4A]" />,
+                icon: <Eye className="w-5 h-5 text-[#529C60]" />,
                 title: "Your Entire Day, in One Click",
                 desc: "Never ask your receptionist for patient updates again. See your complete, live OPD queue at a glance, directly from your screen.",
                 iconBg: "bg-emerald-50 border-emerald-100"
@@ -359,13 +359,13 @@ export default function PartnersPage() {
             ))}
             {[
               {
-                icon: <Users className="w-5 h-5 text-[#205E98]" />,
+                icon: <Users className="w-5 h-5 text-[#5696C7]" />,
                 title: "Quiet Your Front Desk",
                 desc: "End the constant barrage of phone calls and check-in chaos. Our automated patient flow keeps your lobby peaceful and organized.",
                 iconBg: "bg-blue-50 border-blue-100"
               },
               {
-                icon: <Eye className="w-5 h-5 text-[#4A8C4A]" />,
+                icon: <Eye className="w-5 h-5 text-[#529C60]" />,
                 title: "Your Entire Day, in One Click",
                 desc: "Never ask your receptionist for patient updates again. See your complete, live OPD queue at a glance, directly from your screen.",
                 iconBg: "bg-emerald-50 border-emerald-100"
@@ -412,8 +412,8 @@ export default function PartnersPage() {
       <section id="infrastructure" className="py-20 md:py-28 relative z-10 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="text-center max-w-2xl mx-auto mb-16 space-y-4">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50/50 border border-blue-200/50 text-[#205E98] rounded-full text-[10px] font-bold uppercase tracking-widest bg-white">
-              <Sparkles className="w-3.5 h-3.5 text-[#205E98]" /> Platform Architecture
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50/50 border border-blue-200/50 text-[#5696C7] rounded-full text-[10px] font-bold uppercase tracking-widest bg-white">
+              <Sparkles className="w-3.5 h-3.5 text-[#5696C7]" /> Platform Architecture
             </span>
             <h2 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight">
               Clinical infrastructure, digital simplicity.
@@ -426,22 +426,22 @@ export default function PartnersPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
               {
-                icon: <Building2 className="w-5 h-5 text-[#205E98]" />,
+                icon: <Building2 className="w-5 h-5 text-[#5696C7]" />,
                 title: "Practice Discoverability",
                 desc: "Appear immediately in search indices. Let patients in your city locate you based on specific specializations and OPD availability.",
-                border: "hover:border-[#205E98]/35"
+                border: "hover:border-[#5696C7]/35"
               },
               {
-                icon: <Activity className="w-5 h-5 text-[#4A8C4A]" />,
+                icon: <Activity className="w-5 h-5 text-[#529C60]" />,
                 title: "Live Queue Engine",
                 desc: "Synchronize online appointments and physical walk-ins. Update wait times in real time to avoid crowding in clinic waiting rooms.",
-                border: "hover:border-[#4A8C4A]/35"
+                border: "hover:border-[#529C60]/35"
               },
               {
-                icon: <ShieldCheck className="w-5 h-5 text-[#4A8C4A]" />,
+                icon: <ShieldCheck className="w-5 h-5 text-[#529C60]" />,
                 title: "B2B Trust Verified",
                 desc: "Display credentials confidently. Self-declared registration profiles are structured cleanly to establish instant patient trust.",
-                border: "hover:border-[#4A8C4A]/35"
+                border: "hover:border-[#529C60]/35"
               }
             ].map((prop, i) => (
               <motion.div 
@@ -464,11 +464,11 @@ export default function PartnersPage() {
       </section>
 
       {/* ── IMMERSIVE PROCESS TIMELINE ────────────────────────────────────── */}
-      <section id="how-it-works" className="py-20 md:py-28 border-t border-[#205E98]/10 bg-gradient-to-b from-[#F7FBFE] to-[#F1F7FC] relative z-10 px-4">
+      <section id="how-it-works" className="py-20 md:py-28 border-t border-[#5696C7]/10 bg-gradient-to-b from-[#F7FBFE] to-[#F1F7FC] relative z-10 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="text-center max-w-2xl mx-auto mb-16 space-y-4">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 border border-[#4A8C4A]/20 text-[#4A8C4A] rounded-full text-[10px] font-bold uppercase tracking-widest bg-white">
-              <Clock className="w-3.5 h-3.5 text-[#4A8C4A]" /> Simple Onboarding Flow
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 border border-[#529C60]/20 text-[#529C60] rounded-full text-[10px] font-bold uppercase tracking-widest bg-white">
+              <Clock className="w-3.5 h-3.5 text-[#529C60]" /> Simple Onboarding Flow
             </span>
             <h2 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight">
               Enter the partner ecosystem.
@@ -480,7 +480,7 @@ export default function PartnersPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-8 relative">
             {/* Connection axis line */}
-            <div className="hidden md:block absolute top-8 left-[16%] right-[16%] h-[1px] bg-gradient-to-r from-[#205E98]/15 via-[#4A8C4A]/15 to-transparent -z-10" />
+            <div className="hidden md:block absolute top-8 left-[16%] right-[16%] h-[1px] bg-gradient-to-r from-[#5696C7]/15 via-[#529C60]/15 to-transparent -z-10" />
 
             {[
               { num: "01", title: "Submit Credentials", desc: "Share basic clinical parameters, name, qualifications, and state council registration details." },
@@ -495,8 +495,8 @@ export default function PartnersPage() {
                 transition={{ duration: 0.5, delay: i * 0.12 }}
                 className="text-center space-y-4"
               >
-                <div className="w-16 h-16 mx-auto bg-white border border-[#205E98]/20 rounded-2xl flex items-center justify-center shadow-sm">
-                  <span className="text-lg font-black text-transparent bg-clip-text bg-gradient-to-br from-[#205E98] to-[#4A8C4A]">{stepItem.num}</span>
+                <div className="w-16 h-16 mx-auto bg-white border border-[#5696C7]/20 rounded-2xl flex items-center justify-center shadow-sm">
+                  <span className="text-lg font-black text-transparent bg-clip-text bg-gradient-to-br from-[#5696C7] to-[#529C60]">{stepItem.num}</span>
                 </div>
                 <h3 className="text-base font-bold text-slate-800 tracking-tight">{stepItem.title}</h3>
                 <p className="text-slate-600 text-sm leading-relaxed px-4 font-semibold">{stepItem.desc}</p>
@@ -506,7 +506,7 @@ export default function PartnersPage() {
 
           <div className="mt-16 text-center">
             <Link href="/partners/onboard">
-              <Button className="h-16 px-10 rounded-2xl bg-gradient-to-r from-[#205E98] to-[#4A8C4A] hover:from-[#1a4c7a] hover:to-[#3c723c] text-white font-bold text-sm shadow-xl shadow-emerald-500/10 hover:shadow-emerald-500/15 transition-all hover:-translate-y-0.5 active:translate-y-0 duration-300 border-none">
+              <Button className="h-16 px-10 rounded-2xl bg-gradient-to-r from-[#5696C7] to-[#529C60] hover:from-[#1a4c7a] hover:to-[#3c723c] text-white font-bold text-sm shadow-xl shadow-emerald-500/10 hover:shadow-emerald-500/15 transition-all hover:-translate-y-0.5 active:translate-y-0 duration-300 border-none">
                 Start Partner Verification Flow
               </Button>
             </Link>
@@ -515,17 +515,17 @@ export default function PartnersPage() {
       </section>
 
       {/* ── FOOTER DISCLAIMER ────────────────────────────────────────────── */}
-      <footer className="py-12 border-t border-[#205E98]/10 bg-[#E8F2FA] text-center relative z-10 px-4">
+      <footer className="py-12 border-t border-[#5696C7]/10 bg-[#E8F2FA] text-center relative z-10 px-4">
         <div className="max-w-6xl mx-auto flex flex-col items-center gap-4 text-slate-650">
           <div className="flex items-center gap-1.5 justify-center">
-            <ShieldCheck className="w-4 h-4 text-[#205E98] shrink-0" />
+            <ShieldCheck className="w-4 h-4 text-[#5696C7] shrink-0" />
             <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">JivniCare B2B Platform Infrastructure</span>
           </div>
           <p className="text-[10px] text-slate-550 leading-relaxed max-w-2xl mx-auto font-medium">
             JivniCare is a digital OPD and clinic queue optimization tool provider. Medical license registries and council numbers (NMC / State Councils) are self-declared by registering doctors under their own medical responsibility. JivniCare does not act as a licensing registry or certify practitioners.
           </p>
           <div className="text-[10px] text-slate-550 font-bold mt-2">
-            &copy; {new Date().getFullYear()} JivniCare. All rights reserved. &bull; <Link href="/privacy" className="hover:text-[#205E98] transition-colors">Privacy Policy</Link> &bull; <Link href="/terms" className="hover:text-[#205E98] transition-colors">Terms of Service</Link>
+            &copy; {new Date().getFullYear()} JivniCare. All rights reserved. &bull; <Link href="/privacy" className="hover:text-[#5696C7] transition-colors">Privacy Policy</Link> &bull; <Link href="/terms" className="hover:text-[#5696C7] transition-colors">Terms of Service</Link>
           </div>
         </div>
       </footer>

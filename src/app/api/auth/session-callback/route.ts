@@ -6,10 +6,19 @@ import { signToken, AUTH_COOKIE, cookieOptions } from "@/lib/jwt";
 import crypto from "crypto";
 import { Role } from "@prisma/client";
 
+function getSafeRedirectUrl(path: string, requestUrl: string): URL {
+  const url = new URL(path, requestUrl);
+  if (url.hostname === "0.0.0.0") {
+    url.hostname = "localhost";
+  }
+  return url;
+}
+
 export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions);
+
   if (!session || !session.user) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    return NextResponse.redirect(getSafeRedirectUrl("/login", request.url));
   }
 
   const role = (session.user as any).role;
@@ -38,7 +47,7 @@ export async function GET(request: NextRequest) {
       sessionId: dbSession.id,
     });
 
-    const response = NextResponse.redirect(new URL("/doctor/dashboard", request.url));
+    const response = NextResponse.redirect(getSafeRedirectUrl("/doctor/dashboard", request.url));
     response.cookies.set(AUTH_COOKIE, jwt, cookieOptions);
     return response;
   }
@@ -49,7 +58,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!dbUser || !dbUser.email) {
-      return NextResponse.redirect(new URL("/admin/jvc-26", request.url));
+      return NextResponse.redirect(getSafeRedirectUrl("/admin/jvc-26", request.url));
     }
 
     // Query Admin table
@@ -82,7 +91,7 @@ export async function GET(request: NextRequest) {
       ? "/admin/totp-verify"
       : "/admin/totp-setup";
 
-    const response = NextResponse.redirect(new URL(targetUrl, request.url));
+    const response = NextResponse.redirect(getSafeRedirectUrl(targetUrl, request.url));
     response.cookies.set("admin_temp_token", tempJwt, {
       ...cookieOptions,
       maxAge: 600, // 10 mins
@@ -90,8 +99,9 @@ export async function GET(request: NextRequest) {
     return response;
   }
 
-  return NextResponse.redirect(new URL("/login", request.url));
+  return NextResponse.redirect(getSafeRedirectUrl("/login", request.url));
 }
+
 
 async function enforceSessionLimit(userId: string, role: string) {
   const limits: Record<string, number> = { PATIENT: 2, DOCTOR: 3, ADMIN: 1 };

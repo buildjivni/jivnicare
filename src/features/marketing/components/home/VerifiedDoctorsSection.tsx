@@ -18,21 +18,20 @@ export function VerifiedDoctorsSection({ doctors }: VerifiedDoctorsSectionProps)
     <section className="py-12 md:py-20 bg-white relative overflow-hidden">
       <div className="absolute inset-0 bg-slate-50/50 pointer-events-none" />
       <div className="container mx-auto px-4 max-w-6xl relative z-10">
-        <div className="flex flex-col md:flex-row items-center justify-between mb-12 md:mb-16 gap-6">
+        <div className="flex flex-col md:flex-row items-center justify-between mb-8 md:mb-12 gap-6">
           <div className="max-w-3xl text-center md:text-left">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/10 border border-secondary/20 text-secondary text-xs font-black uppercase tracking-[0.2em] mb-6">
-              <ShieldCheck className="w-4 h-4" /> 100% Verified Specialists
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-600 text-[10px] font-black uppercase tracking-widest mb-4">
+              🩺 Featured Specialists
             </div>
-            <h2 className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tight text-slate-900 mb-6 leading-[1.05]">
-              Connect With <br />
-              <span className="text-primary">Verified Doctors.</span>
+            <h2 className="text-3xl md:text-4xl font-black tracking-tight text-slate-900 leading-tight">
+              Featured Doctors
             </h2>
-            <p className="text-xl md:text-2xl text-slate-700 font-bold max-w-xl leading-relaxed">
-              Book instant appointments with verified medical professionals. Verified degrees, verified clinics.
+            <p className="text-sm md:text-base text-slate-500 font-bold mt-2">
+              Top-rated verified professionals available for bookings in Bihar.
             </p>
           </div>
-          <Link href="/doctors" className="hidden md:flex text-base font-black text-white items-center gap-3 bg-primary hover:bg-primary/90 px-8 py-5 rounded-2xl shadow-floating hover:shadow-premium transition-all">
-            Browse All Specialists <ArrowRight className="w-5 h-5" />
+          <Link href="/doctors" className="hidden md:flex text-sm font-black text-white items-center gap-2 bg-[#5696C7] hover:bg-[#184a7a] px-6 py-4 rounded-xl shadow-md hover:shadow-lg transition-all">
+            View All Doctors <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
 

@@ -450,6 +450,10 @@ function scoreDoctor(doctor: Doctor, eq: ExpandedQuery): number {
     }
   }
 
+  if (norm.trim() && keywordScore === 0) {
+    return 0;
+  }
+
   return keywordScore + availabilityScore + distanceScore + profileCompleteScore + earlyPartnerScore + districtBoost;
 }
 

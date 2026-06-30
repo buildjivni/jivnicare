@@ -21,7 +21,7 @@ export interface Doctor {
   qualifications?: string;  // Degree pills: "MBBS, MD Medicine"
   experience: string;       // "12 Years"
   education: string;        // Full education string (profile page)
-  verificationStatus?: 'Verified' | 'Pending' | 'GovtRegistered' | 'JivniCareVerified';
+  verificationStatus?: string;
   registrationNumber?: string;
 
   // ── Practice & Location ────────────────────────────────────

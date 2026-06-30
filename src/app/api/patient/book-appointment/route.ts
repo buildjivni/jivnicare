@@ -143,7 +143,8 @@ export async function POST(request: Request) {
       "BOOKING_FINISHED": "Aaj ki bookings band ho chuki hain.",
       "QUEUE_PAUSED": "Doctor ne abhi online bookings rok di hain.",
       "EMERGENCY_FULL": "Emergency slots bhi full ho gaye hain",
-      "EMERGENCY_ONLY_ACTIVE": "Clinic abhi sirf emergency patients ke liye khula hai."
+      "EMERGENCY_ONLY_ACTIVE": "Clinic abhi sirf emergency patients ke liye khula hai.",
+      "WAITLIST_RESERVED": "Yeh slot abhi waitlisted patients ke liye reserved hai."
     };
 
     const errMsg = err.message ?? "";

@@ -63,7 +63,6 @@ export async function GET(request: NextRequest) {
     if (input.district) {
       andConditions.push({
         OR: [
-          { district: { equals: input.district, mode: "insensitive" } },
           { clinicDistrict: { equals: input.district, mode: "insensitive" } },
           { clinicCity: { equals: input.district, mode: "insensitive" } }
         ]
@@ -121,9 +120,10 @@ export async function GET(request: NextRequest) {
           { name: { contains: term, mode: "insensitive" } },
           { speciality: { contains: term, mode: "insensitive" } },
           { clinicName: { contains: term, mode: "insensitive" } },
-          { hospitalName: { contains: term, mode: "insensitive" } },
+          { clinicAddress: { contains: term, mode: "insensitive" } },
+          { clinicCity: { contains: term, mode: "insensitive" } },
+          { clinicDistrict: { contains: term, mode: "insensitive" } },
           { bio: { contains: term, mode: "insensitive" } },
-          { locality: { contains: term, mode: "insensitive" } },
           { diseases: { has: term } },
           { procedures: { has: term } }
         ]

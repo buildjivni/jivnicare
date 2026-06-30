@@ -3,8 +3,8 @@
  * Enforces 04:00 AM IST Rollover Boundary.
  * Do NOT use any other method for queue-date generation.
  */
-export function resolveClinicLogicalDay(): Date {
-  const now = new Date();
+export function resolveClinicLogicalDay(customDate?: Date): Date {
+  const now = customDate || new Date();
   
   // Format the time explicitly to Asia/Kolkata
   const formatter = new Intl.DateTimeFormat('en-US', {

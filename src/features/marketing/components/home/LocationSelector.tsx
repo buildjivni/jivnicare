@@ -18,13 +18,20 @@ export function LocationSelector({
   const router = useRouter();
   const { district, hasHydrated, setDistrict, setCoordinates } = useLocationStore();
   const [isLocating, setIsLocating] = useState(false);
-  const [inputValue, setInputValue] = useState("");
+  const [inputValue, setInputValue] = useState("Jamui");
 
   useEffect(() => {
     if (district !== undefined) {
-      setInputValue(district || "");
+      setInputValue(district || "Jamui");
     }
   }, [district]);
+
+  // Set default to Jamui if store is hydrated and empty
+  useEffect(() => {
+    if (hasHydrated && !district) {
+      setDistrict("Jamui");
+    }
+  }, [hasHydrated, district, setDistrict]);
 
   const handleGPSDetect = () => {
     setIsLocating(true);
@@ -80,8 +87,6 @@ export function LocationSelector({
       }
     }
   };
-
-  if (!hasHydrated) return null; // Avoid hydration flicker
 
   return (
     <div className={cn("flex flex-col items-start w-full relative", className)}>

@@ -173,15 +173,16 @@ export function mapPrismaDoctorToUI(doc: any): UIDoctor {
     procedures: doc.procedures || [],
     about: doc.bio || "",
     education: doc.education || "",
-    qualifications:
-      doc.qualifications || doc.qualification ||
-      (doc.education ? doc.education.split(",")[0].trim() : ""),
+    qualifications: Array.isArray(doc.qualifications)
+      ? doc.qualifications.join(", ")
+      : (doc.qualifications || doc.qualification || (doc.education ? doc.education.split(",")[0].trim() : "")),
     averageConsultationTime: avgConsultTime,
     languages,
     partnerTier: doc.platformPricing?.partnerTier || doc.partnerTier || undefined,
     gender: doc.gender || undefined,
     emergencyAvailable: doc.isEmergencyEnabled || false,
     isEmergencySupported: doc.isEmergencyEnabled || false,
+    verificationStatus: doc.verificationStatus,
     updatedAt: doc.updatedAt,
   };
 }

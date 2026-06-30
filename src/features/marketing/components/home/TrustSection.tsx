@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { motion } from "framer-motion";
-import { ShieldCheck, CheckCircle2, Star, PhoneCall, Quote, Calendar } from "lucide-react";
+import { ShieldCheck, CheckCircle2, Star, PhoneCall, Quote, Calendar, ArrowRight } from "lucide-react";
 
 export function TrustSection() {
   return (
@@ -21,16 +22,21 @@ export function TrustSection() {
             transition={{ duration: 0.6 }}
             className="lg:w-1/2"
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 border border-blue-100 text-primary text-xs font-black uppercase tracking-widest mb-8">
-              <ShieldCheck className="w-4 h-4" /> Trusted Healthcare
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50 border border-emerald-150 text-[#529C60] text-xs font-black uppercase tracking-[0.15em] mb-8">
+              <ShieldCheck className="w-4 h-4" /> 100% Verified Specialists
             </div>
             <h2 className="text-4xl md:text-6xl font-black tracking-tight mb-8 text-slate-900 leading-[1.1]">
-              A Medical Platform <br />
-              <span className="text-primary">Built on Trust.</span>
+              Connect With <br />
+              <span className="text-[#5696C7]">Verified Doctors.</span>
             </h2>
-            <p className="text-lg md:text-xl text-slate-700 leading-relaxed mb-10 max-w-lg font-bold">
-              We understand that healthcare is personal. <span className="text-primary font-black">Jivni</span><span className="text-secondary font-black">Care</span> ensures every doctor is verified and every appointment is handled with professional care.
+            <p className="text-lg md:text-xl text-slate-700 leading-relaxed mb-8 max-w-lg font-bold">
+              Book instant appointments with verified medical professionals. Verified degrees, verified clinics.
             </p>
+            <div className="mb-10">
+              <Link href="/doctors" className="inline-flex text-sm font-black text-white items-center gap-2 bg-[#5696C7] hover:bg-[#184a7a] px-6 py-4 rounded-xl shadow-md hover:shadow-lg transition-all">
+                Browse All Specialists <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
             
             <div className="space-y-6">
               {[
@@ -107,7 +113,7 @@ export function TrustSection() {
                    <div className="flex -space-x-2">
                      {[
                        { char: "M", bg: "bg-primary text-white" },
-                       { char: "S", bg: "bg-[#4A8C4A] text-white" },
+                       { char: "S", bg: "bg-[#529C60] text-white" },
                        { char: "A", bg: "bg-amber-500 text-white" },
                        { char: "R", bg: "bg-purple-500 text-white" }
                      ].map((item, idx) => (

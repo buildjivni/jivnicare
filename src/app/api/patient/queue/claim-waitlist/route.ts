@@ -6,6 +6,7 @@ import { cookies } from "next/headers";
 import { decrypt } from "@/lib/crypto";
 import { getOrCreateDailyQueue } from "@/lib/queue";
 import { logger } from "@/lib/infrastructure/logger";
+import { resolveClinicLogicalDay } from "@/lib/utils/clinic-utils";
 
 export async function POST(request: Request) {
   try {
@@ -40,25 +41,46 @@ export async function POST(request: Request) {
       return apiError("Aap is doctor ki waitlist par nahi hain", 400);
     }
 
+    // Check that patient was actually notified for the slot
+    if (!waitlistEntry.notified || !waitlistEntry.notifiedAt) {
+      return apiError("Aapko abhi is slot ko claim karne ki permission nahi hai", 400);
+    }
+
+    // Enforce logical-day scoping for the waitlist notification
+    const todayLogicalDate = resolveClinicLogicalDay();
+    const notificationLogicalDate = resolveClinicLogicalDay(waitlistEntry.notifiedAt);
+    if (notificationLogicalDate.getTime() !== todayLogicalDate.getTime()) {
+      return apiError("Aapki waitlist notification purani ho chuki hai. Kripya naya slot open hone ka intezar karein.", 400);
+    }
+
     try {
       const result = await prisma.$transaction(async (tx) => {
         // 1. Fetch current daily queue inside transaction (lazy-create if needed)
         const dailyQueue = await getOrCreateDailyQueue(doctorId, "REGULAR");
 
-        // 2. Atomic conditional update to claim slot
-        const affectedRows = await tx.$executeRaw`
-          UPDATE "daily_queues"
-          SET "totalTokens" = "totalTokens" + 1
-          WHERE id = ${dailyQueue.id} AND "totalTokens" < "dailyLimit"
+        // 2. Lock the daily queue row for update to serialize concurrent claims
+        await tx.$queryRaw`
+          SELECT id FROM "daily_queues" WHERE id = ${dailyQueue.id} FOR UPDATE
         `;
 
-        if (affectedRows === 0) {
+        // 3. Count active bookings in the daily queue to verify capacity
+        const activeBookingsCount = await tx.queueToken.count({
+          where: {
+            queueId: dailyQueue.id,
+            status: { in: ['BOOKED', 'READY', 'CALLED', 'IN_CONSULTATION'] }
+          }
+        });
+
+        if (activeBookingsCount >= dailyQueue.dailyLimit) {
           throw new Error("SLOT_TAKEN");
         }
 
-        // 3. Fetch the updated queue to retrieve the newly assigned tokenNumber
-        const updatedQueue = await tx.dailyQueue.findUnique({
+        // 4. Increment totalTokens atomically on the daily queue
+        const updatedQueue = await tx.dailyQueue.update({
           where: { id: dailyQueue.id },
+          data: {
+            totalTokens: { increment: 1 }
+          },
           select: { totalTokens: true }
         });
 
@@ -66,7 +88,7 @@ export async function POST(request: Request) {
           throw new Error("QUEUE_NOT_FOUND");
         }
 
-        // 4. Create the token
+        // 5. Create the token
         const newTokenNumber = updatedQueue.totalTokens;
         const user = await tx.user.findUnique({
           where: { id: payload.id },
@@ -95,7 +117,7 @@ export async function POST(request: Request) {
           }
         });
 
-        // 5. Delete waitlist entry since slot is claimed
+        // 6. Delete waitlist entry since slot is claimed
         await tx.waitlist.delete({
           where: { id: waitlistEntry.id }
         });

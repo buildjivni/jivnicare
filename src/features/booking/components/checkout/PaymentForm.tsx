@@ -179,12 +179,16 @@ export function PaymentForm() {
 
       // Map backend token format to the frontend store format
       const avgConsultMinutes = selectedDoctor?.averageConsultationTime || 10;
+      const tokenData = data.token || data.data?.token;
+      if (!tokenData) {
+        throw new Error("Invalid response format from server");
+      }
       const token = {
-        id: data.token.id,
-        tokenNumber: data.token.tokenNumber,
-        status: data.token.status,
-        source: data.token.source,
-        estimatedWaitMinutes: data.token.tokenNumber * avgConsultMinutes,
+        id: tokenData.id,
+        tokenNumber: tokenData.tokenNumber,
+        status: tokenData.status,
+        source: tokenData.source,
+        estimatedWaitMinutes: tokenData.tokenNumber * avgConsultMinutes,
         createdAt: new Date().toISOString(),
         doctorId: selectedDoctor?.id,
         doctorName: selectedDoctor?.name,

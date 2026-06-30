@@ -30,7 +30,7 @@ function AuthErrorContent() {
 
   return (
     <Card className="max-w-md w-full shadow-2xl rounded-[2.5rem] border-none bg-white overflow-hidden relative fade-in">
-      <div className="absolute top-0 inset-x-0 h-2 bg-gradient-to-r from-[#205E98] to-[#4A8C4A]" />
+      <div className="absolute top-0 inset-x-0 h-2 bg-gradient-to-r from-[#5696C7] to-[#529C60]" />
       
       <CardHeader className="text-center pt-10 pb-4 px-6 md:px-8">
         <div className="mx-auto h-16 w-16 bg-rose-50 rounded-2xl flex items-center justify-center text-rose-600 mb-6 border border-rose-100 shadow-sm">
@@ -52,7 +52,7 @@ function AuthErrorContent() {
       <CardFooter className="flex flex-col gap-3 px-6 md:px-8 pb-10">
         <Button
           onClick={() => router.push("/partners/login")}
-          className="w-full bg-[#205E98] hover:bg-[#1a4d7d] text-white font-bold rounded-xl py-6 flex items-center justify-center gap-2 shadow-lg shadow-sky-900/10 transition-all text-sm"
+          className="w-full bg-[#5696C7] hover:bg-[#1a4d7d] text-white font-bold rounded-xl py-6 flex items-center justify-center gap-2 shadow-lg shadow-sky-900/10 transition-all text-sm"
         >
           <ArrowLeft className="w-4 h-4" /> Return to Sign In
         </Button>
@@ -77,8 +77,8 @@ export default function AuthErrorPage() {
       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.02] pointer-events-none" />
       
       {/* Floating abstract blobs */}
-      <div className="absolute -top-40 -right-40 w-96 h-96 bg-[#205E98]/5 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-[#4A8C4A]/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -top-40 -right-40 w-96 h-96 bg-[#5696C7]/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-[#529C60]/5 rounded-full blur-3xl pointer-events-none" />
 
       {/* Brand Header */}
       <div className="mb-8 flex items-center gap-3 relative z-10">
@@ -86,14 +86,14 @@ export default function AuthErrorPage() {
           <Logo className="w-6 h-6" />
         </div>
         <span className="text-xl font-black tracking-tight leading-none">
-          <span style={{ color: '#205E98' }}>Jivni</span><span style={{ color: '#4A8C4A' }}>Care</span>
+          <span style={{ color: '#5696C7' }}>Jivni</span><span style={{ color: '#529C60' }}>Care</span>
         </span>
       </div>
 
       <Suspense
         fallback={
           <div className="max-w-md w-full bg-white rounded-[2.5rem] p-12 text-center shadow-2xl flex flex-col items-center justify-center">
-            <span className="w-8 h-8 border-3 border-[#205E98]/30 border-t-[#205E98] rounded-full animate-spin"></span>
+            <span className="w-8 h-8 border-3 border-[#5696C7]/30 border-t-[#5696C7] rounded-full animate-spin"></span>
             <p className="text-slate-500 font-bold mt-4 text-sm">Verifying error status...</p>
           </div>
         }

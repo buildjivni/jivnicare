@@ -180,25 +180,36 @@ function PatientLoginContent() {
         body: JSON.stringify({ phone, turnstileToken }),
       });
 
-      const data = await parseResponseJson<{
+      const responseObj = await parseResponseJson<{
         error?: string;
         userExists?: boolean;
         sessionId?: string;
         retryAfterSec?: number;
+        data?: {
+          userExists?: boolean;
+          sessionId?: string;
+          retryAfterSec?: number;
+        }
       }>(res);
       
-      if (!data) throw new Error("Invalid server response.");
+      if (!responseObj) throw new Error("Invalid server response.");
+      
+      const errorMsg = responseObj.error;
+      const userExists = responseObj.userExists ?? responseObj.data?.userExists;
+      const sessionId = responseObj.sessionId ?? responseObj.data?.sessionId;
+      const retryAfterSec = responseObj.retryAfterSec ?? responseObj.data?.retryAfterSec;
+      
       if (!res.ok) {
-        const msg = data.retryAfterSec
-          ? `${data.error || "Failed to send OTP."} Retry in ${data.retryAfterSec}s.`
-          : data.error || "Failed to send OTP.";
+        const msg = retryAfterSec
+          ? `${errorMsg || "Failed to send OTP."} Retry in ${retryAfterSec}s.`
+          : errorMsg || "Failed to send OTP.";
         throw new Error(msg);
       }
 
-      setNeedsProfile(!data.userExists);
-      if (data.sessionId) setSessionId(data.sessionId);
+      setNeedsProfile(!userExists);
+      if (sessionId) setSessionId(sessionId);
       
-      logOnboarding("otp_send_start", { isNewUser: !data.userExists });
+      logOnboarding("otp_send_start", { isNewUser: !userExists });
 
       setOtpSent(true);
       setResendTimer(30);
@@ -380,7 +391,7 @@ function PatientLoginContent() {
         className="w-full max-w-[1000px] bg-white/80 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_32px_64px_-16px_rgba(32,94,152,0.1)] border border-white/50 flex overflow-hidden z-10 relative"
       >
         {/* Left Side - Premium Branding */}
-        <div className="w-[45%] bg-[#205E98] p-12 lg:p-16 flex flex-col justify-between relative overflow-hidden hidden md:flex">
+        <div className="w-[45%] bg-[#5696C7] p-12 lg:p-16 flex flex-col justify-between relative overflow-hidden hidden md:flex">
           <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
             <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
               <defs>
@@ -399,7 +410,7 @@ function PatientLoginContent() {
               </div>
               <div className="flex flex-col">
                 <span className="text-2xl font-black text-white leading-none">
-                   <span style={{ color: '#4A90D9' }}>Jivni</span><span style={{ color: '#4A8C4A' }}>Care</span>
+                   <span style={{ color: '#4A90D9' }}>Jivni</span><span style={{ color: '#529C60' }}>Care</span>
                 </span>
                 <span className="text-[10px] font-bold text-blue-200 uppercase tracking-widest mt-1">OPD NETWORK</span>
               </div>
@@ -535,7 +546,7 @@ function PatientLoginContent() {
                     <Button
                       type="submit"
                       disabled={isLoading || phone.length < 10 || !agreed || (!!siteKey && !turnstileToken)}
-                      className="w-full h-16 rounded-2xl bg-[#205E98] hover:bg-[#1a4f82] text-white font-black text-lg shadow-[0_12px_24px_-8px_rgba(32,94,152,0.3)] hover:shadow-[0_20px_40px_-12px_rgba(32,94,152,0.4)] active:scale-[0.98] transition-all flex items-center justify-center gap-3"
+                      className="w-full h-16 rounded-2xl bg-[#5696C7] hover:bg-[#1a4f82] text-white font-black text-lg shadow-[0_12px_24px_-8px_rgba(32,94,152,0.3)] hover:shadow-[0_20px_40px_-12px_rgba(32,94,152,0.4)] active:scale-[0.98] transition-all flex items-center justify-center gap-3"
                     >
                       {isLoading ? (
                         <>Sending OTP... <RefreshCw className="w-6 h-6 animate-spin" /></>
@@ -622,7 +633,7 @@ function PatientLoginContent() {
                     <Button
                       type="submit"
                       disabled={isLoading || name.trim().length < 2 || location.trim().length < 2}
-                      className="w-full h-16 rounded-2xl bg-[#205E98] hover:bg-[#1a4f82] text-white font-black text-lg shadow-[0_12px_24px_-8px_rgba(32,94,152,0.3)] transition-all flex items-center justify-center gap-3"
+                      className="w-full h-16 rounded-2xl bg-[#5696C7] hover:bg-[#1a4f82] text-white font-black text-lg shadow-[0_12px_24px_-8px_rgba(32,94,152,0.3)] transition-all flex items-center justify-center gap-3"
                     >
                       {isLoading ? (
                         <RefreshCw className="w-5 h-5 animate-spin" />
@@ -690,7 +701,7 @@ function PatientLoginContent() {
                         otp.length < 6 ||
                         !sessionId
                       }
-                      className="w-full h-16 rounded-2xl bg-[#205E98] hover:bg-[#1a4f82] text-white font-black text-lg shadow-[0_12px_24px_-8px_rgba(32,94,152,0.3)] transition-all flex items-center justify-center gap-3"
+                      className="w-full h-16 rounded-2xl bg-[#5696C7] hover:bg-[#1a4f82] text-white font-black text-lg shadow-[0_12px_24px_-8px_rgba(32,94,152,0.3)] transition-all flex items-center justify-center gap-3"
                     >
                       {isLoading ? (
                         <>Verifying OTP... <RefreshCw className="w-6 h-6 animate-spin" /></>

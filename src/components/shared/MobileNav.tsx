@@ -141,7 +141,7 @@ export function MobileNav({ isOpen, setIsOpen, isLoggedIn, pathname, navLinks, o
                     </Button>
                   </Link>
                   <Link href={pathname === "/partners" ? "/partners/onboard" : "/doctors"} onClick={() => setIsOpen(false)} className="block w-full">
-                    <Button className={`w-full h-12 font-bold rounded-2xl shadow-lg ${pathname === "/partners" ? "bg-gradient-to-r from-[#205E98] to-[#4A8C4A] border-none text-white hover:opacity-90 shadow-emerald-500/10" : "shadow-primary/25"}`}>
+                    <Button className={`w-full h-12 font-bold rounded-2xl shadow-lg ${pathname === "/partners" ? "bg-gradient-to-r from-[#5696C7] to-[#529C60] border-none text-white hover:opacity-90 shadow-emerald-500/10" : "shadow-primary/25"}`}>
                       {pathname === "/partners" ? "Join Partner Network" : "Book Appointment"}
                     </Button>
                   </Link>

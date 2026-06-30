@@ -176,9 +176,9 @@ export default function ConfirmationPage() {
                 <p className="text-sm font-bold text-emerald-800">Doctor abhi aapko dekh rahe hain</p>
               </div>
             ) : (
-              <div className="inline-flex items-center gap-2 bg-[#205E98]/5 border border-[#205E98]/10 px-4 py-2 rounded-xl">
-                <Activity className="w-4 h-4 text-[#205E98]" />
-                <p className="text-sm font-bold text-slate-700">Abhi Number Hai: <span className="text-[#205E98] text-base">#{currentServing}</span></p>
+              <div className="inline-flex items-center gap-2 bg-[#5696C7]/5 border border-[#5696C7]/10 px-4 py-2 rounded-xl">
+                <Activity className="w-4 h-4 text-[#5696C7]" />
+                <p className="text-sm font-bold text-slate-700">Abhi Number Hai: <span className="text-[#5696C7] text-base">#{currentServing}</span></p>
               </div>
             )}
           </div>
@@ -198,7 +198,7 @@ export default function ConfirmationPage() {
               
               <div className="h-3 w-full bg-slate-200 rounded-full overflow-hidden relative">
                 <div 
-                  className="absolute top-0 left-0 h-full bg-[#205E98] rounded-full transition-all duration-1000 ease-out"
+                  className="absolute top-0 left-0 h-full bg-[#5696C7] rounded-full transition-all duration-1000 ease-out"
                   style={{ width: `${progressPercent}%` }}
                 />
                 <div 
@@ -261,7 +261,7 @@ export default function ConfirmationPage() {
             rel="noopener noreferrer"
             className="w-full sm:w-auto shrink-0"
           >
-            <Button variant="outline" className="w-full rounded-xl font-bold border-slate-200 text-[#205E98] hover:bg-[#205E98]/5">
+            <Button variant="outline" className="w-full rounded-xl font-bold border-slate-200 text-[#5696C7] hover:bg-[#5696C7]/5">
               <Navigation className="w-4 h-4 mr-2" /> Raasta Dekhein
             </Button>
           </a>

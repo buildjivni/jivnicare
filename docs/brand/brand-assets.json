@@ -1,0 +1,146 @@
+{
+  "$schema": "https://jivnicare.com/brand-assets.schema.json",
+
+  "version": "1.0.0",
+
+  "brand": {
+    "name": "JivniCare",
+    "officialColors": {
+      "primaryBlue": "#5696C7",
+      "primaryGreen": "#529C60",
+      "white": "#FFFFFF",
+      "black": "#000000"
+    }
+  },
+
+  "assets": {
+    "primaryLogo": {
+      "default": "primary-logo/primary-logo.svg",
+      "white": "primary-logo/primary-logo-white.svg",
+      "black": "primary-logo/primary-logo-black.svg",
+      "vertical": "primary-logo/primary-logo-vertical.svg"
+    },
+
+    "brandIcon": {
+      "default": "brand-icon/brand-icon.svg",
+      "white": "brand-icon/brand-icon-white.svg",
+      "black": "brand-icon/brand-icon-black.svg"
+    },
+
+    "wordmark": {
+      "default": "wordmark/wordmark.svg"
+    },
+
+    "appIcon": {
+      "1024": "app-icon/app-icon-1024.png",
+      "512": "app-icon/app-icon-512.png",
+      "256": "app-icon/app-icon-256.png",
+      "192": "app-icon/app-icon-192.png",
+      "180": "app-icon/app-icon-180.png"
+    },
+
+    "favicon": {
+      "svg": "favicon/favicon.svg",
+      "32": "favicon/favicon-32.png",
+      "16": "favicon/favicon-16.png"
+    }
+  },
+
+  "componentMapping": {
+
+    "websiteHeader": "primaryLogo",
+
+    "websiteFooter": "primaryLogo",
+
+    "loginPage": "primaryLogo",
+
+    "signupPage": "primaryLogo",
+
+    "landingHero": "primaryLogo",
+
+    "emailHeader": "primaryLogo",
+
+    "pdfHeader": "primaryLogo",
+
+    "mobileHeader": "primaryLogo",
+
+    "sidebarCollapsed": "brandIcon",
+
+    "sidebarExpanded": "primaryLogo",
+
+    "loader": "brandIcon",
+
+    "loadingScreen": "brandIcon",
+
+    "avatar": "brandIcon",
+
+    "profilePlaceholder": "brandIcon",
+
+    "emptyState": "brandIcon",
+
+    "browserTab": "favicon",
+
+    "browserBookmark": "favicon",
+
+    "pwa": "appIcon",
+
+    "android": "appIcon",
+
+    "ios": "appIcon",
+
+    "desktopShortcut": "appIcon"
+  },
+
+  "backgroundRules": {
+
+    "lightBackground": {
+      "logo": "primaryLogo.default",
+      "icon": "brandIcon.default"
+    },
+
+    "darkBackground": {
+      "logo": "primaryLogo.white",
+      "icon": "brandIcon.white"
+    },
+
+    "print": {
+      "logo": "primaryLogo.black",
+      "icon": "brandIcon.black"
+    }
+  },
+
+  "restrictions": [
+
+    "Never recreate logos.",
+
+    "Never redraw logos.",
+
+    "Never recolor logos.",
+
+    "Never rotate logos.",
+
+    "Never stretch logos.",
+
+    "Never crop logos.",
+
+    "Never distort logos.",
+
+    "Never add shadows.",
+
+    "Never add outlines.",
+
+    "Never separate icon and wordmark.",
+
+    "Never use screenshots as assets.",
+
+    "Always prefer SVG over PNG.",
+
+    "Use PNG only when SVG is not supported.",
+
+    "App icons may adjust safe padding only.",
+
+    "Favicons may adjust safe padding only.",
+
+    "Logo artwork must never be modified."
+  ]
+}

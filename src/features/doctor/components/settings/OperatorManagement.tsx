@@ -93,7 +93,7 @@ export function OperatorManagement() {
   return (
     <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 md:p-8 mt-8">
       <div className="flex items-center gap-3 mb-6 border-b border-slate-50 pb-4">
-        <div className="w-12 h-12 bg-blue-50 text-[#205E98] rounded-2xl flex items-center justify-center">
+        <div className="w-12 h-12 bg-blue-50 text-[#5696C7] rounded-2xl flex items-center justify-center">
           <Users className="w-6 h-6" />
         </div>
         <div>

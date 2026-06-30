@@ -1,5 +1,5 @@
 import prisma from "@/lib/db/prisma";
-import { resolveClinicCurrentTime } from "@/lib/utils/clinic-utils";
+import { resolveClinicCurrentTime, resolveClinicLogicalDay } from "@/lib/utils/clinic-utils";
 import { getOrCreateDailyQueue } from "@/lib/queue";
 import { hashPhone } from "@/lib/crypto";
 
@@ -97,6 +97,27 @@ export class QueueService {
         if (activeBookingsCount >= dailyQueue.dailyLimit) {
           throw new Error('DAILY_LIMIT_REACHED');
         }
+
+        // If this is a standard online booking, check if there are notified waitlist entries for today's logical day
+        if (tokenType === "ONLINE") {
+          const notifiedWaitlistEntries = await tx.waitlist.findMany({
+            where: {
+              doctorId,
+              notified: true
+            }
+          });
+
+          const todayLogicalDate = dailyQueue.date;
+          const activeNotified = notifiedWaitlistEntries.filter((entry: any) => {
+            if (!entry.notifiedAt) return false;
+            const entryLogicalDate = resolveClinicLogicalDay(entry.notifiedAt);
+            return entryLogicalDate.getTime() === todayLogicalDate.getTime();
+          });
+
+          if (activeNotified.length > 0) {
+            throw new Error('WAITLIST_RESERVED');
+          }
+        }
       } else {
         if (activeBookingsCount >= dailyQueue.emergencySlots) {
           throw new Error('EMERGENCY_FULL');
@@ -123,7 +144,7 @@ export class QueueService {
           walkinPhone: patientPhone,
           patientId: resolvedUserId,
           walkinName: patientName || "Patient",
-          tokenType: tokenType === "EMERGENCY" ? "ONLINE" : tokenType,
+          type: tokenType === "EMERGENCY" ? "ONLINE" : tokenType,
           status: 'BOOKED',
           bookedAt: new Date(),
         },
@@ -135,7 +156,7 @@ export class QueueService {
     if (prismaTx) {
       return await coreLogic(prismaTx);
     } else {
-      return await prisma.$transaction(coreLogic);
+      return await prisma.$transaction(coreLogic, { timeout: 15000 });
     }
   }
 

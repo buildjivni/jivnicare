@@ -42,7 +42,7 @@ export function OrderSummary({ doctor, type }: OrderSummaryProps) {
               </Avatar>
               <div>
                 <h4 className="font-black text-slate-900 text-lg leading-tight">{doctor.name}</h4>
-                <p className="text-sm font-bold text-[#205E98] mt-0.5">{doctor.specialty}</p>
+                <p className="text-sm font-bold text-[#5696C7] mt-0.5">{doctor.specialty}</p>
               </div>
             </div>
             
@@ -86,15 +86,15 @@ export function OrderSummary({ doctor, type }: OrderSummaryProps) {
               <Separator className="bg-slate-100 my-4" />
               <div className="flex justify-between items-center">
                 <span className="font-black text-slate-900 text-base">Total Amount</span>
-                <span className="font-black text-2xl text-[#205E98] tabular-nums">{consultationFee}</span>
+                <span className="font-black text-2xl text-[#5696C7] tabular-nums">{consultationFee}</span>
               </div>
             </div>
           </CardContent>
         </div>
       </Card>
       
-      <div className="flex items-start gap-3 p-4 rounded-2xl bg-[#205E98]/5 border border-[#205E98]/10 text-sm">
-        <Lock className="w-5 h-5 text-[#205E98] shrink-0 mt-0.5" />
+      <div className="flex items-start gap-3 p-4 rounded-2xl bg-[#5696C7]/5 border border-[#5696C7]/10 text-sm">
+        <Lock className="w-5 h-5 text-[#5696C7] shrink-0 mt-0.5" />
         <p className="text-slate-600 font-medium leading-relaxed">
           Your booking is <strong className="font-bold text-slate-900">100% secure</strong>. JivniCare guarantees your exact place in the live clinic queue.
         </p>

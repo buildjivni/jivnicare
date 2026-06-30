@@ -76,15 +76,15 @@ export function BookingWidget({
 
         {/* ── 1. Consultation Type Header ── */}
         <div className="px-4 pt-4 pb-3 border-b border-slate-50 flex items-center gap-2">
-          <div className="p-2 rounded-xl bg-[#205E98]/8 shrink-0">
-            <Stethoscope className="w-4 h-4 text-[#205E98]" />
+          <div className="p-2 rounded-xl bg-[#5696C7]/8 shrink-0">
+            <Stethoscope className="w-4 h-4 text-[#5696C7]" />
           </div>
           <div>
             <p className="text-[12px] font-black text-slate-900 leading-tight">In-Clinic Consultation</p>
             <p className="text-[10.5px] text-slate-500 font-medium mt-0.5">Pay at clinic · No advance required</p>
           </div>
           <div className="ml-auto">
-            <p className="font-black text-[20px] text-[#205E98] leading-none tabular-nums">{doctor.fee}</p>
+            <p className="font-black text-[20px] text-[#5696C7] leading-none tabular-nums">{doctor.fee}</p>
             <p className="text-[9px] text-slate-600 font-bold uppercase tracking-wide text-right mt-0.5">Per Visit</p>
           </div>
         </div>
@@ -131,8 +131,8 @@ export function BookingWidget({
                   {
                     label: "Token",
                     value: isLoading ? null : `#${queue.currentToken}`,
-                    icon: <Zap className="w-3 h-3 text-[#205E98]" />,
-                    bg: "bg-[#205E98]/6 border-[#205E98]/15",
+                    icon: <Zap className="w-3 h-3 text-[#5696C7]" />,
+                    bg: "bg-[#5696C7]/6 border-[#5696C7]/15",
                   },
                   {
                     label: "In Queue",
@@ -204,8 +204,8 @@ export function BookingWidget({
             {/* Always-visible verified badges */}
             <div className="grid grid-cols-2 gap-1.5">
               <div className="flex items-center gap-1.5 p-2 rounded-xl bg-blue-50/60 border border-blue-100/60">
-                <Shield className="w-3 h-3 text-[#205E98] shrink-0" />
-                <span className="text-[10px] text-[#205E98] font-bold leading-tight">JivniCare Verified</span>
+                <Shield className="w-3 h-3 text-[#5696C7] shrink-0" />
+                <span className="text-[10px] text-[#5696C7] font-bold leading-tight">JivniCare Verified</span>
               </div>
               <div className="flex items-center gap-1.5 p-2 rounded-xl bg-emerald-50/60 border border-emerald-100/60">
                 <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />

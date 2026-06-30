@@ -6,8 +6,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useBookingStore } from "@/features/booking/store/useBookingStore";
 import { useAuthStore } from "@/features/auth/store/useAuthStore";
 
-const FLOATING_INPUT_CLASS = "peer w-full h-16 pt-5 pb-1 pl-12 pr-4 rounded-2xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#205E98] focus:ring-1 focus:ring-[#205E98] outline-none transition-all text-slate-900 font-medium placeholder-transparent shadow-sm";
-const FLOATING_LABEL_CLASS = "absolute left-12 top-5 text-slate-400 text-base transition-all pointer-events-none peer-focus:top-2 peer-focus:text-[11px] peer-focus:font-bold peer-focus:text-[#205E98] peer-[:not(:placeholder-shown)]:top-2 peer-[:not(:placeholder-shown)]:text-[11px] peer-[:not(:placeholder-shown)]:font-bold peer-[:not(:placeholder-shown)]:text-slate-500";
+const FLOATING_INPUT_CLASS = "peer w-full h-16 pt-5 pb-1 pl-12 pr-4 rounded-2xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#5696C7] focus:ring-1 focus:ring-[#5696C7] outline-none transition-all text-slate-900 font-medium placeholder-transparent shadow-sm";
+const FLOATING_LABEL_CLASS = "absolute left-12 top-5 text-slate-400 text-base transition-all pointer-events-none peer-focus:top-2 peer-focus:text-[11px] peer-focus:font-bold peer-focus:text-[#5696C7] peer-[:not(:placeholder-shown)]:top-2 peer-[:not(:placeholder-shown)]:text-[11px] peer-[:not(:placeholder-shown)]:font-bold peer-[:not(:placeholder-shown)]:text-slate-500";
 
 export function PatientDetailsForm({ disabled }: { disabled?: boolean }) {
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -70,7 +70,7 @@ export function PatientDetailsForm({ disabled }: { disabled?: boolean }) {
           
           <div>
             <div className="relative group">
-              <User className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors ${errors.name ? 'text-red-400' : 'text-slate-400 group-focus-within:text-[#205E98]'}`} />
+              <User className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors ${errors.name ? 'text-red-400' : 'text-slate-400 group-focus-within:text-[#5696C7]'}`} />
               <input 
                 id="name"
                 disabled={disabled}
@@ -88,7 +88,7 @@ export function PatientDetailsForm({ disabled }: { disabled?: boolean }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
               <div className="relative group">
-                <Phone className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors ${errors.phone ? 'text-red-400' : 'text-slate-400 group-focus-within:text-[#205E98]'}`} />
+                <Phone className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors ${errors.phone ? 'text-red-400' : 'text-slate-400 group-focus-within:text-[#5696C7]'}`} />
                 <input 
                   id="phone"
                   disabled={disabled}
@@ -106,7 +106,7 @@ export function PatientDetailsForm({ disabled }: { disabled?: boolean }) {
 
             <div>
               <div className="relative group">
-                <Mail className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors ${errors.email ? 'text-red-400' : 'text-slate-400 group-focus-within:text-[#205E98]'}`} />
+                <Mail className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors ${errors.email ? 'text-red-400' : 'text-slate-400 group-focus-within:text-[#5696C7]'}`} />
                 <input 
                   id="email"
                   disabled={disabled}
@@ -125,7 +125,7 @@ export function PatientDetailsForm({ disabled }: { disabled?: boolean }) {
 
           <div>
             <div className="relative group">
-              <MapPin className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors ${errors.location ? 'text-red-400' : 'text-slate-400 group-focus-within:text-[#205E98]'}`} />
+              <MapPin className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors ${errors.location ? 'text-red-400' : 'text-slate-400 group-focus-within:text-[#5696C7]'}`} />
               <input 
                 id="location"
                 disabled={disabled}
@@ -145,7 +145,7 @@ export function PatientDetailsForm({ disabled }: { disabled?: boolean }) {
       
       {/* Trust Guarantee */}
       <div className="mt-8 p-5 rounded-3xl bg-blue-50/50 border border-blue-100 flex items-start gap-4">
-        <ShieldCheck className="w-6 h-6 text-[#205E98] shrink-0 mt-0.5" />
+        <ShieldCheck className="w-6 h-6 text-[#5696C7] shrink-0 mt-0.5" />
         <div>
           <p className="font-bold text-slate-900">Verified Booking Guarantee</p>
           <p className="text-sm text-slate-600 mt-1 leading-relaxed">JivniCare connects directly with the clinic's live management system. Your place in the queue is instantly reserved.</p>

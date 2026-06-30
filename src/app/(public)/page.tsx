@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { 
   HeroSection, 
   HowItWorksSection, 
@@ -36,10 +37,12 @@ async function getVerifiedDoctors() {
 
 export default async function Home() {
   const featuredDoctors = await getVerifiedDoctors();
+  const cookieStore = await cookies();
+  const initialLocation = cookieStore.get("jivni_district")?.value || null;
 
   return (
     <main className="flex flex-col min-h-screen w-full max-w-full overflow-x-hidden box-border bg-white">
-      <HeroSection featuredDoctor={featuredDoctors[0]} />
+      <HeroSection initialLocation={initialLocation} />
       
       {/* ── AVAILABLE DOCTORS (Now Primary Discovery) ── */}
       <VerifiedDoctorsSection doctors={featuredDoctors} />

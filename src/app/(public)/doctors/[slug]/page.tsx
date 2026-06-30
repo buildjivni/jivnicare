@@ -166,9 +166,9 @@ export default async function DoctorProfilePage({ params }: PageProps) {
           <Link
             href="/doctors"
             aria-label="Back to Doctors"
-            className="flex items-center gap-2 text-slate-500 hover:text-[#205E98] transition-all font-bold text-sm group"
+            className="flex items-center gap-2 text-slate-500 hover:text-[#5696C7] transition-all font-bold text-sm group"
           >
-            <div className="p-1.5 rounded-lg group-hover:bg-[#205E98]/6 transition-colors">
+            <div className="p-1.5 rounded-lg group-hover:bg-[#5696C7]/6 transition-colors">
               <ArrowLeft className="w-4 h-4" />
             </div>
             <span className="hidden sm:block">Find Doctors</span>

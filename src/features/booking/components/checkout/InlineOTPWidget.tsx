@@ -147,20 +147,30 @@ export function InlineOTPWidget({ onVerified }: InlineOTPWidgetProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phone: phone10, turnstileToken }),
       });
-      const data = await parseResponseJson<{
+      const responseObj = await parseResponseJson<{
         error?: string;
         sessionId?: string;
         userExists?: boolean;
         retryAfterSec?: number;
+        data?: {
+          sessionId?: string;
+          userExists?: boolean;
+          retryAfterSec?: number;
+        }
       }>(res);
 
-      if (!data || !res.ok) {
-        const retryMsg = data?.retryAfterSec ? ` Retry in ${data.retryAfterSec}s.` : "";
-        throw new Error((data?.error || "Failed to send OTP.") + retryMsg);
+      const errorMsg = responseObj?.error;
+      const sessionId = responseObj?.sessionId ?? responseObj?.data?.sessionId;
+      const userExists = responseObj?.userExists ?? responseObj?.data?.userExists;
+      const retryAfterSec = responseObj?.retryAfterSec ?? responseObj?.data?.retryAfterSec;
+
+      if (!responseObj || !res.ok) {
+        const retryMsg = retryAfterSec ? ` Retry in ${retryAfterSec}s.` : "";
+        throw new Error((errorMsg || "Failed to send OTP.") + retryMsg);
       }
 
-      setSessionId(data.sessionId || null);
-      setNeedsProfile(!data.userExists);
+      setSessionId(sessionId || null);
+      setNeedsProfile(!userExists);
       setStep("OTP");
       setResendTimer(30);
       setCanResend(false);
@@ -168,9 +178,9 @@ export function InlineOTPWidget({ onVerified }: InlineOTPWidgetProps) {
 
       sessionStorage.setItem('jc_otp_state', JSON.stringify({
         phone: phone10,
-        sessionId: data.sessionId,
+        sessionId: sessionId,
         step: "OTP",
-        needsProfile: !data.userExists,
+        needsProfile: !userExists,
         timestamp: Date.now()
       }));
 

@@ -86,7 +86,7 @@ export function CtaBannerSection() {
             className="bg-[#F4F9F4] border border-emerald-100/50 rounded-[2rem] p-8 shadow-soft flex flex-col justify-between space-y-8"
           >
             <div className="space-y-4">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-100 text-[#4A8C4A] text-xs font-black uppercase tracking-wider">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-100 text-[#529C60] text-xs font-black uppercase tracking-wider">
                 <Building2 className="w-3.5 h-3.5" /> For Clinics & Doctors
               </span>
               <h3 className="text-3xl font-black text-slate-900 tracking-tight leading-tight">
@@ -99,7 +99,7 @@ export function CtaBannerSection() {
 
             <div className="space-y-4 pt-4 border-t border-emerald-100/40">
               <Link href="/partners/onboard" className="block w-full">
-                <Button className="w-full h-12 rounded-xl bg-[#4A8C4A] hover:bg-[#3c723c] text-white font-bold text-sm shadow-md transition-all">
+                <Button className="w-full h-12 rounded-xl bg-[#529C60] hover:bg-[#3c723c] text-white font-bold text-sm shadow-md transition-all">
                   Partner With Us
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>

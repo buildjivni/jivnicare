@@ -107,7 +107,7 @@ export function DoctorProfileView({ doctor, relatedDoctors }: DoctorProfileViewP
       {/* HERO CARD */}
       <div className="bg-white rounded-3xl border border-slate-100 shadow-premium overflow-hidden">
         {/* Banner */}
-        <div className="relative h-[160px] md:h-[200px] bg-gradient-to-br from-[#205E98]/10 via-blue-50/50 to-slate-50 overflow-hidden">
+        <div className="relative h-[160px] md:h-[200px] bg-gradient-to-br from-[#5696C7]/10 via-blue-50/50 to-slate-50 overflow-hidden">
           {!clinicImgLoaded && clinicImage && <div className="absolute inset-0 skeleton-shimmer" />}
           {clinicImage && (
             <Image
@@ -148,7 +148,7 @@ export function DoctorProfileView({ doctor, relatedDoctors }: DoctorProfileViewP
                       priority
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-[#205E98]/10 text-[#205E98] font-black text-3xl">
+                    <div className="w-full h-full flex items-center justify-center bg-[#5696C7]/10 text-[#5696C7] font-black text-3xl">
                       {doctor.name.charAt(0)}
                     </div>
                   )}
@@ -185,7 +185,7 @@ export function DoctorProfileView({ doctor, relatedDoctors }: DoctorProfileViewP
             <div className="flex flex-wrap items-center gap-2 mb-1">
               <h1 className="font-black text-2xl md:text-3xl text-slate-900 tracking-tight flex items-center gap-2">
                 {doctor.name}
-                <ShieldCheck className="w-6 h-6 text-[#205E98] shrink-0" />
+                <ShieldCheck className="w-6 h-6 text-[#5696C7] shrink-0" />
               </h1>
               {((doctor as any).clinicOperations?.emergencySlots > 0 || (doctor as any).emergencySlots > 0) && (
                 <div className="flex items-center gap-1 bg-red-50 text-red-700 border border-red-200 px-2.5 py-0.5 rounded-full shadow-sm">
@@ -194,7 +194,7 @@ export function DoctorProfileView({ doctor, relatedDoctors }: DoctorProfileViewP
                 </div>
               )}
             </div>
-            <p className="text-base font-bold text-[#205E98] mt-1">{doctor.specialty}</p>
+            <p className="text-base font-bold text-[#5696C7] mt-1">{doctor.specialty}</p>
           </div>
 
           {/* Trust Block */}
@@ -239,7 +239,7 @@ export function DoctorProfileView({ doctor, relatedDoctors }: DoctorProfileViewP
           <div className="grid grid-cols-3 gap-3 mt-2">
             {consultCount ? (
               <div className="flex flex-col items-center justify-center text-center p-3 md:p-4 bg-blue-50/50 border border-blue-100/60 rounded-2xl">
-                <Users className="w-5 h-5 text-[#205E98] mb-1.5" />
+                <Users className="w-5 h-5 text-[#5696C7] mb-1.5" />
                 <span className="font-black text-lg md:text-xl text-slate-900">{consultCount}</span>
                 <span className="text-[9px] md:text-[10px] text-slate-500 font-bold uppercase tracking-wide mt-1 leading-tight">Patients Served</span>
               </div>
@@ -266,7 +266,7 @@ export function DoctorProfileView({ doctor, relatedDoctors }: DoctorProfileViewP
             </div>
 
             <div className="flex flex-col items-center justify-center text-center p-3 md:p-4 bg-slate-50 border border-slate-100 rounded-2xl">
-              <span className="text-sm font-black text-[#205E98] mb-1">₹</span>
+              <span className="text-sm font-black text-[#5696C7] mb-1">₹</span>
               <span className="font-black text-lg md:text-xl text-slate-900 tabular-nums">
                 {doctor.fee.replace("₹", "")}
               </span>
@@ -322,12 +322,12 @@ export function DoctorProfileView({ doctor, relatedDoctors }: DoctorProfileViewP
                 const isTodayStr = new Date().toLocaleDateString("en-US", { weekday: "long", timeZone: "Asia/Kolkata" }).toLowerCase() === d.id;
                 return (
                   <div key={d.id} className={`flex items-center justify-between px-4 py-3 rounded-xl ${
-                    isTodayStr ? "bg-[#205E98]/5 border border-[#205E98]/10" : "hover:bg-slate-50"
+                    isTodayStr ? "bg-[#5696C7]/5 border border-[#5696C7]/10" : "hover:bg-slate-50"
                   }`}>
                     <div className="flex items-center gap-3">
-                      {isTodayStr && <span className="w-1.5 h-4 rounded-full bg-[#205E98] shrink-0" />}
-                      <span className={`text-sm font-bold ${isTodayStr ? "text-[#205E98]" : "text-slate-600"}`}>
-                        {d.label} {isTodayStr && <span className="text-[10px] font-black ml-1 text-[#205E98]">TODAY</span>}
+                      {isTodayStr && <span className="w-1.5 h-4 rounded-full bg-[#5696C7] shrink-0" />}
+                      <span className={`text-sm font-bold ${isTodayStr ? "text-[#5696C7]" : "text-slate-600"}`}>
+                        {d.label} {isTodayStr && <span className="text-[10px] font-black ml-1 text-[#5696C7]">TODAY</span>}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -343,7 +343,7 @@ export function DoctorProfileView({ doctor, relatedDoctors }: DoctorProfileViewP
           </div>
 
           <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-blue-50/50 border border-blue-100 text-sm font-medium text-slate-700">
-            <MapPin className="w-4 h-4 text-[#205E98] shrink-0" />
+            <MapPin className="w-4 h-4 text-[#5696C7] shrink-0" />
             <span className="line-clamp-2">{doctor.clinic}, {doctor.location}</span>
           </div>
         </CardContent>
@@ -362,7 +362,7 @@ export function DoctorProfileView({ doctor, relatedDoctors }: DoctorProfileViewP
             {isLongBio && (
               <button 
                 onClick={() => setIsBioExpanded(!isBioExpanded)}
-                className="text-[#205E98] text-sm font-bold mt-2 flex items-center gap-1 hover:underline focus:outline-none"
+                className="text-[#5696C7] text-sm font-bold mt-2 flex items-center gap-1 hover:underline focus:outline-none"
               >
                 {isBioExpanded ? "Show less" : "Read more"}
                 {isBioExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
@@ -408,7 +408,7 @@ export function DoctorProfileView({ doctor, relatedDoctors }: DoctorProfileViewP
                   <Badge
                     key={lang}
                     variant="secondary"
-                    className="text-xs font-bold text-[#205E98] bg-blue-50 border border-blue-100 rounded-lg px-3 py-1.5"
+                    className="text-xs font-bold text-[#5696C7] bg-blue-50 border border-blue-100 rounded-lg px-3 py-1.5"
                   >
                     {lang}
                   </Badge>
@@ -437,12 +437,12 @@ export function DoctorProfileView({ doctor, relatedDoctors }: DoctorProfileViewP
                     {relDoc.image ? (
                       <Image src={getCanonicalImageUrl(relDoc.image, relDoc.updatedAt) || ""} alt={relDoc.name} width={400} height={300} className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-[#205E98] font-bold text-xl">{relDoc.name.charAt(0)}</div>
+                      <div className="w-full h-full flex items-center justify-center text-[#5696C7] font-bold text-xl">{relDoc.name.charAt(0)}</div>
                     )}
                   </div>
                   <div>
-                    <h4 className="font-black text-base text-slate-900 group-hover:text-[#205E98] transition-colors">{displayName(relDoc.name)}</h4>
-                    <p className="text-sm font-bold text-[#205E98]">{relDoc.specialty}</p>
+                    <h4 className="font-black text-base text-slate-900 group-hover:text-[#5696C7] transition-colors">{displayName(relDoc.name)}</h4>
+                    <p className="text-sm font-bold text-[#5696C7]">{relDoc.specialty}</p>
                   </div>
                 </div>
               </Link>

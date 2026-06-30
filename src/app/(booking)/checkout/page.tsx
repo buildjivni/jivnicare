@@ -90,7 +90,7 @@ export default function CheckoutPage() {
   return (
     <div className="bg-[#f7f9fc] min-h-screen pb-28 md:pb-12 relative">
       {/* Decorative background blur */}
-      <div className="absolute top-0 left-0 w-full h-[300px] bg-gradient-to-b from-[#205E98]/5 to-transparent pointer-events-none" />
+      <div className="absolute top-0 left-0 w-full h-[300px] bg-gradient-to-b from-[#5696C7]/5 to-transparent pointer-events-none" />
 
       {/* Top Navigation */}
       <div className="bg-white/80 backdrop-blur-xl border-b border-slate-200/60 sticky top-0 z-30">
@@ -111,7 +111,7 @@ export default function CheckoutPage() {
 
         {/* Step Indicator */}
         <div className="flex items-center gap-2 mb-6 text-xs md:text-sm font-bold text-slate-400">
-          <span className="text-[#205E98] bg-[#205E98]/10 px-2.5 py-1 rounded-md">1. Patient Details</span>
+          <span className="text-[#5696C7] bg-[#5696C7]/10 px-2.5 py-1 rounded-md">1. Patient Details</span>
           <ChevronRight className="w-4 h-4 text-slate-300" />
           <span>2. Confirmed Token</span>
         </div>
