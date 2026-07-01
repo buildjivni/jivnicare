@@ -182,7 +182,7 @@ export function Header() {
     <>
       <header
         className={cn(
-          "sticky top-0 z-[100] w-full transition-all duration-300 bg-white/95 backdrop-blur-md border-b",
+          "sticky top-0 z-[100] w-full transition-all duration-300 bg-white/95 backdrop-blur-md border-b overflow-hidden",
           "h-16 md:h-20",
           scrolled ? "shadow-sm border-slate-200" : "border-slate-100"
         )}

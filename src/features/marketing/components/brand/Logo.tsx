@@ -6,13 +6,15 @@ export interface LogoProps {
   className?: string;
   alt?: string;
   ariaHidden?: boolean;
+  style?: React.CSSProperties;
 }
 
 export function Logo({
   variant = "primary",
   className,
   alt = "JivniCare Logo",
-  ariaHidden
+  ariaHidden,
+  style
 }: LogoProps) {
   const src = BRAND_ASSETS.logo[variant];
   return (
@@ -24,7 +26,8 @@ export function Logo({
       style={{
         height: "100%",
         width: "auto",
-        objectFit: "contain"
+        objectFit: "contain",
+        ...style
       }}
     />
   );
