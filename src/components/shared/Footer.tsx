@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { MapPin, Phone, Mail, Clock, Heart } from "lucide-react";
-import { Logo } from "@/features/marketing/components/brand/Logo";
+import { FooterBrand } from "@/features/marketing/components/brand/FooterBrand";
 
 const FOOTER_SECTIONS = [
   {
@@ -55,10 +55,7 @@ export function Footer() {
 
           {/* Brand & Mission */}
           <div className="lg:col-span-4 space-y-6 pr-0 lg:pr-10">
-            <Link href="/" className="flex items-center group w-fit">
-              <Logo variant="primary-white" className="h-10 md:h-14 w-auto shrink-0 transition-transform duration-300 group-hover:scale-[1.02]" />
-            </Link>
-
+            <FooterBrand logoClassName="h-6 md:h-8 lg:h-9 w-auto" />
             <p className="text-white/90 text-[14px] font-medium leading-relaxed max-w-xs">
               Making quality healthcare simple, safe, and accessible for everyone. Book verified doctors instantly.
             </p>

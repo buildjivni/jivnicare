@@ -4,6 +4,7 @@
 // ============================================================
 
 import { SITE_CONFIG } from "./metadata";
+import { BRAND_ASSETS } from "@/features/marketing/components/brand/brandAssets";
 
 // ── Organization Schema ──────────────────────────────────────
 export function organizationSchema() {
@@ -12,7 +13,6 @@ export function organizationSchema() {
     "@type": "Organization",
     name: SITE_CONFIG.name,
     url: SITE_CONFIG.baseUrl,
-    logo: `${SITE_CONFIG.baseUrl}/brand/primary-logo.svg`,
     description: SITE_CONFIG.description,
     contactPoint: {
       "@type": "ContactPoint",
@@ -49,7 +49,7 @@ export function websiteSchema() {
       name: SITE_CONFIG.name,
       logo: {
         "@type": "ImageObject",
-        url: `${SITE_CONFIG.baseUrl}/logo.png`,
+        url: `${SITE_CONFIG.baseUrl}${encodeURI(BRAND_ASSETS.logo.primary)}`,
       },
     },
   };

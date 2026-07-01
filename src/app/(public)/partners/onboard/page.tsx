@@ -1,5 +1,4 @@
 "use client";
-import { Logo } from "@/features/marketing/components/brand/Logo";
 import { useState, Suspense, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -11,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
 import { PublicGuard } from "@/components/shared";
+import { HeaderBrand } from "@/features/marketing/components/brand/HeaderBrand";
 import { ImageUploadField } from "@/components/shared/ImageUploadField";
 import { SessionProvider, useSession, signIn } from "next-auth/react";
 
@@ -456,12 +456,7 @@ function DoctorOnboardingFlowContent() {
 
       <header className="w-full bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-50 px-6 py-4 shadow-sm shadow-slate-100/30">
         <div className="max-w-5xl mx-auto flex items-center justify-between w-full">
-          <Link href="/" className="inline-flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl overflow-hidden shadow-md group-hover:scale-105 transition-transform bg-white border border-sky-100 p-1.5 flex items-center justify-center">
-              <Logo variant="icon" size={24} className="w-6 h-6 object-contain" />
-            </div>
-            <Logo variant="wordmark" className="h-5 w-auto" />
-          </Link>
+          <HeaderBrand logoClassName="h-8 w-auto" />
           <Link href="/partners/login" className="px-5 py-2.5 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-600 hover:text-[#5298D2] hover:border-sky-200 shadow-sm transition-all flex items-center gap-2">
             Already a partner? <span className="text-[#5298D2] font-black">Sign In</span>
           </Link>

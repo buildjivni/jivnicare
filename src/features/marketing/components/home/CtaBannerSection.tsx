@@ -4,7 +4,6 @@ import { motion } from "framer-motion";
 import { ArrowRight, ShieldCheck, Star, Users, Stethoscope, Building2 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Logo } from "@/features/marketing/components/brand/Logo";
 
 const TRUST_STATS = [
   { icon: <Users className="w-4 h-4 text-emerald-500" />, value: "Verified", label: "Patient Network" },

@@ -6,7 +6,7 @@ import { ShieldAlert, ArrowLeft, LifeBuoy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
-import { Logo } from "@/features/marketing/components/brand/Logo";
+import { AuthBrand } from "@/features/marketing/components/brand/AuthBrand";
 
 function AuthErrorContent() {
   const searchParams = useSearchParams();
@@ -79,18 +79,7 @@ export default function AuthErrorPage() {
       {/* Floating abstract blobs */}
       <div className="absolute -top-40 -right-40 w-96 h-96 bg-[#5696C7]/5 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-[#529C60]/5 rounded-full blur-3xl pointer-events-none" />
-
-      {/* Brand Header */}
-      <div className="mb-8 flex items-center gap-3 relative z-10 group">
-        <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-md border border-slate-100 group-hover:scale-105 transition-transform duration-300">
-          <Logo variant="icon" size={24} className="w-6 h-6 object-contain" />
-        </div>
-        <div className="flex flex-col gap-1">
-          <Logo variant="wordmark" className="h-5 w-auto" />
-          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">Security Portal</span>
-        </div>
-      </div>
-
+      <AuthBrand className="mb-8" />
       <Suspense
         fallback={
           <div className="max-w-md w-full bg-white rounded-[2.5rem] p-12 text-center shadow-2xl flex flex-col items-center justify-center">

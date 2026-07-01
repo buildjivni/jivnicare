@@ -4,6 +4,7 @@ import "./globals.css";
 import { GoogleAnalytics } from "@/components/shared/GoogleAnalytics";
 import { SITE_CONFIG } from "@/lib/seo/metadata";
 import { websiteSchema, organizationSchema } from "@/lib/seo/jsonld";
+import { BRAND_ASSETS } from "@/features/marketing/components/brand/brandAssets";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -55,14 +56,6 @@ export const metadata: Metadata = {
     siteName: SITE_CONFIG.name,
     title: `${SITE_CONFIG.name} — Book Verified Doctors & Specialists`,
     description: SITE_CONFIG.description,
-    images: [
-      {
-        url: "/brand/app-icon-512.png",
-        width: 512,
-        height: 512,
-        alt: "JivniCare — Healthcare Discovery & Verified Doctor Booking",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
@@ -70,7 +63,6 @@ export const metadata: Metadata = {
     creator: SITE_CONFIG.twitterHandle,
     title: `${SITE_CONFIG.name} — Book Verified Doctors & Specialists`,
     description: SITE_CONFIG.description,
-    images: ["/brand/app-icon-512.png"],
   },
   alternates: {
     canonical: SITE_CONFIG.baseUrl,
@@ -80,10 +72,14 @@ export const metadata: Metadata = {
     // google: "your-verification-token",
   },
   icons: {
-    icon: "/brand/favicon.svg",
-    apple: "/brand/app-icon-180.png",
-    shortcut: "/brand/favicon-32.png",
-  },
+    icon: [
+      { url: BRAND_ASSETS.favicon.master, type: "image/svg+xml" },
+      { url: BRAND_ASSETS.favicon.png16, sizes: "16x16", type: "image/png" }
+    ],
+    apple: [
+      { url: BRAND_ASSETS.appIcon.png180, sizes: "180x180", type: "image/png" }
+    ]
+  }
 };
 
 export const viewport: Viewport = {

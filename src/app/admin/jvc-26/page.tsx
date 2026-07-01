@@ -1,9 +1,9 @@
 "use client";
-import { Logo } from "@/features/marketing/components/brand/Logo";
 import { useState } from "react";
 import { ArrowRight, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { signIn } from "next-auth/react";
+import { AuthBrand } from "@/features/marketing/components/brand/AuthBrand";
 
 export default function AdminLogin() {
   const [isLoading, setIsLoading] = useState(false);
@@ -31,15 +31,7 @@ export default function AdminLogin() {
           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
           
           <div className="relative z-10">
-            <div className="flex items-center gap-3 mb-8 group">
-              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-300">
-                 <Logo variant="icon" size={32} />
-              </div>
-              <div className="flex flex-col gap-1">
-                <Logo variant="wordmark" className="h-6 w-auto brightness-0 invert" />
-                <span className="text-[10px] font-bold text-blue-200 uppercase tracking-widest leading-none">Admin Command</span>
-              </div>
-            </div>
+
             <h1 className="text-4xl font-black text-white leading-tight mt-10">
               Command <br />Center
             </h1>
@@ -64,16 +56,9 @@ export default function AdminLogin() {
         {/* Right Side - Google Login Form */}
         <div className="w-full md:w-1/2 p-12 lg:p-20 flex flex-col justify-center bg-white relative">
           <div className="max-w-sm w-full mx-auto">
+            <AuthBrand />
             <div className="mb-10 text-center md:text-left flex flex-col items-center md:items-start">
-              <div className="md:hidden flex items-center gap-3 mb-8 group">
-                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-md border border-slate-100 group-hover:scale-105 transition-transform duration-300">
-                  <Logo variant="icon" size={24} className="w-6 h-6 object-contain" />
-                </div>
-                <div className="flex flex-col gap-1 text-left">
-                  <Logo variant="wordmark" className="h-5 w-auto" />
-                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">Admin Command</span>
-                </div>
-              </div>
+
               <h2 className="text-3xl font-black text-slate-900">Admin Login</h2>
               <p className="text-slate-500 font-medium mt-2">Sign in using your Google account to access the dashboard.</p>
             </div>

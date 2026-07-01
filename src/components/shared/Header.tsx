@@ -24,8 +24,9 @@ import {
   Zap
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { HeaderBrand } from "@/features/marketing/components/brand/HeaderBrand";
 
-import { Logo } from "@/features/marketing/components/brand/Logo";
+
 import { MobileNav } from "./MobileNav";
 import { UserProfileDropdown } from "./UserProfileDropdown";
 import { useAuthStore } from "@/features/auth/store/useAuthStore";
@@ -220,12 +221,7 @@ export function Header() {
                   </Button>
                 </div>
 
-                {/* Logo and Brand Title (Always visible unless search is expanded on mobile) */}
-                <div className="flex items-center shrink-0 transition-all">
-                  <Link href="/" className="flex items-center group shrink min-w-0">
-                    <Logo variant="primary" className="h-10 lg:h-14 w-auto shrink-0 transition-transform duration-300 group-hover:scale-[1.02]" />
-                  </Link>
-                </div>
+                <HeaderBrand logoClassName="h-6 md:h-8 lg:h-9 w-auto" />
               </div>
 
               {/* ── DESKTOP NAV ───────────────────── */}

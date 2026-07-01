@@ -1,11 +1,11 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Logo } from "@/features/marketing/components/brand/Logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ShieldCheck, Copy, Check, AlertTriangle, Key } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { AuthBrand } from "@/features/marketing/components/brand/AuthBrand";
 
 export default function AdminTOTPSetup() {
   const router = useRouter();
@@ -85,13 +85,7 @@ export default function AdminTOTPSetup() {
     <div className="min-h-screen bg-[#f8f9fa] flex items-center justify-center p-4">
       <div className="w-full max-w-xl bg-white rounded-[2.5rem] shadow-2xl p-8 md:p-12 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-[#1E3A8A] via-[#5298D2] to-[#489C66]" />
-
-        <div className="flex justify-center mb-6">
-          <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center shadow-md">
-            <Logo variant="icon" size={40} className="w-10 h-10 object-contain" />
-          </div>
-        </div>
-
+        <AuthBrand className="mb-8" />
         <AnimatePresence mode="wait">
           {loading && (
             <motion.div

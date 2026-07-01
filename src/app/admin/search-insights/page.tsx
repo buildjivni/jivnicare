@@ -1,6 +1,5 @@
 "use client";
 
-import { Logo } from "@/features/marketing/components/brand/Logo";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -9,6 +8,7 @@ import {
   AlertTriangle, CheckCircle2, TrendingUp, HelpCircle
 } from "lucide-react";
 import { useAuthStore } from "@/features/auth/store/useAuthStore";
+import { SidebarBrand } from "@/features/marketing/components/brand/SidebarBrand";
 import { Button } from "@/components/ui/button";
 
 interface QueryLog {
@@ -83,7 +83,7 @@ export default function AdminSearchInsights() {
         <div className={`w-72 bg-white border-r border-slate-200 flex flex-col h-screen shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-50 fixed md:relative transition-transform duration-300 ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
           <div className="p-6 pb-6 border-b border-slate-100 bg-gradient-to-b from-slate-50 to-white flex items-center justify-between">
             <div className="flex flex-col gap-1.5">
-              <Logo variant="primary" className="h-8 w-auto" />
+              <SidebarBrand expanded={true} className="h-6 w-auto" />
               <p className="text-[9px] font-black text-slate-400 tracking-widest uppercase pl-0.5">Admin Command</p>
             </div>
             <button className="md:hidden text-slate-500 hover:bg-slate-100 p-2 rounded-full" onClick={() => setMobileMenuOpen(false)}>
@@ -128,6 +128,7 @@ export default function AdminSearchInsights() {
         <button className="md:hidden p-2 rounded-xl text-slate-600 hover:bg-slate-100" onClick={() => setMobileMenuOpen(true)}>
           <Menu className="w-6 h-6" />
         </button>
+        <SidebarBrand expanded={true} className="md:hidden h-5 w-auto" />
         <h1 className="text-xl font-black text-slate-900 hidden sm:block">Search Query Analysis</h1>
       </div>
       <div className="flex items-center gap-4 md:gap-6">

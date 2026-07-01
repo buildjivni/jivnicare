@@ -1,5 +1,4 @@
 "use client";
-import { Logo } from "@/features/marketing/components/brand/Logo";
 
 import { useState, Suspense, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -19,6 +18,7 @@ import { useAuthStore, getRoleRedirect } from "@/features/auth/store/useAuthStor
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { PublicGuard } from "@/components/shared";
+import { AuthBrand } from "@/features/marketing/components/brand/AuthBrand";
 import { parseResponseJson } from "@/lib/utils/safe-json";
 import { logOnboarding } from "@/lib/auth/onboarding-log";
 
@@ -403,17 +403,7 @@ function PatientLoginContent() {
             </svg>
           </div>
           <div className="relative z-10">
-            <Link href="/" className="flex items-center gap-3 mb-12 group">
-              <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-xl group-hover:scale-105 transition-transform duration-300">
-                <Logo variant="icon" size={48} className="w-12 h-12 object-contain" />
-              </div>
-              <div className="flex flex-col gap-1">
-                <Logo variant="wordmark" className="h-6 w-auto brightness-0 invert" />
-                <span className="text-[10px] font-bold text-blue-200 uppercase tracking-widest leading-none">
-                  Secure Healthcare Access
-                </span>
-              </div>
-            </Link>
+
 
             <div className="space-y-6">
               <h1 className="text-[42px] font-black text-white leading-[1.1] tracking-tight">
@@ -445,7 +435,7 @@ function PatientLoginContent() {
         {/* Right Side - Interactive Form */}
         <div className="flex-1 p-8 sm:p-12 lg:p-20 flex flex-col justify-center bg-white/40 relative">
           <div className="max-w-[340px] w-full mx-auto">
-
+            <AuthBrand />
             <AnimatePresence mode="wait">
 
               {/* Step 1: Phone Entry */}
@@ -467,15 +457,7 @@ function PatientLoginContent() {
                       </Link>
                     </div>
 
-                    <div className="flex flex-col items-center gap-2 mb-6 group">
-                      <div className="w-12 h-12 bg-white border border-slate-100 rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform duration-300">
-                        <Logo variant="icon" size={32} />
-                      </div>
-                      <Logo variant="wordmark" className="h-6 w-auto" />
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mt-1">
-                        Secure Healthcare Access
-                      </span>
-                    </div>
+
                     <h2 className="text-4xl font-black text-slate-900 tracking-tight">Welcome</h2>
                     <p className="text-slate-500 font-bold mt-3 text-base">Enter your mobile number to log in or sign up safely.</p>
                   </div>
@@ -589,15 +571,7 @@ function PatientLoginContent() {
                       </button>
                     </div>
 
-                    <div className="flex flex-col items-center gap-2 mb-6 group">
-                      <div className="w-12 h-12 bg-white border border-slate-100 rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform duration-300">
-                        <Logo variant="icon" size={32} />
-                      </div>
-                      <Logo variant="wordmark" className="h-6 w-auto" />
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mt-1">
-                        Secure Healthcare Access
-                      </span>
-                    </div>
+
                     <h2 className="text-3xl font-black text-slate-900 tracking-tight">Complete Your Profile</h2>
                     <p className="text-slate-500 font-bold mt-2 text-base italic">
                       Verified <span className="text-primary">+91 {phone}</span> — add your details
@@ -679,15 +653,7 @@ function PatientLoginContent() {
                       </button>
                     </div>
 
-                    <div className="flex flex-col items-center gap-2 mb-6 group">
-                      <div className="w-12 h-12 bg-white border border-slate-100 rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform duration-300">
-                        <Logo variant="icon" size={32} />
-                      </div>
-                      <Logo variant="wordmark" className="h-6 w-auto" />
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mt-1">
-                        Secure Healthcare Access
-                      </span>
-                    </div>
+
                     <h2 className="text-4xl font-black text-slate-900 tracking-tight">Verify OTP</h2>
                     <p className="text-slate-500 font-bold mt-2 text-base leading-relaxed">
                       Enter the 6-digit code sent to{" "}
@@ -777,9 +743,7 @@ function PatientLoginContent() {
                 &bull;{" "}
                 <Link href="/terms" className="hover:text-slate-600">Terms</Link>
               </p>
-              <div className="mt-4 flex items-center justify-center opacity-30 grayscale">
-                <Logo variant="primary" className="h-5 w-auto" />
-              </div>
+
             </div>
           </div>
         </div>

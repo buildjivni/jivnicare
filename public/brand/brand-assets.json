@@ -1,0 +1,63 @@
+{
+  "$schema": "https://jivnicare.com/brand-assets.schema.json",
+  "version": "1.0.0",
+  "brand": {
+    "name": "JivniCare",
+    "officialColors": {
+      "primaryBlue": "#5696C7",
+      "primaryGreen": "#529C60",
+      "white": "#FFFFFF",
+      "black": "#000000"
+    }
+  },
+  "masterAssets": {
+    "appIconMaster": {
+      "path": "app-icon/app-icon-master.svg",
+      "description": "Official master app icon SVG conforming to safe-area Variation 10 (11% margin). Used to programmatically generate launcher and installation PNG assets.",
+      "approvedReference": "Variation 10"
+    },
+    "faviconMaster": {
+      "path": "favicon/favicon.svg",
+      "description": "Official master favicon SVG. Used to programmatically generate 32x32 and 16x16 PNG browser icons."
+    }
+  },
+  "targetPlatformAssets": {
+    "appIcon": {
+      "1024": "app-icon/app-icon-1024.png",
+      "512": "app-icon/app-icon-512.png",
+      "256": "app-icon/app-icon-256.png",
+      "192": "app-icon/app-icon-192.png",
+      "180": "app-icon/app-icon-180.png",
+      "note": "All png files are programmatically compiled from appIconMaster and are not manually maintained in git."
+    },
+    "favicon": {
+      "svg": "favicon/favicon.svg",
+      "32": "favicon/favicon-32.png",
+      "16": "favicon/favicon-16.png",
+      "note": "All png files are programmatically compiled from faviconMaster and are not manually maintained in git."
+    }
+  },
+  "componentMapping": {
+    "websiteHeader": "primaryLogo",
+    "websiteFooter": "primaryLogo",
+    "loginPage": "primaryLogo",
+    "signupPage": "primaryLogo",
+    "landingHero": "No Branding",
+    "emailHeader": "primaryLogo",
+    "pdfHeader": "primaryLogo",
+    "mobileHeader": "primaryLogo",
+    "sidebarCollapsed": "brandIcon",
+    "sidebarExpanded": "primaryLogo",
+    "loader": "brandIcon",
+    "loadingScreen": "brandIcon",
+    "avatar": "brandIcon",
+    "profilePlaceholder": "brandIcon",
+    "emptyState": "brandIcon",
+    "browserTab": "favicon",
+    "browserBookmark": "favicon",
+    "pwa": "appIcon",
+    "android": "appIcon",
+    "ios": "appIcon",
+    "desktopShortcut": "appIcon"
+  }
+}

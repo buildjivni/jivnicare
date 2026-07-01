@@ -1,5 +1,4 @@
 "use client";
-import { Logo } from "@/features/marketing/components/brand/Logo";
 import { useState, Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, Stethoscope, RefreshCw, AlertCircle, ShieldCheck } from "lucide-react";
@@ -9,6 +8,7 @@ import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { PublicGuard } from "@/components/shared";
+import { AuthBrand } from "@/features/marketing/components/brand/AuthBrand";
 
 function DoctorLoginContent() {
   const router = useRouter();
@@ -67,15 +67,7 @@ function DoctorLoginContent() {
           </div>
 
           <div className="relative z-10">
-            <Link href="/" className="flex items-center gap-3 mb-12 group">
-              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-xl group-hover:scale-105 transition-transform duration-300">
-                <Logo variant="icon" size={32} />
-              </div>
-              <div className="flex flex-col gap-1">
-                <Logo variant="wordmark" className="h-6 w-auto brightness-0 invert" />
-                <span className="text-[10px] font-bold text-sky-200 uppercase tracking-widest leading-none">Partner Portal</span>
-              </div>
-            </Link>
+
  
             <div className="space-y-6">
               <h1 className="text-[40px] font-heading font-black text-white leading-[1.1] tracking-tight">
@@ -104,6 +96,7 @@ function DoctorLoginContent() {
         {/* Right Side - Interactive Form */}
         <div className="flex-1 p-8 sm:p-12 lg:p-20 flex flex-col justify-center bg-white/40 relative">
           <div className="max-w-[360px] w-full mx-auto">
+            <AuthBrand />
             <AnimatePresence mode="wait">
               <motion.div
                 key="input"
@@ -113,15 +106,7 @@ function DoctorLoginContent() {
                 transition={{ duration: 0.3 }}
               >
                 <div className="mb-10 text-center md:text-left flex flex-col items-center md:items-start">
-                  <div className="md:hidden flex flex-col items-center gap-2 mb-8 group">
-                    <div className="w-12 h-12 bg-white border border-slate-100 rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform duration-300">
-                      <Logo variant="icon" size={32} />
-                    </div>
-                    <Logo variant="wordmark" className="h-6 w-auto" />
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mt-1">
-                      Partner Portal
-                    </span>
-                  </div>
+
                   <h2 className="text-3xl font-heading font-black text-slate-900 tracking-tight text-center md:text-left">Partner Login</h2>
                   <p className="text-slate-500 font-bold mt-2 text-sm text-center md:text-left">
                     Access your clinical dashboard via Google OAuth.
