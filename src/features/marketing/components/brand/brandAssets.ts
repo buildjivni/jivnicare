@@ -4,6 +4,7 @@ export const BRAND_ASSETS = {
     white: "/brand/primary-logo/primary logo white.svg",
     black: "/brand/primary-logo/primary logo black.svg",
     vertical: "/brand/primary-logo/primary-logo -vertical.svg",
+    footer: "/brand/primary-logo/primary-footer-logo.svg",
   },
   icon: {
     default: "/brand/brand-icon/brand-icon.svg",

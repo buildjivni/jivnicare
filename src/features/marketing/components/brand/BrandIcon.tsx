@@ -22,10 +22,9 @@ export function BrandIcon({
       className={className}
       aria-hidden={ariaHidden ? "true" : undefined}
       style={{
-        maxHeight: "100%",
-        maxWidth: "100%",
-        height: "auto",
-        width: "auto"
+        height: "100%",
+        width: "auto",
+        objectFit: "contain"
       }}
     />
   );

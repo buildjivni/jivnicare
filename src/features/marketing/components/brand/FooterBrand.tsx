@@ -9,7 +9,7 @@ export interface FooterBrandProps {
 export function FooterBrand({ className, logoClassName }: FooterBrandProps) {
   return (
     <BrandLink
-      variant="white"
+      variant="footer"
       className={className}
       logoClassName={logoClassName}
       ariaLabel="Go to JivniCare homepage"

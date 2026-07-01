@@ -2,7 +2,7 @@ import React from "react";
 import { BRAND_ASSETS } from "./brandAssets";
 
 export interface LogoProps {
-  variant?: "primary" | "white" | "black";
+  variant?: "primary" | "white" | "black" | "footer";
   className?: string;
   alt?: string;
   ariaHidden?: boolean;
@@ -22,10 +22,9 @@ export function Logo({
       className={className}
       aria-hidden={ariaHidden ? "true" : undefined}
       style={{
-        maxHeight: "100%",
-        maxWidth: "100%",
-        height: "auto",
-        width: "auto"
+        height: "100%",
+        width: "auto",
+        objectFit: "contain"
       }}
     />
   );

@@ -46,7 +46,7 @@ const FOOTER_SECTIONS = [
 
 export function Footer() {
   return (
-    <footer className="bg-[#5696C7] text-white/80 border-t border-white/10 relative overflow-hidden">
+    <footer className="bg-[#162A45] text-slate-200 border-t border-white/10 relative overflow-hidden">
       
       <div className="container mx-auto px-4 md:px-6 max-w-7xl pt-16 md:pt-20 pb-12 relative z-10">
 
@@ -55,8 +55,8 @@ export function Footer() {
 
           {/* Brand & Mission */}
           <div className="lg:col-span-4 space-y-6 pr-0 lg:pr-10">
-            <FooterBrand logoClassName="h-6 md:h-8 lg:h-9 w-auto" />
-            <p className="text-white/90 text-[14px] font-medium leading-relaxed max-w-xs">
+            <FooterBrand logoClassName="h-9 md:h-11 w-auto shrink-0" />
+            <p className="text-slate-200 text-[14px] font-medium leading-relaxed max-w-xs">
               Making quality healthcare simple, safe, and accessible for everyone. Book verified doctors instantly.
             </p>
 
@@ -89,7 +89,7 @@ export function Footer() {
           <div className="lg:col-span-8 grid grid-cols-2 md:grid-cols-4 gap-8">
             {FOOTER_SECTIONS.map((section) => (
               <div key={section.title} className="col-span-1">
-                <h3 className="text-white font-extrabold mb-6 text-[13px] uppercase tracking-wider">{section.title}</h3>
+                <h3 className="text-white font-extrabold mb-6 text-[12px] uppercase tracking-wider">{section.title}</h3>
                 <ul className="space-y-3">
                   {section.links.map((link) => {
                     const isExternal = link.href.startsWith("mailto:") || link.href.startsWith("http");
@@ -99,10 +99,10 @@ export function Footer() {
                       <li key={link.label}>
                         <Tag
                           {...extraProps}
-                          className={`text-sm hover:translate-x-1 inline-block transition-transform duration-200 ${
+                          className={`text-[14px] hover:translate-x-1 inline-block transition-transform duration-200 ${
                             "accent" in link && link.accent
                               ? "text-emerald-300 font-bold hover:text-emerald-200"
-                              : "text-white/70 hover:text-white hover:underline"
+                              : "text-slate-200 hover:text-white hover:underline"
                           }`}
                         >
                           {link.label}
@@ -125,7 +125,7 @@ export function Footer() {
                 </div>
                 <div>
                   <h4 className="font-bold text-white text-sm mb-1">Headquarters</h4>
-                  <p className="text-sm text-white/80">Tech Hub, India</p>
+                  <p className="text-sm text-slate-200">Tech Hub, India</p>
                 </div>
              </div>
              <div className="flex items-start gap-4 p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
@@ -134,8 +134,8 @@ export function Footer() {
                 </div>
                 <div>
                   <h4 className="font-bold text-white text-sm mb-1">Helpline</h4>
-                  <a href="tel:8235351897" className="text-sm text-white/80 hover:text-white hover:underline block mb-0.5">+91 82353 51897</a>
-                  <p className="text-xs text-white/60 font-semibold flex items-center gap-1"><Clock className="w-3 h-3" /> 24/7 Support</p>
+                  <a href="tel:8235351897" className="text-sm text-slate-200 hover:text-white hover:underline block mb-0.5">+91 82353 51897</a>
+                  <p className="text-xs text-slate-300 font-semibold flex items-center gap-1"><Clock className="w-3 h-3" /> 24/7 Support</p>
                 </div>
              </div>
              <div className="flex items-start gap-4 p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
@@ -144,14 +144,14 @@ export function Footer() {
                 </div>
                 <div>
                   <h4 className="font-bold text-white text-sm mb-1">Email Support</h4>
-                  <a href="mailto:support@jivnicare.com" className="text-sm text-white/80 hover:text-white hover:underline block">support@jivnicare.com</a>
+                  <a href="mailto:support@jivnicare.com" className="text-sm text-slate-200 hover:text-white hover:underline block">support@jivnicare.com</a>
                 </div>
              </div>
           </div>
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-6 text-[13px] text-white/60 text-center md:text-left font-medium">
+        <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-6 text-[13px] text-slate-300 text-center md:text-left font-medium">
           <div className="flex flex-col md:flex-row items-center gap-3">
             <p>© {new Date().getFullYear()} JivniCare. All rights reserved.</p>
             <p className="hidden md:block text-white/20">|</p>
