@@ -1,5 +1,6 @@
 import React from "react";
 import { BrandLink } from "./BrandLink";
+import { BRAND_SIZES } from "./brandSizes";
 
 export interface FooterBrandProps {
   className?: string;
@@ -11,7 +12,7 @@ export function FooterBrand({ className, logoClassName }: FooterBrandProps) {
     <BrandLink
       variant="footer"
       className={className}
-      logoClassName={logoClassName}
+      logoClassName={`${logoClassName || ""} ${BRAND_SIZES.footer.logo}`}
       ariaLabel="Go to JivniCare homepage"
     />
   );

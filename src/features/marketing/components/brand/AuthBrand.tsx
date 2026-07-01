@@ -1,6 +1,7 @@
 import React from "react";
 import { BrandIcon } from "./BrandIcon";
 import { Wordmark } from "./Wordmark";
+import { BRAND_SIZES } from "./brandSizes";
 
 export interface AuthBrandProps {
   children?: React.ReactNode;
@@ -12,8 +13,8 @@ export interface AuthBrandProps {
 export function AuthBrand({
   children,
   className,
-  iconClassName = "h-8",
-  wordmarkClassName = "h-6"
+  iconClassName = BRAND_SIZES.auth.icon,
+  wordmarkClassName = BRAND_SIZES.auth.wordmark
 }: AuthBrandProps) {
   return (
     <div className={`flex flex-col items-center gap-2 mb-6 group ${className || ""}`}>

@@ -1,9 +1,9 @@
 export const BRAND_ASSETS = {
   logo: {
-    primary: "/brand/primary-logo/primary logo.svg",
-    white: "/brand/primary-logo/primary logo white.svg",
-    black: "/brand/primary-logo/primary logo black.svg",
-    vertical: "/brand/primary-logo/primary-logo -vertical.svg",
+    primary: "/brand/primary-logo/primary%20logo.svg",
+    white: "/brand/primary-logo/primary%20logo%20white.svg",
+    black: "/brand/primary-logo/primary%20logo%20black.svg",
+    vertical: "/brand/primary-logo/primary-logo%20-vertical.svg",
     footer: "/brand/primary-logo/primary-footer-logo.svg",
   },
   icon: {
@@ -12,7 +12,7 @@ export const BRAND_ASSETS = {
     black: "/brand/brand-icon/brand-icon-black.svg",
   },
   wordmark: {
-    default: "/brand/wordmark/JivniCare wordmark.svg",
+    default: "/brand/wordmark/JivniCare%20wordmark.svg",
   },
   appIcon: {
     png1024: "/brand/app-icon/app-icon-1024.png",

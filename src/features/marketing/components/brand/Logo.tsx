@@ -1,5 +1,6 @@
 import React from "react";
 import { BRAND_ASSETS } from "./brandAssets";
+import { cn } from "@/lib/utils/utils";
 
 export interface LogoProps {
   variant?: "primary" | "white" | "black" | "footer";
@@ -21,14 +22,9 @@ export function Logo({
     <img
       src={src}
       alt={ariaHidden ? "" : alt}
-      className={className}
+      className={cn("h-full w-auto object-contain", className)}
       aria-hidden={ariaHidden ? "true" : undefined}
-      style={{
-        height: "100%",
-        width: "auto",
-        objectFit: "contain",
-        ...style
-      }}
+      style={style}
     />
   );
 }

@@ -1,6 +1,7 @@
 import React from "react";
 import { Logo } from "./Logo";
 import { BrandIcon } from "./BrandIcon";
+import { BRAND_SIZES } from "./brandSizes";
 
 export interface SidebarBrandProps {
   expanded: boolean;
@@ -12,8 +13,8 @@ export interface SidebarBrandProps {
 export function SidebarBrand({
   expanded,
   className,
-  logoClassName,
-  iconClassName
+  logoClassName = BRAND_SIZES.sidebar.desktop,
+  iconClassName = BRAND_SIZES.sidebar.mobile
 }: SidebarBrandProps) {
   return (
     <div className={`flex items-center justify-between ${className || ""}`}>

@@ -55,7 +55,7 @@ export function Footer() {
 
           {/* Brand & Mission */}
           <div className="lg:col-span-4 space-y-6 pr-0 lg:pr-10">
-            <FooterBrand logoClassName="h-7 md:h-8 w-auto shrink-0" />
+            <FooterBrand />
             <p className="text-white/95 text-[14px] font-medium leading-relaxed max-w-xs">
               Making quality healthcare simple, safe, and accessible for everyone. Book verified doctors instantly.
             </p>
