@@ -12,8 +12,8 @@ export interface AuthBrandProps {
 export function AuthBrand({
   children,
   className,
-  iconClassName,
-  wordmarkClassName
+  iconClassName = "h-8",
+  wordmarkClassName = "h-6"
 }: AuthBrandProps) {
   return (
     <div className={`flex flex-col items-center gap-2 mb-6 group ${className || ""}`}>

@@ -221,7 +221,7 @@ export function Header() {
                   </Button>
                 </div>
 
-                <HeaderBrand logoClassName="h-6 md:h-8 lg:h-9 w-auto" />
+                <HeaderBrand logoClassName="h-5 md:h-7 lg:h-8 w-auto" />
               </div>
 
               {/* ── DESKTOP NAV ───────────────────── */}
